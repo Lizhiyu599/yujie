@@ -4,15 +4,14 @@
  */
 
 // ===== Modal 注册表 =====
-// 各软件模块在这里注册自己的面板
 window._modals = {};
 
 function registerModal(id, title, bodyHTML) {
     window._modals[id] = { title, body: bodyHTML };
 }
 
-// ===== 渲染 Modal 容器 =====
-function renderModalContainer() {
+// ===== 初始化渲染所有 Modal =====
+function renderAllModals() {
     const container = document.getElementById('modalContainer');
     if (!container) return;
 
@@ -29,9 +28,10 @@ function renderModalContainer() {
 
 // ===== 打开 Modal =====
 function openModal(id) {
-    // 先渲染容器
-    renderModalContainer();
-    // 显示对应面板
+    // 确保面板已渲染
+    if (!document.getElementById(id)) {
+        renderAllModals();
+    }
     const panel = document.getElementById(id);
     if (panel) {
         panel.classList.add('active');
@@ -59,12 +59,3 @@ function updatePageIndicator() {
         dot.classList.toggle('active', index === currentPage);
     });
 }
-
-// ===== 初始化 =====
-window.addEventListener('DOMContentLoaded', () => {
-    // 绑定翻页事件
-    const pages = document.getElementById('desktopPages');
-    if (pages) {
-        pages.addEventListener('scroll', updatePageIndicator);
-    }
-});
