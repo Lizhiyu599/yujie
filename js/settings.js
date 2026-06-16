@@ -1,6 +1,6 @@
 /**
  * 玉界 - 设置软件
- * 包含：设置面板模板、API 配置、折叠交互、双重确认清空
+ * 包含：设置面板模板、API 配置、折叠交互、双重确认清空、Dock 图标注册
  * 配套样式：css/settings.css
  */
 
@@ -352,12 +352,11 @@ const settingsHTML = `
 </div>
 `;
 
-// ===== 注册到 Dock =====
+// ===== 注册设置图标到 Dock =====
 window.addEventListener('DOMContentLoaded', () => {
     const dockBar = document.getElementById('dockBar');
     if (!dockBar) return;
 
-    // 创建设置图标
     const settingItem = document.createElement('div');
     settingItem.className = 'dock-item';
     settingItem.innerHTML = `
@@ -365,7 +364,6 @@ window.addEventListener('DOMContentLoaded', () => {
         <div>设置</div>
     `;
     settingItem.onclick = () => {
-        // 打开设置 Modal（modal.js 里会提供 openModal 函数）
         if (typeof openModal === 'function') {
             openModal('settingsModal');
         }
