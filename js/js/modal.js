@@ -28,13 +28,11 @@ function renderAllModals() {
 
 // ===== 打开 Modal =====
 function openModal(id) {
-    // 确保面板已渲染
-    if (!document.getElementById(id)) {
-        renderAllModals();
-    }
+    // 强制重新渲染，确保 Modal 一定存在于 DOM 中
+    renderAllModals();
+    
     const panel = document.getElementById(id);
     if (panel) {
-        // 使用 setTimeout 确保 DOM 渲染完毕后再添加动画类名，否则可能没有平滑弹出的动画
         setTimeout(() => {
             panel.classList.add('active');
         }, 10);
@@ -55,12 +53,20 @@ function updatePageIndicator() {
     if (!pages) return;
     const pageWidth = pages.clientWidth;
     const scrollLeft = pages.scrollLeft;
-    // 加上安全判断，防止除以0
     if (pageWidth > 0) {
         const currentPage = Math.round(scrollLeft / pageWidth);
         const dots = document.querySelectorAll('.page-dot');
         dots.forEach((dot, index) => {
-            dot.classList.toggle('active', index === currentPage);
+            if (index === currentPage) {
+                dot.classList.add('active');
+            } else {
+                dot.classList.remove('active');
+            }
         });
     }
 }
+
+// 页面加载完成后初始化指示器
+window.addEventListener('DOMContentLoaded', () => {
+    updatePageIndicator();
+});
