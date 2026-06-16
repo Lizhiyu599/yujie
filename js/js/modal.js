@@ -34,7 +34,10 @@ function openModal(id) {
     }
     const panel = document.getElementById(id);
     if (panel) {
-        panel.classList.add('active');
+        // 使用 setTimeout 确保 DOM 渲染完毕后再添加动画类名，否则可能没有平滑弹出的动画
+        setTimeout(() => {
+            panel.classList.add('active');
+        }, 10);
     }
 }
 
@@ -52,10 +55,12 @@ function updatePageIndicator() {
     if (!pages) return;
     const pageWidth = pages.clientWidth;
     const scrollLeft = pages.scrollLeft;
-    const currentPage = Math.round(scrollLeft / pageWidth);
-
-    const dots = document.querySelectorAll('.page-dot');
-    dots.forEach((dot, index) => {
-        dot.classList.toggle('active', index === currentPage);
-    });
+    // 加上安全判断，防止除以0
+    if (pageWidth > 0) {
+        const currentPage = Math.round(scrollLeft / pageWidth);
+        const dots = document.querySelectorAll('.page-dot');
+        dots.forEach((dot, index) => {
+            dot.classList.toggle('active', index === currentPage);
+        });
+    }
 }
