@@ -34,7 +34,7 @@ function addDesktopIcon(item) {
 // ========== 全局状态 ==========
 let isEditing = false;
 let longPressTimer = null;
-let longPressStarted = false;   // 防止 touchend 误触发
+let longPressStarted = false;
 let addButton = null;
 let halfPanel = null;
 let touchStartX = 0, touchStartY = 0;
@@ -83,7 +83,6 @@ function onIconTouchStart(e) {
 
 function onIconTouchEnd() {
     clearTimeout(longPressTimer);
-    // 如果长按已触发，阻止后续 click
     if (longPressStarted) {
         longPressStarted = false;
     }
@@ -155,7 +154,6 @@ function setupDesktopLongPress() {
     const desktopPage = document.getElementById('page1');
     if (!desktopPage) return;
 
-    // 只监听整个桌面的 touchstart，判断是否在空白处
     desktopPage.addEventListener('touchstart', (e) => {
         if (e.target.closest('.app-icon') || e.target.closest('.add-widget-btn')) return;
         touchStartX = e.touches[0].clientX;
@@ -166,12 +164,10 @@ function setupDesktopLongPress() {
         }, 500);
     });
 
-    // touchend 取消
     desktopPage.addEventListener('touchend', () => {
         clearTimeout(longPressTimer);
     });
 
-    // touchmove 超过阈值取消
     desktopPage.addEventListener('touchmove', (e) => {
         if (!longPressTimer) return;
         const dx = e.touches[0].clientX - touchStartX;
@@ -188,17 +184,20 @@ function showAddButton() {
     addButton = document.createElement('div');
     addButton.className = 'add-widget-btn';
     addButton.innerHTML = '+';
-    // 阻止点击冒泡到桌面
-    addButton.addEventListener('touchstart', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-    });
-    addButton.addEventListener('click', (e) => {
+
+    // 用 touchend 响应手机点击
+    addButton.addEventListener('touchend', (e) => {
         e.stopPropagation();
         e.preventDefault();
         openHalfPanel();
         removeAddButton();
     });
+
+    // 阻止触摸开始冒泡
+    addButton.addEventListener('touchstart', (e) => {
+        e.stopPropagation();
+    });
+
     document.getElementById('desktop').appendChild(addButton);
 }
 
@@ -209,12 +208,11 @@ function removeAddButton() {
     }
 }
 
-// 点击桌面其他地方关闭加号（加号本身已阻止冒泡所以不会被自己关掉）
+// 点击桌面其他地方关闭加号
 document.addEventListener('touchstart', (e) => {
     if (addButton && !addButton.contains(e.target)) {
         removeAddButton();
     }
-    // 点击非图标区域退出编辑模式
     if (isEditing && !e.target.closest('.app-icon') && !e.target.closest('.add-widget-btn') && !e.target.closest('.delete-btn') && !e.target.closest('.half-panel-overlay')) {
         exitEditMode();
     }
