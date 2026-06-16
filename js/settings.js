@@ -351,3 +351,25 @@ const settingsHTML = `
     </div>
 </div>
 `;
+
+// ===== 注册到 Dock =====
+window.addEventListener('DOMContentLoaded', () => {
+    const dockBar = document.getElementById('dockBar');
+    if (!dockBar) return;
+
+    // 创建设置图标
+    const settingItem = document.createElement('div');
+    settingItem.className = 'dock-item';
+    settingItem.innerHTML = `
+        <div class="dock-icon">设</div>
+        <div>设置</div>
+    `;
+    settingItem.onclick = () => {
+        // 打开设置 Modal（modal.js 里会提供 openModal 函数）
+        if (typeof openModal === 'function') {
+            openModal('settingsModal');
+        }
+    };
+
+    dockBar.appendChild(settingItem);
+});
