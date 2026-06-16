@@ -139,7 +139,7 @@
 }
 
 .ios-switch:checked {
-    background: #000;   /* 改这里：原来是 #34c759，现在改成黑色 */
+    background: #000;
 }
 
 .ios-switch::after {
@@ -179,4 +179,12 @@
     border-radius: 50%;
     cursor: pointer;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== 折叠箭头 ===== */
+.toggle-arrow {
+    font-size: 16px;
+    font-weight: 400;
+    color: #8e8e93;
+    transition: transform 0.2s;
 }
