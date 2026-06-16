@@ -12,36 +12,38 @@ function registerModal(id, title, bodyHTML) {
 
 // ===== 初始化渲染所有 Modal =====
 function renderAllModals() {
-    const container = document.getElementById('modalContainer');
+    var container = document.getElementById('modalContainer');
     if (!container) return;
 
-    container.innerHTML = Object.entries(window._modals).map(([id, modal]) => `
-        <div class="modal-panel" id="${id}">
-            <div class="modal-header">
-                <span class="modal-close" onclick="closeModal('${id}')">‹</span>
-                <span>${modal.title}</span>
-            </div>
-            <div class="modal-body">${modal.body}</div>
-        </div>
-    `).join('');
+    var html = '';
+    var modals = window._modals;
+    for (var id in modals) {
+        var m = modals[id];
+        html += '<div class="modal-panel" id="' + id + '">';
+        html += '<div class="modal-header">';
+        html += '<span class="modal-close" onclick="closeModal(\'' + id + '\')">‹</span>';
+        html += '<span>' + m.title + '</span>';
+        html += '</div>';
+        html += '<div class="modal-body">' + m.body + '</div>';
+        html += '</div>';
+    }
+    container.innerHTML = html;
 }
 
 // ===== 打开 Modal =====
 function openModal(id) {
-    // 强制重新渲染，确保 Modal 一定存在于 DOM 中
+    // 强制渲染
     renderAllModals();
     
-    const panel = document.getElementById(id);
+    var panel = document.getElementById(id);
     if (panel) {
-        setTimeout(() => {
-            panel.classList.add('active');
-        }, 10);
+        panel.classList.add('active');
     }
 }
 
 // ===== 关闭 Modal =====
 function closeModal(id) {
-    const panel = document.getElementById(id);
+    var panel = document.getElementById(id);
     if (panel) {
         panel.classList.remove('active');
     }
@@ -49,24 +51,24 @@ function closeModal(id) {
 
 // ===== 翻页指示器 =====
 function updatePageIndicator() {
-    const pages = document.getElementById('desktopPages');
+    var pages = document.getElementById('desktopPages');
     if (!pages) return;
-    const pageWidth = pages.clientWidth;
-    const scrollLeft = pages.scrollLeft;
+    var pageWidth = pages.clientWidth;
+    var scrollLeft = pages.scrollLeft;
     if (pageWidth > 0) {
-        const currentPage = Math.round(scrollLeft / pageWidth);
-        const dots = document.querySelectorAll('.page-dot');
-        dots.forEach((dot, index) => {
-            if (index === currentPage) {
-                dot.classList.add('active');
+        var currentPage = Math.round(scrollLeft / pageWidth);
+        var dots = document.querySelectorAll('.page-dot');
+        for (var i = 0; i < dots.length; i++) {
+            if (i === currentPage) {
+                dots[i].classList.add('active');
             } else {
-                dot.classList.remove('active');
+                dots[i].classList.remove('active');
             }
-        });
+        }
     }
 }
 
-// 页面加载完成后初始化指示器
-window.addEventListener('DOMContentLoaded', () => {
+// 初始化指示器
+window.addEventListener('DOMContentLoaded', function() {
     updatePageIndicator();
 });
