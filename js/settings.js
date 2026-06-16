@@ -354,6 +354,12 @@ const settingsHTML = `
 
 // ===== 注册设置图标到 Dock =====
 window.addEventListener('DOMContentLoaded', () => {
+    // 1. 注册设置面板到 Modal 系统
+    if (typeof registerModal === 'function') {
+        registerModal('settingsModal', '设置', settingsHTML);
+    }
+
+    // 2. 挂载设置图标到 Dock
     const dockBar = document.getElementById('dockBar');
     if (!dockBar) return;
 
