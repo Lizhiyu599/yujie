@@ -1,7 +1,44 @@
 /**
  * 玉界 - 设置软件
- * 包含：设置面板模板、API 配置、折叠交互、双重确认清空、Dock 图标注册
+ * 包含：设置面板模板、API 配置（多设备）、折叠交互、导入导出、清空数据、Dock 图标注册
  */
+
+// ========== 设备存储结构 ==========
+// api_devices: [{ id, name, baseUrl, apiKey, model, temperature, stream }]
+
+function getDevices() {
+    const raw = localStorage.getItem('api_devices');
+    return raw ? JSON.parse(raw) : [];
+}
+
+function saveDevices(devices) {
+    localStorage.setItem('api_devices', JSON.stringify(devices));
+}
+
+// 迁移旧版单设备数据
+function migrateOldConfig() {
+    const oldBase = localStorage.getItem('main_api_base_url');
+    if (!oldBase) return;
+    const oldKey = localStorage.getItem('main_api_key') || '';
+    const oldModel = localStorage.getItem('main_api_model') || '';
+    const devices = getDevices();
+    if (devices.length === 0) {
+        devices.push({
+            id: Date.now(),
+            name: '1号api',
+            baseUrl: oldBase,
+            apiKey: oldKey,
+            model: oldModel,
+            temperature: 1.0,
+            stream: true
+        });
+        saveDevices(devices);
+    }
+    // 清除旧键
+    localStorage.removeItem('main_api_base_url');
+    localStorage.removeItem('main_api_key');
+    localStorage.removeItem('main_api_model');
+}
 
 // ===== 一键清除输入框 =====
 function clearInputs(containerId) {
@@ -12,10 +49,12 @@ function clearInputs(containerId) {
     }
 }
 
-// ===== API 模型拉取 =====
-async function fetchModels(baseUrlId, keyId, modelInputId) {
-    const baseUrl = document.getElementById(baseUrlId).value.trim();
-    const apiKey = document.getElementById(keyId).value.trim();
+// ===== API 模型拉取（可点选） =====
+async function fetchModels(deviceId) {
+    const container = document.getElementById('device-' + deviceId);
+    if (!container) return;
+    const baseUrl = container.querySelector('.api-base-url').value.trim();
+    const apiKey = container.querySelector('.api-key').value.trim();
     if (!baseUrl || !apiKey) {
         alert('请先填写完整的 Base URL 和 API Key');
         return;
@@ -32,9 +71,8 @@ async function fetchModels(baseUrlId, keyId, modelInputId) {
         });
         const data = await res.json();
         if (data && data.data && Array.isArray(data.data)) {
-            const models = data.data.map(m => m.id).join('\n');
-            const chosen = prompt('获取到以下模型，请手动输入你要使用的模型名称:\n\n' + models);
-            if (chosen) document.getElementById(modelInputId).value = chosen;
+            const models = data.data.map(m => m.id);
+            showModelPicker(container, models);
         } else {
             alert('获取模型失败，接口返回格式不支持。');
         }
@@ -43,43 +81,84 @@ async function fetchModels(baseUrlId, keyId, modelInputId) {
     }
 }
 
-// ===== 保存与加载主 API 配置 =====
-function saveMainAPI() {
-    const baseUrl = document.getElementById('api-base-url-1').value.trim();
-    const apiKey = document.getElementById('api-key-1').value.trim();
-    const model = document.getElementById('api-model-1').value.trim();
-    localStorage.setItem('main_api_base_url', baseUrl);
-    localStorage.setItem('main_api_key', apiKey);
-    localStorage.setItem('main_api_model', model);
-    alert('主API配置已保存到本地。');
+// 在输入框下方显示模型列表供点选
+function showModelPicker(container, models) {
+    // 移除已有列表
+    const oldList = container.querySelector('.model-picker');
+    if (oldList) oldList.remove();
+
+    const input = container.querySelector('.api-model');
+    const ul = document.createElement('ul');
+    ul.className = 'model-picker';
+    ul.style.cssText = 'list-style:none;padding:0;margin:4px 0 0;max-height:160px;overflow-y:auto;background:#fff;border:1px solid #e5e5ea;border-radius:8px;';
+    
+    models.forEach(m => {
+        const li = document.createElement('li');
+        li.textContent = m;
+        li.style.cssText = 'padding:8px 12px;font-size:14px;cursor:pointer;border-bottom:1px solid #f0f0f0;';
+        li.onclick = () => {
+            input.value = m;
+            ul.remove();
+        };
+        ul.appendChild(li);
+    });
+
+    input.parentNode.appendChild(ul);
 }
 
-function loadSettings() {
-    const baseUrl = localStorage.getItem('main_api_base_url');
-    const apiKey = localStorage.getItem('main_api_key');
-    const model = localStorage.getItem('main_api_model');
-    if (baseUrl) {
-        const el = document.getElementById('api-base-url-1');
-        if (el) el.value = baseUrl;
-    }
-    if (apiKey) {
-        const el = document.getElementById('api-key-1');
-        if (el) el.value = apiKey;
-    }
-    if (model) {
-        const el = document.getElementById('api-model-1');
-        if (el) el.value = model;
-    }
-}
-
-// ===== 连接测试 =====
-async function testMainAPI() {
-    const baseUrl = document.getElementById('api-base-url-1').value.trim();
-    const apiKey = document.getElementById('api-key-1').value.trim();
-    const model = document.getElementById('api-model-1').value.trim();
+// ===== 保存当前设备 =====
+function saveDevice(deviceId) {
+    const container = document.getElementById('device-' + deviceId);
+    if (!container) return;
+    const name = container.querySelector('.device-name').value.trim() || '未命名';
+    const baseUrl = container.querySelector('.api-base-url').value.trim();
+    const apiKey = container.querySelector('.api-key').value.trim();
+    const model = container.querySelector('.api-model').value.trim();
+    const tempSlider = container.querySelector('.temp-slider');
+    const temperature = tempSlider ? parseFloat(tempSlider.value) : 1.0;
+    const streamCheck = container.querySelector('.stream-check');
+    const stream = streamCheck ? streamCheck.checked : true;
 
     if (!baseUrl || !apiKey || !model) {
-        alert('连接失败：详细原因 - 请填写完整的 Base URL、API Key 和 模型。');
+        alert('请填写完整的 Base URL、API Key 和模型');
+        return;
+    }
+
+    const devices = getDevices();
+    const index = devices.findIndex(d => d.id === deviceId);
+    const newDevice = { id: deviceId, name, baseUrl, apiKey, model, temperature, stream };
+    
+    if (index >= 0) {
+        devices[index] = newDevice;
+    } else {
+        devices.push(newDevice);
+    }
+    saveDevices(devices);
+    alert('设备“' + name + '”已保存');
+    renderDeviceList(); // 刷新列表
+}
+
+// ===== 删除设备 =====
+function deleteDevice(deviceId) {
+    if (!confirm('确定删除该设备吗？')) return;
+    let devices = getDevices();
+    devices = devices.filter(d => d.id !== deviceId);
+    saveDevices(devices);
+    renderDeviceList();
+}
+
+// ===== 连接测试（带温度） =====
+async function testDevice(deviceId) {
+    const container = document.getElementById('device-' + deviceId);
+    if (!container) return;
+    const baseUrl = container.querySelector('.api-base-url').value.trim();
+    const apiKey = container.querySelector('.api-key').value.trim();
+    const model = container.querySelector('.api-model').value.trim();
+    const tempSlider = container.querySelector('.temp-slider');
+    const temperature = tempSlider ? parseFloat(tempSlider.value) : 1.0;
+
+    if (!baseUrl || !apiKey || !model) {
+        alert('连接失败：请填写完整的 Base URL、API Key 和 模型。');
         return;
     }
 
@@ -98,7 +177,8 @@ async function testMainAPI() {
             body: JSON.stringify({
                 model: model,
                 messages: [{ role: 'user', content: 'hello' }],
-                max_tokens: 10
+                max_tokens: 10,
+                temperature: temperature
             })
         });
 
@@ -106,10 +186,10 @@ async function testMainAPI() {
             alert('连接成功！API配置有效。');
         } else {
             const data = await response.json();
-            alert(`连接失败：详细原因 - ${data.error?.message || response.status}`);
+            alert(`连接失败：${data.error?.message || response.status}`);
         }
     } catch (e) {
-        alert(`连接失败：详细原因 - 网络错误或跨域拦截 (${e.message})`);
+        alert(`连接失败：网络错误或跨域拦截 (${e.message})`);
     }
 }
 
@@ -118,6 +198,140 @@ function toggleSection(id) {
     const el = document.getElementById(id);
     if (!el) return;
     el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+// ===== 添加新设备（生成空白表单） =====
+function addNewDevice() {
+    const devices = getDevices();
+    const newId = Date.now();
+    devices.push({
+        id: newId,
+        name: '',
+        baseUrl: '',
+        apiKey: '',
+        model: '',
+        temperature: 1.0,
+        stream: true
+    });
+    saveDevices(devices);
+    renderDeviceList();
+    // 自动展开新设备
+    setTimeout(() => {
+        toggleDeviceEdit(newId);
+    }, 100);
+}
+
+// 切换设备编辑区显示
+function toggleDeviceEdit(deviceId) {
+    const edit = document.getElementById('device-edit-' + deviceId);
+    if (edit) {
+        edit.style.display = edit.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+// ===== 渲染设备列表 =====
+function renderDeviceList() {
+    const listContainer = document.getElementById('device-list');
+    if (!listContainer) return;
+    const devices = getDevices();
+    listContainer.innerHTML = '';
+
+    devices.forEach(device => {
+        const item = document.createElement('div');
+        item.className = 'ios-group';
+        item.style.margin = '8px 16px';
+        item.innerHTML = `
+            <div class="ios-row" onclick="toggleDeviceEdit(${device.id})" style="cursor:pointer;">
+                <div>
+                    <div style="font-size:16px; font-weight:500;">${device.name || '未命名设备'}</div>
+                    <div style="font-size:13px; color:#8e8e93;">${device.model || '未配置模型'}</div>
+                </div>
+                <span style="color:#c6c6c8; font-size:24px;">›</span>
+            </div>
+            <div id="device-edit-${device.id}" style="display:none; padding:16px; border-top:1px solid #e5e5ea; background:#fafafa;" class="device-edit">
+                <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+                    <label class="ios-label">配置名称</label>
+                    <span style="font-size:13px; color:#ff3b30; cursor:pointer;" onclick="deleteDevice(${device.id})">删除设备</span>
+                </div>
+                <input type="text" class="ios-input device-name" placeholder="例如：1号api" value="${device.name}">
+
+                <label class="ios-label">API地址 (Base URL)</label>
+                <input type="text" class="ios-input api-base-url" placeholder="例如：https://.../v1" value="${device.baseUrl}">
+
+                <label class="ios-label">API密钥 (Key)</label>
+                <input type="text" class="ios-input api-key" placeholder="例如：sk-..." value="${device.apiKey}">
+
+                <label class="ios-label">模型</label>
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <input type="text" class="ios-input api-model" placeholder="手动输入或拉取" style="flex:1;" value="${device.model}">
+                    <button class="ios-btn-white" style="width:auto; margin:0; padding:12px 16px;" onclick="fetchModels(${device.id})">拉取</button>
+                </div>
+
+                <label class="ios-label" style="display:flex; justify-content:space-between; margin-top:20px;">
+                    <span>API温度</span> <span class="temp-display">${device.temperature}</span>
+                </label>
+                <input type="range" min="0" max="2" step="0.1" value="${device.temperature}" class="ios-slider temp-slider" oninput="this.parentNode.querySelector('.temp-display').innerText=this.value">
+
+                <div style="font-size:11px; color:#8e8e93; margin-top:4px;">提示：越低越收敛越高越大胆</div>
+
+                <div class="ios-row" style="padding:16px 0 0 0; border:none; background:transparent;">
+                    <span style="font-weight:500; font-size:15px;">流式输出</span>
+                    <input type="checkbox" class="ios-switch stream-check" ${device.stream ? 'checked' : ''}>
+                </div>
+
+                <button class="ios-btn-black" onclick="saveDevice(${device.id})">保存设备</button>
+                <button class="ios-btn-white" onclick="testDevice(${device.id})">连接测试</button>
+            </div>
+        `;
+        listContainer.appendChild(item);
+    });
+}
+
+// ===== 导出数据 =====
+function exportData() {
+    const allData = {};
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        allData[key] = localStorage.getItem(key);
+    }
+    const jsonStr = JSON.stringify(allData, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'yujie_backup_' + new Date().toISOString().slice(0, 10) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    alert('数据已导出。');
+}
+
+// ===== 导入数据 =====
+function importData() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            try {
+                const data = JSON.parse(ev.target.result);
+                const count = Object.keys(data).length;
+                for (const key in data) {
+                    localStorage.setItem(key, data[key]);
+                }
+                alert('成功导入 ' + count + ' 条数据，即将刷新页面。');
+                setTimeout(() => location.reload(), 500);
+            } catch (err) {
+                alert('导入失败：文件格式不正确。');
+            }
+        };
+        reader.readAsText(file);
+    };
+    input.click();
 }
 
 // ===== 清空数据（双重确认） =====
@@ -139,11 +353,10 @@ function handleClearData() {
             }
         }, 3000);
     } else {
-        alert("所有数据已清空。");
+        localStorage.clear();
+        alert("所有数据已清空，即将刷新页面。");
         clearClicks = 0;
-        btn.innerText = "清空所有数据";
-        btn.style.backgroundColor = "#fff";
-        btn.style.color = "#ff3b30";
+        setTimeout(() => location.reload(), 500);
     }
 }
 
@@ -156,53 +369,10 @@ const settingsHTML = `
         <span style="color:#8e8e93; font-weight:400; font-size:14px;">展开/折叠</span>
     </div>
     <div id="api-section" class="collapsible-section" style="display:none;">
-        <div style="font-size:12px; color:#8e8e93; margin:0 16px 8px;">API预设 (数量无限制)</div>
-        <button class="ios-btn-white" style="margin: 0 16px; width: calc(100% - 32px); color:#007aff;">+ 添加新设备</button>
+        <div style="font-size:12px; color:#8e8e93; margin:0 16px 8px;">API配置</div>
+        <button class="ios-btn-white" style="margin: 0 16px; width: calc(100% - 32px); color:#007aff;" onclick="addNewDevice()">+ 添加新设备</button>
 
-        <div class="ios-group">
-            <div class="ios-row" onclick="toggleSection('api-edit-1')" style="cursor:pointer;">
-                <div>
-                    <div style="font-size:16px; font-weight:500; color:#000;">1号api</div>
-                    <div style="font-size:13px; color:#8e8e93; margin-top:2px;">当前模型配置</div>
-                </div>
-                <span style="color:#c6c6c8; font-size:24px; line-height:1;">›</span>
-            </div>
-            
-            <div id="api-edit-1" style="display:none; padding:16px; border-top:1px solid #e5e5ea; background:#fafafa;">
-                <div style="display:flex; justify-content:space-between; align-items:flex-end;">
-                    <label class="ios-label">配置名称</label>
-                    <span style="font-size:13px; color:#ff3b30; cursor:pointer; margin-bottom:6px;" onclick="clearInputs('api-edit-1')">一键清除配置</span>
-                </div>
-                <input type="text" class="ios-input" placeholder="例如：1号api" value="1号api">
-
-                <label class="ios-label">API地址 (Base URL)</label>
-                <input type="text" id="api-base-url-1" class="ios-input" placeholder="例如：https://.../v1">
-
-                <label class="ios-label">API密钥 (Key)</label>
-                <input type="text" id="api-key-1" class="ios-input" placeholder="例如：sk-...">
-
-                <label class="ios-label">模型</label>
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <input type="text" id="api-model-1" class="ios-input" placeholder="手动输入或拉取" style="flex:1;">
-                    <button class="ios-btn-white" style="width:auto; margin:0; padding:12px 16px;" onclick="fetchModels('api-base-url-1', 'api-key-1', 'api-model-1')">拉取</button>
-                </div>
-
-                <label class="ios-label" style="display:flex; justify-content:space-between; margin-top:20px;">
-                    <span>API温度</span> <span id="temp-val-1">1.0</span>
-                </label>
-                <input type="range" min="0" max="2" step="0.1" value="1.0" class="ios-slider" oninput="document.getElementById('temp-val-1').innerText=this.value">
-
-                <div style="font-size:11px; color:#8e8e93; margin-top:4px;">提示：越低越收敛越高越大胆</div>
-
-                <div class="ios-row" style="padding:16px 0 0 0; border:none; background:transparent;">
-                    <span style="font-weight:500; font-size:15px;">流式输出</span>
-                    <input type="checkbox" class="ios-switch" checked>
-                </div>
-
-                <button class="ios-btn-black" onclick="saveMainAPI()">保存配置</button>
-                <button class="ios-btn-white" onclick="testMainAPI()">连接测试</button>
-            </div>
-        </div>
+        <div id="device-list"></div>
     </div>
 
     <div class="list-header" onclick="toggleSection('subapi-section')">
@@ -343,13 +513,19 @@ const settingsHTML = `
     </div>
     <div id="danger-section" class="collapsible-section" style="display:none;">
         <div class="ios-group" style="padding:16px; background:#fff0f0; border:1px solid #ffd6d6;">
-            <button class="ios-btn-white" style="margin-top:0;">导出数据</button>
-            <button class="ios-btn-black">导入数据</button>
+            <button class="ios-btn-white" style="margin-top:0;" onclick="exportData()">导出数据</button>
+            <button class="ios-btn-black" onclick="importData()">导入数据</button>
             <button class="ios-btn-white" id="clearDataBtn" onclick="handleClearData()" style="border-color:#ff3b30; color:#ff3b30;">清空所有数据</button>
         </div>
     </div>
 </div>
 `;
+
+// ===== 初始化设置面板 =====
+function initSettings() {
+    migrateOldConfig(); // 迁移旧版数据
+    renderDeviceList();
+}
 
 // ===== 注册设置图标到 Dock =====
 window.addEventListener('DOMContentLoaded', () => {
@@ -363,11 +539,13 @@ window.addEventListener('DOMContentLoaded', () => {
         renderAllModals();
     }
 
-    // 3. 挂载设置图标到 Dock
+    // 3. 初始化设备列表（需要在 Modal 渲染后执行）
+    initSettings();
+
+    // 4. 挂载设置图标到 Dock
     const dockBar = document.getElementById('dockBar');
     if (!dockBar) return;
 
-    // 清空现有 Dock 栏内容，防止重复加载
     dockBar.innerHTML = '';
 
     const settingItem = document.createElement('div');
@@ -377,11 +555,10 @@ window.addEventListener('DOMContentLoaded', () => {
         <div>设置</div>
     `;
     settingItem.onclick = () => {
+        // 打开设置面板时重新渲染设备列表，保证显示最新数据
+        renderDeviceList();
         openModal('settingsModal');
     };
 
-    // 将设置图标添加到 Dock 栏中
     dockBar.appendChild(settingItem);
-    
-    // 如果之后有其他3个软件，你可以用类似 dockBar.appendChild(...) 添加在后面
 });
