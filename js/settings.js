@@ -1,7 +1,6 @@
 /**
  * 玉界 - 设置软件
  * 包含：设置面板模板、API 配置、折叠交互、双重确认清空、Dock 图标注册
- * 配套样式：css/settings.css
  */
 
 // ===== 一键清除输入框 =====
@@ -368,6 +367,9 @@ window.addEventListener('DOMContentLoaded', () => {
     const dockBar = document.getElementById('dockBar');
     if (!dockBar) return;
 
+    // 清空现有 Dock 栏内容，防止重复加载
+    dockBar.innerHTML = '';
+
     const settingItem = document.createElement('div');
     settingItem.className = 'dock-item';
     settingItem.innerHTML = `
@@ -378,5 +380,8 @@ window.addEventListener('DOMContentLoaded', () => {
         openModal('settingsModal');
     };
 
+    // 将设置图标添加到 Dock 栏中
     dockBar.appendChild(settingItem);
+    
+    // 如果之后有其他3个软件，你可以用类似 dockBar.appendChild(...) 添加在后面
 });
