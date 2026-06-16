@@ -4,8 +4,6 @@
  */
 
 // ========== 设备存储结构 ==========
-// api_devices: [{ id, name, baseUrl, apiKey, model, temperature, stream }]
-
 function getDevices() {
     const raw = localStorage.getItem('api_devices');
     return raw ? JSON.parse(raw) : [];
@@ -34,7 +32,6 @@ function migrateOldConfig() {
         });
         saveDevices(devices);
     }
-    // 清除旧键
     localStorage.removeItem('main_api_base_url');
     localStorage.removeItem('main_api_key');
     localStorage.removeItem('main_api_model');
@@ -49,8 +46,39 @@ function clearInputs(containerId) {
     }
 }
 
-// ===== API 模型拉取（可点选） =====
-async function fetchModels(deviceId) {
+// ===== 旧版 API 模型拉取（副API等仍用这个） =====
+async function fetchModels(baseUrlId, keyId, modelInputId) {
+    const baseUrl = document.getElementById(baseUrlId).value.trim();
+    const apiKey = document.getElementById(keyId).value.trim();
+    if (!baseUrl || !apiKey) {
+        alert('请先填写完整的 Base URL 和 API Key');
+        return;
+    }
+    let endpoint = baseUrl;
+    if (endpoint.endsWith('/chat/completions')) {
+        endpoint = endpoint.replace('/chat/completions', '');
+    }
+    endpoint = endpoint.replace(/\/+$/, '') + '/models';
+
+    try {
+        const res = await fetch(endpoint, {
+            headers: { 'Authorization': `Bearer ${apiKey}` }
+        });
+        const data = await res.json();
+        if (data && data.data && Array.isArray(data.data)) {
+            const models = data.data.map(m => m.id).join('\n');
+            const chosen = prompt('获取到以下模型，请手动输入你要使用的模型名称:\n\n' + models);
+            if (chosen) document.getElementById(modelInputId).value = chosen;
+        } else {
+            alert('获取模型失败，接口返回格式不支持。');
+        }
+    } catch (e) {
+        alert('拉取失败: 网络错误或跨域拦截 (' + e.message + ')');
+    }
+}
+
+// ===== 主设备模型拉取（可点选） =====
+async function fetchModelsForDevice(deviceId) {
     const container = document.getElementById('device-' + deviceId);
     if (!container) return;
     const baseUrl = container.querySelector('.api-base-url').value.trim();
@@ -81,9 +109,7 @@ async function fetchModels(deviceId) {
     }
 }
 
-// 在输入框下方显示模型列表供点选
 function showModelPicker(container, models) {
-    // 移除已有列表
     const oldList = container.querySelector('.model-picker');
     if (oldList) oldList.remove();
 
@@ -106,7 +132,7 @@ function showModelPicker(container, models) {
     input.parentNode.appendChild(ul);
 }
 
-// ===== 保存当前设备 =====
+// ===== 保存设备 =====
 function saveDevice(deviceId) {
     const container = document.getElementById('device-' + deviceId);
     if (!container) return;
@@ -135,7 +161,7 @@ function saveDevice(deviceId) {
     }
     saveDevices(devices);
     alert('设备“' + name + '”已保存');
-    renderDeviceList(); // 刷新列表
+    renderDeviceList();
 }
 
 // ===== 删除设备 =====
@@ -147,7 +173,7 @@ function deleteDevice(deviceId) {
     renderDeviceList();
 }
 
-// ===== 连接测试（带温度） =====
+// ===== 连接测试 =====
 async function testDevice(deviceId) {
     const container = document.getElementById('device-' + deviceId);
     if (!container) return;
@@ -200,7 +226,7 @@ function toggleSection(id) {
     el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
-// ===== 添加新设备（生成空白表单） =====
+// ===== 添加新设备 =====
 function addNewDevice() {
     const devices = getDevices();
     const newId = Date.now();
@@ -215,15 +241,13 @@ function addNewDevice() {
     });
     saveDevices(devices);
     renderDeviceList();
-    // 自动展开新设备
     setTimeout(() => {
         toggleDeviceEdit(newId);
     }, 100);
 }
 
-// 切换设备编辑区显示
 function toggleDeviceEdit(deviceId) {
-    const edit = document.getElementById('device-edit-' + deviceId);
+    const edit = document.getElementById('device-' + deviceId);
     if (edit) {
         edit.style.display = edit.style.display === 'none' ? 'block' : 'none';
     }
@@ -248,7 +272,7 @@ function renderDeviceList() {
                 </div>
                 <span style="color:#c6c6c8; font-size:24px;">›</span>
             </div>
-            <div id="device-edit-${device.id}" style="display:none; padding:16px; border-top:1px solid #e5e5ea; background:#fafafa;" class="device-edit">
+            <div id="device-${device.id}" style="display:none; padding:16px; border-top:1px solid #e5e5ea; background:#fafafa;" class="device-edit">
                 <div style="display:flex; justify-content:space-between; align-items:flex-end;">
                     <label class="ios-label">配置名称</label>
                     <span style="font-size:13px; color:#ff3b30; cursor:pointer;" onclick="deleteDevice(${device.id})">删除设备</span>
@@ -264,7 +288,7 @@ function renderDeviceList() {
                 <label class="ios-label">模型</label>
                 <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                     <input type="text" class="ios-input api-model" placeholder="手动输入或拉取" style="flex:1;" value="${device.model}">
-                    <button class="ios-btn-white" style="width:auto; margin:0; padding:12px 16px;" onclick="fetchModels(${device.id})">拉取</button>
+                    <button class="ios-btn-white" style="width:auto; margin:0; padding:12px 16px;" onclick="fetchModelsForDevice(${device.id})">拉取</button>
                 </div>
 
                 <label class="ios-label" style="display:flex; justify-content:space-between; margin-top:20px;">
@@ -370,7 +394,7 @@ const settingsHTML = `
     </div>
     <div id="api-section" class="collapsible-section" style="display:none;">
         <div style="font-size:12px; color:#8e8e93; margin:0 16px 8px;">API配置</div>
-        <button class="ios-btn-white" style="margin: 0 16px; width: calc(100% - 32px); color:#007aff;" onclick="addNewDevice()">+ 添加新设备</button>
+        <button class="ios-btn-white" style="margin: 0 16px; width: calc(100% - 32px); color:#000;" onclick="addNewDevice()">+ 添加新设备</button>
 
         <div id="device-list"></div>
     </div>
@@ -523,26 +547,22 @@ const settingsHTML = `
 
 // ===== 初始化设置面板 =====
 function initSettings() {
-    migrateOldConfig(); // 迁移旧版数据
+    migrateOldConfig();
     renderDeviceList();
 }
 
 // ===== 注册设置图标到 Dock =====
 window.addEventListener('DOMContentLoaded', () => {
-    // 1. 注册设置面板到 Modal 系统
     if (typeof registerModal === 'function') {
         registerModal('settingsModal', '设置', settingsHTML);
     }
 
-    // 2. 统一渲染所有已注册的 Modal
     if (typeof renderAllModals === 'function') {
         renderAllModals();
     }
 
-    // 3. 初始化设备列表（需要在 Modal 渲染后执行）
     initSettings();
 
-    // 4. 挂载设置图标到 Dock
     const dockBar = document.getElementById('dockBar');
     if (!dockBar) return;
 
@@ -555,7 +575,6 @@ window.addEventListener('DOMContentLoaded', () => {
         <div>设置</div>
     `;
     settingItem.onclick = () => {
-        // 打开设置面板时重新渲染设备列表，保证显示最新数据
         renderDeviceList();
         openModal('settingsModal');
     };
