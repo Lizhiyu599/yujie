@@ -266,6 +266,23 @@ body, html {
 }
 
 /* ===== 编辑模式（抖动+删除） ===== */
+(255, 255, 255, 0.68);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: #4a4a4f;
+    cursor: pointer;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    user-select: none;
+}
+
+/* ===== 编辑模式（抖动+删除） ===== */
 .app-icon.editing .icon-img {
     animation: jiggle 0.3s infinite;
 }
@@ -295,7 +312,7 @@ body, html {
     z-index: 5;
 }
 
-/* ===== 添加小组件按钮（毛玻璃“+”） ===== */
+/* ===== 添加小组件按钮（毛玻璃正方形"+", 22px模糊） ===== */
 .add-widget-btn {
     position: absolute;
     top: 20px;
@@ -303,10 +320,10 @@ body, html {
     width: 44px;
     height: 44px;
     background: rgba(255, 255, 255, 0.68);
-    backdrop-filter: blur(28px);
-    -webkit-backdrop-filter: blur(28px);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
     border: 1px solid rgba(255, 255, 255, 0.85);
-    border-radius: 22px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -318,11 +335,11 @@ body, html {
     user-select: none;
 }
 
-/* ===== 半屏面板 ===== */
+/* ===== 半屏面板（毛玻璃, 22px模糊, 占半屏） ===== */
 .half-panel-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.3);
+    background: rgba(0,0,0,0.2);
     z-index: 200;
     display: flex;
     align-items: flex-end;
@@ -330,14 +347,16 @@ body, html {
 
 .half-panel {
     width: 100%;
-    max-height: 70%;
-    background: rgba(255,255,255,0.95);
-    backdrop-filter: blur(30px);
-    -webkit-backdrop-filter: blur(30px);
+    height: 50%;
+    max-height: 50%;
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    border: 1px solid rgba(255,255,255,0.8);
     border-radius: 24px 24px 0 0;
     overflow-y: auto;
     padding: 8px 16px 30px;
-    box-shadow: 0 -8px 32px rgba(0,0,0,0.1);
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.08);
 }
 
 .half-panel-handle {
@@ -360,21 +379,16 @@ body, html {
     align-items: center;
     padding: 14px 16px;
     margin: 8px 0;
-    background: #fff;
-    border-radius: 12px;
+    background: rgba(255,255,255,0.6);
+    backdrop-filter: blur(10px);
+    border-radius: 14px;
     cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-.widget-list-item .toggle-arrow {
-    font-size: 16px;
-    color: #8e8e93;
 }
 
 .widget-placeholder {
-    background: #f2f2f7;
-    border: 1px dashed #c6c6c8;
-    border-radius: 12px;
+    background: rgba(255,255,255,0.4);
+    border: 1px dashed rgba(0,0,0,0.1);
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
