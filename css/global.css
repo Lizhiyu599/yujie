@@ -166,11 +166,12 @@ body, html {
 .dock {
     height: 78px;
     display: flex;
-    justify-content: space-around;
+    justify-content: flex-start;
     align-items: center;
-    padding: 0 8px;
+    padding: 0 20px;
+    gap: 16px;
     border-radius: 32px;
-}
+ }   
 
 .dock-item {
     display: flex;
