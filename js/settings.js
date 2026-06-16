@@ -573,5 +573,6 @@ window.addEventListener('DOMContentLoaded', () => {
         openModal('settingsModal');
     };
 
-    dockBar.appendChild(settingItem);
+    // 关键改动：插入到最前面，而不是 appendChild
+    dockBar.insertBefore(settingItem, dockBar.firstChild);
 });
