@@ -139,7 +139,7 @@
 }
 
 .ios-switch:checked {
-    background: #34c759;
+    background: #000;   /* 改这里：原来是 #34c759，现在改成黑色 */
 }
 
 .ios-switch::after {
