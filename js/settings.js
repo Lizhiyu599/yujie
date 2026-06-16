@@ -219,11 +219,18 @@ async function testDevice(deviceId) {
     }
 }
 
-// ===== 折叠区块 =====
-function toggleSection(id) {
+// ===== 折叠区块（带箭头切换） =====
+function toggleSection(id, headerEl) {
     const el = document.getElementById(id);
     if (!el) return;
-    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    const isHidden = el.style.display === 'none';
+    el.style.display = isHidden ? 'block' : 'none';
+    if (headerEl) {
+        const arrow = headerEl.querySelector('.toggle-arrow');
+        if (arrow) {
+            arrow.textContent = isHidden ? '∨' : '›';
+        }
+    }
 }
 
 // ===== 添加新设备 =====
@@ -388,20 +395,19 @@ function handleClearData() {
 const settingsHTML = `
 <div class="settings-container">
 
-    <div class="list-header" onclick="toggleSection('api-section')">
+    <div class="list-header" onclick="toggleSection('api-section', this)">
         <span>API</span> 
-        <span style="color:#8e8e93; font-weight:400; font-size:14px;">展开/折叠</span>
+        <span class="toggle-arrow" style="color:#8e8e93;">›</span>
     </div>
     <div id="api-section" class="collapsible-section" style="display:none;">
         <div style="font-size:12px; color:#8e8e93; margin:0 16px 8px;">API配置</div>
         <button class="ios-btn-white" style="margin: 0 16px; width: calc(100% - 32px); color:#000;" onclick="addNewDevice()">+ 添加新设备</button>
-
         <div id="device-list"></div>
     </div>
 
-    <div class="list-header" onclick="toggleSection('subapi-section')">
+    <div class="list-header" onclick="toggleSection('subapi-section', this)">
         <span>副API</span> 
-        <span style="color:#8e8e93; font-weight:400; font-size:14px;">展开/折叠</span>
+        <span class="toggle-arrow" style="color:#8e8e93;">›</span>
     </div>
     <div id="subapi-section" class="collapsible-section" style="display:none;">
         <div style="font-size:12px; color:#8e8e93; margin:0 16px 8px;">仅保存一个配置</div>
@@ -452,88 +458,76 @@ const settingsHTML = `
         </div>
     </div>
 
-    <div class="list-header" onclick="toggleSection('voice-section')">
+    <div class="list-header" onclick="toggleSection('voice-section', this)">
         <span>语音API</span> 
-        <span style="color:#8e8e93; font-weight:400; font-size:14px;">展开/折叠</span>
+        <span class="toggle-arrow" style="color:#8e8e93;">›</span>
     </div>
     <div id="voice-section" class="collapsible-section" style="display:none;">
         <div class="ios-group" style="padding:16px;">
             <div style="font-weight:600; margin-bottom:16px; font-size:16px;">MiniMax API 配置</div>
-            
             <label class="ios-label">Group ID</label>
             <input type="text" class="ios-input" placeholder="输入MiniMax Group ID">
-
             <label class="ios-label">API Key</label>
             <input type="text" class="ios-input" placeholder="输入MiniMax API Key">
-
             <label class="ios-label">音色 (VOICE ID)</label>
             <select class="ios-input" style="height:46px; background:#f2f2f7;">
                 <option value="" disabled selected>选择ID或输入</option>
                 <option value="male-1">青涩青年</option>
                 <option value="male-2">成熟大叔</option>
             </select>
-
             <button class="ios-btn-black">保存配置</button>
             <button class="ios-btn-white" onclick="alert('连接失败：请配置完整的语音API')">连接测试</button>
         </div>
     </div>
 
-    <div class="list-header" onclick="toggleSection('image-section')">
+    <div class="list-header" onclick="toggleSection('image-section', this)">
         <span>生图API</span> 
-        <span style="color:#8e8e93; font-weight:400; font-size:14px;">展开/折叠</span>
+        <span class="toggle-arrow" style="color:#8e8e93;">›</span>
     </div>
     <div id="image-section" class="collapsible-section" style="display:none;">
         <div class="ios-group" style="padding:16px;">
             <label class="ios-label">API地址 (Base URL)</label>
             <input type="text" id="api-base-url-img" class="ios-input" placeholder="例如：https://.../v1">
-
             <label class="ios-label">API密钥 (Key)</label>
             <input type="text" id="api-key-img" class="ios-input" placeholder="例如：sk-...">
-
             <label class="ios-label">模型</label>
             <div style="display:flex; gap:8px; align-items:center;">
                 <input type="text" id="api-model-img" class="ios-input" placeholder="手动输入或拉取" style="flex:1;">
                 <button class="ios-btn-white" style="width:auto; margin:0; padding:12px 16px;" onclick="fetchModels('api-base-url-img', 'api-key-img', 'api-model-img')">拉取</button>
             </div>
-
             <button class="ios-btn-black">保存配置</button>
             <button class="ios-btn-white" onclick="alert('连接失败：详细原因 - 未检测到有效的API密钥')">连接测试</button>
         </div>
     </div>
 
-    <div class="list-header" onclick="toggleSection('weather-section')">
+    <div class="list-header" onclick="toggleSection('weather-section', this)">
         <span>天气API</span> 
-        <span style="color:#8e8e93; font-weight:400; font-size:14px;">展开/折叠</span>
+        <span class="toggle-arrow" style="color:#8e8e93;">›</span>
     </div>
     <div id="weather-section" class="collapsible-section" style="display:none;">
         <div class="ios-group" style="padding:16px;">
             <label class="ios-label">API地址 (Base URL)</label>
             <input type="text" id="api-base-url-weather" class="ios-input" placeholder="例如：https://.../v1">
-
             <label class="ios-label">API密钥 (Key)</label>
             <input type="text" id="api-key-weather" class="ios-input" placeholder="例如：sk-...">
-
             <label class="ios-label">城市名</label>
             <input type="text" class="ios-input" placeholder="例如：上海">
-
             <label class="ios-label">剧情城市名</label>
             <div style="font-size:11px; color:#8e8e93; margin-bottom:6px;">提示：不填写剧情城市名则默认真实城市名。</div>
             <input type="text" class="ios-input" placeholder="例如：xx市">
-
             <label class="ios-label">模型</label>
             <div style="display:flex; gap:8px; align-items:center;">
                 <input type="text" id="api-model-weather" class="ios-input" placeholder="手动输入或拉取" style="flex:1;">
                 <button class="ios-btn-white" style="width:auto; margin:0; padding:12px 16px;" onclick="fetchModels('api-base-url-weather', 'api-key-weather', 'api-model-weather')">拉取</button>
             </div>
-
             <button class="ios-btn-black">保存配置</button>
             <button class="ios-btn-white" onclick="alert('连接失败：详细原因 - 城市信息或密钥不完整')">连接测试</button>
         </div>
     </div>
 
-    <div class="list-header danger-zone-header" onclick="toggleSection('danger-section')">
+    <div class="list-header danger-zone-header" onclick="toggleSection('danger-section', this)">
         <span>危险区</span> 
-        <span style="color:#ff3b30; font-weight:400; font-size:14px;">展开/折叠</span>
+        <span class="toggle-arrow" style="color:#8e8e93;">›</span>
     </div>
     <div id="danger-section" class="collapsible-section" style="display:none;">
         <div class="ios-group" style="padding:16px; background:#fff0f0; border:1px solid #ffd6d6;">
