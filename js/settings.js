@@ -560,7 +560,6 @@ window.addEventListener('DOMContentLoaded', () => {
     const dockBar = document.getElementById('dockBar');
     if (!dockBar) return;
 
-    dockBar.innerHTML = '';
 
     const settingItem = document.createElement('div');
     settingItem.className = 'dock-item';
