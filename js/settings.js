@@ -545,7 +545,7 @@ function initSettings() {
     renderDeviceList();
 }
 
-// ===== 注册设置图标到 Dock =====
+// ===== 注册设置图标到 Dock（插入到最左侧第一位） =====
 window.addEventListener('DOMContentLoaded', () => {
     if (typeof registerModal === 'function') {
         registerModal('settingsModal', '设置', settingsHTML);
@@ -574,6 +574,7 @@ window.addEventListener('DOMContentLoaded', () => {
     };
 
     // 将设置图标插入到 Dock 最左侧第一位（延迟确保 Dock 已渲染）
-setTimeout(() => {
-    dockBar.insertBefore(settingItem, dockBar.firstChild);
-}, 100);
+    setTimeout(() => {
+        dockBar.insertBefore(settingItem, dockBar.firstChild);
+    }, 100);
+});
