@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>玉界</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="phone-screen" id="desktop">
+    <!-- 桌面分页容器 -->
+    <div class="desktop-pages" id="desktopPages" onscroll="updatePageIndicator()">
+        <!-- 第1页 -->
+        <div class="desktop-page" id="page1">
+            <div class="desktop-icons" id="appIcons"></div>
+        </div>
+        <!-- 第2页 -->
+        <div class="desktop-page" id="page2">
+            <div class="page2-shortcuts" id="page2Shortcuts"></div>
+        </div>
+    </div>
+
+    <!-- 翻页指示器 -->
+    <div class="page-indicator">
+        <div class="page-dot active" id="dot1"></div>
+        <div class="page-dot" id="dot2"></div>
+    </div>
+
+    <!-- Dock 栏 -->
+    <div class="dock-wrapper">
+        <div class="dock liquid-glass" id="dockBar"></div>
+    </div>
+
+    <!-- Modal 容器 -->
+    <div id="modalContainer"></div>
+</div>
+
+<!-- JS 模块加载 -->
+<script src="js/data.js"></script>
+<script src="js/config.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/beautify.js"></script>
+<script src="js/render.js"></script>
+<script src="js/modal.js"></script>
+<script src="js/chat_system.js"></script>
+
+</body>
+</html>
