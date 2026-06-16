@@ -573,6 +573,7 @@ window.addEventListener('DOMContentLoaded', () => {
         openModal('settingsModal');
     };
 
-    // 关键改动：插入到最前面，而不是 appendChild
+    // 将设置图标插入到 Dock 最左侧第一位（延迟确保 Dock 已渲染）
+setTimeout(() => {
     dockBar.insertBefore(settingItem, dockBar.firstChild);
-});
+}, 100);
