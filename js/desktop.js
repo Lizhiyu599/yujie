@@ -19,10 +19,8 @@ function saveIcons(icons) {
 }
 
 // ===== 供外部调用的注册函数 =====
-// 用法：addDesktopIcon({ id: 'chat', name: '聊天', icon: '', action: 'openChat' })
 function addDesktopIcon(item) {
     const icons = getIcons();
-    // 避免重复添加
     if (icons.find(i => i.id === item.id)) return;
     icons.push({
         id: item.id,
@@ -79,7 +77,7 @@ function onIconTouchStart(e) {
     touchStartY = e.touches[0].clientY;
     longPressTimer = setTimeout(() => {
         enterEditMode();
-    }, 500);
+    }, 400);
 }
 
 function onIconTouchEnd() {
@@ -90,7 +88,7 @@ function onIconTouchMove(e) {
     if (!longPressTimer) return;
     const dx = e.touches[0].clientX - touchStartX;
     const dy = e.touches[0].clientY - touchStartY;
-    if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+    if (Math.abs(dx) > 20 || Math.abs(dy) > 20) {
         clearTimeout(longPressTimer);
     }
 }
@@ -100,7 +98,7 @@ function onIconMouseDown(e) {
     touchStartY = e.clientY;
     longPressTimer = setTimeout(() => {
         enterEditMode();
-    }, 500);
+    }, 400);
 }
 
 function onIconMouseUp() {
@@ -170,7 +168,7 @@ function startBlankLongPress() {
     longPressTimer = setTimeout(() => {
         if (isEditing) return;
         showAddButton();
-    }, 500);
+    }, 400);
 }
 
 document.addEventListener('touchmove', () => {
