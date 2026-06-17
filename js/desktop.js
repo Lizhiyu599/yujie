@@ -364,9 +364,10 @@ function renderWidgets() {
                 </div>
             </div>
             <div class="widget-divider"></div>
-            <input type="text" class="widget-signature" value="${widget.signature}" placeholder="——  ..おやすみ ..——" 
-                   onchange="updateWidgetSignature('${widget.id}', this.value)" 
-                   onclick="event.stopPropagation();">
+            <span class="widget-signature" contenteditable="true" 
+      onblur="updateWidgetSignature('${widget.id}', this.innerText)" 
+      onclick="event.stopPropagation();"
+      onfocus="if(this.innerText==='——  ..おやすみ ..——'){this.innerText=''}">${widget.signature}</span>
             <div class="widget-delete-btn" onclick="event.stopPropagation(); confirmDeleteWidget('${widget.id}')">×</div>
         `;
 
