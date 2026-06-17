@@ -317,7 +317,7 @@ body, html {
     z-index: 5;
 }
 
-/* ===== 添加小组件按钮（毛玻璃正方形"+"，透壁纸颜色，22px模糊） ===== */
+/* ===== 添加小组件按钮 ===== */
 .add-widget-btn {
     position: absolute;
     top: 20px;
@@ -340,7 +340,7 @@ body, html {
     user-select: none;
 }
 
-/* ===== 半屏面板（毛玻璃，透壁纸颜色，22px模糊） ===== */
+/* ===== 半屏面板 ===== */
 .half-panel-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -403,7 +403,7 @@ body, html {
     padding: 30px;
 }
 
-/* ===== 桌面小组件卡片（2x4 时钟） ===== */
+/* ===== 桌面小组件卡片 ===== */
 .desktop-widget {
     position: relative;
     margin: 44px 16px 10px 16px;
@@ -701,4 +701,31 @@ body, html {
     font-weight: 600;
     margin-top: 10px;
     pointer-events: none;
-    }
+}
+
+/* ===== 顶部提示弹窗 Toast ===== */
+.global-toast {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 22px;
+    padding: 12px 24px;
+    font-size: 14px;
+    color: #3a3a3c;
+    font-weight: 500;
+    z-index: 500;
+    pointer-events: auto;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    user-select: none;
+}
+
+.global-toast.toast-hiding {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+}
