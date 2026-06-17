@@ -130,39 +130,42 @@ const beautifyHTML = `
             <div style="font-size:12px; color:#8e8e93; margin-bottom:8px;">自定义小组件</div>
             <div style="display:flex; gap:12px; margin-bottom:12px;">
                 <div style="position:relative; flex:1; overflow:visible;">
-                    <div class="beautify-box-2x2 custom-widget-box" id="custom-widget-2x2-0" 
-                         style="background-size:cover; background-position:center; background-repeat:no-repeat;"
-                         onclick="handleCustomWidgetClick('2x2_0', '2x2')">
+                    <label for="custom-widget-upload-2x2_0"
+                           class="beautify-box-2x2 custom-widget-box" id="custom-widget-2x2-0"
+                           style="display:flex; background-size:cover; background-position:center; background-repeat:no-repeat;"
+                           onclick="if(localStorage.getItem('beautify_custom_widget_2x2_0')){event.preventDefault();handleCustomWidgetClick('2x2_0','2x2');}">
                         <span class="custom-widget-placeholder">2x2</span>
-                    </div>
+                    </label>
                     <div class="custom-widget-delete-btn" id="custom-del-2x2-0" style="display:none;"
                          onclick="event.stopPropagation(); confirmDeleteCustomWidget('2x2_0')">×</div>
+                    <input type="file" id="custom-widget-upload-2x2_0" accept="image/*" style="display:none;"
+                           onchange="handleCustomWidgetImage(event, '2x2_0', '2x2')">
                 </div>
-                <input type="file" id="custom-widget-upload-2x2_0" accept="image/*" style="display:none;" 
-                       onchange="handleCustomWidgetImage(event, '2x2_0', '2x2')">
                 <div style="position:relative; flex:1; overflow:visible;">
-                    <div class="beautify-box-2x2 custom-widget-box" id="custom-widget-2x2-1" 
-                         style="background-size:cover; background-position:center; background-repeat:no-repeat;"
-                         onclick="handleCustomWidgetClick('2x2_1', '2x2')">
+                    <label for="custom-widget-upload-2x2_1"
+                           class="beautify-box-2x2 custom-widget-box" id="custom-widget-2x2-1"
+                           style="display:flex; background-size:cover; background-position:center; background-repeat:no-repeat;"
+                           onclick="if(localStorage.getItem('beautify_custom_widget_2x2_1')){event.preventDefault();handleCustomWidgetClick('2x2_1','2x2');}">
                         <span class="custom-widget-placeholder">2x2</span>
-                    </div>
+                    </label>
                     <div class="custom-widget-delete-btn" id="custom-del-2x2-1" style="display:none;"
                          onclick="event.stopPropagation(); confirmDeleteCustomWidget('2x2_1')">×</div>
+                    <input type="file" id="custom-widget-upload-2x2_1" accept="image/*" style="display:none;"
+                           onchange="handleCustomWidgetImage(event, '2x2_1', '2x2')">
                 </div>
-                <input type="file" id="custom-widget-upload-2x2_1" accept="image/*" style="display:none;" 
-                       onchange="handleCustomWidgetImage(event, '2x2_1', '2x2')">
             </div>
             <div style="position:relative; overflow:visible;">
-                <div class="beautify-box-2x4 custom-widget-box" id="custom-widget-2x4-0" 
-                     style="background-size:cover; background-position:center; background-repeat:no-repeat;"
-                     onclick="handleCustomWidgetClick('2x4_0', '2x4')">
+                <label for="custom-widget-upload-2x4_0"
+                       class="beautify-box-2x4 custom-widget-box" id="custom-widget-2x4-0"
+                       style="display:flex; background-size:cover; background-position:center; background-repeat:no-repeat;"
+                       onclick="if(localStorage.getItem('beautify_custom_widget_2x4_0')){event.preventDefault();handleCustomWidgetClick('2x4_0','2x4');}">
                     <span class="custom-widget-placeholder">2x4</span>
-                </div>
+                </label>
                 <div class="custom-widget-delete-btn" id="custom-del-2x4-0" style="display:none;"
                      onclick="event.stopPropagation(); confirmDeleteCustomWidget('2x4_0')">×</div>
+                <input type="file" id="custom-widget-upload-2x4_0" accept="image/*" style="display:none;"
+                       onchange="handleCustomWidgetImage(event, '2x4_0', '2x4')">
             </div>
-            <input type="file" id="custom-widget-upload-2x4_0" accept="image/*" style="display:none;" 
-                   onchange="handleCustomWidgetImage(event, '2x4_0', '2x4')">
         </div>
     </div>
 
@@ -386,27 +389,24 @@ function loadCustomWidgetPreviews() {
 }
 
 // ===== 确认添加自定义小组件 =====
+window._pendingCustomKey = null;
+window._pendingCustomSize = null;
+
 function confirmAddCustomWidget(key, size) {
+    // 防止重复叠加
+    var old = document.getElementById('confirmAddCustomWidgetOverlay');
+    if (old) old.remove();
+
+    window._pendingCustomKey = key;
+    window._pendingCustomSize = size;
+
     var overlay = document.createElement('div');
     overlay.className = 'confirm-overlay';
     overlay.id = 'confirmAddCustomWidgetOverlay';
-    overlay.innerHTML = '<div class="confirm-dialog"><p>添加当前小组件？</p><div class="confirm-buttons"><div class="confirm-btn-cancel" id="cancelAddCustomWidgetBtn">取消</div><div class="confirm-btn-delete" id="confirmAddCustomWidgetBtn">确定</div></div></div>';
+    overlay.style.zIndex = '9999';
+    overlay.innerHTML = '<div class="confirm-dialog"><p>添加当前小组件？</p><div class="confirm-buttons"><div class="confirm-btn-cancel" onclick="cancelAddCustomWidget()">取消</div><div class="confirm-btn-delete" onclick="executeAddCustomWidget(window._pendingCustomKey, window._pendingCustomSize)">确定</div></div></div>';
     document.body.appendChild(overlay);
-    
-    var cancelBtn = document.getElementById('cancelAddCustomWidgetBtn');
-    var confirmBtn = document.getElementById('confirmAddCustomWidgetBtn');
-
-    function doCancel(e) { if(e) e.preventDefault(); cancelAddCustomWidget(); }
-    function doConfirm(e) { if(e) e.preventDefault(); executeAddCustomWidget(key, size); }
-
-    cancelBtn.addEventListener('click', doCancel);
-    cancelBtn.addEventListener('touchend', doCancel);
-    confirmBtn.addEventListener('click', doConfirm);
-    confirmBtn.addEventListener('touchend', doConfirm);
-
-    overlay.addEventListener('click', function(e) {
-        if (e.target === overlay) cancelAddCustomWidget();
-    });
+    overlay.onclick = function(e) { if (e.target === overlay) cancelAddCustomWidget(); };
 }
 
 function cancelAddCustomWidget() {
