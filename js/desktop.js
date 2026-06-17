@@ -366,6 +366,11 @@ function renderWidgets() {
         if (widget.type === 'custom') {
             el.style.padding = '0';
             el.style.overflow = 'visible';
+            el.style.background = 'transparent';
+            el.style.backdropFilter = 'none';
+            el.style.webkitBackdropFilter = 'none';
+            el.style.border = 'none';
+            el.style.boxShadow = 'none';
             el.style.minHeight = widget.size === '2x2' ? '120px' : '160px';
             el.innerHTML = `
                 <div style="width:100%; height:100%; min-height:${widget.size === '2x2' ? '120px' : '160px'}; background-image:url(${widget.image}); background-size:cover; background-position:center; border-radius:18px;"></div>
