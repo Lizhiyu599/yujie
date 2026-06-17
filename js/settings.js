@@ -750,7 +750,6 @@ const settingsHTML = `
                 <input type="text" id="img-model" class="ios-input" placeholder="手动输入或拉取" style="flex:1;">
                 <button class="ios-btn-white" style="width:auto; margin:0; padding:12px 16px;" onclick="fetchModels('img-base-url', 'img-api-key', 'img-model')">拉取</button>
             </div>
-            
             <button class="ios-btn-black" onclick="saveImageConfig()">保存配置</button>
             <button class="ios-btn-white" onclick="testImage()">连接测试</button>
         </div>
@@ -775,8 +774,8 @@ const settingsHTML = `
             <div style="display:flex; gap:8px; align-items:center;">
                 <input type="text" id="weather-model" class="ios-input" placeholder="手动输入或拉取" style="flex:1;">
                 <button class="ios-btn-white" style="width:auto; margin:0; padding:12px 16px;" onclick="fetchModels('weather-base-url', 'weather-api-key', 'weather-model')">拉取</button>
-
-                        <button class="ios-btn-black" onclick="saveWeatherConfig()">保存配置</button>
+            </div>
+            <button class="ios-btn-black" onclick="saveWeatherConfig()">保存配置</button>
             <button class="ios-btn-white" onclick="testWeather()">连接测试</button>
         </div>
     </div>
