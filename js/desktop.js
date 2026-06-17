@@ -364,16 +364,14 @@ function renderWidgets() {
         el.setAttribute('data-widget-page', widget.page);
 
         if (widget.type === 'custom') {
-            // 自定义图片小组件
             el.style.padding = '0';
-            el.style.overflow = 'hidden';
+            el.style.overflow = 'visible';
             el.style.minHeight = widget.size === '2x2' ? '120px' : '160px';
             el.innerHTML = `
                 <div style="width:100%; height:100%; min-height:${widget.size === '2x2' ? '120px' : '160px'}; background-image:url(${widget.image}); background-size:cover; background-position:center; border-radius:18px;"></div>
                 <div class="widget-delete-btn" onclick="event.stopPropagation(); confirmDeleteWidget('${widget.id}')">×</div>
             `;
         } else {
-            // 时钟小组件
             const avatarSrc = widget.avatar || '';
             const avatarContent = avatarSrc
                 ? `<div class="widget-avatar" style="background-image:url(${avatarSrc});" onclick="event.stopPropagation(); document.getElementById('widget-avatar-upload').click()"></div>`
