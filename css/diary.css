@@ -2,7 +2,7 @@
 .diary-app {
     width: 100%;
     height: 100%;
-    background: #1a1410;
+    background: #0d0d0d;
     display: flex;
     flex-direction: column;
     font-family: "STKaiti", "KaiTi", "楷体", "Noto Serif SC", serif;
@@ -16,16 +16,16 @@
     justify-content: space-between;
     align-items: center;
     padding: 48px 16px 12px;
-    background: linear-gradient(to bottom, rgba(26, 20, 16, 0.95), rgba(26, 20, 16, 0.8));
+    background: linear-gradient(to bottom, rgba(13, 13, 13, 0.98), rgba(13, 13, 13, 0.85));
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     z-index: 50;
     flex-shrink: 0;
-    border-bottom: 1px solid rgba(180, 150, 120, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .diary-back-btn {
-    color: #c4a882;
+    color: #888;
     font-size: 24px;
     cursor: pointer;
     width: 36px;
@@ -37,15 +37,15 @@
     transition: 0.2s;
 }
 .diary-back-btn:active {
-    color: #f5deb3;
+    color: #fff;
     transform: scale(0.9);
 }
 
 .diary-top-title {
     font-size: 16px;
-    color: #c4a882;
+    color: #aaa;
     font-weight: 500;
-    letter-spacing: 2px;
+    letter-spacing: 4px;
 }
 
 .diary-top-actions {
@@ -57,47 +57,65 @@
 .diary-btn-refresh {
     width: 32px;
     height: 32px;
-    border: 1.5px solid #8b7355;
+    border: 1.5px solid #555;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #c4a882;
+    color: #999;
     font-size: 18px;
     cursor: pointer;
     transition: 0.3s;
 }
 .diary-btn-refresh:active {
-    border-color: #f5deb3;
-    color: #f5deb3;
+    border-color: #fff;
+    color: #fff;
     transform: rotate(180deg);
 }
 
 .diary-btn-settings {
     width: 32px;
     height: 32px;
-    border: 1px solid #8b7355;
+    border: 1px solid #555;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #c4a882;
+    color: #999;
     font-size: 18px;
     cursor: pointer;
     transition: 0.2s;
 }
 .diary-btn-settings:active {
-    background: rgba(196, 168, 130, 0.15);
+    background: rgba(255, 255, 255, 0.08);
 }
 
-/* ===== 日记本书架背景 ===== */
+.diary-btn-calendar {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #555;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.diary-btn-calendar:active {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+/* ===== 背景 ===== */
 .diary-shelf {
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
-    background: radial-gradient(ellipse at center bottom, #2a1f18 0%, #1a1410 70%);
+    background: radial-gradient(ellipse at center, #1a1a1a 0%, #0d0d0d 70%);
     padding: 20px;
 }
 
@@ -110,17 +128,41 @@
     perspective: 1800px;
 }
 
-/* ===== 英伦复古封面 ===== */
+/* ===== 活页金属环 ===== */
+.diary-rings {
+    position: absolute;
+    left: 8px;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 200;
+    pointer-events: none;
+}
+
+.diary-ring {
+    width: 16px;
+    height: 28px;
+    border: 2.5px solid #777;
+    border-radius: 10px;
+    background: transparent;
+    box-shadow: inset 0 0 6px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.4);
+}
+
+/* ===== 黑白封面 ===== */
 .diary-cover {
     position: absolute;
     width: 100%;
     height: 100%;
-    background: linear-gradient(160deg, #3d2b1f 0%, #5c3d2e 30%, #4a2f20 60%, #3d2b1f 100%);
+    background: linear-gradient(160deg, #1a1a1a 0%, #111 30%, #0f0f0f 60%, #1a1a1a 100%);
     border-radius: 6px 18px 18px 6px;
     box-shadow: 
-        8px 8px 24px rgba(0,0,0,0.5),
-        inset 3px 0 12px rgba(255,255,255,0.04),
-        inset -1px 0 4px rgba(0,0,0,0.3);
+        8px 8px 30px rgba(0,0,0,0.7),
+        inset 3px 0 8px rgba(255,255,255,0.02),
+        inset -2px 0 6px rgba(0,0,0,0.5);
     cursor: pointer;
     z-index: 100;
     transform-origin: left center;
@@ -136,74 +178,79 @@
 .diary-cover::before {
     content: '';
     position: absolute;
-    top: 18px;
-    left: 18px;
-    right: 18px;
-    bottom: 18px;
-    border: 1.5px solid rgba(196, 168, 130, 0.25);
+    top: 24px;
+    left: 24px;
+    right: 24px;
+    bottom: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 2px 12px 12px 2px;
     pointer-events: none;
 }
 
-/* 封面压花装饰 */
+/* 封面活页孔 */
 .diary-cover::after {
     content: '';
     position: absolute;
+    left: 12px;
     top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 60px;
-    height: 60px;
-    border: 1px solid rgba(196, 168, 130, 0.15);
-    border-radius: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 70%;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 50px,
+        rgba(255,255,255,0.05) 50px,
+        rgba(255,255,255,0.05) 68px
+    );
+    border-radius: 4px;
     pointer-events: none;
 }
 
 .diary-cover.open {
     transform: rotateY(-165deg);
     box-shadow: 
-        -12px 8px 30px rgba(0,0,0,0.6),
-        inset -6px 0 15px rgba(0,0,0,0.3);
+        -15px 10px 35px rgba(0,0,0,0.8),
+        inset -8px 0 20px rgba(0,0,0,0.4);
 }
 
 .cover-ornament {
-    font-size: 14px;
-    color: rgba(196, 168, 130, 0.5);
-    letter-spacing: 4px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.2);
+    letter-spacing: 6px;
     margin-bottom: 8px;
 }
 
 .cover-title {
-    font-size: 30px;
-    color: #c4a882;
-    letter-spacing: 6px;
-    font-weight: 400;
+    font-size: 32px;
+    color: #ddd;
+    letter-spacing: 8px;
+    font-weight: 300;
     margin: 12px 0;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
 }
 
 .cover-subtitle {
-    font-size: 12px;
-    color: rgba(196, 168, 130, 0.4);
-    letter-spacing: 3px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.15);
+    letter-spacing: 4px;
 }
 
-/* ===== 牛皮纸内页 ===== */
+/* ===== 黑白内页 ===== */
 .diary-page {
     position: absolute;
     width: 100%;
     height: 100%;
     background: linear-gradient(to right, 
-        #f4e4c1 0%, 
-        #f5deb3 1%, 
-        #faf0e6 3%, 
-        #faf0e6 97%, 
-        #f5deb3 99%, 
-        #f4e4c1 100%);
+        #1c1c1c 0%, 
+        #222 1%, 
+        #1e1e1e 3%, 
+        #1e1e1e 97%, 
+        #222 99%, 
+        #1c1c1c 100%);
     border-radius: 4px 14px 14px 4px;
     box-shadow: 
-        4px 4px 16px rgba(0,0,0,0.2),
-        inset 0 0 40px rgba(139, 105, 20, 0.04);
+        4px 4px 20px rgba(0,0,0,0.5),
+        inset 0 0 50px rgba(255,255,255,0.01);
     transform-origin: left center;
     transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94), z-index 0s 0.35s;
     padding: 24px 18px;
@@ -212,17 +259,7 @@
     flex-direction: column;
 }
 
-/* 纸张纤维纹理 */
-.diary-page::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-image: url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-    pointer-events: none;
-    opacity: 0.4;
-}
-
-/* 横线 */
+/* 内页横线 */
 .diary-page::after {
     content: '';
     position: absolute;
@@ -231,30 +268,52 @@
         0deg,
         transparent,
         transparent 31px,
-        rgba(139, 105, 20, 0.12) 31px,
-        rgba(139, 105, 20, 0.12) 32px
+        rgba(255, 255, 255, 0.04) 31px,
+        rgba(255, 255, 255, 0.04) 32px
     );
     pointer-events: none;
     padding-top: 24px;
 }
 
-/* 装订线 */
 .diary-page .binding-edge {
     position: absolute;
     left: 0;
     top: 0;
     bottom: 0;
-    width: 12px;
-    background: linear-gradient(to right, rgba(0,0,0,0.06), transparent);
+    width: 14px;
+    background: linear-gradient(to right, rgba(0,0,0,0.3), transparent);
     pointer-events: none;
+}
+
+/* 内页活页孔 */
+.diary-page .page-holes {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 65%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.diary-page .page-hole {
+    width: 6px;
+    height: 18px;
+    border: 1.5px solid #444;
+    border-radius: 3px;
+    background: #0d0d0d;
 }
 
 /* 翻过的页 */
 .diary-page.flipped {
     transform: rotateY(-170deg);
     box-shadow: 
-        -10px 5px 25px rgba(0,0,0,0.45),
-        inset -4px 0 12px rgba(0,0,0,0.12);
+        -12px 6px 30px rgba(0,0,0,0.6),
+        inset -5px 0 15px rgba(0,0,0,0.2);
     z-index: 0;
     transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94), z-index 0s;
 }
@@ -276,12 +335,12 @@
 .page-number {
     position: absolute;
     bottom: 16px;
-    font-size: 11px;
-    color: #b8a080;
+    font-size: 10px;
+    color: #555;
     pointer-events: none;
 }
-.page-number.left-num { left: 16px; }
-.page-number.right-num { right: 16px; }
+.page-number.left-num { left: 24px; }
+.page-number.right-num { right: 24px; }
 
 /* ===== 日记内容区 ===== */
 .diary-page-content {
@@ -294,22 +353,22 @@
 }
 .diary-page-content::-webkit-scrollbar { width: 3px; }
 .diary-page-content::-webkit-scrollbar-thumb {
-    background: #d4c5a0;
+    background: #333;
     border-radius: 2px;
 }
 
 .diary-entry-date {
     text-align: right;
-    font-size: 13px;
-    color: #8b7355;
-    margin-bottom: 16px;
-    font-style: italic;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 20px;
+    letter-spacing: 1px;
 }
 
 .diary-entry-text {
     font-size: 17px;
     line-height: 2;
-    color: #3c2415;
+    color: #ccc;
     text-indent: 2em;
     word-break: break-word;
     white-space: pre-wrap;
@@ -320,9 +379,9 @@
     align-items: center;
     justify-content: center;
     height: 100%;
-    color: #c4b5a0;
-    font-size: 14px;
-    letter-spacing: 2px;
+    color: #444;
+    font-size: 13px;
+    letter-spacing: 3px;
 }
 
 /* ===== 底部工具栏 ===== */
@@ -331,40 +390,149 @@
     justify-content: space-around;
     align-items: center;
     padding: 14px 20px 28px;
-    background: linear-gradient(to top, rgba(26, 20, 16, 0.95), rgba(26, 20, 16, 0.7));
+    background: linear-gradient(to top, rgba(13, 13, 13, 0.98), rgba(13, 13, 13, 0.75));
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border-top: 1px solid rgba(180, 150, 120, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
     flex-shrink: 0;
     z-index: 50;
 }
 
 .diary-nav-btn {
     background: transparent;
-    border: 1px solid rgba(196, 168, 130, 0.3);
-    color: #c4a882;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #999;
     padding: 10px 22px;
     border-radius: 20px;
     font-size: 14px;
     font-family: inherit;
     cursor: pointer;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
     transition: 0.3s;
 }
 .diary-nav-btn:active {
-    background: rgba(196, 168, 130, 0.1);
-    border-color: #c4a882;
+    background: rgba(255, 255, 255, 0.04);
+    border-color: #fff;
+    color: #fff;
 }
 .diary-nav-btn:disabled {
-    opacity: 0.3;
+    opacity: 0.2;
     pointer-events: none;
+}
+
+/* ===== 日历视图 ===== */
+.diary-calendar-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 350;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.diary-calendar-panel {
+    width: 88%;
+    max-width: 360px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 20px;
+    padding: 24px 20px 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+}
+
+.diary-calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.diary-calendar-header span {
+    color: #aaa;
+    font-size: 16px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    padding: 0 8px;
+}
+
+.diary-calendar-month {
+    font-size: 18px;
+    color: #fff;
+    font-weight: 300;
+    letter-spacing: 3px;
+}
+
+.diary-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    text-align: center;
+}
+
+.diary-calendar-day-name {
+    font-size: 11px;
+    color: #555;
+    padding: 6px 0;
+}
+
+.diary-calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #888;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: 0.2s;
+    position: relative;
+}
+
+.diary-calendar-day.has-diary::after {
+    content: '';
+    position: absolute;
+    bottom: 3px;
+    width: 4px;
+    height: 4px;
+    background: #fff;
+    border-radius: 50%;
+}
+
+.diary-calendar-day:hover {
+    background: rgba(255,255,255,0.06);
+}
+
+.diary-calendar-day.today {
+    color: #fff;
+    font-weight: 600;
+    border: 1px solid #555;
+}
+
+.diary-calendar-day.selected {
+    background: #fff;
+    color: #000;
+    font-weight: 600;
+}
+
+.diary-calendar-close {
+    text-align: center;
+    margin-top: 18px;
+    color: #666;
+    font-size: 13px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: 0.2s;
+}
+.diary-calendar-close:active {
+    color: #fff;
 }
 
 /* ===== 写日记弹窗 ===== */
 .diary-modal-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.7);
+    background: rgba(0,0,0,0.85);
     z-index: 300;
     display: flex;
     align-items: center;
@@ -378,29 +546,29 @@
 }
 
 .diary-modal {
-    background: #faf0e6;
+    background: #1a1a1a;
     border-radius: 16px;
     padding: 24px 20px 20px;
     width: 88%;
     max-width: 400px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-    border: 1px solid #d4c5a0;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    border: 1px solid #333;
 }
 
 .diary-modal h2 {
     text-align: center;
-    color: #3c2415;
+    color: #ccc;
     margin-bottom: 16px;
     font-size: 20px;
-    font-weight: 400;
-    letter-spacing: 2px;
+    font-weight: 300;
+    letter-spacing: 4px;
 }
 
 .diary-modal textarea {
     width: 100%;
     height: 180px;
-    background: #fffef7;
-    border: 1px solid #d4c5a0;
+    background: #111;
+    border: 1px solid #333;
     border-radius: 8px;
     padding: 14px;
     font-size: 16px;
@@ -408,10 +576,10 @@
     line-height: 1.8;
     resize: none;
     outline: none;
-    color: #3c2415;
+    color: #ccc;
 }
 .diary-modal textarea:focus {
-    border-color: #8b6914;
+    border-color: #555;
 }
 
 .diary-modal-buttons {
@@ -427,26 +595,27 @@
     font-family: inherit;
     cursor: pointer;
     border: none;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
     transition: 0.2s;
 }
 .diary-modal-buttons button:active {
     transform: scale(0.96);
 }
 .btn-diary-save {
-    background: #5c3d2e;
-    color: #f5deb3;
+    background: #fff;
+    color: #000;
 }
 .btn-diary-cancel {
-    background: #e8dcc8;
-    color: #5c3d2e;
+    background: transparent;
+    color: #888;
+    border: 1px solid #333;
 }
 
-/* ===== 设置面板（日记专用） ===== */
+/* ===== 设置面板 ===== */
 .diary-settings-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.6);
+    background: rgba(0,0,0,0.8);
     z-index: 250;
     display: flex;
     align-items: flex-end;
@@ -454,11 +623,12 @@
 .diary-settings-panel {
     width: 100%;
     max-height: 75%;
-    background: #faf0e6;
+    background: #1a1a1a;
     border-radius: 20px 20px 0 0;
     padding: 8px 16px 30px;
     overflow-y: auto;
     animation: slideUp 0.3s ease;
+    border-top: 1px solid #333;
 }
 
 @keyframes slideUp {
@@ -469,18 +639,18 @@
 .diary-settings-handle {
     width: 36px;
     height: 4px;
-    background: #d4c5a0;
+    background: #444;
     border-radius: 2px;
     margin: 8px auto 16px;
 }
 
 .diary-settings-title {
     font-size: 16px;
-    font-weight: 500;
-    color: #3c2415;
+    font-weight: 300;
+    color: #ccc;
     text-align: center;
     margin-bottom: 16px;
-    letter-spacing: 2px;
+    letter-spacing: 4px;
 }
 
 /* 自动日记开关 */
@@ -489,19 +659,18 @@
     justify-content: space-between;
     align-items: center;
     padding: 14px 16px;
-    background: #fffef7;
+    background: #111;
     border-radius: 12px;
     margin-bottom: 8px;
-    border: 1px solid #e8dcc8;
+    border: 1px solid #2a2a2a;
 }
-
 .diary-auto-row span {
     font-size: 15px;
-    color: #3c2415;
+    color: #aaa;
 }
 .diary-auto-hint {
     font-size: 11px;
-    color: #b8a080;
+    color: #555;
     margin: 4px 0 16px 8px;
     letter-spacing: 1px;
 }
@@ -512,16 +681,16 @@
     justify-content: space-between;
     align-items: center;
     padding: 14px 16px;
-    background: #fff;
-    border: 1px solid #e8dcc8;
+    background: #111;
+    border: 1px solid #2a2a2a;
     border-radius: 12px;
     cursor: pointer;
     margin-bottom: 4px;
     font-size: 15px;
-    color: #3c2415;
+    color: #aaa;
 }
 .diary-font-header .arrow {
-    color: #b8a080;
+    color: #555;
     font-size: 12px;
     transition: 0.3s;
 }
@@ -541,14 +710,14 @@
 .diary-font-preview {
     width: 100%;
     height: 100px;
-    background: #fffef7;
-    border: 1px solid #e8dcc8;
+    background: #111;
+    border: 1px solid #2a2a2a;
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 18px;
-    color: #3c2415;
+    color: #ccc;
     margin-bottom: 12px;
 }
 
@@ -559,14 +728,14 @@
     align-items: center;
     margin-bottom: 4px;
     font-size: 13px;
-    color: #8b7355;
+    color: #666;
 }
 .diary-font-slider {
     -webkit-appearance: none;
     width: 100%;
     height: 6px;
-    background: #fff;
-    border: 1px solid #d4c5a0;
+    background: #111;
+    border: 1px solid #333;
     border-radius: 3px;
     outline: none;
     margin: 8px 0 12px;
@@ -575,10 +744,9 @@
     -webkit-appearance: none;
     width: 20px;
     height: 20px;
-    background: #3c2415;
+    background: #fff;
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 /* 字体颜色 */
@@ -598,14 +766,14 @@
     transition: 0.2s;
 }
 .diary-color-dot:active, .diary-color-dot.active {
-    border-color: #3c2415;
+    border-color: #fff;
     transform: scale(1.15);
 }
 .diary-color-picker {
     width: 28px;
     height: 28px;
     border-radius: 14px;
-    border: 1px solid #d4c5a0;
+    border: 1px solid #444;
     cursor: pointer;
     background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);
 }
@@ -614,13 +782,13 @@
 .diary-upload-box {
     width: 100%;
     height: 70px;
-    background: #fffef7;
-    border: 1.5px dashed #d4c5a0;
+    background: #111;
+    border: 1.5px dashed #333;
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #b8a080;
+    color: #555;
     font-size: 13px;
     cursor: pointer;
     margin-bottom: 10px;
@@ -628,40 +796,40 @@
     letter-spacing: 1px;
 }
 .diary-upload-box:active {
-    border-color: #8b6914;
-    background: #fffdf5;
+    border-color: #666;
+    background: #181818;
 }
 
 .diary-url-input {
     width: 100%;
-    background: #fffef7;
-    border: 1px solid #d4c5a0;
+    background: #111;
+    border: 1px solid #333;
     border-radius: 8px;
     padding: 10px 12px;
     font-size: 13px;
     font-family: inherit;
     outline: none;
     margin-bottom: 10px;
-    color: #3c2415;
+    color: #aaa;
 }
 .diary-url-input:focus {
-    border-color: #8b6914;
+    border-color: #555;
 }
 
 .diary-btn-save-font {
     width: 100%;
-    background: #3c2415;
-    color: #f5deb3;
+    background: #fff;
+    color: #000;
     border: none;
     border-radius: 10px;
     padding: 14px;
     font-size: 15px;
     font-family: inherit;
     cursor: pointer;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
     transition: 0.2s;
 }
 .diary-btn-save-font:active {
-    background: #5c3d2e;
+    background: #ccc;
     transform: scale(0.98);
-  }
+}
