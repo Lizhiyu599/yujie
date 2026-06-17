@@ -1,6 +1,6 @@
 /**
  * 玉界 - 美化软件
- * 包含：美化面板模板、壁纸/图标/字体/小组件/CSS、导出导入、清空美化、Dock 图标注册
+ * 包含：美化面板模板、壁纸/图标/字体/小组件/CSS、导出导入、清空美化、顶部状态栏时钟、Dock 图标注册
  * 配套样式：css/beautify.css
  */
 
@@ -323,6 +323,7 @@ function toggleTopInfo() {
     const options = document.getElementById('top-info-options');
     if (options) options.style.display = isChecked ? 'block' : 'none';
     localStorage.setItem('beautify_top_info', isChecked);
+    applyTopBarVisibility();
 }
 
 // ===== 自定义 CSS =====
@@ -428,6 +429,42 @@ function handleClearBeautify() {
     }
 }
 
+// ===== 顶部状态栏时钟 =====
+let topBarClockInterval = null;
+
+function updateTopBarClock() {
+    const el = document.getElementById('topStatusBar');
+    if (!el) return;
+    const now = new Date();
+    let h = now.getHours();
+    const m = now.getMinutes().toString().padStart(2, '0');
+    const is12 = localStorage.getItem('beautify_12hr') === 'true';
+    if (is12) {
+        h = h % 12 || 12;
+    }
+    el.textContent = h.toString().padStart(2, '0') + ':' + m;
+}
+
+function startTopBarClock() {
+    if (topBarClockInterval) clearInterval(topBarClockInterval);
+    updateTopBarClock();
+    topBarClockInterval = setInterval(updateTopBarClock, 1000);
+}
+
+function applyTopBarVisibility() {
+    const el = document.getElementById('topStatusBar');
+    const visible = localStorage.getItem('beautify_top_info');
+    if (el) {
+        el.style.display = (visible === 'false') ? 'none' : 'block';
+    }
+}
+
+function updateClockDisplay() {
+    const is12 = document.getElementById('sw-12hr').checked;
+    localStorage.setItem('beautify_12hr', is12);
+    updateTopBarClock();
+}
+
 // ===== 初始化美化面板 =====
 function initBeautify() {
     renderBeautifyIcons();
@@ -444,6 +481,10 @@ window.addEventListener('DOMContentLoaded', () => {
     if (typeof renderAllModals === 'function') {
         renderAllModals();
     }
+
+    // 启动状态栏时钟
+    startTopBarClock();
+    applyTopBarVisibility();
 
     // 加载已保存的壁纸
     loadSavedWallpaper();
