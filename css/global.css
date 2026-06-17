@@ -85,6 +85,7 @@ body, html {
     flex-direction: column;
     align-items: center;
     cursor: pointer;
+    position: relative;
 }
 
 .icon-img {
@@ -170,7 +171,7 @@ body, html {
     padding: 0 20px;
     gap: 16px;
     border-radius: 32px;
- }   
+}
 
 .dock-item {
     display: flex;
@@ -183,13 +184,30 @@ body, html {
 }
 
 .dock-icon {
-    font-size: 38px;
-    margin-bottom: 0;
+    font-size: 22px;
+    margin-bottom: 3px;
 }
 
-/* Dock 图标不显示文字标签 */
-.dock-item > div:not(.dock-icon) {
-    display: none;
+.dock-icon-img {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    color: #1d1d1f;
+}
+
+.dock-label {
+    font-size: 10px;
+    color: #3a3a3c;
+    margin-top: 4px;
 }
 
 /* ===== 翻页指示器 ===== */
@@ -268,23 +286,6 @@ body, html {
     overflow-y: auto;
     padding: 0;
     -webkit-overflow-scrolling: touch;
-}
-
-/* ===== 编辑模式（抖动+删除） ===== */
-(255, 255, 255, 0.68);
-    backdrop-filter: blur(28px);
-    -webkit-backdrop-filter: blur(28px);
-    border: 1px solid rgba(255, 255, 255, 0.85);
-    border-radius: 22px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 28px;
-    color: #4a4a4f;
-    cursor: pointer;
-    z-index: 100;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    user-select: none;
 }
 
 /* ===== 编辑模式（抖动+删除） ===== */
