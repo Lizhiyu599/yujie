@@ -263,7 +263,6 @@ function handleWallpaperPreview(e) {
                 preview.style.backgroundImage = `url(${ev.target.result})`;
                 preview.innerText = '';
             }
-            // 显示删除按钮
             const delBtn = document.getElementById('wallpaperDeleteBtn');
             if (delBtn) delBtn.style.display = 'flex';
         };
@@ -350,15 +349,16 @@ function handleCustomWidgetImage(e, index, size) {
         reader.onload = ev => {
             customWidgetImages[key] = ev.target.result;
             localStorage.setItem('beautify_custom_widget_' + key, ev.target.result);
-            // 更新预览
             const boxId = size === '2x4' ? 'custom-widget-2x4-0' : 'custom-widget-2x2-' + index;
             const box = document.getElementById(boxId);
             if (box) {
                 box.style.backgroundImage = `url(${ev.target.result})`;
+                box.style.backgroundSize = 'cover';
+                box.style.backgroundPosition = 'center';
                 const placeholder = box.querySelector('.custom-widget-placeholder');
                 if (placeholder) placeholder.style.display = 'none';
-                // 改成点击触发添加确认
                 box.onclick = () => confirmAddCustomWidget(key, size);
+                showToast('图片已就绪，点击框可添加到桌面');
             }
         };
         reader.readAsDataURL(e.target.files[0]);
@@ -375,6 +375,8 @@ function loadCustomWidgetPreviews() {
             const box = document.getElementById(boxId);
             if (box) {
                 box.style.backgroundImage = `url(${customWidgetImages[key]})`;
+                box.style.backgroundSize = 'cover';
+                box.style.backgroundPosition = 'center';
                 const placeholder = box.querySelector('.custom-widget-placeholder');
                 if (placeholder) placeholder.style.display = 'none';
                 box.onclick = () => confirmAddCustomWidget(key, size);
@@ -408,7 +410,6 @@ function executeAddCustomWidget(key, size) {
     const imageSrc = customWidgetImages[key];
     if (!imageSrc) return;
 
-    // 存到桌面小组件数据
     const widgets = JSON.parse(localStorage.getItem('desktop_widgets') || '[]');
     widgets.push({
         id: 'widget-custom-' + Date.now(),
@@ -422,6 +423,11 @@ function executeAddCustomWidget(key, size) {
     const overlay = document.getElementById('confirmAddCustomWidgetOverlay');
     if (overlay) overlay.remove();
     showToast('已添加');
+
+    // 刷新桌面小组件
+    if (typeof renderWidgets === 'function') {
+        renderWidgets();
+    }
 }
 
 // ===== 顶部提示弹窗 =====
@@ -430,7 +436,6 @@ let toastStartX = 0;
 let toastStartY = 0;
 
 function showToast(message) {
-    // 移除旧弹窗
     const old = document.getElementById('globalToast');
     if (old) old.remove();
     if (toastTimer) clearTimeout(toastTimer);
@@ -441,7 +446,6 @@ function showToast(message) {
     toast.textContent = message;
     document.body.appendChild(toast);
 
-    // 滑动手势
     toast.addEventListener('touchstart', (e) => {
         toastStartX = e.touches[0].clientX;
         toastStartY = e.touches[0].clientY;
@@ -454,7 +458,6 @@ function showToast(message) {
         }
     });
 
-    // 3秒后自动消失
     toastTimer = setTimeout(() => dismissToast(toast), 3000);
 }
 
