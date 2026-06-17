@@ -120,6 +120,42 @@ const CORE_RULES = [
 时间应自然流逝，事件应有因果关联。`
     },
     {
+        name: '语气风格类',
+        content: `【语气风格类】
+1. 以随意的口吻回答，像朋友/恋人间的聊天，避免过于正式或教科书式的语言。
+2. 加入自然的口语停顿感，避免长句堆砌。
+3. 带点轻松调侃的语气，像朋友聊天一样。
+4. 用温和委婉的表述，别太生硬直接。
+5. 加入轻微的情绪倾向（比如无奈、惊喜、吐槽），但不夸张。
+6. 采用短句为主，偶尔穿插长句，符合日常说话节奏。
+7. 模仿普通人的表达逻辑，不用层层递进的严谨结构。
+8. 使用更多口语化表达，可以适当使用网络流行语和日常用语。
+9. 答案不必详尽无遗，就像人类不可能知道所有信息一样。
+10. 结尾加1-2个口语化语气词（哦、呀、呢、啦），不堆砌。
+11. 带点"小啰嗦"的细节补充，避免过于精炼。
+12. 用通俗比喻代替专业术语，比如"像喝了冰可乐一样清爽"。
+13. 模仿聊天时的跳跃感，不用严格按逻辑展开。
+14. 用"我觉得""我感觉""个人觉得"体现主观感，不绝对化。
+15. 避免完美句式，偶尔用"大概""差不多""可能吧"等模糊表述。
+16. 语气保持平和，别用激昂或过于正式的语调。
+17. 加入轻微的犹豫感，比如"这个嘛""让我想想"。`
+    },
+    {
+        name: '行为要求类',
+        content: `【行为要求类】
+1. 在线上对话中禁止写小作文一次性超过20字一句话，除非用户要求一句话超过20个字。
+2. 禁止char频繁将工作中的词汇代入生活中。
+3. 个别角色允许说"我靠""靠""我丢"，其他脏话一概不允许。年上引导型恋人禁止说脏话。
+4. 禁止出现辱女、威胁、过分自残、血腥的行为。
+5. 禁止抢用户的话，用户自己会说话，不要抢用户的剧情。
+6. 禁止出现角色故意伤害他人、摔打物品等过激行为。禁止有莽撞笨重行为，如：烫伤自己、捡玻璃碎划伤手指等等，角色必须保持自身情绪的稳定。
+7. 禁止出现：纽扣、领带、领带夹、戒指、蛋糕。
+8. 禁止频繁出现：打横抱、掐后颈、扯松领带撕开衬衫、踹开门、同手同脚、撞门框、发疯、眯眼、扛、收利息、小妖精、小姑娘、丫头等油腻情节和词汇。
+9. 需要经常出现大段落情感描写细节，精神链接为主，性为辅。
+10. 角色如果是不会说隐私部位器官词的人，旁白（以及他的实时状态栏内心想法）要大胆，不要意识流，直接说出来。
+11. 不要生成太多超过需要用户回复的话，需要用户回应了再进下一个阶段。`
+    },
+    {
         name: '情绪系统',
         content: `【情绪系统】
 情绪是动态变化的。不要永远保持同一种情绪。
@@ -173,10 +209,8 @@ function savePresets(presets) {
     localStorage.setItem('worldbook_presets', JSON.stringify(presets));
 }
 
-// 用户可见的内置预设（空，核心规则已移至 CORE_RULES）
 const BUILTIN_PRESETS = [];
 
-// ========== 初始化 ==========
 function initPresets() {
     const existing = getPresets();
     if (existing.length === 0) {
@@ -184,12 +218,10 @@ function initPresets() {
     }
 }
 
-// ========== 获取核心规则文本（供 API 调用） ==========
 function getCoreRulesText() {
     return CORE_RULES.map(r => r.content).join('\n\n');
 }
 
-// ========== 获取完整系统提示（核心规则 + 用户预设） ==========
 function getFullSystemPrompt() {
     let prompt = getCoreRulesText();
     const presets = getPresets();
@@ -202,8 +234,8 @@ function getFullSystemPrompt() {
 
 // ========== 当前视图 ==========
 let wbCurrentFilter = 'all';
+let wbSearchQuery = '';
 
-// ========== 打开万象树 ==========
 function openWorldbook() {
     initPresets();
     let appWindow = document.getElementById('worldbookAppWindow');
@@ -214,6 +246,7 @@ function openWorldbook() {
         document.getElementById('desktop').appendChild(appWindow);
     }
     wbCurrentFilter = 'all';
+    wbSearchQuery = '';
     renderWorldbook();
     appWindow.style.display = 'flex';
 }
@@ -223,15 +256,19 @@ function closeWorldbook() {
     if (appWindow) appWindow.style.display = 'none';
 }
 
-// ========== 渲染主界面 ==========
 function renderWorldbook() {
     const appWindow = document.getElementById('worldbookAppWindow');
     if (!appWindow) return;
 
     const presets = getPresets();
-    const filtered = wbCurrentFilter === 'all' 
+    let filtered = wbCurrentFilter === 'all' 
         ? presets 
         : presets.filter(p => p.type === wbCurrentFilter);
+    
+    if (wbSearchQuery) {
+        const q = wbSearchQuery.toLowerCase();
+        filtered = filtered.filter(p => p.name.toLowerCase().includes(q));
+    }
 
     let cardsHTML = '';
     if (filtered.length === 0) {
@@ -240,7 +277,7 @@ function renderWorldbook() {
         filtered.forEach(p => {
             const charLabel = p.characterId ? ' · ' + (p.characterName || '已绑定角色') : '';
             cardsHTML += `
-                <div class="wb-preset-card" onclick="editPreset('${p.id}')">
+                <div class="wb-preset-card" id="preset-card-${p.id}" onclick="editPreset('${p.id}')">
                     <div class="wb-preset-header">
                         <span class="wb-preset-name">${p.name}</span>
                         <span class="wb-preset-badge ${p.type}">${p.type === 'global' ? '全局' : '局部'}${charLabel}</span>
@@ -264,8 +301,13 @@ function renderWorldbook() {
 
             <div class="wb-body">
                 <div class="wb-section-title">自定义预设</div>
+                <div style="padding: 0 0 12px;">
+                    <input type="text" class="ios-input" id="wbSearchInput" placeholder="搜索预设..." value="${wbSearchQuery}" 
+                           style="background: rgba(255,255,255,0.8); border-radius: 10px;" 
+                           oninput="wbSearchQuery = this.value; renderWorldbook();">
+                </div>
                 ${cardsHTML}
-                <button class="wb-add-btn" onclick="addNewPreset()">+ 新建预设</button>
+                <button class="wb-add-btn" style="font-weight: 700;" onclick="addNewPreset()">+ 新建预设</button>
             </div>
 
             <div class="wb-bottom-bar">
@@ -277,23 +319,24 @@ function renderWorldbook() {
     `;
 }
 
-// ========== 筛选 ==========
 function filterPresets(type) {
     wbCurrentFilter = type;
     renderWorldbook();
 }
 
-// ========== 新建预设 ==========
 function addNewPreset() {
     openPresetEditor(null);
 }
 
-// ========== 编辑预设 ==========
 function editPreset(id) {
     openPresetEditor(id);
 }
 
 // ========== 预设编辑器 ==========
+let wbEditType = 'global';
+let wbEditCharacterId = '';
+let wbEditCharacterName = '';
+
 function openPresetEditor(presetId) {
     const presets = getPresets();
     const preset = presetId ? presets.find(p => p.id === presetId) : null;
@@ -302,16 +345,14 @@ function openPresetEditor(presetId) {
     const name = preset ? preset.name : '';
     const content = preset ? preset.content : '';
     const type = preset ? preset.type : 'global';
-    const characterId = preset ? (preset.characterId || '') : '';
-    const characterName = preset ? (preset.characterName || '') : '';
     wbEditType = type;
-    wbEditCharacterId = characterId;
-    wbEditCharacterName = characterName;
+    wbEditCharacterId = preset ? (preset.characterId || '') : '';
+    wbEditCharacterName = preset ? (preset.characterName || '') : '';
 
     const charSelectHTML = type === 'local' ? `
         <div class="wb-editor-label">绑定角色</div>
         <div class="wb-character-select" id="wbCharSelect" onclick="selectCharacter()">
-            ${characterName || '点击选择角色（占位）'}
+            ${wbEditCharacterName || '点击选择角色（占位）'}
         </div>
     ` : '';
 
@@ -328,8 +369,8 @@ function openPresetEditor(presetId) {
 
             <div class="wb-editor-label">分支类型</div>
             <div class="wb-editor-segment">
-                <div class="wb-segment-btn ${type === 'global' ? 'active' : ''}" id="wbSegGlobal" onclick="wbSelectType('global')">全 局</div>
-                <div class="wb-segment-btn ${type === 'local' ? 'active' : ''}" id="wbSegLocal" onclick="wbSelectType('local')">局 部</div>
+                <div class="wb-segment-btn ${type === 'global' ? 'active' : ''}" id="wbSegGlobal" onclick="wbSwitchType('global')">全 局</div>
+                <div class="wb-segment-btn ${type === 'local' ? 'active' : ''}" id="wbSegLocal" onclick="wbSwitchType('local')">局 部</div>
             </div>
 
             ${charSelectHTML}
@@ -366,87 +407,35 @@ function openPresetEditor(presetId) {
     });
 }
 
-// ========== 选择分支类型 ==========
-let wbEditType = 'global';
-let wbEditCharacterId = '';
-let wbEditCharacterName = '';
-
-function wbSelectType(type) {
+function wbSwitchType(type) {
     wbEditType = type;
     document.getElementById('wbSegGlobal').classList.toggle('active', type === 'global');
     document.getElementById('wbSegLocal').classList.toggle('active', type === 'local');
-    // 重新渲染编辑器以显示/隐藏角色选择
-    const presetId = document.getElementById('wbEditName').getAttribute('data-id') || '';
-    const name = document.getElementById('wbEditName').value;
-    const content = document.getElementById('wbEditContent').value;
-    closePresetEditor();
-    openPresetEditorWithData(name, content, type, wbEditCharacterId, wbEditCharacterName);
+    // 刷新角色选择区域
+    const charSection = document.getElementById('wbCharSelect');
+    if (type === 'local' && !charSection) {
+        const segment = document.querySelector('.wb-editor-segment');
+        const label = document.createElement('div');
+        label.className = 'wb-editor-label';
+        label.textContent = '绑定角色';
+        const select = document.createElement('div');
+        select.className = 'wb-character-select';
+        select.id = 'wbCharSelect';
+        select.onclick = selectCharacter;
+        select.textContent = wbEditCharacterName || '点击选择角色（占位）';
+        segment.parentNode.insertBefore(label, segment.nextSibling);
+        segment.parentNode.insertBefore(select, label.nextSibling);
+    } else if (type === 'global' && charSection) {
+        const label = charSection.previousSibling;
+        if (label && label.className === 'wb-editor-label') label.remove();
+        charSection.remove();
+    }
 }
 
-function openPresetEditorWithData(name, content, type, characterId, characterName) {
-    const charSelectHTML = type === 'local' ? `
-        <div class="wb-editor-label">绑定角色</div>
-        <div class="wb-character-select" id="wbCharSelect" onclick="selectCharacter()">
-            ${characterName || '点击选择角色（占位）'}
-        </div>
-    ` : '';
-
-    const overlay = document.createElement('div');
-    overlay.className = 'wb-editor-overlay';
-    overlay.id = 'wbEditorOverlay';
-    overlay.innerHTML = `
-        <div class="wb-editor-panel" id="wbEditorPanel">
-            <div class="wb-editor-handle" id="wbEditorHandle"></div>
-            <div class="wb-editor-title">编辑预设</div>
-
-            <div class="wb-editor-label">预设名称</div>
-            <input type="text" class="wb-editor-input" id="wbEditName" value="${name}" placeholder="输入预设名称">
-
-            <div class="wb-editor-label">分支类型</div>
-            <div class="wb-editor-segment">
-                <div class="wb-segment-btn ${type === 'global' ? 'active' : ''}" id="wbSegGlobal" onclick="wbSelectType('global')">全 局</div>
-                <div class="wb-segment-btn ${type === 'local' ? 'active' : ''}" id="wbSegLocal" onclick="wbSelectType('local')">局 部</div>
-            </div>
-
-            ${charSelectHTML}
-
-            <div class="wb-editor-label">预设内容</div>
-            <textarea class="wb-editor-textarea" id="wbEditContent" placeholder="描述角色的行为约束、禁止事项、风格要求等...">${content}</textarea>
-
-            <div class="wb-editor-buttons">
-                <button class="wb-btn-save" onclick="savePreset('')">保存</button>
-            </div>
-        </div>
-    `;
-
-    document.body.appendChild(overlay);
-
-    overlay.onclick = function(e) {
-        if (e.target === overlay) closePresetEditor();
-    };
-
-    const handle = document.getElementById('wbEditorHandle');
-    let startY = 0;
-    handle.addEventListener('touchstart', function(e) {
-        startY = e.touches[0].clientY;
-    });
-    handle.addEventListener('touchmove', function(e) {
-        if (e.touches[0].clientY - startY > 40) {
-            closePresetEditor();
-        }
-    });
-    handle.addEventListener('click', function(e) {
-        e.stopPropagation();
-        closePresetEditor();
-    });
-}
-
-// ========== 选择角色（占位） ==========
 function selectCharacter() {
     showToast('角色选择功能即将上线');
 }
 
-// ========== 切换预设分支类型 ==========
 function togglePresetType(id) {
     const presets = getPresets();
     const preset = presets.find(p => p.id === id);
@@ -461,7 +450,6 @@ function togglePresetType(id) {
     }
 }
 
-// ========== 保存预设 ==========
 function savePreset(id) {
     const name = document.getElementById('wbEditName').value.trim();
     const content = document.getElementById('wbEditContent').value.trim();
@@ -499,7 +487,6 @@ function savePreset(id) {
     showToast('预设已保存');
 }
 
-// ========== 删除预设 ==========
 function deletePreset(id) {
     let presets = getPresets();
     presets = presets.filter(p => p.id !== id);
@@ -509,7 +496,6 @@ function deletePreset(id) {
     showToast('预设已删除');
 }
 
-// ========== 关闭编辑器 ==========
 function closePresetEditor() {
     const overlay = document.getElementById('wbEditorOverlay');
     if (overlay) overlay.remove();
