@@ -1,7 +1,7 @@
 /**
  * 玉界 - 桌面管理系统
  * 包含：图标/小组件渲染、长按编辑（抖动+删除）、长按空白出"+"按钮、
- *       半屏小组件选择器（折叠列表）、数据持久化、小组件拖动、头像上传
+ *       半屏小组件选择器（折叠列表+预览卡片）、数据持久化、小组件拖动、头像上传
  *       addDesktopIcon() 供其他模块注册图标
  */
 
@@ -241,8 +241,26 @@ function openHalfPanel() {
                 <span class="toggle-arrow">&gt;</span>
             </div>
             <div id="widget-2x4" class="collapsible-section" style="display:none;">
-                <div class="widget-placeholder" data-widget-type="clock" onclick="confirmAddWidget('clock')" style="cursor:pointer;">
-                    时钟小组件<br><span style="font-size:12px; color:#8e8e93;">点击添加</span>
+                <!-- 时钟小组件预览 -->
+                <div class="widget-preview-card" data-widget-type="clock" onclick="confirmAddWidget('clock')">
+                    <div class="widget-preview-inner">
+                        <div class="preview-top-row">
+                            <div class="preview-left">
+                                <div class="preview-avatar">+</div>
+                                <div class="preview-time-block">
+                                    <span class="preview-time">14:30</span>
+                                    <span class="preview-date">6月17日 星期二</span>
+                                </div>
+                            </div>
+                            <div class="preview-weather-block">
+                                <span class="preview-temp">24°</span>
+                                <div class="preview-weather-desc">上海·晴</div>
+                            </div>
+                        </div>
+                        <div class="preview-divider"></div>
+                        <div class="preview-signature">——  ..おやすみ ..——</div>
+                    </div>
+                    <div class="widget-preview-label">时钟小组件</div>
                 </div>
             </div>
             <div class="widget-list-item" data-target="widget-3x4">
