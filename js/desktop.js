@@ -119,7 +119,7 @@ function enterEditMode() {
         if (!el.querySelector('.delete-btn')) {
             const delBtn = document.createElement('div');
             delBtn.className = 'delete-btn';
-            delBtn.innerHTML = '✕';
+            delBtn.innerHTML = 'X';
             delBtn.onclick = (e) => {
                 e.stopPropagation();
                 deleteIcon(el);
@@ -151,30 +151,32 @@ function deleteIcon(el) {
 
 // ========== 桌面空白处长按 ==========
 function setupDesktopLongPress() {
-    const desktopPage = document.getElementById('page1');
-    if (!desktopPage) return;
+    ['page1', 'page2'].forEach(pageId => {
+        const desktopPage = document.getElementById(pageId);
+        if (!desktopPage) return;
 
-    desktopPage.addEventListener('touchstart', (e) => {
-        if (e.target.closest('.app-icon') || e.target.closest('.add-widget-btn')) return;
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-        longPressTimer = setTimeout(() => {
-            if (isEditing) return;
-            showAddButton();
-        }, 500);
-    });
+        desktopPage.addEventListener('touchstart', (e) => {
+            if (e.target.closest('.app-icon') || e.target.closest('.add-widget-btn')) return;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            longPressTimer = setTimeout(() => {
+                if (isEditing) return;
+                showAddButton();
+            }, 500);
+        });
 
-    desktopPage.addEventListener('touchend', () => {
-        clearTimeout(longPressTimer);
-    });
-
-    desktopPage.addEventListener('touchmove', (e) => {
-        if (!longPressTimer) return;
-        const dx = e.touches[0].clientX - touchStartX;
-        const dy = e.touches[0].clientY - touchStartY;
-        if (Math.abs(dx) > 15 || Math.abs(dy) > 15) {
+        desktopPage.addEventListener('touchend', () => {
             clearTimeout(longPressTimer);
-        }
+        });
+
+        desktopPage.addEventListener('touchmove', (e) => {
+            if (!longPressTimer) return;
+            const dx = e.touches[0].clientX - touchStartX;
+            const dy = e.touches[0].clientY - touchStartY;
+            if (Math.abs(dx) > 15 || Math.abs(dy) > 15) {
+                clearTimeout(longPressTimer);
+            }
+        });
     });
 }
 
@@ -231,32 +233,32 @@ function openHalfPanel() {
         <div class="half-panel-handle"></div>
         <div class="half-panel-content" id="halfPanelContent">
             <div class="widget-list-item" data-target="widget-2x2">
-                <span>2×2 小组件</span>
-                <span class="toggle-arrow">›</span>
+                <span>2x2 小组件</span>
+                <span class="toggle-arrow">&gt;</span>
             </div>
             <div id="widget-2x2" class="collapsible-section" style="display:none;">
-                <div class="widget-placeholder">2×2 占位</div>
+                <div class="widget-placeholder">2x2 占位</div>
             </div>
             <div class="widget-list-item" data-target="widget-2x4">
-                <span>2×4 小组件</span>
-                <span class="toggle-arrow">›</span>
+                <span>2x4 小组件</span>
+                <span class="toggle-arrow">&gt;</span>
             </div>
             <div id="widget-2x4" class="collapsible-section" style="display:none;">
-                <div class="widget-placeholder">2×4 占位</div>
+                <div class="widget-placeholder">2x4 占位</div>
             </div>
             <div class="widget-list-item" data-target="widget-3x4">
-                <span>3×4 小组件</span>
-                <span class="toggle-arrow">›</span>
+                <span>3x4 小组件</span>
+                <span class="toggle-arrow">&gt;</span>
             </div>
             <div id="widget-3x4" class="collapsible-section" style="display:none;">
-                <div class="widget-placeholder">3×4 占位</div>
+                <div class="widget-placeholder">3x4 占位</div>
             </div>
             <div class="widget-list-item" data-target="widget-4x4">
-                <span>4×4 小组件</span>
-                <span class="toggle-arrow">›</span>
+                <span>4x4 小组件</span>
+                <span class="toggle-arrow">&gt;</span>
             </div>
             <div id="widget-4x4" class="collapsible-section" style="display:none;">
-                <div class="widget-placeholder">4×4 占位</div>
+                <div class="widget-placeholder">4x4 占位</div>
             </div>
         </div>
     `;
@@ -285,7 +287,7 @@ function openHalfPanel() {
         const isHidden = target.style.display === 'none';
         target.style.display = isHidden ? 'block' : 'none';
         const arrow = item.querySelector('.toggle-arrow');
-        if (arrow) arrow.textContent = isHidden ? '∨' : '›';
+        if (arrow) arrow.textContent = isHidden ? 'v' : '>';
     });
 
     // 手柄交互
