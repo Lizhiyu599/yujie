@@ -154,7 +154,7 @@
     border: 1.5px dashed rgba(0, 0, 0, 0.12);
     border-radius: 16px;
     padding: 16px;
-    color: #007aff;
+    color: #000;
     font-size: 15px;
     font-family: inherit;
     cursor: pointer;
@@ -164,7 +164,7 @@
 }
 .wb-add-btn:active {
     background: rgba(255, 255, 255, 0.8);
-    border-color: #007aff;
+    border-color: #000;
 }
 
 /* ===== 底部工具栏 ===== */
@@ -299,9 +299,9 @@
     color: #8e8e93;
 }
 .wb-segment-btn.active {
-    background: #000;
-    color: #fff;
-    border-color: #000;
+    background: #fff;
+    color: #000;
+    border-color: rgba(0, 0, 0, 0.12);
 }
 
 /* 角色选择占位 */
