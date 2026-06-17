@@ -32,15 +32,15 @@ let isCoverOpen = false;
 
 // ========== 打开日记软件 ==========
 function openDiary() {
-    // 检查是否已有日记应用窗口
     let appWindow = document.getElementById('diaryAppWindow');
     if (!appWindow) {
         appWindow = document.createElement('div');
         appWindow.id = 'diaryAppWindow';
-        appWindow.className = 'app-window';
-        appWindow.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:20;display:none;flex-direction:column;';
+        appWindow.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:#1a1410;z-index:200;display:none;flex-direction:column;';
         document.getElementById('desktop').appendChild(appWindow);
     }
+    isCoverOpen = false;
+    currentPageIndex = 0;
     renderDiaryApp();
     appWindow.style.display = 'flex';
 }
@@ -315,7 +315,6 @@ function previewDiaryFontColor(color) {
     const preview = document.getElementById('diaryFontPreview');
     if (preview) preview.style.color = color;
     
-    // 更新色块选中态
     document.querySelectorAll('.diary-color-dot').forEach(dot => dot.classList.remove('active'));
 }
 
@@ -370,4 +369,4 @@ function toggleDiaryAuto() {
     const isChecked = document.getElementById('diaryAutoSwitch').checked;
     localStorage.setItem('diary_auto_enabled', isChecked);
     showToast(isChecked ? '自动日记已开启' : '自动日记已关闭');
-                             }
+}
