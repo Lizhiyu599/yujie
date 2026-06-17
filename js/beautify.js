@@ -138,8 +138,7 @@ const beautifyHTML = `
                     </label>
                     <div class="custom-widget-delete-btn" id="custom-del-2x2-0" style="display:none;"
                          onclick="event.stopPropagation(); confirmDeleteCustomWidget('2x2_0')">×</div>
-                    <input type="file" id="custom-widget-upload-2x2_0" accept="image/*"
-                           style="position:absolute;width:0;height:0;overflow:hidden;opacity:0;"
+                    <input type="file" id="custom-widget-upload-2x2_0" accept="image/*" style="display:none;"
                            onchange="handleCustomWidgetImage(event, '2x2_0', '2x2')">
                 </div>
                 <div style="position:relative; flex:1; overflow:visible;">
@@ -151,8 +150,7 @@ const beautifyHTML = `
                     </label>
                     <div class="custom-widget-delete-btn" id="custom-del-2x2-1" style="display:none;"
                          onclick="event.stopPropagation(); confirmDeleteCustomWidget('2x2_1')">×</div>
-                    <input type="file" id="custom-widget-upload-2x2_1" accept="image/*"
-                           style="position:absolute;width:0;height:0;overflow:hidden;opacity:0;"
+                    <input type="file" id="custom-widget-upload-2x2_1" accept="image/*" style="display:none;"
                            onchange="handleCustomWidgetImage(event, '2x2_1', '2x2')">
                 </div>
             </div>
@@ -165,8 +163,7 @@ const beautifyHTML = `
                 </label>
                 <div class="custom-widget-delete-btn" id="custom-del-2x4-0" style="display:none;"
                      onclick="event.stopPropagation(); confirmDeleteCustomWidget('2x4_0')">×</div>
-                <input type="file" id="custom-widget-upload-2x4_0" accept="image/*"
-                       style="position:absolute;width:0;height:0;overflow:hidden;opacity:0;"
+                <input type="file" id="custom-widget-upload-2x4_0" accept="image/*" style="display:none;"
                        onchange="handleCustomWidgetImage(event, '2x4_0', '2x4')">
             </div>
         </div>
@@ -396,6 +393,7 @@ window._pendingCustomKey = null;
 window._pendingCustomSize = null;
 
 function confirmAddCustomWidget(key, size) {
+    // 防止重复叠加
     var old = document.getElementById('confirmAddCustomWidgetOverlay');
     if (old) old.remove();
 
