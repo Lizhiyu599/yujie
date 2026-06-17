@@ -755,6 +755,7 @@ window.addEventListener('DOMContentLoaded', () => {
     setupDesktopLongPress();
     setupWidgetAvatarUpload();
     renderWidgets();
+    addDesktopIcon({ id: 'diary', name: '日记', icon: '记', action: 'openDiary' });
 });
 
 // ========== 暴露到全局，供 beautify.js 调用 ==========
