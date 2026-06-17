@@ -389,24 +389,47 @@ function loadCustomWidgetPreviews() {
 }
 
 // ===== 确认添加自定义小组件 =====
-window._pendingCustomKey = null;
-window._pendingCustomSize = null;
-
 function confirmAddCustomWidget(key, size) {
-    // 防止重复叠加
     var old = document.getElementById('confirmAddCustomWidgetOverlay');
     if (old) old.remove();
-
-    window._pendingCustomKey = key;
-    window._pendingCustomSize = size;
 
     var overlay = document.createElement('div');
     overlay.className = 'confirm-overlay';
     overlay.id = 'confirmAddCustomWidgetOverlay';
     overlay.style.zIndex = '9999';
-    overlay.innerHTML = '<div class="confirm-dialog"><p>添加当前小组件？</p><div class="confirm-buttons"><div class="confirm-btn-cancel" onclick="cancelAddCustomWidget()">取消</div><div class="confirm-btn-delete" onclick="executeAddCustomWidget(window._pendingCustomKey, window._pendingCustomSize)">确定</div></div></div>';
+    
+    var dialog = document.createElement('div');
+    dialog.className = 'confirm-dialog';
+    dialog.innerHTML = '<p>添加当前小组件？</p>';
+    
+    var buttons = document.createElement('div');
+    buttons.className = 'confirm-buttons';
+    
+    var cancelBtn = document.createElement('div');
+    cancelBtn.className = 'confirm-btn-cancel';
+    cancelBtn.textContent = '取消';
+    cancelBtn.onclick = function(e) {
+        e.stopPropagation();
+        cancelAddCustomWidget();
+    };
+    
+    var confirmBtn = document.createElement('div');
+    confirmBtn.className = 'confirm-btn-delete';
+    confirmBtn.textContent = '确定';
+    confirmBtn.onclick = function(e) {
+        e.stopPropagation();
+        executeAddCustomWidget(key, size);
+    };
+    
+    buttons.appendChild(cancelBtn);
+    buttons.appendChild(confirmBtn);
+    dialog.appendChild(buttons);
+    overlay.appendChild(dialog);
     document.body.appendChild(overlay);
-    overlay.onclick = function(e) { if (e.target === overlay) cancelAddCustomWidget(); };
+    
+    overlay.onclick = function(e) {
+        if (e.target === overlay) cancelAddCustomWidget();
+    };
 }
 
 function cancelAddCustomWidget() {
