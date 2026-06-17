@@ -183,8 +183,19 @@ body, html {
 }
 
 .dock-icon {
-    font-size: 22px;
-    margin-bottom: 3px;
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 4px;
 }
 
 /* ===== 翻页指示器 ===== */
@@ -395,4 +406,4 @@ body, html {
     color: #8e8e93;
     margin: 8px 0 16px;
     padding: 30px;
-}
+    }
