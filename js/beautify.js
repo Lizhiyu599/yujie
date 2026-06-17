@@ -129,25 +129,37 @@ const beautifyHTML = `
         <div class="ios-group" style="padding:16px;">
             <div style="font-size:12px; color:#8e8e93; margin-bottom:8px;">自定义小组件</div>
             <div style="display:flex; gap:12px; margin-bottom:12px;">
-                <div class="beautify-box-2x2 custom-widget-box" id="custom-widget-2x2-0" 
-                     style="background-size:cover; background-position:center; background-repeat:no-repeat;"
-                     onclick="handleCustomWidgetClick('2x2_0', '2x2')">
-                    <span class="custom-widget-placeholder">2x2</span>
+                <div style="position:relative; flex:1;">
+                    <div class="beautify-box-2x2 custom-widget-box" id="custom-widget-2x2-0" 
+                         style="background-size:cover; background-position:center; background-repeat:no-repeat;"
+                         onclick="handleCustomWidgetClick('2x2_0', '2x2')">
+                        <span class="custom-widget-placeholder">2x2</span>
+                    </div>
+                    <div class="custom-widget-delete-btn" id="custom-del-2x2-0" style="display:none;"
+                         onclick="event.stopPropagation(); confirmDeleteCustomWidget('2x2_0')">×</div>
                 </div>
                 <input type="file" id="custom-widget-upload-2x2_0" accept="image/*" style="display:none;" 
                        onchange="handleCustomWidgetImage(event, '2x2_0', '2x2')">
-                <div class="beautify-box-2x2 custom-widget-box" id="custom-widget-2x2-1" 
-                     style="background-size:cover; background-position:center; background-repeat:no-repeat;"
-                     onclick="handleCustomWidgetClick('2x2_1', '2x2')">
-                    <span class="custom-widget-placeholder">2x2</span>
+                <div style="position:relative; flex:1;">
+                    <div class="beautify-box-2x2 custom-widget-box" id="custom-widget-2x2-1" 
+                         style="background-size:cover; background-position:center; background-repeat:no-repeat;"
+                         onclick="handleCustomWidgetClick('2x2_1', '2x2')">
+                        <span class="custom-widget-placeholder">2x2</span>
+                    </div>
+                    <div class="custom-widget-delete-btn" id="custom-del-2x2-1" style="display:none;"
+                         onclick="event.stopPropagation(); confirmDeleteCustomWidget('2x2_1')">×</div>
                 </div>
                 <input type="file" id="custom-widget-upload-2x2_1" accept="image/*" style="display:none;" 
                        onchange="handleCustomWidgetImage(event, '2x2_1', '2x2')">
             </div>
-            <div class="beautify-box-2x4 custom-widget-box" id="custom-widget-2x4-0" 
-                 style="background-size:cover; background-position:center; background-repeat:no-repeat;"
-                 onclick="handleCustomWidgetClick('2x4_0', '2x4')">
-                <span class="custom-widget-placeholder">2x4</span>
+            <div style="position:relative;">
+                <div class="beautify-box-2x4 custom-widget-box" id="custom-widget-2x4-0" 
+                     style="background-size:cover; background-position:center; background-repeat:no-repeat;"
+                     onclick="handleCustomWidgetClick('2x4_0', '2x4')">
+                    <span class="custom-widget-placeholder">2x4</span>
+                </div>
+                <div class="custom-widget-delete-btn" id="custom-del-2x4-0" style="display:none;"
+                     onclick="event.stopPropagation(); confirmDeleteCustomWidget('2x4_0')">×</div>
             </div>
             <input type="file" id="custom-widget-upload-2x4_0" accept="image/*" style="display:none;" 
                    onchange="handleCustomWidgetImage(event, '2x4_0', '2x4')">
@@ -178,7 +190,6 @@ function registerAppIconForBeautify(id, name, label) {
     registeredAppIcons.push({ id, name, label });
 }
 
-// ===== 渲染美化面板中的应用图标网格 =====
 function renderBeautifyIcons() {
     const grid = document.getElementById('beautifyAppIconsGrid');
     if (!grid) return;
@@ -277,17 +288,12 @@ function handleWallpaperPreview(e) {
 }
 
 function applyWallpaperFromFile() {
-    if (!selectedWallpaperFile) {
-        alert('请先选择壁纸图片');
-        return;
-    }
+    if (!selectedWallpaperFile) { alert('请先选择壁纸图片'); return; }
     const reader = new FileReader();
     reader.onload = ev => {
         const result = ev.target.result;
         const desktop = document.getElementById('desktop');
-        if (desktop) {
-            desktop.style.backgroundImage = `url(${result})`;
-        }
+        if (desktop) desktop.style.backgroundImage = `url(${result})`;
         localStorage.setItem('beautify_wallpaper', result);
         showToast('已更换壁纸');
     };
@@ -298,30 +304,20 @@ function loadSavedWallpaper() {
     const saved = localStorage.getItem('beautify_wallpaper');
     if (saved) {
         const desktop = document.getElementById('desktop');
-        if (desktop) {
-            desktop.style.backgroundImage = `url(${saved})`;
-        }
+        if (desktop) desktop.style.backgroundImage = `url(${saved})`;
     }
 }
 
 function confirmClearWallpaper() {
-    const overlay = document.createElement('div');
+    var overlay = document.createElement('div');
     overlay.className = 'confirm-overlay';
     overlay.id = 'confirmClearWallpaperOverlay';
-    overlay.innerHTML = `
-        <div class="confirm-dialog">
-            <p>确认清除当前背景图？</p>
-            <div class="confirm-buttons">
-                <div class="confirm-btn-cancel" onclick="cancelClearWallpaper()">取消</div>
-                <div class="confirm-btn-delete" onclick="executeClearWallpaper()">确定</div>
-            </div>
-        </div>
-    `;
+    overlay.innerHTML = '<div class="confirm-dialog"><p>确认清除当前背景图？</p><div class="confirm-buttons"><div class="confirm-btn-cancel" onclick="cancelClearWallpaper()">取消</div><div class="confirm-btn-delete" onclick="executeClearWallpaper()">确定</div></div></div>';
     document.body.appendChild(overlay);
 }
 
 function cancelClearWallpaper() {
-    const overlay = document.getElementById('confirmClearWallpaperOverlay');
+    var overlay = document.getElementById('confirmClearWallpaperOverlay');
     if (overlay) overlay.remove();
 }
 
@@ -331,39 +327,27 @@ function executeClearWallpaper() {
     localStorage.removeItem('beautify_wallpaper');
     selectedWallpaperFile = null;
     const preview = document.getElementById('b-wallpaper-preview');
-    if (preview) {
-        preview.style.backgroundImage = '';
-        preview.innerText = '点击选择壁纸 (9:16)';
-    }
+    if (preview) { preview.style.backgroundImage = ''; preview.innerText = '点击选择壁纸 (9:16)'; }
     const delBtn = document.getElementById('wallpaperDeleteBtn');
     if (delBtn) delBtn.style.display = 'none';
-    const overlay = document.getElementById('confirmClearWallpaperOverlay');
-    if (overlay) overlay.remove();
+    cancelClearWallpaper();
     showToast('已清除背景图');
 }
 
 // ===== 自定义小组件 =====
-function getCustomWidgetImages() {
-    return {
-        '2x2_0': localStorage.getItem('beautify_custom_widget_2x2_0') || '',
-        '2x2_1': localStorage.getItem('beautify_custom_widget_2x2_1') || '',
-        '2x4_0': localStorage.getItem('beautify_custom_widget_2x4_0') || ''
-    };
-}
-
 function handleCustomWidgetClick(key, size) {
-    const images = getCustomWidgetImages();
-    if (images[key]) {
+    var src = localStorage.getItem('beautify_custom_widget_' + key);
+    if (src) {
         confirmAddCustomWidget(key, size);
     } else {
-        const uploadEl = document.getElementById('custom-widget-upload-' + key);
+        var uploadEl = document.getElementById('custom-widget-upload-' + key);
         if (uploadEl) uploadEl.click();
     }
 }
 
 function handleCustomWidgetImage(e, key, size) {
     if (e.target.files && e.target.files[0]) {
-        const reader = new FileReader();
+        var reader = new FileReader();
         reader.onload = function(ev) {
             localStorage.setItem('beautify_custom_widget_' + key, ev.target.result);
             updateCustomWidgetPreview(key);
@@ -374,10 +358,10 @@ function handleCustomWidgetImage(e, key, size) {
 }
 
 function updateCustomWidgetPreview(key) {
-    const parts = key.split('_');
-    const boxId = 'custom-widget-' + parts[0] + '-' + parts[1];
-    const box = document.getElementById(boxId);
-    const src = localStorage.getItem('beautify_custom_widget_' + key);
+    var parts = key.split('_');
+    var boxId = 'custom-widget-' + parts[0] + '-' + parts[1];
+    var box = document.getElementById(boxId);
+    var src = localStorage.getItem('beautify_custom_widget_' + key);
     if (box && src) {
         box.style.backgroundImage = 'url(' + src + ')';
         box.style.backgroundSize = 'cover';
@@ -385,6 +369,11 @@ function updateCustomWidgetPreview(key) {
         box.style.backgroundRepeat = 'no-repeat';
         var placeholder = box.querySelector('.custom-widget-placeholder');
         if (placeholder) placeholder.style.display = 'none';
+    }
+    // 显示删除按钮
+    var delBtn = document.getElementById('custom-del-' + key);
+    if (delBtn) {
+        delBtn.style.display = src ? 'flex' : 'none';
     }
 }
 
@@ -395,18 +384,12 @@ function loadCustomWidgetPreviews() {
     }
 }
 
+// ===== 确认添加自定义小组件 =====
 function confirmAddCustomWidget(key, size) {
     var overlay = document.createElement('div');
     overlay.className = 'confirm-overlay';
     overlay.id = 'confirmAddCustomWidgetOverlay';
-    overlay.innerHTML =
-        '<div class="confirm-dialog">' +
-        '<p>添加当前小组件？</p>' +
-        '<div class="confirm-buttons">' +
-        '<div class="confirm-btn-cancel" onclick="cancelAddCustomWidget()">取消</div>' +
-        '<div class="confirm-btn-delete" onclick="executeAddCustomWidget(\'' + key + '\', \'' + size + '\')">确定</div>' +
-        '</div>' +
-        '</div>';
+    overlay.innerHTML = '<div class="confirm-dialog"><p>添加当前小组件？</p><div class="confirm-buttons"><div class="confirm-btn-cancel" onclick="cancelAddCustomWidget()">取消</div><div class="confirm-btn-delete" onclick="executeAddCustomWidget(\'' + key + '\',\'' + size + '\')">确定</div></div></div>';
     document.body.appendChild(overlay);
 }
 
@@ -418,26 +401,52 @@ function cancelAddCustomWidget() {
 function executeAddCustomWidget(key, size) {
     var imageSrc = localStorage.getItem('beautify_custom_widget_' + key);
     if (!imageSrc) return;
-
     var widgets = typeof getWidgets === 'function' ? getWidgets() : [];
-    widgets.push({
-        id: 'widget-custom-' + Date.now(),
-        type: 'custom',
-        page: 0,
-        image: imageSrc,
-        size: size
-    });
-    if (typeof saveWidgets === 'function') {
-        saveWidgets(widgets);
-    }
-
-    var overlay = document.getElementById('confirmAddCustomWidgetOverlay');
-    if (overlay) overlay.remove();
+    widgets.push({ id: 'widget-custom-' + Date.now(), type: 'custom', page: 0, image: imageSrc, size: size });
+    if (typeof saveWidgets === 'function') saveWidgets(widgets);
+    cancelAddCustomWidget();
     showToast('已添加');
+    if (typeof renderWidgets === 'function') renderWidgets();
+}
 
-    if (typeof renderWidgets === 'function') {
-        renderWidgets();
+// ===== 删除自定义小组件图片 =====
+let pendingDeleteCustomKey = null;
+
+function confirmDeleteCustomWidget(key) {
+    pendingDeleteCustomKey = key;
+    var overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.id = 'confirmDeleteCustomOverlay';
+    overlay.innerHTML = '<div class="confirm-dialog"><p>确认清除当前小组件？</p><div class="confirm-buttons"><div class="confirm-btn-cancel" onclick="cancelDeleteCustomWidget()">取消</div><div class="confirm-btn-delete" onclick="executeDeleteCustomWidget()">确定</div></div></div>';
+    document.body.appendChild(overlay);
+}
+
+function cancelDeleteCustomWidget() {
+    pendingDeleteCustomKey = null;
+    var overlay = document.getElementById('confirmDeleteCustomOverlay');
+    if (overlay) overlay.remove();
+}
+
+function executeDeleteCustomWidget() {
+    if (!pendingDeleteCustomKey) return;
+    localStorage.removeItem('beautify_custom_widget_' + pendingDeleteCustomKey);
+    var key = pendingDeleteCustomKey;
+    pendingDeleteCustomKey = null;
+    var overlay = document.getElementById('confirmDeleteCustomOverlay');
+    if (overlay) overlay.remove();
+    updateCustomWidgetPreview(key);
+    // 恢复占位文字
+    var parts = key.split('_');
+    var boxId = 'custom-widget-' + parts[0] + '-' + parts[1];
+    var box = document.getElementById(boxId);
+    if (box) {
+        box.style.backgroundImage = '';
+        var placeholder = box.querySelector('.custom-widget-placeholder');
+        if (placeholder) placeholder.style.display = '';
     }
+    var delBtn = document.getElementById('custom-del-' + key);
+    if (delBtn) delBtn.style.display = 'none';
+    showToast('已删除');
 }
 
 // ===== 顶部提示弹窗 =====
@@ -449,34 +458,20 @@ function showToast(message) {
     const old = document.getElementById('globalToast');
     if (old) old.remove();
     if (toastTimer) clearTimeout(toastTimer);
-
     const toast = document.createElement('div');
     toast.id = 'globalToast';
     toast.className = 'global-toast';
     toast.textContent = message;
     document.body.appendChild(toast);
-
-    toast.addEventListener('touchstart', (e) => {
-        toastStartX = e.touches[0].clientX;
-        toastStartY = e.touches[0].clientY;
-    });
-    toast.addEventListener('touchmove', (e) => {
-        const dx = e.touches[0].clientX - toastStartX;
-        const dy = e.touches[0].clientY - toastStartY;
-        if (Math.abs(dx) > 50 || Math.abs(dy) > 50) {
-            dismissToast(toast);
-        }
-    });
-
+    toast.addEventListener('touchstart', (e) => { toastStartX = e.touches[0].clientX; toastStartY = e.touches[0].clientY; });
+    toast.addEventListener('touchmove', (e) => { if (Math.abs(e.touches[0].clientX - toastStartX) > 50 || Math.abs(e.touches[0].clientY - toastStartY) > 50) dismissToast(toast); });
     toastTimer = setTimeout(() => dismissToast(toast), 3000);
 }
 
 function dismissToast(el) {
     if (!el || el.classList.contains('toast-hiding')) return;
     el.classList.add('toast-hiding');
-    setTimeout(() => {
-        if (el.parentNode) el.remove();
-    }, 300);
+    setTimeout(() => { if (el.parentNode) el.remove(); }, 300);
 }
 
 // ===== 字体相关 =====
@@ -484,10 +479,7 @@ function updateFontPreview(val) {
     const valEl = document.getElementById('font-size-val');
     if (valEl) valEl.innerText = val;
     const preview = document.getElementById('font-preview-text');
-    if (preview) {
-        const baseSize = 16;
-        preview.style.fontSize = (baseSize + parseInt(val) / 5) + 'px';
-    }
+    if (preview) preview.style.fontSize = (16 + parseInt(val) / 5) + 'px';
 }
 
 function handleFontUpload(e) {
@@ -504,8 +496,7 @@ function handleFontUpload(e) {
 }
 
 function saveFontSettings() {
-    const fontSize = document.getElementById('font-size-val').innerText;
-    localStorage.setItem('beautify_font_size', fontSize);
+    localStorage.setItem('beautify_font_size', document.getElementById('font-size-val').innerText);
     alert('字体设置已保存');
 }
 
@@ -529,11 +520,7 @@ function saveCustomCSS() {
 function applyCustomCSS() {
     const css = localStorage.getItem('beautify_custom_css');
     let styleEl = document.getElementById('beautify-custom-css');
-    if (!styleEl) {
-        styleEl = document.createElement('style');
-        styleEl.id = 'beautify-custom-css';
-        document.head.appendChild(styleEl);
-    }
+    if (!styleEl) { styleEl = document.createElement('style'); styleEl.id = 'beautify-custom-css'; document.head.appendChild(styleEl); }
     styleEl.innerHTML = css || '';
 }
 
@@ -542,28 +529,20 @@ function exportBeautify() {
     const data = {};
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key.startsWith('beautify_')) {
-            data[key] = localStorage.getItem(key);
-        }
+        if (key.startsWith('beautify_')) data[key] = localStorage.getItem(key);
     }
     const jsonStr = JSON.stringify(data, null, 2);
     const blob = new Blob([jsonStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = 'yujie_beautify_' + new Date().toISOString().slice(0, 10) + '.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    a.href = url; a.download = 'yujie_beautify_' + new Date().toISOString().slice(0, 10) + '.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
     alert('美化配置已导出。');
 }
 
-// ===== 导入美化配置 =====
 function importBeautify() {
     const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
+    input.type = 'file'; input.accept = '.json';
     input.onchange = function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -571,14 +550,10 @@ function importBeautify() {
         reader.onload = function(ev) {
             try {
                 const data = JSON.parse(ev.target.result);
-                for (const key in data) {
-                    localStorage.setItem(key, data[key]);
-                }
+                for (const key in data) localStorage.setItem(key, data[key]);
                 alert('美化配置已导入，即将刷新。');
                 setTimeout(() => location.reload(), 500);
-            } catch (err) {
-                alert('导入失败：文件格式不正确。');
-            }
+            } catch (err) { alert('导入失败：文件格式不正确。'); }
         };
         reader.readAsText(file);
     };
@@ -587,93 +562,45 @@ function importBeautify() {
 
 // ===== 清空美化 =====
 let clearBeautifyClicks = 0;
-
 function handleClearBeautify() {
     const btn = document.getElementById('clearBeautifyBtn');
     if (clearBeautifyClicks === 0) {
         clearBeautifyClicks++;
-        btn.innerText = "确认清空美化？(再次点击)";
-        btn.style.backgroundColor = "#ff3b30";
-        btn.style.color = "#fff";
-        setTimeout(() => {
-            if (clearBeautifyClicks === 1) {
-                clearBeautifyClicks = 0;
-                btn.innerText = "清空所有美化";
-                btn.style.backgroundColor = "#fff";
-                btn.style.color = "#ff3b30";
-            }
-        }, 3000);
+        btn.innerText = "确认清空美化？(再次点击)"; btn.style.backgroundColor = "#ff3b30"; btn.style.color = "#fff";
+        setTimeout(() => { if (clearBeautifyClicks === 1) { clearBeautifyClicks = 0; btn.innerText = "清空所有美化"; btn.style.backgroundColor = "#fff"; btn.style.color = "#ff3b30"; } }, 3000);
     } else {
         const keys = [];
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key.startsWith('beautify_')) keys.push(key);
-        }
+        for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key.startsWith('beautify_')) keys.push(key); }
         keys.forEach(k => localStorage.removeItem(k));
-        const desktop = document.getElementById('desktop');
-        if (desktop) desktop.style.backgroundImage = '';
+        const desktop = document.getElementById('desktop'); if (desktop) desktop.style.backgroundImage = '';
         registeredAppIcons.forEach((_, idx) => resetAppIcon(idx));
-        clearBeautifyClicks = 0;
-        btn.innerText = "清空所有美化";
-        btn.style.backgroundColor = "#fff";
-        btn.style.color = "#ff3b30";
+        clearBeautifyClicks = 0; btn.innerText = "清空所有美化"; btn.style.backgroundColor = "#fff"; btn.style.color = "#ff3b30";
         alert("所有美化已清空。");
     }
 }
 
 // ===== 顶部状态栏时钟 =====
 let topBarClockInterval = null;
-
 function updateTopBarClock() {
-    const el = document.getElementById('topStatusBar');
-    if (!el) return;
-    const now = new Date();
-    let h = now.getHours();
-    const m = now.getMinutes().toString().padStart(2, '0');
-    const is12 = localStorage.getItem('beautify_12hr') === 'true';
-    if (is12) {
-        h = h % 12 || 12;
-    }
+    const el = document.getElementById('topStatusBar'); if (!el) return;
+    const now = new Date(); let h = now.getHours(); const m = now.getMinutes().toString().padStart(2, '0');
+    if (localStorage.getItem('beautify_12hr') === 'true') h = h % 12 || 12;
     el.textContent = h.toString().padStart(2, '0') + ':' + m;
 }
-
-function startTopBarClock() {
-    if (topBarClockInterval) clearInterval(topBarClockInterval);
-    updateTopBarClock();
-    topBarClockInterval = setInterval(updateTopBarClock, 1000);
-}
-
+function startTopBarClock() { if (topBarClockInterval) clearInterval(topBarClockInterval); updateTopBarClock(); topBarClockInterval = setInterval(updateTopBarClock, 1000); }
 function applyTopBarVisibility() {
     const el = document.getElementById('topStatusBar');
-    const visible = localStorage.getItem('beautify_top_info');
-    if (el) {
-        el.style.display = (visible === 'false') ? 'none' : 'block';
-    }
+    if (el) el.style.display = (localStorage.getItem('beautify_top_info') === 'false') ? 'none' : 'block';
 }
-
-function updateClockDisplay() {
-    const is12 = document.getElementById('sw-12hr').checked;
-    localStorage.setItem('beautify_12hr', is12);
-    updateTopBarClock();
-}
+function updateClockDisplay() { localStorage.setItem('beautify_12hr', document.getElementById('sw-12hr').checked); updateTopBarClock(); }
 
 // ===== 初始化美化面板 =====
-function initBeautify() {
-    renderBeautifyIcons();
-    loadSavedIcons();
-    loadSavedWallpaper();
-}
+function initBeautify() { renderBeautifyIcons(); loadSavedIcons(); loadSavedWallpaper(); }
 
 // ===== 注册美化图标到 Dock =====
 window.addEventListener('DOMContentLoaded', () => {
-    if (typeof registerModal === 'function') {
-        registerModal('beautifyModal', '美化', beautifyHTML);
-    }
-
-    if (typeof renderAllModals === 'function') {
-        renderAllModals();
-    }
-
+    if (typeof registerModal === 'function') registerModal('beautifyModal', '美化', beautifyHTML);
+    if (typeof renderAllModals === 'function') renderAllModals();
     startTopBarClock();
     applyTopBarVisibility();
     loadSavedWallpaper();
@@ -684,20 +611,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const beautifyItem = document.createElement('div');
     beautifyItem.className = 'dock-item';
-    beautifyItem.innerHTML = `
-        <div class="dock-icon">
-            <div class="dock-icon-img">美</div>
-        </div>
-        <div class="dock-label">美化</div>
-    `;
+    beautifyItem.innerHTML = '<div class="dock-icon"><div class="dock-icon-img">美</div></div><div class="dock-label">美化</div>';
     beautifyItem.onclick = () => {
         initBeautify();
         openModal('beautifyModal');
-        // DOM 渲染完成后再加载预览
-        setTimeout(() => {
-            loadCustomWidgetPreviews();
-        }, 200);
+        setTimeout(() => { loadCustomWidgetPreviews(); }, 300);
     };
-
     dockBar.appendChild(beautifyItem);
 });
