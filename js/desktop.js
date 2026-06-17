@@ -756,15 +756,22 @@ window.addEventListener('DOMContentLoaded', () => {
     setupWidgetAvatarUpload();
     renderWidgets();
 
-    // 注册日记图标到 Dock
     const dockBar = document.getElementById('dockBar');
-    if (dockBar) {
-        const diaryItem = document.createElement('div');
-        diaryItem.className = 'dock-item';
-        diaryItem.innerHTML = '<div class="dock-icon"><div class="dock-icon-img">记</div></div><div class="dock-label">日记</div>';
-        diaryItem.onclick = () => { openDiary(); };
-        dockBar.appendChild(diaryItem);
-    }
+    if (!dockBar) return;
+
+    // 日记图标
+    const diaryItem = document.createElement('div');
+    diaryItem.className = 'dock-item';
+    diaryItem.innerHTML = '<div class="dock-icon"><div class="dock-icon-img">记</div></div><div class="dock-label">日记</div>';
+    diaryItem.onclick = () => { openDiary(); };
+    dockBar.appendChild(diaryItem);
+
+    // 万象树图标
+    const worldbookItem = document.createElement('div');
+    worldbookItem.className = 'dock-item';
+    worldbookItem.innerHTML = '<div class="dock-icon"><div class="dock-icon-img">象</div></div><div class="dock-label">万象树</div>';
+    worldbookItem.onclick = () => { openWorldbook(); };
+    dockBar.appendChild(worldbookItem);
 });
 
 // ========== 暴露到全局，供 beautify.js 调用 ==========
