@@ -615,7 +615,7 @@ window.addEventListener('DOMContentLoaded', () => {
     beautifyItem.onclick = () => {
         initBeautify();
         openModal('beautifyModal');
-        setTimeout(() => { loadCustomWidgetPreviews(); }, 300);
+        setTimeout(() => { loadCustomWidgetPreviews(); }, 500);
     };
     dockBar.appendChild(beautifyItem);
 });
