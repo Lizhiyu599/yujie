@@ -160,7 +160,7 @@ function saveDevice(deviceId) {
         devices.push(newDevice);
     }
     saveDevices(devices);
-    alert('设备“' + name + '”已保存');
+    alert('设备"${name}"已保存');
     renderDeviceList();
 }
 
@@ -564,8 +564,10 @@ window.addEventListener('DOMContentLoaded', () => {
     const settingItem = document.createElement('div');
     settingItem.className = 'dock-item';
     settingItem.innerHTML = `
-        <div class="dock-icon">设</div>
-        <div>设置</div>
+        <div class="dock-icon">
+            <div class="dock-icon-img">设</div>
+        </div>
+        <div class="dock-label">设置</div>
     `;
     settingItem.onclick = () => {
         renderDeviceList();
