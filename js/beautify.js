@@ -31,7 +31,7 @@ const beautifyHTML = `
     <div id="b-icon-sec" class="collapsible-section" style="display:none;">
         <div class="ios-group" style="padding:16px; background:#f9f9f9; border:1px solid #e5e5ea;">
             <div style="font-size:11px; color:#8e8e93; margin-bottom:12px; text-align:center;">
-                点击更换图标，双击恢复默认
+                提示：点击一下图标，更改图标，点击两下删除图标
             </div>
             <div id="beautifyAppIconsGrid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; text-align:center;"></div>
         </div>
@@ -52,18 +52,6 @@ const beautifyHTML = `
                 <div class="ios-row">
                     <span>12小时制</span>
                     <input type="checkbox" class="ios-switch" id="sw-12hr" onchange="updateClockDisplay()">
-                </div>
-                <div class="ios-row">
-                    <span>无线耳机</span>
-                    <input type="checkbox" class="ios-switch" id="sw-headphone">
-                </div>
-                <div class="ios-row">
-                    <span>免打扰</span>
-                    <input type="checkbox" class="ios-switch" id="sw-dnd">
-                </div>
-                <div class="ios-row">
-                    <span>蓝牙</span>
-                    <input type="checkbox" class="ios-switch" id="sw-bt">
                 </div>
             </div>
         </div>
@@ -87,25 +75,16 @@ const beautifyHTML = `
             </label>
             <input type="range" min="-50" max="50" value="0" class="ios-slider" oninput="updateFontPreview(this.value)">
 
-            <label class="ios-label" style="margin-top:16px;">字体颜色</label>
-            <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
-                <div class="color-circle" style="background:#fff;" onclick="setFontColor('#fff')"></div>
-                <div class="color-circle" style="background:#000;" onclick="setFontColor('#000')"></div>
-                <div class="color-circle" style="background:purple;" onclick="setFontColor('purple')"></div>
-                <div class="color-circle" style="background:blue;" onclick="setFontColor('blue')"></div>
-                <div class="color-circle" style="background:pink;" onclick="setFontColor('pink')"></div>
-                <input type="color" style="width:32px;height:32px;border:none;padding:0;cursor:pointer;border-radius:16px;" onchange="setFontColor(this.value)">
+            <label class="ios-label" style="margin-top:16px;">字体上传</label>
+            <div class="beautify-box-2x4" style="height:80px; cursor:pointer;" onclick="document.getElementById('fontFileInput').click()">
+                点击上传字体文件
             </div>
-
-            <label class="ios-label">字体上传 (文件)</label>
-            <div class="beautify-box-2x4" style="height:80px;" onclick="alert('选择字体文件')">
-                点击选择字体文件 (.ttf/.otf)
-            </div>
+            <input type="file" id="fontFileInput" accept=".ttf,.otf" style="display:none;" onchange="handleFontUpload(event)">
 
             <label class="ios-label" style="margin-top:16px;">URL字体</label>
             <input type="text" class="ios-input" placeholder="例如: https://.../font.ttf">
 
-            <button class="ios-btn-black">保存字体</button>
+            <button class="ios-btn-black" onclick="saveFontSettings()">保存字体</button>
         </div>
     </div>
 
@@ -116,6 +95,15 @@ const beautifyHTML = `
     </div>
     <div id="b-css-sec" class="collapsible-section" style="display:none;">
         <div class="ios-group" style="padding:16px;">
+            <!-- 预览气泡 -->
+            <div style="background:#f2f2f7; border-radius:16px; padding:16px; margin-bottom:16px; display:flex; flex-direction:column; gap:10px;">
+                <div style="display:flex; justify-content:flex-end;">
+                    <div class="css-preview-bubble css-preview-user">咋样我的美化？</div>
+                </div>
+                <div style="display:flex; justify-content:flex-start;">
+                    <div class="css-preview-bubble css-preview-bot">绝了女神！好崇拜。</div>
+                </div>
+            </div>
             <div style="display:flex; justify-content:space-between; align-items:flex-end;">
                 <label class="ios-label">CSS代码</label>
                 <span style="font-size:13px; color:#ff3b30; cursor:pointer; margin-bottom:6px;" onclick="document.getElementById('custom-css-input').value=''">
@@ -123,7 +111,7 @@ const beautifyHTML = `
                 </span>
             </div>
             <textarea id="custom-css-input" class="ios-input" style="height:120px; resize:none;" placeholder="输入css代码..."></textarea>
-            <button class="ios-btn-black">保存css</button>
+            <button class="ios-btn-black" onclick="saveCustomCSS()">保存css</button>
         </div>
     </div>
 
@@ -199,13 +187,11 @@ function changeAppIcon(e, idx) {
                 target.style.backgroundImage = `url(${ev.target.result})`;
                 target.innerText = '';
             }
-            // 同步更新桌面图标
             const desktopIcon = document.getElementById('desktop-icon-img-' + idx);
             if (desktopIcon) {
                 desktopIcon.style.backgroundImage = `url(${ev.target.result})`;
                 desktopIcon.innerText = '';
             }
-            // 持久化
             localStorage.setItem('beautify_icon_' + idx, ev.target.result);
         };
         reader.readAsDataURL(e.target.files[0]);
@@ -312,9 +298,23 @@ function updateFontPreview(val) {
     }
 }
 
-function setFontColor(color) {
-    const preview = document.getElementById('font-preview-text');
-    if (preview) preview.style.color = color;
+function handleFontUpload(e) {
+    if (e.target.files[0]) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = ev => {
+            localStorage.setItem('beautify_font', ev.target.result);
+            localStorage.setItem('beautify_font_name', file.name);
+            alert('字体文件已上传：' + file.name);
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function saveFontSettings() {
+    const fontSize = document.getElementById('font-size-val').innerText;
+    localStorage.setItem('beautify_font_size', fontSize);
+    alert('字体设置已保存');
 }
 
 // ===== 信息栏 =====
@@ -322,6 +322,26 @@ function toggleTopInfo() {
     const isChecked = document.getElementById('sw-top-info').checked;
     const options = document.getElementById('top-info-options');
     if (options) options.style.display = isChecked ? 'block' : 'none';
+    localStorage.setItem('beautify_top_info', isChecked);
+}
+
+// ===== 自定义 CSS =====
+function saveCustomCSS() {
+    const css = document.getElementById('custom-css-input').value;
+    localStorage.setItem('beautify_custom_css', css);
+    alert('CSS已保存');
+    applyCustomCSS();
+}
+
+function applyCustomCSS() {
+    const css = localStorage.getItem('beautify_custom_css');
+    let styleEl = document.getElementById('beautify-custom-css');
+    if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = 'beautify-custom-css';
+        document.head.appendChild(styleEl);
+    }
+    styleEl.innerHTML = css || '';
 }
 
 // ===== 导出美化配置 =====
@@ -391,14 +411,12 @@ function handleClearBeautify() {
             }
         }, 3000);
     } else {
-        // 清除所有美化相关数据
         const keys = [];
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key.startsWith('beautify_')) keys.push(key);
         }
         keys.forEach(k => localStorage.removeItem(k));
-        // 恢复桌面
         const desktop = document.getElementById('desktop');
         if (desktop) desktop.style.backgroundImage = '';
         registeredAppIcons.forEach((_, idx) => resetAppIcon(idx));
@@ -419,7 +437,6 @@ function initBeautify() {
 
 // ===== 注册美化图标到 Dock =====
 window.addEventListener('DOMContentLoaded', () => {
-    // 注册美化面板到 Modal 系统
     if (typeof registerModal === 'function') {
         registerModal('beautifyModal', '美化', beautifyHTML);
     }
@@ -428,7 +445,12 @@ window.addEventListener('DOMContentLoaded', () => {
         renderAllModals();
     }
 
-    // 挂载美化图标到 Dock（排在设置右边）
+    // 加载已保存的壁纸
+    loadSavedWallpaper();
+
+    // 加载已保存的自定义 CSS
+    applyCustomCSS();
+
     const dockBar = document.getElementById('dockBar');
     if (!dockBar) return;
 
