@@ -676,4 +676,18 @@ window.addEventListener('DOMContentLoaded', () => {
     applyTopBarVisibility();
     loadSavedWallpaper();
     applyCustomCSS();
-    window.rende
+    window.renderWidgets(); // 恢复已保存的自定义小组件
+
+    const dockBar = document.getElementById('dockBar');
+    if (!dockBar) return;
+
+    const beautifyItem = document.createElement('div');
+    beautifyItem.className = 'dock-item';
+    beautifyItem.innerHTML = '<div class="dock-icon"><div class="dock-icon-img">美</div></div><div class="dock-label">美化</div>';
+    beautifyItem.onclick = () => {
+        initBeautify();
+        openModal('beautifyModal');
+        setTimeout(() => { loadCustomWidgetPreviews(); }, 500);
+    };
+    dockBar.appendChild(beautifyItem);
+});
