@@ -17,7 +17,7 @@ function getDiaryFontSettings() {
     const raw = localStorage.getItem('diary_font_settings');
     return raw ? JSON.parse(raw) : {
         size: 0,
-        color: '#cccccc',
+        color: '#999999',
         fontFamily: ''
     };
 }
@@ -58,12 +58,10 @@ function renderDiaryApp() {
     const appWindow = document.getElementById('diaryAppWindow');
     if (!appWindow) return;
 
-    const fontSettings = getDiaryFontSettings();
     const diaries = getDiaries();
 
     appWindow.innerHTML = `
         <div class="diary-app">
-            <!-- 顶部栏 -->
             <div class="diary-top-bar">
                 <div class="diary-back-btn" onclick="closeDiary()">‹</div>
                 <div class="diary-top-title">日 记</div>
@@ -74,10 +72,8 @@ function renderDiaryApp() {
                 </div>
             </div>
 
-            <!-- 书架背景 -->
             <div class="diary-shelf">
                 <div class="diary-book" id="diaryBook">
-                    <!-- 封面 -->
                     <div class="diary-cover ${isCoverOpen ? 'open' : ''}" id="diaryCover" onclick="openCover()">
                         <div class="cover-ornament">✦ DIARY ✦</div>
                         <div class="cover-title">日 记</div>
@@ -86,7 +82,6 @@ function renderDiaryApp() {
                 </div>
             </div>
 
-            <!-- 底部工具栏 -->
             <div class="diary-bottom-bar">
                 <button class="diary-nav-btn" onclick="prevPage()" ${!isCoverOpen || currentPageIndex === 0 ? 'disabled' : ''}>‹ 上一页</button>
                 <button class="diary-nav-btn" onclick="nextPage()">${isCoverOpen ? '下一页 ›' : '翻开'}</button>
@@ -94,7 +89,6 @@ function renderDiaryApp() {
         </div>
     `;
 
-    // 渲染内页
     renderDiaryPages();
     updateBottomBar();
 }
@@ -107,7 +101,6 @@ function renderDiaryPages() {
     const diaries = getDiaries();
     const fontSettings = getDiaryFontSettings();
 
-    // 清除旧页面（保留封面）
     const oldPages = book.querySelectorAll('.diary-page');
     oldPages.forEach(p => p.remove());
 
@@ -122,7 +115,6 @@ function renderDiaryPages() {
             page.classList.add('behind');
         }
 
-        // 生成6个活页孔
         let holesHTML = '';
         for (let h = 0; h < 6; h++) {
             holesHTML += '<div class="page-hole"></div>';
@@ -318,7 +310,6 @@ function jumpToDiary(index) {
     closeDiaryCalendar();
     if (!isCoverOpen) {
         openCover();
-        // 等待封面动画完成后再跳转
         setTimeout(() => {
             currentPageIndex = index;
             updatePageVisibility();
@@ -344,18 +335,16 @@ function openDiarySettings() {
     overlay.className = 'diary-settings-overlay';
     overlay.id = 'diarySettingsOverlay';
     overlay.innerHTML = `
-        <div class="diary-settings-panel">
-            <div class="diary-settings-handle"></div>
+        <div class="diary-settings-panel" id="diarySettingsPanel">
+            <div class="diary-settings-handle" id="diarySettingsHandle"></div>
             <div class="diary-settings-title">日记设置</div>
 
-            <!-- 自动日记 -->
             <div class="diary-auto-row">
                 <span>自动日记</span>
                 <input type="checkbox" class="ios-switch" id="diaryAutoSwitch" onchange="toggleDiaryAuto()">
             </div>
             <div class="diary-auto-hint">提示：开启后角色会自己写日记，一天最多写两篇日记。</div>
 
-            <!-- 字体设置 -->
             <div class="diary-font-header" onclick="toggleDiaryFontSection()">
                 <span>日记字体</span>
                 <span class="arrow" id="diaryFontArrow">∨</span>
@@ -363,14 +352,12 @@ function openDiarySettings() {
             <div class="diary-font-body" id="diaryFontBody">
                 <div style="font-size:11px; color:#555; margin-bottom:6px;">提示：此字体仅用来表示角色的日记字体，不填写则默认字体。</div>
 
-                <!-- 字体预览 -->
                 <div class="diary-font-preview" id="diaryFontPreview" style="
                     font-size: ${18 + parseInt(fontSettings.size) / 5}px;
                     color: ${fontSettings.color};
                     ${fontSettings.fontFamily ? 'font-family: ' + fontSettings.fontFamily + ';' : ''}
                 ">用户你好呀</div>
 
-                <!-- 字体大小 -->
                 <div class="diary-font-slider-row">
                     <span>字体大小</span>
                     <span id="diaryFontSizeVal">${fontSettings.size}</span>
@@ -378,18 +365,16 @@ function openDiarySettings() {
                 <input type="range" min="-50" max="50" value="${fontSettings.size}" class="diary-font-slider"
                        oninput="document.getElementById('diaryFontSizeVal').innerText=this.value; document.getElementById('diaryFontPreview').style.fontSize=${18 + parseInt(fontSettings.size) / 5} + 'px';">
 
-                <!-- 字体颜色 -->
                 <div style="font-size:13px; color:#666; margin:10px 0 6px;">字体颜色</div>
                 <div class="diary-color-row">
-                    <div class="diary-color-dot" style="background:#cccccc;" onclick="previewDiaryFontColor('#cccccc')"></div>
-                    <div class="diary-color-dot" style="background:#ffffff;" onclick="previewDiaryFontColor('#ffffff')"></div>
-                    <div class="diary-color-dot" style="background:#999999;" onclick="previewDiaryFontColor('#999999')"></div>
-                    <div class="diary-color-dot" style="background:#bbbbbb;" onclick="previewDiaryFontColor('#bbbbbb')"></div>
-                    <div class="diary-color-dot" style="background:#dddddd;" onclick="previewDiaryFontColor('#dddddd')"></div>
+                    <div class="diary-color-dot" style="background:#999;" onclick="previewDiaryFontColor('#999999')"></div>
+                    <div class="diary-color-dot" style="background:#bbb;" onclick="previewDiaryFontColor('#bbbbbb')"></div>
+                    <div class="diary-color-dot" style="background:#ddd;" onclick="previewDiaryFontColor('#dddddd')"></div>
+                    <div class="diary-color-dot" style="background:#fff;" onclick="previewDiaryFontColor('#ffffff')"></div>
+                    <div class="diary-color-dot" style="background:#777;" onclick="previewDiaryFontColor('#777777')"></div>
                     <input type="color" class="diary-color-picker" onchange="previewDiaryFontColor(this.value)">
                 </div>
 
-                <!-- 字体上传 -->
                 <div style="font-size:13px; color:#666; margin:10px 0 6px;">字体上传</div>
                 <div class="diary-upload-box" onclick="document.getElementById('diaryFontFileInput').click()">
                     点击上传字体文件
@@ -400,7 +385,6 @@ function openDiarySettings() {
                 <input type="text" class="diary-url-input" id="diaryFontUrl" placeholder="https://.../font.ttf" value="${fontSettings.fontUrl || ''}">
                 <div style="font-size:10px; color:#555; margin-bottom:10px;">支持 .ttf / .otf / .woff / .woff2 用于日记字体。</div>
 
-                <!-- 保存字体 -->
                 <button class="diary-btn-save-font" onclick="saveDiaryFont()">保存字体</button>
             </div>
         </div>
@@ -411,6 +395,24 @@ function openDiarySettings() {
     overlay.onclick = function(e) {
         if (e.target === overlay) closeDiarySettings();
     };
+
+    const handle = document.getElementById('diarySettingsHandle');
+    let startY = 0;
+
+    handle.addEventListener('touchstart', function(e) {
+        startY = e.touches[0].clientY;
+    });
+
+    handle.addEventListener('touchmove', function(e) {
+        if (e.touches[0].clientY - startY > 40) {
+            closeDiarySettings();
+        }
+    });
+
+    handle.addEventListener('click', function(e) {
+        e.stopPropagation();
+        closeDiarySettings();
+    });
 }
 
 function closeDiarySettings() {
@@ -419,13 +421,11 @@ function closeDiarySettings() {
 }
 
 // ========== 字体颜色预览 ==========
-let diaryPreviewColor = '#cccccc';
+let diaryPreviewColor = '#999999';
 function previewDiaryFontColor(color) {
     diaryPreviewColor = color;
     const preview = document.getElementById('diaryFontPreview');
     if (preview) preview.style.color = color;
-
-    document.querySelectorAll('.diary-color-dot').forEach(dot => dot.classList.remove('active'));
 }
 
 // ========== 字体上传 ==========
