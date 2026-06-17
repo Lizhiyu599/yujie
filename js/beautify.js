@@ -15,8 +15,14 @@ const beautifyHTML = `
     </div>
     <div id="b-wallpaper-sec" class="collapsible-section" style="display:none;">
         <div class="ios-group" style="padding:16px;">
-            <div class="beautify-box-2x4" id="b-wallpaper-preview" onclick="document.getElementById('wallpaperFileInput').click()">
-                点击选择壁纸 (9:16)
+            <div style="position:relative; display:inline-block; width:100%;">
+                <div class="beautify-box-2x4" id="b-wallpaper-preview" onclick="document.getElementById('wallpaperFileInput').click()"
+                     style="background-image:url(${localStorage.getItem('beautify_wallpaper') || ''});">
+                    ${localStorage.getItem('beautify_wallpaper') ? '' : '点击选择壁纸 (9:16)'}
+                </div>
+                <div class="wallpaper-delete-btn" id="wallpaperDeleteBtn" 
+                     style="display:${localStorage.getItem('beautify_wallpaper') ? 'flex' : 'none'};"
+                     onclick="event.stopPropagation(); confirmClearWallpaper()">×</div>
             </div>
             <input type="file" id="wallpaperFileInput" accept="image/*" style="display:none" onchange="handleWallpaperPreview(event)">
             <button class="ios-btn-black" onclick="applyWallpaperFromFile()">保存设置</button>
@@ -95,7 +101,6 @@ const beautifyHTML = `
     </div>
     <div id="b-css-sec" class="collapsible-section" style="display:none;">
         <div class="ios-group" style="padding:16px;">
-            <!-- 预览气泡 -->
             <div style="background:#f2f2f7; border-radius:16px; padding:16px; margin-bottom:16px; display:flex; flex-direction:column; gap:10px;">
                 <div style="display:flex; justify-content:flex-end;">
                     <div class="css-preview-bubble css-preview-user">咋样我的美化？</div>
@@ -124,10 +129,25 @@ const beautifyHTML = `
         <div class="ios-group" style="padding:16px;">
             <div style="font-size:12px; color:#8e8e93; margin-bottom:8px;">自定义小组件</div>
             <div style="display:flex; gap:12px; margin-bottom:12px;">
-                <div class="beautify-box-2x2" onclick="alert('选择图库图片')">2x2</div>
-                <div class="beautify-box-2x2" onclick="alert('选择图库图片')">2x2</div>
+                <div class="beautify-box-2x2 custom-widget-box" id="custom-widget-2x2-0" 
+                     onclick="document.getElementById('custom-widget-upload-0').click()">
+                    <span class="custom-widget-placeholder">2x2</span>
+                </div>
+                <input type="file" id="custom-widget-upload-0" accept="image/*" style="display:none;" 
+                       onchange="handleCustomWidgetImage(event, 0, '2x2')">
+                <div class="beautify-box-2x2 custom-widget-box" id="custom-widget-2x2-1" 
+                     onclick="document.getElementById('custom-widget-upload-1').click()">
+                    <span class="custom-widget-placeholder">2x2</span>
+                </div>
+                <input type="file" id="custom-widget-upload-1" accept="image/*" style="display:none;" 
+                       onchange="handleCustomWidgetImage(event, 1, '2x2')">
             </div>
-            <div class="beautify-box-2x4" onclick="alert('选择图库图片')">2x4</div>
+            <div class="beautify-box-2x4 custom-widget-box" id="custom-widget-2x4-0" 
+                 onclick="document.getElementById('custom-widget-upload-2x4').click()">
+                <span class="custom-widget-placeholder">2x4</span>
+            </div>
+            <input type="file" id="custom-widget-upload-2x4" accept="image/*" style="display:none;" 
+                   onchange="handleCustomWidgetImage(event, 0, '2x4')">
         </div>
     </div>
 
@@ -148,7 +168,7 @@ const beautifyHTML = `
 </div>
 `;
 
-// ===== 当前已注册的应用图标数据（供美化面板展示） =====
+// ===== 当前已注册的应用图标数据 =====
 let registeredAppIcons = [];
 
 function registerAppIconForBeautify(id, name, label) {
@@ -177,7 +197,6 @@ function renderBeautifyIcons() {
     `).join('');
 }
 
-// ===== 更换应用图标 =====
 function changeAppIcon(e, idx) {
     if (e.target.files[0]) {
         const reader = new FileReader();
@@ -198,7 +217,6 @@ function changeAppIcon(e, idx) {
     }
 }
 
-// ===== 恢复默认图标 =====
 function resetAppIcon(idx) {
     const target = document.getElementById('b-icon-img-' + idx);
     const icon = registeredAppIcons[idx];
@@ -214,7 +232,6 @@ function resetAppIcon(idx) {
     localStorage.removeItem('beautify_icon_' + idx);
 }
 
-// ===== 加载已保存的图标 =====
 function loadSavedIcons() {
     registeredAppIcons.forEach((icon, idx) => {
         const saved = localStorage.getItem('beautify_icon_' + idx);
@@ -246,6 +263,9 @@ function handleWallpaperPreview(e) {
                 preview.style.backgroundImage = `url(${ev.target.result})`;
                 preview.innerText = '';
             }
+            // 显示删除按钮
+            const delBtn = document.getElementById('wallpaperDeleteBtn');
+            if (delBtn) delBtn.style.display = 'flex';
         };
         reader.readAsDataURL(selectedWallpaperFile);
     }
@@ -263,7 +283,7 @@ function applyWallpaperFromFile() {
             desktop.style.backgroundImage = `url(${ev.target.result})`;
         }
         localStorage.setItem('beautify_wallpaper', ev.target.result);
-        alert('壁纸应用成功');
+        showToast('已更换壁纸');
     };
     reader.readAsDataURL(selectedWallpaperFile);
 }
@@ -278,13 +298,172 @@ function loadSavedWallpaper() {
     }
 }
 
-function clearWallpaper() {
+function confirmClearWallpaper() {
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.id = 'confirmClearWallpaperOverlay';
+    overlay.innerHTML = `
+        <div class="confirm-dialog">
+            <p>确认清除当前背景图？</p>
+            <div class="confirm-buttons">
+                <div class="confirm-btn-cancel" onclick="cancelClearWallpaper()">取消</div>
+                <div class="confirm-btn-delete" onclick="executeClearWallpaper()">确定</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+}
+
+function cancelClearWallpaper() {
+    const overlay = document.getElementById('confirmClearWallpaperOverlay');
+    if (overlay) overlay.remove();
+}
+
+function executeClearWallpaper() {
     const desktop = document.getElementById('desktop');
-    if (desktop) {
-        desktop.style.backgroundImage = '';
-    }
+    if (desktop) desktop.style.backgroundImage = '';
     localStorage.removeItem('beautify_wallpaper');
-    alert('壁纸已清除');
+    selectedWallpaperFile = null;
+    const preview = document.getElementById('b-wallpaper-preview');
+    if (preview) {
+        preview.style.backgroundImage = '';
+        preview.innerText = '点击选择壁纸 (9:16)';
+    }
+    const delBtn = document.getElementById('wallpaperDeleteBtn');
+    if (delBtn) delBtn.style.display = 'none';
+    const overlay = document.getElementById('confirmClearWallpaperOverlay');
+    if (overlay) overlay.remove();
+    showToast('已清除背景图');
+}
+
+// ===== 自定义小组件 =====
+let customWidgetImages = {
+    '2x2_0': localStorage.getItem('beautify_custom_widget_2x2_0') || '',
+    '2x2_1': localStorage.getItem('beautify_custom_widget_2x2_1') || '',
+    '2x4_0': localStorage.getItem('beautify_custom_widget_2x4_0') || ''
+};
+
+function handleCustomWidgetImage(e, index, size) {
+    if (e.target.files[0]) {
+        const reader = new FileReader();
+        const key = size + '_' + index;
+        reader.onload = ev => {
+            customWidgetImages[key] = ev.target.result;
+            localStorage.setItem('beautify_custom_widget_' + key, ev.target.result);
+            // 更新预览
+            const boxId = size === '2x4' ? 'custom-widget-2x4-0' : 'custom-widget-2x2-' + index;
+            const box = document.getElementById(boxId);
+            if (box) {
+                box.style.backgroundImage = `url(${ev.target.result})`;
+                const placeholder = box.querySelector('.custom-widget-placeholder');
+                if (placeholder) placeholder.style.display = 'none';
+                // 改成点击触发添加确认
+                box.onclick = () => confirmAddCustomWidget(key, size);
+            }
+        };
+        reader.readAsDataURL(e.target.files[0]);
+    }
+}
+
+function loadCustomWidgetPreviews() {
+    for (const key in customWidgetImages) {
+        if (customWidgetImages[key]) {
+            const parts = key.split('_');
+            const size = parts[0] + '_' + parts[1];
+            const index = parts[2];
+            const boxId = size === '2x4' ? 'custom-widget-2x4-0' : 'custom-widget-' + size + '-' + index;
+            const box = document.getElementById(boxId);
+            if (box) {
+                box.style.backgroundImage = `url(${customWidgetImages[key]})`;
+                const placeholder = box.querySelector('.custom-widget-placeholder');
+                if (placeholder) placeholder.style.display = 'none';
+                box.onclick = () => confirmAddCustomWidget(key, size);
+            }
+        }
+    }
+}
+
+function confirmAddCustomWidget(key, size) {
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.id = 'confirmAddCustomWidgetOverlay';
+    overlay.innerHTML = `
+        <div class="confirm-dialog">
+            <p>添加当前小组件？</p>
+            <div class="confirm-buttons">
+                <div class="confirm-btn-cancel" onclick="cancelAddCustomWidget()">取消</div>
+                <div class="confirm-btn-delete" onclick="executeAddCustomWidget('${key}', '${size}')">确定</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+}
+
+function cancelAddCustomWidget() {
+    const overlay = document.getElementById('confirmAddCustomWidgetOverlay');
+    if (overlay) overlay.remove();
+}
+
+function executeAddCustomWidget(key, size) {
+    const imageSrc = customWidgetImages[key];
+    if (!imageSrc) return;
+
+    // 存到桌面小组件数据
+    const widgets = JSON.parse(localStorage.getItem('desktop_widgets') || '[]');
+    widgets.push({
+        id: 'widget-custom-' + Date.now(),
+        type: 'custom',
+        page: 0,
+        image: imageSrc,
+        size: size
+    });
+    localStorage.setItem('desktop_widgets', JSON.stringify(widgets));
+
+    const overlay = document.getElementById('confirmAddCustomWidgetOverlay');
+    if (overlay) overlay.remove();
+    showToast('已添加');
+}
+
+// ===== 顶部提示弹窗 =====
+let toastTimer = null;
+let toastStartX = 0;
+let toastStartY = 0;
+
+function showToast(message) {
+    // 移除旧弹窗
+    const old = document.getElementById('globalToast');
+    if (old) old.remove();
+    if (toastTimer) clearTimeout(toastTimer);
+
+    const toast = document.createElement('div');
+    toast.id = 'globalToast';
+    toast.className = 'global-toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    // 滑动手势
+    toast.addEventListener('touchstart', (e) => {
+        toastStartX = e.touches[0].clientX;
+        toastStartY = e.touches[0].clientY;
+    });
+    toast.addEventListener('touchmove', (e) => {
+        const dx = e.touches[0].clientX - toastStartX;
+        const dy = e.touches[0].clientY - toastStartY;
+        if (Math.abs(dx) > 50 || Math.abs(dy) > 50) {
+            dismissToast(toast);
+        }
+    });
+
+    // 3秒后自动消失
+    toastTimer = setTimeout(() => dismissToast(toast), 3000);
+}
+
+function dismissToast(el) {
+    if (!el || el.classList.contains('toast-hiding')) return;
+    el.classList.add('toast-hiding');
+    setTimeout(() => {
+        if (el.parentNode) el.remove();
+    }, 300);
 }
 
 // ===== 字体相关 =====
@@ -393,7 +572,7 @@ function importBeautify() {
     input.click();
 }
 
-// ===== 清空美化（双重确认） =====
+// ===== 清空美化 =====
 let clearBeautifyClicks = 0;
 
 function handleClearBeautify() {
@@ -470,6 +649,7 @@ function initBeautify() {
     renderBeautifyIcons();
     loadSavedIcons();
     loadSavedWallpaper();
+    loadCustomWidgetPreviews();
 }
 
 // ===== 注册美化图标到 Dock =====
@@ -482,14 +662,9 @@ window.addEventListener('DOMContentLoaded', () => {
         renderAllModals();
     }
 
-    // 启动状态栏时钟
     startTopBarClock();
     applyTopBarVisibility();
-
-    // 加载已保存的壁纸
     loadSavedWallpaper();
-
-    // 加载已保存的自定义 CSS
     applyCustomCSS();
 
     const dockBar = document.getElementById('dockBar');
@@ -508,384 +683,5 @@ window.addEventListener('DOMContentLoaded', () => {
         openModal('beautifyModal');
     };
 
-    // ========== 小组件系统 ==========
-
-// 小组件默认数据
-const DEFAULT_WIDGETS = [
-    {
-        id: 'widget-clock-1',
-        type: 'clock',
-        page: 0, // 第1页
-        avatar: '',
-        signature: '——  ..おやすみ ..——',
-        temp: '24°',
-        weatherDesc: '上海·晴'
-    }
-];
-
-function getWidgets() {
-    const raw = localStorage.getItem('desktop_widgets');
-    return raw ? JSON.parse(raw) : DEFAULT_WIDGETS.slice();
-}
-
-function saveWidgets(widgets) {
-    localStorage.setItem('desktop_widgets', JSON.stringify(widgets));
-}
-
-// ========== 渲染小组件 ==========
-function renderWidgets() {
-    const widgets = getWidgets();
-
-    // 清除所有页面上的旧小组件
-    document.querySelectorAll('.desktop-widget').forEach(el => el.remove());
-
-    widgets.forEach(widget => {
-        const page = document.querySelectorAll('.desktop-page')[widget.page];
-        if (!page) return;
-
-        const el = document.createElement('div');
-        el.className = 'desktop-widget';
-        el.setAttribute('data-widget-id', widget.id);
-        el.setAttribute('data-widget-type', widget.type);
-        el.setAttribute('data-widget-page', widget.page);
-
-        const avatarSrc = widget.avatar || '';
-        const avatarContent = avatarSrc
-            ? `<div class="widget-avatar" style="background-image:url(${avatarSrc});" onclick="event.stopPropagation(); document.getElementById('widget-avatar-upload').click()"></div>`
-            : `<div class="widget-avatar" onclick="event.stopPropagation(); document.getElementById('widget-avatar-upload').click()">+</div>`;
-
-        el.innerHTML = `
-            <div class="widget-top-row">
-                <div class="widget-left">
-                    ${avatarContent}
-                    <div class="widget-time-block">
-                        <span class="widget-time" id="widget-time-display">00:00</span>
-                        <span class="widget-date" id="widget-date-display">1月1日 星期一</span>
-                    </div>
-                </div>
-                <div class="widget-weather-block">
-                    <span class="widget-temp">${widget.temp}</span>
-                    <div class="widget-weather-desc">${widget.weatherDesc}</div>
-                </div>
-            </div>
-            <div class="widget-divider"></div>
-            <input type="text" class="widget-signature" value="${widget.signature}" placeholder="——  ..おやすみ ..——" 
-                   onchange="updateWidgetSignature('${widget.id}', this.value)" 
-                   onclick="event.stopPropagation();">
-            <div class="widget-delete-btn" onclick="event.stopPropagation(); confirmDeleteWidget('${widget.id}')">×</div>
-        `;
-
-        // 小组件事件
-        el.addEventListener('touchstart', (e) => onWidgetTouchStart(e, el));
-        el.addEventListener('touchend', onWidgetTouchEnd);
-        el.addEventListener('touchmove', (e) => onWidgetTouchMove(e, el));
-        el.addEventListener('mousedown', (e) => onWidgetMouseDown(e, el));
-        el.addEventListener('mouseup', onWidgetMouseUp);
-        el.addEventListener('mouseleave', onWidgetMouseUp);
-
-        // 插入到页面第一位（在图标网格之前）
-        const iconsGrid = page.querySelector('.desktop-icons');
-        if (iconsGrid) {
-            page.insertBefore(el, iconsGrid);
-        } else {
-            page.appendChild(el);
-        }
-    });
-
-    updateAllWidgetClocks();
-}
-
-// ========== 更新小组件时钟 ==========
-function updateAllWidgetClocks() {
-    const now = new Date();
-    const h = now.getHours().toString().padStart(2, '0');
-    const m = now.getMinutes().toString().padStart(2, '0');
-    const month = now.getMonth() + 1;
-    const day = now.getDate();
-    const days = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
-    const dayName = days[now.getDay()];
-
-    document.querySelectorAll('.desktop-widget').forEach(el => {
-        const timeEl = el.querySelector('#widget-time-display');
-        const dateEl = el.querySelector('#widget-date-display');
-        if (timeEl) timeEl.textContent = h + ':' + m;
-        if (dateEl) dateEl.textContent = month + '月' + day + '日 ' + dayName;
-    });
-}
-
-// 每秒更新
-setInterval(updateAllWidgetClocks, 1000);
-
-// ========== 小组件签名更新 ==========
-function updateWidgetSignature(widgetId, value) {
-    const widgets = getWidgets();
-    const widget = widgets.find(w => w.id === widgetId);
-    if (widget) {
-        widget.signature = value;
-        saveWidgets(widgets);
-    }
-}
-
-// ========== 小组件长按与拖动 ==========
-let widgetLongPressTimer = null;
-let widgetLongPressStarted = false;
-let widgetDragTarget = null;
-let widgetDragStartX = 0;
-let widgetDragStartY = 0;
-let widgetStartLeft = 0;
-let widgetStartTop = 0;
-let widgetPlaceholder = null;
-let widgetClone = null;
-
-function onWidgetTouchStart(e, el) {
-    if (isEditing) return;
-    widgetDragTarget = el;
-    widgetDragStartX = e.touches[0].clientX;
-    widgetDragStartY = e.touches[0].clientY;
-    const rect = el.getBoundingClientRect();
-    widgetStartLeft = rect.left;
-    widgetStartTop = rect.top;
-    widgetLongPressStarted = false;
-    widgetDragStarted = false;
-
-    widgetLongPressTimer = setTimeout(() => {
-        widgetLongPressStarted = true;
-    }, 500);
-}
-
-function onWidgetTouchEnd(e) {
-    clearTimeout(widgetLongPressTimer);
-
-    if (widgetLongPressStarted && !widgetDragStarted) {
-        // 长按不拖动 → 进入编辑模式
-        enterWidgetEditMode(widgetDragTarget);
-    }
-
-    if (widgetDragStarted) {
-        endWidgetDrag();
-    }
-
-    widgetLongPressStarted = false;
-    widgetDragStarted = false;
-    widgetDragTarget = null;
-}
-
-let widgetDragStarted = false;
-
-function onWidgetTouchMove(e, el) {
-    if (!widgetLongPressTimer && !widgetDragStarted) return;
-
-    const dx = e.touches[0].clientX - widgetDragStartX;
-    const dy = e.touches[0].clientY - widgetDragStartY;
-
-    if (widgetLongPressStarted && !widgetDragStarted && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
-        // 开始拖动
-        widgetDragStarted = true;
-        startWidgetDrag(el, e.touches[0].clientX, e.touches[0].clientY);
-    }
-
-    if (widgetDragStarted) {
-        moveWidgetDrag(e.touches[0].clientX, e.touches[0].clientY);
-    }
-}
-
-function onWidgetMouseDown(e, el) {
-    if (isEditing) return;
-    widgetDragTarget = el;
-    const rect = el.getBoundingClientRect();
-    widgetDragStartX = e.clientX;
-    widgetDragStartY = e.clientY;
-    widgetStartLeft = rect.left;
-    widgetStartTop = rect.top;
-    widgetLongPressStarted = false;
-    widgetDragStarted = false;
-
-    widgetLongPressTimer = setTimeout(() => {
-        widgetLongPressStarted = true;
-    }, 500);
-}
-
-function onWidgetMouseUp() {
-    clearTimeout(widgetLongPressTimer);
-
-    if (widgetLongPressStarted && !widgetDragStarted && widgetDragTarget) {
-        enterWidgetEditMode(widgetDragTarget);
-    }
-
-    if (widgetDragStarted) {
-        endWidgetDrag();
-    }
-
-    widgetLongPressStarted = false;
-    widgetDragStarted = false;
-    widgetDragTarget = null;
-}
-
-// ========== 小组件拖动实现 ==========
-function startWidgetDrag(el, clientX, clientY) {
-    el.classList.add('dragging');
-    el.style.position = 'fixed';
-    el.style.zIndex = '150';
-    el.style.left = widgetStartLeft + 'px';
-    el.style.top = widgetStartTop + 'px';
-    el.style.width = el.offsetWidth + 'px';
-    el.style.margin = '0';
-    el.style.pointerEvents = 'none';
-}
-
-function moveWidgetDrag(clientX, clientY) {
-    if (!widgetDragTarget) return;
-    const dx = clientX - widgetDragStartX;
-    const dy = clientY - widgetDragStartY;
-    widgetDragTarget.style.left = (widgetStartLeft + dx) + 'px';
-    widgetDragTarget.style.top = (widgetStartTop + dy) + 'px';
-
-    // 检测是否拖到屏幕边缘 → 翻页
-    const screenWidth = window.innerWidth;
-    const pages = document.getElementById('desktopPages');
-    if (clientX > screenWidth - 30 && pages) {
-        // 拖到右边缘，翻到下一页
-        const currentScroll = pages.scrollLeft;
-        const pageWidth = pages.clientWidth;
-        const targetPage = Math.min(Math.floor(currentScroll / pageWidth) + 1, pages.children.length - 1);
-        pages.scrollTo({ left: targetPage * pageWidth, behavior: 'smooth' });
-    } else if (clientX < 30 && pages) {
-        // 拖到左边缘，翻到上一页
-        const currentScroll = pages.scrollLeft;
-        const pageWidth = pages.clientWidth;
-        const targetPage = Math.max(Math.floor(currentScroll / pageWidth) - 1, 0);
-        pages.scrollTo({ left: targetPage * pageWidth, behavior: 'smooth' });
-    }
-}
-
-function endWidgetDrag() {
-    if (!widgetDragTarget) return;
-
-    // 获取当前小组件中心点，判断落在哪个页面
-    const rect = widgetDragTarget.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const pages = document.getElementById('desktopPages');
-    const pageWidth = pages.clientWidth;
-    const scrollLeft = pages.scrollLeft;
-    const targetPage = Math.round((centerX + scrollLeft) / pageWidth);
-    const clampedPage = Math.max(0, Math.min(targetPage, pages.children.length - 1));
-
-    // 更新小组件数据
-    const widgetId = widgetDragTarget.getAttribute('data-widget-id');
-    const widgets = getWidgets();
-    const widget = widgets.find(w => w.id === widgetId);
-    if (widget) {
-        widget.page = clampedPage;
-        saveWidgets(widgets);
-    }
-
-    // 清理拖动状态
-    widgetDragTarget.classList.remove('dragging');
-    widgetDragTarget.style.position = '';
-    widgetDragTarget.style.zIndex = '';
-    widgetDragTarget.style.left = '';
-    widgetDragTarget.style.top = '';
-    widgetDragTarget.style.width = '';
-    widgetDragTarget.style.margin = '';
-    widgetDragTarget.style.pointerEvents = '';
-
-    // 重新渲染
-    renderWidgets();
-}
-
-// ========== 小组件编辑模式 ==========
-function enterWidgetEditMode(el) {
-    if (isEditing) return;
-    // 先退出图标编辑
-    exitEditMode();
-    el.classList.add('editing');
-}
-
-// 点击桌面其他地方退出小组件编辑
-document.addEventListener('touchstart', (e) => {
-    if (!e.target.closest('.desktop-widget') && !e.target.closest('.confirm-dialog')) {
-        document.querySelectorAll('.desktop-widget.editing').forEach(el => {
-            el.classList.remove('editing');
-        });
-    }
-});
-
-// ========== 确认删除小组件弹窗 ==========
-let pendingDeleteWidgetId = null;
-
-function confirmDeleteWidget(widgetId) {
-    pendingDeleteWidgetId = widgetId;
-
-    const overlay = document.createElement('div');
-    overlay.className = 'confirm-overlay';
-    overlay.id = 'confirmDeleteOverlay';
-    overlay.innerHTML = `
-        <div class="confirm-dialog">
-            <p>确认删除当前小组件？</p>
-            <div class="confirm-buttons">
-                <div class="confirm-btn-cancel" onclick="cancelDeleteWidget()">取消</div>
-                <div class="confirm-btn-delete" onclick="executeDeleteWidget()">确定</div>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(overlay);
-}
-
-function cancelDeleteWidget() {
-    pendingDeleteWidgetId = null;
-    const overlay = document.getElementById('confirmDeleteOverlay');
-    if (overlay) overlay.remove();
-}
-
-function executeDeleteWidget() {
-    if (!pendingDeleteWidgetId) return;
-    let widgets = getWidgets();
-    widgets = widgets.filter(w => w.id !== pendingDeleteWidgetId);
-    saveWidgets(widgets);
-    pendingDeleteWidgetId = null;
-    const overlay = document.getElementById('confirmDeleteOverlay');
-    if (overlay) overlay.remove();
-    renderWidgets();
-}
-
-// ========== 小组件头像上传 ==========
-function setupWidgetAvatarUpload() {
-    // 创建全局隐藏的文件上传input
-    let input = document.getElementById('widget-avatar-upload');
-    if (!input) {
-        input = document.createElement('input');
-        input.type = 'file';
-        input.id = 'widget-avatar-upload';
-        input.accept = 'image/*';
-        input.style.display = 'none';
-        input.onchange = handleWidgetAvatarChange;
-        document.body.appendChild(input);
-    }
-}
-
-function handleWidgetAvatarChange(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-        const result = ev.target.result;
-        const widgets = getWidgets();
-        // 更新第一个时钟小组件的头像
-        const clockWidget = widgets.find(w => w.type === 'clock');
-        if (clockWidget) {
-            clockWidget.avatar = result;
-            saveWidgets(widgets);
-            renderWidgets();
-        }
-    };
-    reader.readAsDataURL(file);
-}
-
-// ========== 初始化小组件 ==========
-window.addEventListener('DOMContentLoaded', () => {
-    setupWidgetAvatarUpload();
-    renderWidgets();
-});
-    
     dockBar.appendChild(beautifyItem);
 });
