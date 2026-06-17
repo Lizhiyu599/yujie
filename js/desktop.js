@@ -371,7 +371,13 @@ function renderWidgets() {
             el.style.webkitBackdropFilter = 'none';
             el.style.border = 'none';
             el.style.boxShadow = 'none';
-            el.style.minHeight = widget.size === '2x2' ? '120px' : '160px';
+            if (widget.size === '2x2') {
+                el.style.maxWidth = 'calc(50% - 10px)';
+                el.style.minHeight = '120px';
+            } else {
+                el.style.maxWidth = '100%';
+                el.style.minHeight = '160px';
+            }
             el.innerHTML = `
                 <div style="width:100%; height:100%; min-height:${widget.size === '2x2' ? '120px' : '160px'}; background-image:url(${widget.image}); background-size:cover; background-position:center; border-radius:18px;"></div>
                 <div class="widget-delete-btn" onclick="event.stopPropagation(); confirmDeleteWidget('${widget.id}')">×</div>
