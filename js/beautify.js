@@ -121,7 +121,7 @@ const beautifyHTML = `
     </div>
 
     <!-- 小组件 -->
-    <div class="list-header" onclick="toggleSection('b-widget-sec', this); setTimeout(function(){ loadCustomWidgetPreviews(); }, 100);">
+    <div class="list-header" onclick="toggleSection('b-widget-sec', this); setTimeout(function(){ loadCustomWidgetPreviews(); }, 300);">
         <span>小组件</span>
         <span class="toggle-arrow" style="color:#8e8e93;">›</span>
     </div>
@@ -129,7 +129,7 @@ const beautifyHTML = `
         <div class="ios-group" style="padding:16px;">
             <div style="font-size:12px; color:#8e8e93; margin-bottom:8px;">自定义小组件</div>
             <div style="display:flex; gap:12px; margin-bottom:12px;">
-                <div style="position:relative;">
+                <div style="position:relative; flex:1;">
                     <div class="beautify-box-2x2 custom-widget-box" id="custom-widget-2x2-0" 
                          style="background-size:cover; background-position:center; background-repeat:no-repeat;"
                          onclick="handleCustomWidgetClick('2x2_0', '2x2')">
@@ -140,7 +140,7 @@ const beautifyHTML = `
                 </div>
                 <input type="file" id="custom-widget-upload-2x2_0" accept="image/*" style="display:none;" 
                        onchange="handleCustomWidgetImage(event, '2x2_0', '2x2')">
-                <div style="position:relative;">
+                <div style="position:relative; flex:1;">
                     <div class="beautify-box-2x2 custom-widget-box" id="custom-widget-2x2-1" 
                          style="background-size:cover; background-position:center; background-repeat:no-repeat;"
                          onclick="handleCustomWidgetClick('2x2_1', '2x2')">
@@ -613,6 +613,7 @@ window.addEventListener('DOMContentLoaded', () => {
     beautifyItem.onclick = () => {
         initBeautify();
         openModal('beautifyModal');
+        setTimeout(() => { loadCustomWidgetPreviews(); }, 500);
     };
     dockBar.appendChild(beautifyItem);
 });
