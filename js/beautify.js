@@ -17,7 +17,7 @@ const beautifyHTML = `
         <div class="ios-group" style="padding:16px;">
             <div style="position:relative; display:inline-block; width:100%;">
                 <div class="beautify-box-2x4" id="b-wallpaper-preview" onclick="document.getElementById('wallpaperFileInput').click()"
-                     style="background-image:url(${localStorage.getItem('beautify_wallpaper') || ''});">
+                     style="background-image:url(${localStorage.getItem('beautify_wallpaper') || ''}); background-size:cover; background-position:center; background-repeat:no-repeat;">
                     ${localStorage.getItem('beautify_wallpaper') ? '' : '点击选择壁纸 (9:16)'}
                 </div>
                 <div class="wallpaper-delete-btn" id="wallpaperDeleteBtn" 
@@ -130,27 +130,27 @@ const beautifyHTML = `
             <div style="font-size:12px; color:#8e8e93; margin-bottom:8px;">自定义小组件</div>
             <div style="display:flex; gap:12px; margin-bottom:12px;">
                 <div class="beautify-box-2x2 custom-widget-box" id="custom-widget-2x2-0" 
-                     style="background-size:cover; background-position:center;"
-                     onclick="document.getElementById('custom-widget-upload-0').click()">
+                     style="background-size:cover; background-position:center; background-repeat:no-repeat;"
+                     onclick="handleCustomWidgetClick('2x2_0', '2x2')">
                     <span class="custom-widget-placeholder">2x2</span>
                 </div>
-                <input type="file" id="custom-widget-upload-0" accept="image/*" style="display:none;" 
-                       onchange="handleCustomWidgetImage(event, 0, '2x2')">
+                <input type="file" id="custom-widget-upload-2x2_0" accept="image/*" style="display:none;" 
+                       onchange="handleCustomWidgetImage(event, '2x2_0', '2x2')">
                 <div class="beautify-box-2x2 custom-widget-box" id="custom-widget-2x2-1" 
-                     style="background-size:cover; background-position:center;"
-                     onclick="document.getElementById('custom-widget-upload-1').click()">
+                     style="background-size:cover; background-position:center; background-repeat:no-repeat;"
+                     onclick="handleCustomWidgetClick('2x2_1', '2x2')">
                     <span class="custom-widget-placeholder">2x2</span>
                 </div>
-                <input type="file" id="custom-widget-upload-1" accept="image/*" style="display:none;" 
-                       onchange="handleCustomWidgetImage(event, 1, '2x2')">
+                <input type="file" id="custom-widget-upload-2x2_1" accept="image/*" style="display:none;" 
+                       onchange="handleCustomWidgetImage(event, '2x2_1', '2x2')">
             </div>
             <div class="beautify-box-2x4 custom-widget-box" id="custom-widget-2x4-0" 
-                 style="background-size:cover; background-position:center;"
-                 onclick="document.getElementById('custom-widget-upload-2x4').click()">
+                 style="background-size:cover; background-position:center; background-repeat:no-repeat;"
+                 onclick="handleCustomWidgetClick('2x4_0', '2x4')">
                 <span class="custom-widget-placeholder">2x4</span>
             </div>
-            <input type="file" id="custom-widget-upload-2x4" accept="image/*" style="display:none;" 
-                   onchange="handleCustomWidgetImage(event, 0, '2x4')">
+            <input type="file" id="custom-widget-upload-2x4_0" accept="image/*" style="display:none;" 
+                   onchange="handleCustomWidgetImage(event, '2x4_0', '2x4')">
         </div>
     </div>
 
@@ -264,6 +264,9 @@ function handleWallpaperPreview(e) {
             const preview = document.getElementById('b-wallpaper-preview');
             if (preview) {
                 preview.style.backgroundImage = `url(${ev.target.result})`;
+                preview.style.backgroundSize = 'cover';
+                preview.style.backgroundPosition = 'center';
+                preview.style.backgroundRepeat = 'no-repeat';
                 preview.innerText = '';
             }
             const delBtn = document.getElementById('wallpaperDeleteBtn');
@@ -280,11 +283,12 @@ function applyWallpaperFromFile() {
     }
     const reader = new FileReader();
     reader.onload = ev => {
+        const result = ev.target.result;
         const desktop = document.getElementById('desktop');
         if (desktop) {
-            desktop.style.backgroundImage = `url(${ev.target.result})`;
+            desktop.style.backgroundImage = `url(${result})`;
         }
-        localStorage.setItem('beautify_wallpaper', ev.target.result);
+        localStorage.setItem('beautify_wallpaper', result);
         showToast('已更换壁纸');
     };
     reader.readAsDataURL(selectedWallpaperFile);
@@ -345,26 +349,40 @@ let customWidgetImages = {
     '2x4_0': localStorage.getItem('beautify_custom_widget_2x4_0') || ''
 };
 
-function handleCustomWidgetImage(e, index, size) {
+function handleCustomWidgetClick(key, size) {
+    if (customWidgetImages[key]) {
+        confirmAddCustomWidget(key, size);
+    } else {
+        const uploadId = 'custom-widget-upload-' + key;
+        const uploadEl = document.getElementById(uploadId);
+        if (uploadEl) uploadEl.click();
+    }
+}
+
+function handleCustomWidgetImage(e, key, size) {
     if (e.target.files[0]) {
         const reader = new FileReader();
-        const key = size + '_' + index;
         reader.onload = ev => {
             customWidgetImages[key] = ev.target.result;
             localStorage.setItem('beautify_custom_widget_' + key, ev.target.result);
-            const boxId = size === '2x4' ? 'custom-widget-2x4-0' : 'custom-widget-2x2-' + index;
-            const box = document.getElementById(boxId);
-            if (box) {
-                box.style.backgroundImage = `url(${ev.target.result})`;
-                box.style.backgroundSize = 'cover';
-                box.style.backgroundPosition = 'center';
-                const placeholder = box.querySelector('.custom-widget-placeholder');
-                if (placeholder) placeholder.style.display = 'none';
-                box.onclick = () => confirmAddCustomWidget(key, size);
-                showToast('图片已就绪，点击框可添加到桌面');
-            }
+            updateCustomWidgetPreview(key, size);
+            showToast('图片已就绪，点击框可添加到桌面');
         };
         reader.readAsDataURL(e.target.files[0]);
+    }
+}
+
+function updateCustomWidgetPreview(key, size) {
+    const parts = key.split('_');
+    const boxId = 'custom-widget-' + parts[0] + '-' + parts[1] + '-' + parts[2];
+    const box = document.getElementById(boxId);
+    if (box) {
+        box.style.backgroundImage = `url(${customWidgetImages[key]})`;
+        box.style.backgroundSize = 'cover';
+        box.style.backgroundPosition = 'center';
+        box.style.backgroundRepeat = 'no-repeat';
+        const placeholder = box.querySelector('.custom-widget-placeholder');
+        if (placeholder) placeholder.style.display = 'none';
     }
 }
 
@@ -373,17 +391,7 @@ function loadCustomWidgetPreviews() {
         if (customWidgetImages[key]) {
             const parts = key.split('_');
             const size = parts[0] + '_' + parts[1];
-            const index = parts[2];
-            const boxId = size === '2x4' ? 'custom-widget-2x4-0' : 'custom-widget-' + size + '-' + index;
-            const box = document.getElementById(boxId);
-            if (box) {
-                box.style.backgroundImage = `url(${customWidgetImages[key]})`;
-                box.style.backgroundSize = 'cover';
-                box.style.backgroundPosition = 'center';
-                const placeholder = box.querySelector('.custom-widget-placeholder');
-                if (placeholder) placeholder.style.display = 'none';
-                box.onclick = () => confirmAddCustomWidget(key, size);
-            }
+            updateCustomWidgetPreview(key, size);
         }
     }
 }
