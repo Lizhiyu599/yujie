@@ -755,7 +755,16 @@ window.addEventListener('DOMContentLoaded', () => {
     setupDesktopLongPress();
     setupWidgetAvatarUpload();
     renderWidgets();
-    addDesktopIcon({ id: 'diary', name: '日记', icon: '记', action: 'openDiary' });
+
+    // 注册日记图标到 Dock
+    const dockBar = document.getElementById('dockBar');
+    if (dockBar) {
+        const diaryItem = document.createElement('div');
+        diaryItem.className = 'dock-item';
+        diaryItem.innerHTML = '<div class="dock-icon"><div class="dock-icon-img">记</div></div><div class="dock-label">日记</div>';
+        diaryItem.onclick = () => { openDiary(); };
+        dockBar.appendChild(diaryItem);
+    }
 });
 
 // ========== 暴露到全局，供 beautify.js 调用 ==========
