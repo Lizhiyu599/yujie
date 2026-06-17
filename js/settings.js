@@ -750,6 +750,7 @@ const settingsHTML = `
                 <input type="text" id="img-model" class="ios-input" placeholder="手动输入或拉取" style="flex:1;">
                 <button class="ios-btn-white" style="width:auto; margin:0; padding:12px 16px;" onclick="fetchModels('img-base-url', 'img-api-key', 'img-model')">拉取</button>
             </div>
+            
             <button class="ios-btn-black" onclick="saveImageConfig()">保存配置</button>
             <button class="ios-btn-white" onclick="testImage()">连接测试</button>
         </div>
@@ -774,5 +775,91 @@ const settingsHTML = `
             <div style="display:flex; gap:8px; align-items:center;">
                 <input type="text" id="weather-model" class="ios-input" placeholder="手动输入或拉取" style="flex:1;">
                 <button class="ios-btn-white" style="width:auto; margin:0; padding:12px 16px;" onclick="fetchModels('weather-base-url', 'weather-api-key', 'weather-model')">拉取</button>
-            </div>
-            <button class="ios-btn-black" onclick="saveWeatherConfig()">保存配置</b
+
+                        <button class="ios-btn-black" onclick="saveWeatherConfig()">保存配置</button>
+            <button class="ios-btn-white" onclick="testWeather()">连接测试</button>
+        </div>
+    </div>
+
+    <div class="list-header danger-zone-header" onclick="toggleSection('danger-section', this)">
+        <span>危险区</span> 
+        <span class="toggle-arrow" style="color:#8e8e93;">›</span>
+    </div>
+    <div id="danger-section" class="collapsible-section" style="display:none;">
+        <div class="ios-group" style="padding:16px; background:#fff0f0; border:1px solid #ffd6d6;">
+            <button class="ios-btn-white" style="margin-top:0;" onclick="exportData()">导出数据</button>
+            <button class="ios-btn-black" onclick="importData()">导入数据</button>
+            <button class="ios-btn-white" id="clearDataBtn" onclick="handleClearData()" style="border-color:#ff3b30; color:#ff3b30;">清空所有数据</button>
+        </div>
+    </div>
+</div>
+`;
+
+// ===== 初始化设置面板 =====
+function initSettings() {
+    migrateOldConfig();
+    renderDeviceList();
+    setTimeout(() => {
+        const voiceGroupId = localStorage.getItem('voice_group_id');
+        const voiceApiKey = localStorage.getItem('voice_api_key');
+        const voiceVoiceId = localStorage.getItem('voice_voice_id');
+        const vGroup = document.getElementById('voice-group-id');
+        const vKey = document.getElementById('voice-api-key');
+        const vVoice = document.getElementById('voice-voice-id');
+        if (vGroup && voiceGroupId) vGroup.value = voiceGroupId;
+        if (vKey && voiceApiKey) vKey.value = voiceApiKey;
+        if (vVoice && voiceVoiceId) vVoice.value = voiceVoiceId;
+        const imgBaseUrl = localStorage.getItem('image_base_url');
+        const imgApiKey = localStorage.getItem('image_api_key');
+        const imgModel = localStorage.getItem('image_model');
+        const iBase = document.getElementById('img-base-url');
+        const iKey = document.getElementById('img-api-key');
+        const iModel = document.getElementById('img-model');
+        if (iBase && imgBaseUrl) iBase.value = imgBaseUrl;
+        if (iKey && imgApiKey) iKey.value = imgApiKey;
+        if (iModel && imgModel) iModel.value = imgModel;
+        const weatherBaseUrl = localStorage.getItem('weather_base_url');
+        const weatherApiKey = localStorage.getItem('weather_api_key');
+        const weatherCity = localStorage.getItem('weather_city');
+        const weatherStoryCity = localStorage.getItem('weather_story_city');
+        const wBase = document.getElementById('weather-base-url');
+        const wKey = document.getElementById('weather-api-key');
+        const wCity = document.getElementById('weather-city');
+        const wStory = document.getElementById('weather-story-city');
+        if (wBase && weatherBaseUrl) wBase.value = weatherBaseUrl;
+        if (wKey && weatherApiKey) wKey.value = weatherApiKey;
+        if (wCity && weatherCity) wCity.value = weatherCity;
+        if (wStory && weatherStoryCity) wStory.value = weatherStoryCity;
+    }, 200);
+}
+
+// ===== 注册设置图标到 Dock（插入到最左侧第一位） =====
+window.addEventListener('DOMContentLoaded', () => {
+    if (typeof registerModal === 'function') {
+        registerModal('settingsModal', '设置', settingsHTML);
+    }
+
+    if (typeof renderAllModals === 'function') {
+        renderAllModals();
+    }
+
+    initSettings();
+
+    const dockBar = document.getElementById('dockBar');
+    if (!dockBar) return;
+
+    const settingItem = document.createElement('div');
+    settingItem.className = 'dock-item';
+    settingItem.innerHTML = `
+        <div class="dock-icon">
+            <div class="dock-icon-img">设</div>
+        </div>
+        <div class="dock-label">设置</div>
+    `;
+    settingItem.onclick = () => {
+        renderDeviceList();
+        openModal('settingsModal');
+    };
+
+    dockBar.prepend(settingItem);
+});
