@@ -163,7 +163,7 @@ function setupDesktopLongPress() {
                 if (isEditing) return;
                 showAddButton();
             }, 500);
-        });
+        }, { passive: true });
 
         desktopPage.addEventListener('touchend', () => {
             clearTimeout(longPressTimer);
@@ -173,10 +173,11 @@ function setupDesktopLongPress() {
             if (!longPressTimer) return;
             const dx = e.touches[0].clientX - touchStartX;
             const dy = e.touches[0].clientY - touchStartY;
-            if (Math.abs(dx) > 15 || Math.abs(dy) > 15) {
+            // 阈值提高到25px，防止手指自然微颤误取消长按
+            if (Math.abs(dx) > 25 || Math.abs(dy) > 25) {
                 clearTimeout(longPressTimer);
             }
-        });
+        }, { passive: true });
     });
 }
 
