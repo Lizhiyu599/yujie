@@ -674,3 +674,36 @@ function importBeautify() {
                 setTimeout(() => location.reload(), 500);
             } catch (err) { alert('导入失败：文件格式不正确。'); }
         };
+        reader.readAsText(file);
+    };
+    input.click();
+}
+
+// ===== 清空美化 =====
+let clearBeautifyClicks = 0;
+function handleClearBeautify() {
+    const btn = document.getElementById('clearBeautifyBtn');
+    if (clearBeautifyClicks === 0) {
+        clearBeautifyClicks++;
+        btn.innerText = "确认清空美化？(再次点击)"; btn.style.backgroundColor = "#ff3b30"; btn.style.color = "#fff";
+        setTimeout(() => { if (clearBeautifyClicks === 1) { clearBeautifyClicks = 0; btn.innerText = "清空所有美化"; btn.style.backgroundColor = "#fff"; btn.style.color = "#ff3b30"; } }, 3000);
+    } else {
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key.startsWith('beautify_')) keys.push(key); }
+        keys.forEach(k => localStorage.removeItem(k));
+        const desktop = document.getElementById('desktop'); if (desktop) desktop.style.backgroundImage = '';
+        registeredAppIcons.forEach((_, idx) => resetAppIcon(idx));
+        clearBeautifyClicks = 0; btn.innerText = "清空所有美化"; btn.style.backgroundColor = "#fff"; btn.style.color = "#ff3b30";
+        alert("所有美化已清空。");
+    }
+}
+
+// ===== 顶部状态栏时钟 =====
+let topBarClockInterval = null;
+function updateTopBarClock() {
+    const el = document.getElementById('topStatusBar'); if (!el) return;
+    const now = new Date(); let h = now.getHours(); const m = now.getMinutes().toString().padStart(2, '0');
+    if (localStorage.getItem('beautify_12hr') === 'true') h = h % 12 || 12;
+    el.textContent = h.toString().padStart(2, '0') + ':' + m;
+}
+function startTopBarClock() { if (to
