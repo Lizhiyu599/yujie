@@ -756,3 +756,8 @@ window.addEventListener('DOMContentLoaded', () => {
     setupWidgetAvatarUpload();
     renderWidgets();
 });
+
+// ========== 暴露到全局，供 beautify.js 调用 ==========
+window.getWidgets = getWidgets;
+window.saveWidgets = saveWidgets;
+window.renderWidgets = renderWidgets;
