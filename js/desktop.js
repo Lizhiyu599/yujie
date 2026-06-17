@@ -241,7 +241,6 @@ function openHalfPanel() {
                 <span class="toggle-arrow">&gt;</span>
             </div>
             <div id="widget-2x4" class="collapsible-section" style="display:none;">
-                <!-- 时钟小组件预览 -->
                 <div class="widget-preview-card" data-widget-type="clock" onclick="confirmAddWidget('clock')">
                     <div class="widget-preview-inner">
                         <div class="preview-top-row">
@@ -364,32 +363,44 @@ function renderWidgets() {
         el.setAttribute('data-widget-type', widget.type);
         el.setAttribute('data-widget-page', widget.page);
 
-        const avatarSrc = widget.avatar || '';
-        const avatarContent = avatarSrc
-            ? `<div class="widget-avatar" style="background-image:url(${avatarSrc});" onclick="event.stopPropagation(); document.getElementById('widget-avatar-upload').click()"></div>`
-            : `<div class="widget-avatar" onclick="event.stopPropagation(); document.getElementById('widget-avatar-upload').click()">+</div>`;
+        if (widget.type === 'custom') {
+            // 自定义图片小组件
+            el.style.padding = '0';
+            el.style.overflow = 'hidden';
+            el.style.minHeight = widget.size === '2x2' ? '120px' : '160px';
+            el.innerHTML = `
+                <div style="width:100%; height:100%; min-height:${widget.size === '2x2' ? '120px' : '160px'}; background-image:url(${widget.image}); background-size:cover; background-position:center; border-radius:18px;"></div>
+                <div class="widget-delete-btn" onclick="event.stopPropagation(); confirmDeleteWidget('${widget.id}')">×</div>
+            `;
+        } else {
+            // 时钟小组件
+            const avatarSrc = widget.avatar || '';
+            const avatarContent = avatarSrc
+                ? `<div class="widget-avatar" style="background-image:url(${avatarSrc});" onclick="event.stopPropagation(); document.getElementById('widget-avatar-upload').click()"></div>`
+                : `<div class="widget-avatar" onclick="event.stopPropagation(); document.getElementById('widget-avatar-upload').click()">+</div>`;
 
-        el.innerHTML = `
-            <div class="widget-top-row">
-                <div class="widget-left">
-                    ${avatarContent}
-                    <div class="widget-time-block">
-                        <span class="widget-time widget-time-display">00:00</span>
-                        <span class="widget-date widget-date-display">1月1日 星期一</span>
+            el.innerHTML = `
+                <div class="widget-top-row">
+                    <div class="widget-left">
+                        ${avatarContent}
+                        <div class="widget-time-block">
+                            <span class="widget-time widget-time-display">00:00</span>
+                            <span class="widget-date widget-date-display">1月1日 星期一</span>
+                        </div>
+                    </div>
+                    <div class="widget-weather-block">
+                        <span class="widget-temp">${widget.temp}</span>
+                        <div class="widget-weather-desc">${widget.weatherDesc}</div>
                     </div>
                 </div>
-                <div class="widget-weather-block">
-                    <span class="widget-temp">${widget.temp}</span>
-                    <div class="widget-weather-desc">${widget.weatherDesc}</div>
-                </div>
-            </div>
-            <div class="widget-divider"></div>
-            <span class="widget-signature" contenteditable="true" 
-                  onblur="updateWidgetSignature('${widget.id}', this.innerText)" 
-                  onclick="event.stopPropagation();"
-                  onfocus="if(this.innerText==='——  ..おやすみ ..——'){this.innerText=''}">${widget.signature}</span>
-            <div class="widget-delete-btn" onclick="event.stopPropagation(); confirmDeleteWidget('${widget.id}')">×</div>
-        `;
+                <div class="widget-divider"></div>
+                <span class="widget-signature" contenteditable="true" 
+                      onblur="updateWidgetSignature('${widget.id}', this.innerText)" 
+                      onclick="event.stopPropagation();"
+                      onfocus="if(this.innerText==='——  ..おやすみ ..——'){this.innerText=''}">${widget.signature}</span>
+                <div class="widget-delete-btn" onclick="event.stopPropagation(); confirmDeleteWidget('${widget.id}')">×</div>
+            `;
+        }
 
         el.addEventListener('touchstart', (e) => onWidgetTouchStart(e, el));
         el.addEventListener('touchend', onWidgetTouchEnd);
