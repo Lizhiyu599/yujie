@@ -343,14 +343,17 @@ function executeClearWallpaper() {
 }
 
 // ===== 自定义小组件 =====
-let customWidgetImages = {
-    '2x2_0': localStorage.getItem('beautify_custom_widget_2x2_0') || '',
-    '2x2_1': localStorage.getItem('beautify_custom_widget_2x2_1') || '',
-    '2x4_0': localStorage.getItem('beautify_custom_widget_2x4_0') || ''
-};
+function getCustomWidgetImages() {
+    return {
+        '2x2_0': localStorage.getItem('beautify_custom_widget_2x2_0') || '',
+        '2x2_1': localStorage.getItem('beautify_custom_widget_2x2_1') || '',
+        '2x4_0': localStorage.getItem('beautify_custom_widget_2x4_0') || ''
+    };
+}
 
 function handleCustomWidgetClick(key, size) {
-    if (customWidgetImages[key]) {
+    const images = getCustomWidgetImages();
+    if (images[key]) {
         confirmAddCustomWidget(key, size);
     } else {
         const uploadEl = document.getElementById('custom-widget-upload-' + key);
@@ -359,10 +362,9 @@ function handleCustomWidgetClick(key, size) {
 }
 
 function handleCustomWidgetImage(e, key, size) {
-    if (e.target.files[0]) {
+    if (e.target.files && e.target.files[0]) {
         const reader = new FileReader();
-        reader.onload = ev => {
-            customWidgetImages[key] = ev.target.result;
+        reader.onload = function(ev) {
             localStorage.setItem('beautify_custom_widget_' + key, ev.target.result);
             updateCustomWidgetPreview(key);
             showToast('图片已就绪，点击框可添加到桌面');
@@ -375,50 +377,49 @@ function updateCustomWidgetPreview(key) {
     const parts = key.split('_');
     const boxId = 'custom-widget-' + parts[0] + '-' + parts[1];
     const box = document.getElementById(boxId);
-    if (box && customWidgetImages[key]) {
-        box.style.backgroundImage = `url(${customWidgetImages[key]})`;
+    const src = localStorage.getItem('beautify_custom_widget_' + key);
+    if (box && src) {
+        box.style.backgroundImage = 'url(' + src + ')';
         box.style.backgroundSize = 'cover';
         box.style.backgroundPosition = 'center';
         box.style.backgroundRepeat = 'no-repeat';
-        const placeholder = box.querySelector('.custom-widget-placeholder');
+        var placeholder = box.querySelector('.custom-widget-placeholder');
         if (placeholder) placeholder.style.display = 'none';
     }
 }
 
 function loadCustomWidgetPreviews() {
-    for (const key in customWidgetImages) {
-        if (customWidgetImages[key]) {
-            updateCustomWidgetPreview(key);
-        }
+    var keys = ['2x2_0', '2x2_1', '2x4_0'];
+    for (var i = 0; i < keys.length; i++) {
+        updateCustomWidgetPreview(keys[i]);
     }
 }
 
 function confirmAddCustomWidget(key, size) {
-    const overlay = document.createElement('div');
+    var overlay = document.createElement('div');
     overlay.className = 'confirm-overlay';
     overlay.id = 'confirmAddCustomWidgetOverlay';
-    overlay.innerHTML = `
-        <div class="confirm-dialog">
-            <p>添加当前小组件？</p>
-            <div class="confirm-buttons">
-                <div class="confirm-btn-cancel" onclick="cancelAddCustomWidget()">取消</div>
-                <div class="confirm-btn-delete" onclick="executeAddCustomWidget('${key}', '${size}')">确定</div>
-            </div>
-        </div>
-    `;
+    overlay.innerHTML =
+        '<div class="confirm-dialog">' +
+        '<p>添加当前小组件？</p>' +
+        '<div class="confirm-buttons">' +
+        '<div class="confirm-btn-cancel" onclick="cancelAddCustomWidget()">取消</div>' +
+        '<div class="confirm-btn-delete" onclick="executeAddCustomWidget(\'' + key + '\', \'' + size + '\')">确定</div>' +
+        '</div>' +
+        '</div>';
     document.body.appendChild(overlay);
 }
 
 function cancelAddCustomWidget() {
-    const overlay = document.getElementById('confirmAddCustomWidgetOverlay');
+    var overlay = document.getElementById('confirmAddCustomWidgetOverlay');
     if (overlay) overlay.remove();
 }
 
 function executeAddCustomWidget(key, size) {
-    const imageSrc = customWidgetImages[key];
+    var imageSrc = localStorage.getItem('beautify_custom_widget_' + key);
     if (!imageSrc) return;
 
-    const widgets = JSON.parse(localStorage.getItem('desktop_widgets') || '[]');
+    var widgets = typeof getWidgets === 'function' ? getWidgets() : [];
     widgets.push({
         id: 'widget-custom-' + Date.now(),
         type: 'custom',
@@ -426,9 +427,11 @@ function executeAddCustomWidget(key, size) {
         image: imageSrc,
         size: size
     });
-    localStorage.setItem('desktop_widgets', JSON.stringify(widgets));
+    if (typeof saveWidgets === 'function') {
+        saveWidgets(widgets);
+    }
 
-    const overlay = document.getElementById('confirmAddCustomWidgetOverlay');
+    var overlay = document.getElementById('confirmAddCustomWidgetOverlay');
     if (overlay) overlay.remove();
     showToast('已添加');
 
@@ -659,7 +662,6 @@ function initBeautify() {
     renderBeautifyIcons();
     loadSavedIcons();
     loadSavedWallpaper();
-    loadCustomWidgetPreviews();
 }
 
 // ===== 注册美化图标到 Dock =====
@@ -691,6 +693,10 @@ window.addEventListener('DOMContentLoaded', () => {
     beautifyItem.onclick = () => {
         initBeautify();
         openModal('beautifyModal');
+        // DOM 渲染完成后再加载预览
+        setTimeout(() => {
+            loadCustomWidgetPreviews();
+        }, 200);
     };
 
     dockBar.appendChild(beautifyItem);
