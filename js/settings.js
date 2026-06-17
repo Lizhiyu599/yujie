@@ -573,4 +573,5 @@ window.addEventListener('DOMContentLoaded', () => {
     };
 
     // 将设置图标插入到 Dock 最左侧第一位
-dockBar.appendChild(settingItem);
+    dockBar.prepend(settingItem);
+});
