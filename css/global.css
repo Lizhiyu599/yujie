@@ -97,11 +97,11 @@ body, html {
     font-size: 26px;
     border-radius: 22px;
     transition: transform 0.2s;
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.9);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     color: #1d1d1f;
     background-size: cover;
     background-position: center;
@@ -148,10 +148,10 @@ body, html {
     width: 56px;
     height: 56px;
     border-radius: 22px;
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -195,11 +195,11 @@ body, html {
     justify-content: center;
     font-size: 24px;
     border-radius: 18px;
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.9);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     color: #1d1d1f;
 }
 
@@ -317,17 +317,17 @@ body, html {
     z-index: 5;
 }
 
-/* ===== 添加小组件按钮（毛玻璃正方形"+", 22px模糊） ===== */
+/* ===== 添加小组件按钮（毛玻璃正方形"+"，透壁纸颜色，22px模糊） ===== */
 .add-widget-btn {
     position: absolute;
     top: 20px;
     left: 20px;
     width: 44px;
     height: 44px;
-    background: rgba(255, 255, 255, 0.68);
+    background: rgba(255, 255, 255, 0.4);
     backdrop-filter: blur(22px);
     -webkit-backdrop-filter: blur(22px);
-    border: 1px solid rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.6);
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -336,11 +336,11 @@ body, html {
     color: #4a4a4f;
     cursor: pointer;
     z-index: 100;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     user-select: none;
 }
 
-/* ===== 半屏面板（毛玻璃, 22px模糊, 占半屏） ===== */
+/* ===== 半屏面板（毛玻璃，透壁纸颜色，22px模糊） ===== */
 .half-panel-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -354,10 +354,10 @@ body, html {
     width: 100%;
     height: 50%;
     max-height: 50%;
-    background: rgba(255,255,255,0.72);
+    background: rgba(255,255,255,0.55);
     backdrop-filter: blur(22px);
     -webkit-backdrop-filter: blur(22px);
-    border: 1px solid rgba(255,255,255,0.8);
+    border: 1px solid rgba(255,255,255,0.6);
     border-radius: 24px 24px 0 0;
     overflow-y: auto;
     padding: 8px 16px 30px;
@@ -384,8 +384,9 @@ body, html {
     align-items: center;
     padding: 14px 16px;
     margin: 8px 0;
-    background: rgba(255,255,255,0.6);
+    background: rgba(255,255,255,0.5);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border-radius: 14px;
     cursor: pointer;
 }
