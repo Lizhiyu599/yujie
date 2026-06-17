@@ -130,12 +130,14 @@ const beautifyHTML = `
             <div style="font-size:12px; color:#8e8e93; margin-bottom:8px;">自定义小组件</div>
             <div style="display:flex; gap:12px; margin-bottom:12px;">
                 <div class="beautify-box-2x2 custom-widget-box" id="custom-widget-2x2-0" 
+                     style="background-size:cover; background-position:center;"
                      onclick="document.getElementById('custom-widget-upload-0').click()">
                     <span class="custom-widget-placeholder">2x2</span>
                 </div>
                 <input type="file" id="custom-widget-upload-0" accept="image/*" style="display:none;" 
                        onchange="handleCustomWidgetImage(event, 0, '2x2')">
                 <div class="beautify-box-2x2 custom-widget-box" id="custom-widget-2x2-1" 
+                     style="background-size:cover; background-position:center;"
                      onclick="document.getElementById('custom-widget-upload-1').click()">
                     <span class="custom-widget-placeholder">2x2</span>
                 </div>
@@ -143,6 +145,7 @@ const beautifyHTML = `
                        onchange="handleCustomWidgetImage(event, 1, '2x2')">
             </div>
             <div class="beautify-box-2x4 custom-widget-box" id="custom-widget-2x4-0" 
+                 style="background-size:cover; background-position:center;"
                  onclick="document.getElementById('custom-widget-upload-2x4').click()">
                 <span class="custom-widget-placeholder">2x4</span>
             </div>
@@ -424,7 +427,6 @@ function executeAddCustomWidget(key, size) {
     if (overlay) overlay.remove();
     showToast('已添加');
 
-    // 刷新桌面小组件
     if (typeof renderWidgets === 'function') {
         renderWidgets();
     }
