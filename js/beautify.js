@@ -353,8 +353,7 @@ function handleCustomWidgetClick(key, size) {
     if (customWidgetImages[key]) {
         confirmAddCustomWidget(key, size);
     } else {
-        const uploadId = 'custom-widget-upload-' + key;
-        const uploadEl = document.getElementById(uploadId);
+        const uploadEl = document.getElementById('custom-widget-upload-' + key);
         if (uploadEl) uploadEl.click();
     }
 }
@@ -365,18 +364,18 @@ function handleCustomWidgetImage(e, key, size) {
         reader.onload = ev => {
             customWidgetImages[key] = ev.target.result;
             localStorage.setItem('beautify_custom_widget_' + key, ev.target.result);
-            updateCustomWidgetPreview(key, size);
+            updateCustomWidgetPreview(key);
             showToast('图片已就绪，点击框可添加到桌面');
         };
         reader.readAsDataURL(e.target.files[0]);
     }
 }
 
-function updateCustomWidgetPreview(key, size) {
+function updateCustomWidgetPreview(key) {
     const parts = key.split('_');
-    const boxId = 'custom-widget-' + parts[0] + '-' + parts[1] + '-' + parts[2];
+    const boxId = 'custom-widget-' + parts[0] + '-' + parts[1];
     const box = document.getElementById(boxId);
-    if (box) {
+    if (box && customWidgetImages[key]) {
         box.style.backgroundImage = `url(${customWidgetImages[key]})`;
         box.style.backgroundSize = 'cover';
         box.style.backgroundPosition = 'center';
@@ -389,9 +388,7 @@ function updateCustomWidgetPreview(key, size) {
 function loadCustomWidgetPreviews() {
     for (const key in customWidgetImages) {
         if (customWidgetImages[key]) {
-            const parts = key.split('_');
-            const size = parts[0] + '_' + parts[1];
-            updateCustomWidgetPreview(key, size);
+            updateCustomWidgetPreview(key);
         }
     }
 }
