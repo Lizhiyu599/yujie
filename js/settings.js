@@ -160,7 +160,7 @@ function saveDevice(deviceId) {
         devices.push(newDevice);
     }
     saveDevices(devices);
-    alert('设备"${name}"已保存');
+    showToast('设备"' + name + '"已保存');
     renderDeviceList();
 }
 
@@ -173,7 +173,7 @@ function deleteDevice(deviceId) {
     renderDeviceList();
 }
 
-// ===== 连接测试 =====
+// ===== 连接测试（主设备） =====
 async function testDevice(deviceId) {
     const container = document.getElementById('device-' + deviceId);
     if (!container) return;
@@ -209,13 +209,188 @@ async function testDevice(deviceId) {
         });
 
         if (response.ok) {
-            alert('连接成功！API配置有效。');
+            showToast('连接成功！');
+        } else {
+            try {
+                const data = await response.json();
+                alert(`连接失败：${data.error?.message || response.status}`);
+            } catch (e) {
+                alert(`连接失败：HTTP ${response.status}`);
+            }
+        }
+    } catch (e) {
+        showToast('连接失败：网络错误');
+    }
+}
+
+// ===== 语音 API 保存 =====
+function saveVoiceConfig() {
+    const groupId = document.getElementById('voice-group-id').value.trim();
+    const apiKey = document.getElementById('voice-api-key').value.trim();
+    const voiceId = document.getElementById('voice-voice-id').value.trim();
+
+    if (!groupId || !apiKey || !voiceId) {
+        alert('请填写完整的语音 API 配置');
+        return;
+    }
+
+    localStorage.setItem('voice_group_id', groupId);
+    localStorage.setItem('voice_api_key', apiKey);
+    localStorage.setItem('voice_voice_id', voiceId);
+    showToast('语音API已保存');
+}
+
+// ===== 语音 API 连接测试 =====
+async function testVoice() {
+    const groupId = document.getElementById('voice-group-id').value.trim();
+    const apiKey = document.getElementById('voice-api-key').value.trim();
+
+    if (!groupId || !apiKey) {
+        alert('请填写 Group ID 和 API Key');
+        return;
+    }
+
+    try {
+        const response = await fetch(`https://api.minimax.chat/v1/text/chatcompletion_v2`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: 'abab5.5-chat',
+                messages: [{ role: 'user', content: 'hi' }],
+                max_tokens: 5
+            })
+        });
+
+        if (response.ok) {
+            showToast('语音API连接成功！');
         } else {
             const data = await response.json();
             alert(`连接失败：${data.error?.message || response.status}`);
         }
     } catch (e) {
-        alert(`连接失败：网络错误或跨域拦截 (${e.message})`);
+        showToast('连接失败：网络错误');
+    }
+}
+
+// ===== 生图 API 保存 =====
+function saveImageConfig() {
+    const baseUrl = document.getElementById('img-base-url').value.trim();
+    const apiKey = document.getElementById('img-api-key').value.trim();
+    const model = document.getElementById('img-model').value.trim();
+
+    if (!baseUrl || !apiKey || !model) {
+        alert('请填写完整的生图 API 配置');
+        return;
+    }
+
+    localStorage.setItem('image_base_url', baseUrl);
+    localStorage.setItem('image_api_key', apiKey);
+    localStorage.setItem('image_model', model);
+    showToast('生图API已保存');
+}
+
+// ===== 生图 API 连接测试 =====
+async function testImage() {
+    const baseUrl = document.getElementById('img-base-url').value.trim();
+    const apiKey = document.getElementById('img-api-key').value.trim();
+    const model = document.getElementById('img-model').value.trim();
+
+    if (!baseUrl || !apiKey || !model) {
+        alert('请填写完整的生图 API 配置');
+        return;
+    }
+
+    let endpoint = baseUrl;
+    if (!endpoint.endsWith('/images/generations')) {
+        endpoint = endpoint.replace(/\/+$/, '') + '/images/generations';
+    }
+
+    try {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: model,
+                prompt: 'test',
+                n: 1,
+                size: '256x256'
+            })
+        });
+
+        if (response.ok) {
+            showToast('生图API连接成功！');
+        } else {
+            const data = await response.json();
+            alert(`连接失败：${data.error?.message || response.status}`);
+        }
+    } catch (e) {
+        showToast('连接失败：网络错误');
+    }
+}
+
+// ===== 天气 API 保存 =====
+function saveWeatherConfig() {
+    const baseUrl = document.getElementById('weather-base-url').value.trim();
+    const apiKey = document.getElementById('weather-api-key').value.trim();
+    const city = document.getElementById('weather-city').value.trim();
+    const storyCity = document.getElementById('weather-story-city').value.trim();
+
+    if (!baseUrl || !apiKey || !city) {
+        alert('请填写 API 地址、密钥和城市名');
+        return;
+    }
+
+    localStorage.setItem('weather_base_url', baseUrl);
+    localStorage.setItem('weather_api_key', apiKey);
+    localStorage.setItem('weather_city', city);
+    localStorage.setItem('weather_story_city', storyCity);
+    showToast('天气API已保存');
+}
+
+// ===== 天气 API 连接测试 =====
+async function testWeather() {
+    const baseUrl = document.getElementById('weather-base-url').value.trim();
+    const apiKey = document.getElementById('weather-api-key').value.trim();
+    const city = document.getElementById('weather-city').value.trim();
+
+    if (!baseUrl || !apiKey || !city) {
+        alert('请填写 API 地址、密钥和城市名');
+        return;
+    }
+
+    let endpoint = baseUrl;
+    if (!endpoint.endsWith('/chat/completions')) {
+        endpoint = endpoint.replace(/\/+$/, '') + '/chat/completions';
+    }
+
+    try {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: document.getElementById('weather-model').value.trim() || 'gpt-3.5-turbo',
+                messages: [{ role: 'user', content: `当前城市：${city}，请返回今天的天气` }],
+                max_tokens: 20
+            })
+        });
+
+        if (response.ok) {
+            showToast('天气API连接成功！');
+        } else {
+            const data = await response.json();
+            alert(`连接失败：${data.error?.message || response.status}`);
+        }
+    } catch (e) {
+        showToast('连接失败：网络错误');
     }
 }
 
@@ -466,17 +641,19 @@ const settingsHTML = `
         <div class="ios-group" style="padding:16px;">
             <div style="font-weight:600; margin-bottom:16px; font-size:16px;">MiniMax API 配置</div>
             <label class="ios-label">Group ID</label>
-            <input type="text" class="ios-input" placeholder="输入MiniMax Group ID">
+            <input type="text" id="voice-group-id" class="ios-input" placeholder="输入MiniMax Group ID">
             <label class="ios-label">API Key</label>
-            <input type="text" class="ios-input" placeholder="输入MiniMax API Key">
+            <input type="text" id="voice-api-key" class="ios-input" placeholder="输入MiniMax API Key">
             <label class="ios-label">音色 (VOICE ID)</label>
-            <select class="ios-input" style="height:46px; background:#f2f2f7;">
+            <select id="voice-voice-id" class="ios-input" style="height:46px; background:#f2f2f7;">
                 <option value="" disabled selected>选择ID或输入</option>
-                <option value="male-1">青涩青年</option>
-                <option value="male-2">成熟大叔</option>
+                <option value="male-qn-qingse">青涩青年</option>
+                <option value="male-qn-jingying">精英男士</option>
+                <option value="female-shaonv">少女</option>
+                <option value="female-yujie">御姐</option>
             </select>
-            <button class="ios-btn-black">保存配置</button>
-            <button class="ios-btn-white" onclick="alert('连接失败：请配置完整的语音API')">连接测试</button>
+            <button class="ios-btn-black" onclick="saveVoiceConfig()">保存配置</button>
+            <button class="ios-btn-white" onclick="testVoice()">连接测试</button>
         </div>
     </div>
 
@@ -487,16 +664,16 @@ const settingsHTML = `
     <div id="image-section" class="collapsible-section" style="display:none;">
         <div class="ios-group" style="padding:16px;">
             <label class="ios-label">API地址 (Base URL)</label>
-            <input type="text" id="api-base-url-img" class="ios-input" placeholder="例如：https://.../v1">
+            <input type="text" id="img-base-url" class="ios-input" placeholder="例如：https://.../v1">
             <label class="ios-label">API密钥 (Key)</label>
-            <input type="text" id="api-key-img" class="ios-input" placeholder="例如：sk-...">
+            <input type="text" id="img-api-key" class="ios-input" placeholder="例如：sk-...">
             <label class="ios-label">模型</label>
             <div style="display:flex; gap:8px; align-items:center;">
-                <input type="text" id="api-model-img" class="ios-input" placeholder="手动输入或拉取" style="flex:1;">
-                <button class="ios-btn-white" style="width:auto; margin:0; padding:12px 16px;" onclick="fetchModels('api-base-url-img', 'api-key-img', 'api-model-img')">拉取</button>
+                <input type="text" id="img-model" class="ios-input" placeholder="手动输入或拉取" style="flex:1;">
+                <button class="ios-btn-white" style="width:auto; margin:0; padding:12px 16px;" onclick="fetchModels('img-base-url', 'img-api-key', 'img-model')">拉取</button>
             </div>
-            <button class="ios-btn-black">保存配置</button>
-            <button class="ios-btn-white" onclick="alert('连接失败：详细原因 - 未检测到有效的API密钥')">连接测试</button>
+            <button class="ios-btn-black" onclick="saveImageConfig()">保存配置</button>
+            <button class="ios-btn-white" onclick="testImage()">连接测试</button>
         </div>
     </div>
 
@@ -507,21 +684,21 @@ const settingsHTML = `
     <div id="weather-section" class="collapsible-section" style="display:none;">
         <div class="ios-group" style="padding:16px;">
             <label class="ios-label">API地址 (Base URL)</label>
-            <input type="text" id="api-base-url-weather" class="ios-input" placeholder="例如：https://.../v1">
+            <input type="text" id="weather-base-url" class="ios-input" placeholder="例如：https://.../v1">
             <label class="ios-label">API密钥 (Key)</label>
-            <input type="text" id="api-key-weather" class="ios-input" placeholder="例如：sk-...">
+            <input type="text" id="weather-api-key" class="ios-input" placeholder="例如：sk-...">
             <label class="ios-label">城市名</label>
-            <input type="text" class="ios-input" placeholder="例如：上海">
+            <input type="text" id="weather-city" class="ios-input" placeholder="例如：上海">
             <label class="ios-label">剧情城市名</label>
             <div style="font-size:11px; color:#8e8e93; margin-bottom:6px;">提示：不填写剧情城市名则默认真实城市名。</div>
-            <input type="text" class="ios-input" placeholder="例如：xx市">
+            <input type="text" id="weather-story-city" class="ios-input" placeholder="例如：xx市">
             <label class="ios-label">模型</label>
             <div style="display:flex; gap:8px; align-items:center;">
-                <input type="text" id="api-model-weather" class="ios-input" placeholder="手动输入或拉取" style="flex:1;">
-                <button class="ios-btn-white" style="width:auto; margin:0; padding:12px 16px;" onclick="fetchModels('api-base-url-weather', 'api-key-weather', 'api-model-weather')">拉取</button>
+                <input type="text" id="weather-model" class="ios-input" placeholder="手动输入或拉取" style="flex:1;">
+                <button class="ios-btn-white" style="width:auto; margin:0; padding:12px 16px;" onclick="fetchModels('weather-base-url', 'weather-api-key', 'weather-model')">拉取</button>
             </div>
-            <button class="ios-btn-black">保存配置</button>
-            <button class="ios-btn-white" onclick="alert('连接失败：详细原因 - 城市信息或密钥不完整')">连接测试</button>
+            <button class="ios-btn-black" onclick="saveWeatherConfig()">保存配置</button>
+            <button class="ios-btn-white" onclick="testWeather()">连接测试</button>
         </div>
     </div>
 
@@ -543,6 +720,29 @@ const settingsHTML = `
 function initSettings() {
     migrateOldConfig();
     renderDeviceList();
+    // 加载已保存的语音API配置
+    const voiceGroupId = localStorage.getItem('voice_group_id');
+    const voiceApiKey = localStorage.getItem('voice_api_key');
+    const voiceVoiceId = localStorage.getItem('voice_voice_id');
+    if (voiceGroupId) document.getElementById('voice-group-id').value = voiceGroupId;
+    if (voiceApiKey) document.getElementById('voice-api-key').value = voiceApiKey;
+    if (voiceVoiceId) document.getElementById('voice-voice-id').value = voiceVoiceId;
+    // 加载已保存的生图API配置
+    const imgBaseUrl = localStorage.getItem('image_base_url');
+    const imgApiKey = localStorage.getItem('image_api_key');
+    const imgModel = localStorage.getItem('image_model');
+    if (imgBaseUrl) document.getElementById('img-base-url').value = imgBaseUrl;
+    if (imgApiKey) document.getElementById('img-api-key').value = imgApiKey;
+    if (imgModel) document.getElementById('img-model').value = imgModel;
+    // 加载已保存的天气API配置
+    const weatherBaseUrl = localStorage.getItem('weather_base_url');
+    const weatherApiKey = localStorage.getItem('weather_api_key');
+    const weatherCity = localStorage.getItem('weather_city');
+    const weatherStoryCity = localStorage.getItem('weather_story_city');
+    if (weatherBaseUrl) document.getElementById('weather-base-url').value = weatherBaseUrl;
+    if (weatherApiKey) document.getElementById('weather-api-key').value = weatherApiKey;
+    if (weatherCity) document.getElementById('weather-city').value = weatherCity;
+    if (weatherStoryCity) document.getElementById('weather-story-city').value = weatherStoryCity;
 }
 
 // ===== 注册设置图标到 Dock（插入到最左侧第一位） =====
@@ -560,7 +760,6 @@ window.addEventListener('DOMContentLoaded', () => {
     const dockBar = document.getElementById('dockBar');
     if (!dockBar) return;
 
-
     const settingItem = document.createElement('div');
     settingItem.className = 'dock-item';
     settingItem.innerHTML = `
@@ -574,6 +773,5 @@ window.addEventListener('DOMContentLoaded', () => {
         openModal('settingsModal');
     };
 
-    // 将设置图标插入到 Dock 最左侧第一位
     dockBar.prepend(settingItem);
 });
