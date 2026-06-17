@@ -508,5 +508,384 @@ window.addEventListener('DOMContentLoaded', () => {
         openModal('beautifyModal');
     };
 
+    // ========== 小组件系统 ==========
+
+// 小组件默认数据
+const DEFAULT_WIDGETS = [
+    {
+        id: 'widget-clock-1',
+        type: 'clock',
+        page: 0, // 第1页
+        avatar: '',
+        signature: '——  ..おやすみ ..——',
+        temp: '24°',
+        weatherDesc: '上海·晴'
+    }
+];
+
+function getWidgets() {
+    const raw = localStorage.getItem('desktop_widgets');
+    return raw ? JSON.parse(raw) : DEFAULT_WIDGETS.slice();
+}
+
+function saveWidgets(widgets) {
+    localStorage.setItem('desktop_widgets', JSON.stringify(widgets));
+}
+
+// ========== 渲染小组件 ==========
+function renderWidgets() {
+    const widgets = getWidgets();
+
+    // 清除所有页面上的旧小组件
+    document.querySelectorAll('.desktop-widget').forEach(el => el.remove());
+
+    widgets.forEach(widget => {
+        const page = document.querySelectorAll('.desktop-page')[widget.page];
+        if (!page) return;
+
+        const el = document.createElement('div');
+        el.className = 'desktop-widget';
+        el.setAttribute('data-widget-id', widget.id);
+        el.setAttribute('data-widget-type', widget.type);
+        el.setAttribute('data-widget-page', widget.page);
+
+        const avatarSrc = widget.avatar || '';
+        const avatarContent = avatarSrc
+            ? `<div class="widget-avatar" style="background-image:url(${avatarSrc});" onclick="event.stopPropagation(); document.getElementById('widget-avatar-upload').click()"></div>`
+            : `<div class="widget-avatar" onclick="event.stopPropagation(); document.getElementById('widget-avatar-upload').click()">+</div>`;
+
+        el.innerHTML = `
+            <div class="widget-top-row">
+                <div class="widget-left">
+                    ${avatarContent}
+                    <div class="widget-time-block">
+                        <span class="widget-time" id="widget-time-display">00:00</span>
+                        <span class="widget-date" id="widget-date-display">1月1日 星期一</span>
+                    </div>
+                </div>
+                <div class="widget-weather-block">
+                    <span class="widget-temp">${widget.temp}</span>
+                    <div class="widget-weather-desc">${widget.weatherDesc}</div>
+                </div>
+            </div>
+            <div class="widget-divider"></div>
+            <input type="text" class="widget-signature" value="${widget.signature}" placeholder="——  ..おやすみ ..——" 
+                   onchange="updateWidgetSignature('${widget.id}', this.value)" 
+                   onclick="event.stopPropagation();">
+            <div class="widget-delete-btn" onclick="event.stopPropagation(); confirmDeleteWidget('${widget.id}')">×</div>
+        `;
+
+        // 小组件事件
+        el.addEventListener('touchstart', (e) => onWidgetTouchStart(e, el));
+        el.addEventListener('touchend', onWidgetTouchEnd);
+        el.addEventListener('touchmove', (e) => onWidgetTouchMove(e, el));
+        el.addEventListener('mousedown', (e) => onWidgetMouseDown(e, el));
+        el.addEventListener('mouseup', onWidgetMouseUp);
+        el.addEventListener('mouseleave', onWidgetMouseUp);
+
+        // 插入到页面第一位（在图标网格之前）
+        const iconsGrid = page.querySelector('.desktop-icons');
+        if (iconsGrid) {
+            page.insertBefore(el, iconsGrid);
+        } else {
+            page.appendChild(el);
+        }
+    });
+
+    updateAllWidgetClocks();
+}
+
+// ========== 更新小组件时钟 ==========
+function updateAllWidgetClocks() {
+    const now = new Date();
+    const h = now.getHours().toString().padStart(2, '0');
+    const m = now.getMinutes().toString().padStart(2, '0');
+    const month = now.getMonth() + 1;
+    const day = now.getDate();
+    const days = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+    const dayName = days[now.getDay()];
+
+    document.querySelectorAll('.desktop-widget').forEach(el => {
+        const timeEl = el.querySelector('#widget-time-display');
+        const dateEl = el.querySelector('#widget-date-display');
+        if (timeEl) timeEl.textContent = h + ':' + m;
+        if (dateEl) dateEl.textContent = month + '月' + day + '日 ' + dayName;
+    });
+}
+
+// 每秒更新
+setInterval(updateAllWidgetClocks, 1000);
+
+// ========== 小组件签名更新 ==========
+function updateWidgetSignature(widgetId, value) {
+    const widgets = getWidgets();
+    const widget = widgets.find(w => w.id === widgetId);
+    if (widget) {
+        widget.signature = value;
+        saveWidgets(widgets);
+    }
+}
+
+// ========== 小组件长按与拖动 ==========
+let widgetLongPressTimer = null;
+let widgetLongPressStarted = false;
+let widgetDragTarget = null;
+let widgetDragStartX = 0;
+let widgetDragStartY = 0;
+let widgetStartLeft = 0;
+let widgetStartTop = 0;
+let widgetPlaceholder = null;
+let widgetClone = null;
+
+function onWidgetTouchStart(e, el) {
+    if (isEditing) return;
+    widgetDragTarget = el;
+    widgetDragStartX = e.touches[0].clientX;
+    widgetDragStartY = e.touches[0].clientY;
+    const rect = el.getBoundingClientRect();
+    widgetStartLeft = rect.left;
+    widgetStartTop = rect.top;
+    widgetLongPressStarted = false;
+    widgetDragStarted = false;
+
+    widgetLongPressTimer = setTimeout(() => {
+        widgetLongPressStarted = true;
+    }, 500);
+}
+
+function onWidgetTouchEnd(e) {
+    clearTimeout(widgetLongPressTimer);
+
+    if (widgetLongPressStarted && !widgetDragStarted) {
+        // 长按不拖动 → 进入编辑模式
+        enterWidgetEditMode(widgetDragTarget);
+    }
+
+    if (widgetDragStarted) {
+        endWidgetDrag();
+    }
+
+    widgetLongPressStarted = false;
+    widgetDragStarted = false;
+    widgetDragTarget = null;
+}
+
+let widgetDragStarted = false;
+
+function onWidgetTouchMove(e, el) {
+    if (!widgetLongPressTimer && !widgetDragStarted) return;
+
+    const dx = e.touches[0].clientX - widgetDragStartX;
+    const dy = e.touches[0].clientY - widgetDragStartY;
+
+    if (widgetLongPressStarted && !widgetDragStarted && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+        // 开始拖动
+        widgetDragStarted = true;
+        startWidgetDrag(el, e.touches[0].clientX, e.touches[0].clientY);
+    }
+
+    if (widgetDragStarted) {
+        moveWidgetDrag(e.touches[0].clientX, e.touches[0].clientY);
+    }
+}
+
+function onWidgetMouseDown(e, el) {
+    if (isEditing) return;
+    widgetDragTarget = el;
+    const rect = el.getBoundingClientRect();
+    widgetDragStartX = e.clientX;
+    widgetDragStartY = e.clientY;
+    widgetStartLeft = rect.left;
+    widgetStartTop = rect.top;
+    widgetLongPressStarted = false;
+    widgetDragStarted = false;
+
+    widgetLongPressTimer = setTimeout(() => {
+        widgetLongPressStarted = true;
+    }, 500);
+}
+
+function onWidgetMouseUp() {
+    clearTimeout(widgetLongPressTimer);
+
+    if (widgetLongPressStarted && !widgetDragStarted && widgetDragTarget) {
+        enterWidgetEditMode(widgetDragTarget);
+    }
+
+    if (widgetDragStarted) {
+        endWidgetDrag();
+    }
+
+    widgetLongPressStarted = false;
+    widgetDragStarted = false;
+    widgetDragTarget = null;
+}
+
+// ========== 小组件拖动实现 ==========
+function startWidgetDrag(el, clientX, clientY) {
+    el.classList.add('dragging');
+    el.style.position = 'fixed';
+    el.style.zIndex = '150';
+    el.style.left = widgetStartLeft + 'px';
+    el.style.top = widgetStartTop + 'px';
+    el.style.width = el.offsetWidth + 'px';
+    el.style.margin = '0';
+    el.style.pointerEvents = 'none';
+}
+
+function moveWidgetDrag(clientX, clientY) {
+    if (!widgetDragTarget) return;
+    const dx = clientX - widgetDragStartX;
+    const dy = clientY - widgetDragStartY;
+    widgetDragTarget.style.left = (widgetStartLeft + dx) + 'px';
+    widgetDragTarget.style.top = (widgetStartTop + dy) + 'px';
+
+    // 检测是否拖到屏幕边缘 → 翻页
+    const screenWidth = window.innerWidth;
+    const pages = document.getElementById('desktopPages');
+    if (clientX > screenWidth - 30 && pages) {
+        // 拖到右边缘，翻到下一页
+        const currentScroll = pages.scrollLeft;
+        const pageWidth = pages.clientWidth;
+        const targetPage = Math.min(Math.floor(currentScroll / pageWidth) + 1, pages.children.length - 1);
+        pages.scrollTo({ left: targetPage * pageWidth, behavior: 'smooth' });
+    } else if (clientX < 30 && pages) {
+        // 拖到左边缘，翻到上一页
+        const currentScroll = pages.scrollLeft;
+        const pageWidth = pages.clientWidth;
+        const targetPage = Math.max(Math.floor(currentScroll / pageWidth) - 1, 0);
+        pages.scrollTo({ left: targetPage * pageWidth, behavior: 'smooth' });
+    }
+}
+
+function endWidgetDrag() {
+    if (!widgetDragTarget) return;
+
+    // 获取当前小组件中心点，判断落在哪个页面
+    const rect = widgetDragTarget.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const pages = document.getElementById('desktopPages');
+    const pageWidth = pages.clientWidth;
+    const scrollLeft = pages.scrollLeft;
+    const targetPage = Math.round((centerX + scrollLeft) / pageWidth);
+    const clampedPage = Math.max(0, Math.min(targetPage, pages.children.length - 1));
+
+    // 更新小组件数据
+    const widgetId = widgetDragTarget.getAttribute('data-widget-id');
+    const widgets = getWidgets();
+    const widget = widgets.find(w => w.id === widgetId);
+    if (widget) {
+        widget.page = clampedPage;
+        saveWidgets(widgets);
+    }
+
+    // 清理拖动状态
+    widgetDragTarget.classList.remove('dragging');
+    widgetDragTarget.style.position = '';
+    widgetDragTarget.style.zIndex = '';
+    widgetDragTarget.style.left = '';
+    widgetDragTarget.style.top = '';
+    widgetDragTarget.style.width = '';
+    widgetDragTarget.style.margin = '';
+    widgetDragTarget.style.pointerEvents = '';
+
+    // 重新渲染
+    renderWidgets();
+}
+
+// ========== 小组件编辑模式 ==========
+function enterWidgetEditMode(el) {
+    if (isEditing) return;
+    // 先退出图标编辑
+    exitEditMode();
+    el.classList.add('editing');
+}
+
+// 点击桌面其他地方退出小组件编辑
+document.addEventListener('touchstart', (e) => {
+    if (!e.target.closest('.desktop-widget') && !e.target.closest('.confirm-dialog')) {
+        document.querySelectorAll('.desktop-widget.editing').forEach(el => {
+            el.classList.remove('editing');
+        });
+    }
+});
+
+// ========== 确认删除小组件弹窗 ==========
+let pendingDeleteWidgetId = null;
+
+function confirmDeleteWidget(widgetId) {
+    pendingDeleteWidgetId = widgetId;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.id = 'confirmDeleteOverlay';
+    overlay.innerHTML = `
+        <div class="confirm-dialog">
+            <p>确认删除当前小组件？</p>
+            <div class="confirm-buttons">
+                <div class="confirm-btn-cancel" onclick="cancelDeleteWidget()">取消</div>
+                <div class="confirm-btn-delete" onclick="executeDeleteWidget()">确定</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+}
+
+function cancelDeleteWidget() {
+    pendingDeleteWidgetId = null;
+    const overlay = document.getElementById('confirmDeleteOverlay');
+    if (overlay) overlay.remove();
+}
+
+function executeDeleteWidget() {
+    if (!pendingDeleteWidgetId) return;
+    let widgets = getWidgets();
+    widgets = widgets.filter(w => w.id !== pendingDeleteWidgetId);
+    saveWidgets(widgets);
+    pendingDeleteWidgetId = null;
+    const overlay = document.getElementById('confirmDeleteOverlay');
+    if (overlay) overlay.remove();
+    renderWidgets();
+}
+
+// ========== 小组件头像上传 ==========
+function setupWidgetAvatarUpload() {
+    // 创建全局隐藏的文件上传input
+    let input = document.getElementById('widget-avatar-upload');
+    if (!input) {
+        input = document.createElement('input');
+        input.type = 'file';
+        input.id = 'widget-avatar-upload';
+        input.accept = 'image/*';
+        input.style.display = 'none';
+        input.onchange = handleWidgetAvatarChange;
+        document.body.appendChild(input);
+    }
+}
+
+function handleWidgetAvatarChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+        const result = ev.target.result;
+        const widgets = getWidgets();
+        // 更新第一个时钟小组件的头像
+        const clockWidget = widgets.find(w => w.type === 'clock');
+        if (clockWidget) {
+            clockWidget.avatar = result;
+            saveWidgets(widgets);
+            renderWidgets();
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+// ========== 初始化小组件 ==========
+window.addEventListener('DOMContentLoaded', () => {
+    setupWidgetAvatarUpload();
+    renderWidgets();
+});
+    
     dockBar.appendChild(beautifyItem);
 });
