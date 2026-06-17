@@ -51,7 +51,7 @@ async function fetchModels(baseUrlId, keyId, modelInputId) {
     const baseUrl = document.getElementById(baseUrlId).value.trim();
     const apiKey = document.getElementById(keyId).value.trim();
     if (!baseUrl || !apiKey) {
-        alert('请先填写完整的 Base URL 和 API Key');
+        showToast('拉取失败：请先填写完整的 Base URL 和 API Key');
         return;
     }
     let endpoint = baseUrl;
@@ -68,12 +68,15 @@ async function fetchModels(baseUrlId, keyId, modelInputId) {
         if (data && data.data && Array.isArray(data.data)) {
             const models = data.data.map(m => m.id).join('\n');
             const chosen = prompt('获取到以下模型，请手动输入你要使用的模型名称:\n\n' + models);
-            if (chosen) document.getElementById(modelInputId).value = chosen;
+            if (chosen) {
+                document.getElementById(modelInputId).value = chosen;
+                showToast('拉取成功');
+            }
         } else {
-            alert('获取模型失败，接口返回格式不支持。');
+            showToast('拉取失败：接口返回格式不支持');
         }
     } catch (e) {
-        alert('拉取失败: 网络错误或跨域拦截 (' + e.message + ')');
+        showToast('拉取失败：网络错误或跨域拦截');
     }
 }
 
@@ -84,7 +87,7 @@ async function fetchModelsForDevice(deviceId) {
     const baseUrl = container.querySelector('.api-base-url').value.trim();
     const apiKey = container.querySelector('.api-key').value.trim();
     if (!baseUrl || !apiKey) {
-        alert('请先填写完整的 Base URL 和 API Key');
+        showToast('拉取失败：请先填写完整的 Base URL 和 API Key');
         return;
     }
     let endpoint = baseUrl;
@@ -101,11 +104,12 @@ async function fetchModelsForDevice(deviceId) {
         if (data && data.data && Array.isArray(data.data)) {
             const models = data.data.map(m => m.id);
             showModelPicker(container, models);
+            showToast('拉取成功');
         } else {
-            alert('获取模型失败，接口返回格式不支持。');
+            showToast('拉取失败：接口返回格式不支持');
         }
     } catch (e) {
-        alert('拉取失败: 网络错误或跨域拦截 (' + e.message + ')');
+        showToast('拉取失败：网络错误或跨域拦截');
     }
 }
 
@@ -146,7 +150,7 @@ function saveDevice(deviceId) {
     const stream = streamCheck ? streamCheck.checked : true;
 
     if (!baseUrl || !apiKey || !model) {
-        alert('请填写完整的 Base URL、API Key 和模型');
+        showToast('保存失败：请填写完整的 Base URL、API Key 和模型');
         return;
     }
 
@@ -160,17 +164,71 @@ function saveDevice(deviceId) {
         devices.push(newDevice);
     }
     saveDevices(devices);
-    showToast('设备"' + name + '"已保存');
+    showToast('配置保存成功');
     renderDeviceList();
 }
 
-// ===== 删除设备 =====
-function deleteDevice(deviceId) {
-    if (!confirm('确定删除该设备吗？')) return;
+// ===== 确认删除设备弹窗 =====
+let pendingDeleteDeviceId = null;
+
+function confirmDeleteDevice(deviceId) {
+    pendingDeleteDeviceId = deviceId;
+    
+    var overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.id = 'confirmDeleteDeviceOverlay';
+    overlay.style.zIndex = '9999';
+    
+    var dialog = document.createElement('div');
+    dialog.className = 'confirm-dialog';
+    dialog.innerHTML = '<p>确认删除当前配置？</p>';
+    
+    var buttons = document.createElement('div');
+    buttons.className = 'confirm-buttons';
+    
+    var cancelBtn = document.createElement('div');
+    cancelBtn.className = 'confirm-btn-cancel';
+    cancelBtn.textContent = '取消';
+    cancelBtn.onclick = function(e) {
+        e.stopPropagation();
+        cancelDeleteDevice();
+    };
+    
+    var confirmBtn = document.createElement('div');
+    confirmBtn.className = 'confirm-btn-delete';
+    confirmBtn.textContent = '确定';
+    confirmBtn.onclick = function(e) {
+        e.stopPropagation();
+        executeDeleteDevice();
+    };
+    
+    buttons.appendChild(cancelBtn);
+    buttons.appendChild(confirmBtn);
+    dialog.appendChild(buttons);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+    
+    overlay.onclick = function(e) {
+        if (e.target === overlay) cancelDeleteDevice();
+    };
+}
+
+function cancelDeleteDevice() {
+    pendingDeleteDeviceId = null;
+    var overlay = document.getElementById('confirmDeleteDeviceOverlay');
+    if (overlay) overlay.remove();
+}
+
+function executeDeleteDevice() {
+    if (!pendingDeleteDeviceId) return;
     let devices = getDevices();
-    devices = devices.filter(d => d.id !== deviceId);
+    devices = devices.filter(d => d.id !== pendingDeleteDeviceId);
     saveDevices(devices);
+    pendingDeleteDeviceId = null;
+    var overlay = document.getElementById('confirmDeleteDeviceOverlay');
+    if (overlay) overlay.remove();
     renderDeviceList();
+    showToast('已删除当前配置');
 }
 
 // ===== 连接测试（主设备） =====
@@ -184,7 +242,7 @@ async function testDevice(deviceId) {
     const temperature = tempSlider ? parseFloat(tempSlider.value) : 1.0;
 
     if (!baseUrl || !apiKey || !model) {
-        alert('连接失败：请填写完整的 Base URL、API Key 和 模型。');
+        showToast('连接失败：请填写完整的 Base URL、API Key 和模型');
         return;
     }
 
@@ -209,17 +267,19 @@ async function testDevice(deviceId) {
         });
 
         if (response.ok) {
-            showToast('连接成功！');
+            showToast('配置连接成功');
         } else {
+            let errMsg = '未知错误';
             try {
                 const data = await response.json();
-                alert(`连接失败：${data.error?.message || response.status}`);
+                errMsg = data.error?.message || `HTTP ${response.status}`;
             } catch (e) {
-                alert(`连接失败：HTTP ${response.status}`);
+                errMsg = `HTTP ${response.status}`;
             }
+            showToast('当前配置连接失败：' + errMsg);
         }
     } catch (e) {
-        showToast('连接失败：网络错误');
+        showToast('当前配置连接失败：网络错误或跨域拦截');
     }
 }
 
@@ -230,14 +290,14 @@ function saveVoiceConfig() {
     const voiceId = document.getElementById('voice-voice-id').value.trim();
 
     if (!groupId || !apiKey || !voiceId) {
-        alert('请填写完整的语音 API 配置');
+        showToast('保存失败：请填写完整的语音 API 配置');
         return;
     }
 
     localStorage.setItem('voice_group_id', groupId);
     localStorage.setItem('voice_api_key', apiKey);
     localStorage.setItem('voice_voice_id', voiceId);
-    showToast('语音API已保存');
+    showToast('配置保存成功');
 }
 
 // ===== 语音 API 连接测试 =====
@@ -246,7 +306,7 @@ async function testVoice() {
     const apiKey = document.getElementById('voice-api-key').value.trim();
 
     if (!groupId || !apiKey) {
-        alert('请填写 Group ID 和 API Key');
+        showToast('连接失败：请填写 Group ID 和 API Key');
         return;
     }
 
@@ -265,13 +325,19 @@ async function testVoice() {
         });
 
         if (response.ok) {
-            showToast('语音API连接成功！');
+            showToast('配置连接成功');
         } else {
-            const data = await response.json();
-            alert(`连接失败：${data.error?.message || response.status}`);
+            let errMsg = '未知错误';
+            try {
+                const data = await response.json();
+                errMsg = data.error?.message || `HTTP ${response.status}`;
+            } catch (e) {
+                errMsg = `HTTP ${response.status}`;
+            }
+            showToast('当前配置连接失败：' + errMsg);
         }
     } catch (e) {
-        showToast('连接失败：网络错误');
+        showToast('当前配置连接失败：网络错误或跨域拦截');
     }
 }
 
@@ -282,14 +348,14 @@ function saveImageConfig() {
     const model = document.getElementById('img-model').value.trim();
 
     if (!baseUrl || !apiKey || !model) {
-        alert('请填写完整的生图 API 配置');
+        showToast('保存失败：请填写完整的生图 API 配置');
         return;
     }
 
     localStorage.setItem('image_base_url', baseUrl);
     localStorage.setItem('image_api_key', apiKey);
     localStorage.setItem('image_model', model);
-    showToast('生图API已保存');
+    showToast('配置保存成功');
 }
 
 // ===== 生图 API 连接测试 =====
@@ -299,7 +365,7 @@ async function testImage() {
     const model = document.getElementById('img-model').value.trim();
 
     if (!baseUrl || !apiKey || !model) {
-        alert('请填写完整的生图 API 配置');
+        showToast('连接失败：请填写完整的生图 API 配置');
         return;
     }
 
@@ -324,13 +390,19 @@ async function testImage() {
         });
 
         if (response.ok) {
-            showToast('生图API连接成功！');
+            showToast('配置连接成功');
         } else {
-            const data = await response.json();
-            alert(`连接失败：${data.error?.message || response.status}`);
+            let errMsg = '未知错误';
+            try {
+                const data = await response.json();
+                errMsg = data.error?.message || `HTTP ${response.status}`;
+            } catch (e) {
+                errMsg = `HTTP ${response.status}`;
+            }
+            showToast('当前配置连接失败：' + errMsg);
         }
     } catch (e) {
-        showToast('连接失败：网络错误');
+        showToast('当前配置连接失败：网络错误或跨域拦截');
     }
 }
 
@@ -342,7 +414,7 @@ function saveWeatherConfig() {
     const storyCity = document.getElementById('weather-story-city').value.trim();
 
     if (!baseUrl || !apiKey || !city) {
-        alert('请填写 API 地址、密钥和城市名');
+        showToast('保存失败：请填写 API 地址、密钥和城市名');
         return;
     }
 
@@ -350,7 +422,7 @@ function saveWeatherConfig() {
     localStorage.setItem('weather_api_key', apiKey);
     localStorage.setItem('weather_city', city);
     localStorage.setItem('weather_story_city', storyCity);
-    showToast('天气API已保存');
+    showToast('配置保存成功');
 }
 
 // ===== 天气 API 连接测试 =====
@@ -360,7 +432,7 @@ async function testWeather() {
     const city = document.getElementById('weather-city').value.trim();
 
     if (!baseUrl || !apiKey || !city) {
-        alert('请填写 API 地址、密钥和城市名');
+        showToast('连接失败：请填写 API 地址、密钥和城市名');
         return;
     }
 
@@ -384,13 +456,19 @@ async function testWeather() {
         });
 
         if (response.ok) {
-            showToast('天气API连接成功！');
+            showToast('配置连接成功');
         } else {
-            const data = await response.json();
-            alert(`连接失败：${data.error?.message || response.status}`);
+            let errMsg = '未知错误';
+            try {
+                const data = await response.json();
+                errMsg = data.error?.message || `HTTP ${response.status}`;
+            } catch (e) {
+                errMsg = `HTTP ${response.status}`;
+            }
+            showToast('当前配置连接失败：' + errMsg);
         }
     } catch (e) {
-        showToast('连接失败：网络错误');
+        showToast('当前配置连接失败：网络错误或跨域拦截');
     }
 }
 
@@ -457,7 +535,7 @@ function renderDeviceList() {
             <div id="device-${device.id}" style="display:none; padding:16px; border-top:1px solid #e5e5ea; background:#fafafa;" class="device-edit">
                 <div style="display:flex; justify-content:space-between; align-items:flex-end;">
                     <label class="ios-label">配置名称</label>
-                    <span style="font-size:13px; color:#ff3b30; cursor:pointer;" onclick="deleteDevice(${device.id})">删除设备</span>
+                    <span style="font-size:13px; color:#ff3b30; cursor:pointer;" onclick="confirmDeleteDevice(${device.id})">删除设备</span>
                 </div>
                 <input type="text" class="ios-input device-name" placeholder="例如：1号api" value="${device.name}">
 
@@ -618,7 +696,7 @@ const settingsHTML = `
             </div>
 
             <button class="ios-btn-black">保存配置</button>
-            <button class="ios-btn-white" onclick="alert('连接失败：密钥为空')">连接测试</button>
+            <button class="ios-btn-white" onclick="showToast('连接失败：密钥为空')">连接测试</button>
         </div>
         
         <div style="margin: 24px 16px 8px; font-size:13px; color:#8e8e93;">副API用途 (没开默认用主API)</div>
@@ -697,81 +775,4 @@ const settingsHTML = `
                 <input type="text" id="weather-model" class="ios-input" placeholder="手动输入或拉取" style="flex:1;">
                 <button class="ios-btn-white" style="width:auto; margin:0; padding:12px 16px;" onclick="fetchModels('weather-base-url', 'weather-api-key', 'weather-model')">拉取</button>
             </div>
-            <button class="ios-btn-black" onclick="saveWeatherConfig()">保存配置</button>
-            <button class="ios-btn-white" onclick="testWeather()">连接测试</button>
-        </div>
-    </div>
-
-    <div class="list-header danger-zone-header" onclick="toggleSection('danger-section', this)">
-        <span>危险区</span> 
-        <span class="toggle-arrow" style="color:#8e8e93;">›</span>
-    </div>
-    <div id="danger-section" class="collapsible-section" style="display:none;">
-        <div class="ios-group" style="padding:16px; background:#fff0f0; border:1px solid #ffd6d6;">
-            <button class="ios-btn-white" style="margin-top:0;" onclick="exportData()">导出数据</button>
-            <button class="ios-btn-black" onclick="importData()">导入数据</button>
-            <button class="ios-btn-white" id="clearDataBtn" onclick="handleClearData()" style="border-color:#ff3b30; color:#ff3b30;">清空所有数据</button>
-        </div>
-    </div>
-</div>
-`;
-
-// ===== 初始化设置面板 =====
-function initSettings() {
-    migrateOldConfig();
-    renderDeviceList();
-    // 加载已保存的语音API配置
-    const voiceGroupId = localStorage.getItem('voice_group_id');
-    const voiceApiKey = localStorage.getItem('voice_api_key');
-    const voiceVoiceId = localStorage.getItem('voice_voice_id');
-    if (voiceGroupId) document.getElementById('voice-group-id').value = voiceGroupId;
-    if (voiceApiKey) document.getElementById('voice-api-key').value = voiceApiKey;
-    if (voiceVoiceId) document.getElementById('voice-voice-id').value = voiceVoiceId;
-    // 加载已保存的生图API配置
-    const imgBaseUrl = localStorage.getItem('image_base_url');
-    const imgApiKey = localStorage.getItem('image_api_key');
-    const imgModel = localStorage.getItem('image_model');
-    if (imgBaseUrl) document.getElementById('img-base-url').value = imgBaseUrl;
-    if (imgApiKey) document.getElementById('img-api-key').value = imgApiKey;
-    if (imgModel) document.getElementById('img-model').value = imgModel;
-    // 加载已保存的天气API配置
-    const weatherBaseUrl = localStorage.getItem('weather_base_url');
-    const weatherApiKey = localStorage.getItem('weather_api_key');
-    const weatherCity = localStorage.getItem('weather_city');
-    const weatherStoryCity = localStorage.getItem('weather_story_city');
-    if (weatherBaseUrl) document.getElementById('weather-base-url').value = weatherBaseUrl;
-    if (weatherApiKey) document.getElementById('weather-api-key').value = weatherApiKey;
-    if (weatherCity) document.getElementById('weather-city').value = weatherCity;
-    if (weatherStoryCity) document.getElementById('weather-story-city').value = weatherStoryCity;
-}
-
-// ===== 注册设置图标到 Dock（插入到最左侧第一位） =====
-window.addEventListener('DOMContentLoaded', () => {
-    if (typeof registerModal === 'function') {
-        registerModal('settingsModal', '设置', settingsHTML);
-    }
-
-    if (typeof renderAllModals === 'function') {
-        renderAllModals();
-    }
-
-    initSettings();
-
-    const dockBar = document.getElementById('dockBar');
-    if (!dockBar) return;
-
-    const settingItem = document.createElement('div');
-    settingItem.className = 'dock-item';
-    settingItem.innerHTML = `
-        <div class="dock-icon">
-            <div class="dock-icon-img">设</div>
-        </div>
-        <div class="dock-label">设置</div>
-    `;
-    settingItem.onclick = () => {
-        renderDeviceList();
-        openModal('settingsModal');
-    };
-
-    dockBar.prepend(settingItem);
-});
+            <button class="ios-btn-black" onclick="saveWeatherConfig()">保存配置</b
