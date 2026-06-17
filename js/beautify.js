@@ -372,7 +372,7 @@ function updateCustomWidgetPreview(key) {
     }
     var delBtn = document.getElementById('custom-del-' + key);
     if (delBtn) {
-        delBtn.style.display = src ? 'flex' : 'none';
+        delBtn.style.setProperty('display', src ? 'flex' : 'none', 'important');
         var parent = delBtn.parentElement;
         if (parent) parent.style.overflow = 'visible';
     }
@@ -390,8 +390,18 @@ function confirmAddCustomWidget(key, size) {
     var overlay = document.createElement('div');
     overlay.className = 'confirm-overlay';
     overlay.id = 'confirmAddCustomWidgetOverlay';
-    overlay.innerHTML = '<div class="confirm-dialog"><p>添加当前小组件？</p><div class="confirm-buttons"><div class="confirm-btn-cancel" onclick="cancelAddCustomWidget()">取消</div><div class="confirm-btn-delete" onclick="executeAddCustomWidget(\'' + key + '\',\'' + size + '\')">确定</div></div></div>';
+    overlay.innerHTML = '<div class="confirm-dialog"><p>添加当前小组件？</p><div class="confirm-buttons"><div class="confirm-btn-cancel" id="cancelAddCustomWidgetBtn">取消</div><div class="confirm-btn-delete" id="confirmAddCustomWidgetBtn">确定</div></div></div>';
     document.body.appendChild(overlay);
+    
+    document.getElementById('cancelAddCustomWidgetBtn').onclick = function() {
+        cancelAddCustomWidget();
+    };
+    document.getElementById('confirmAddCustomWidgetBtn').onclick = function() {
+        executeAddCustomWidget(key, size);
+    };
+    overlay.onclick = function(e) {
+        if (e.target === overlay) cancelAddCustomWidget();
+    };
 }
 
 function cancelAddCustomWidget() {
@@ -418,8 +428,14 @@ function confirmDeleteCustomWidget(key) {
     var overlay = document.createElement('div');
     overlay.className = 'confirm-overlay';
     overlay.id = 'confirmDeleteCustomOverlay';
-    overlay.innerHTML = '<div class="confirm-dialog"><p>确认清除当前小组件？</p><div class="confirm-buttons"><div class="confirm-btn-cancel" onclick="cancelDeleteCustomWidget()">取消</div><div class="confirm-btn-delete" onclick="executeDeleteCustomWidget()">确定</div></div></div>';
+    overlay.innerHTML = '<div class="confirm-dialog"><p>确认清除当前小组件？</p><div class="confirm-buttons"><div class="confirm-btn-cancel" id="cancelDeleteCustomWidgetBtn">取消</div><div class="confirm-btn-delete" id="confirmDeleteCustomWidgetBtn">确定</div></div></div>';
     document.body.appendChild(overlay);
+    
+    document.getElementById('cancelDeleteCustomWidgetBtn').onclick = cancelDeleteCustomWidget;
+    document.getElementById('confirmDeleteCustomWidgetBtn').onclick = executeDeleteCustomWidget;
+    overlay.onclick = function(e) {
+        if (e.target === overlay) cancelDeleteCustomWidget();
+    };
 }
 
 function cancelDeleteCustomWidget() {
