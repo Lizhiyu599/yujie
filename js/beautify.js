@@ -129,7 +129,7 @@ const beautifyHTML = `
         <div class="ios-group" style="padding:16px;">
             <div style="font-size:12px; color:#8e8e93; margin-bottom:8px;">自定义小组件</div>
             <div style="display:flex; gap:12px; margin-bottom:12px;">
-                <div style="position:relative; flex:1;">
+                <div style="position:relative; flex:1; overflow:visible;">
                     <div class="beautify-box-2x2 custom-widget-box" id="custom-widget-2x2-0" 
                          style="background-size:cover; background-position:center; background-repeat:no-repeat;"
                          onclick="handleCustomWidgetClick('2x2_0', '2x2')">
@@ -140,7 +140,7 @@ const beautifyHTML = `
                 </div>
                 <input type="file" id="custom-widget-upload-2x2_0" accept="image/*" style="display:none;" 
                        onchange="handleCustomWidgetImage(event, '2x2_0', '2x2')">
-                <div style="position:relative; flex:1;">
+                <div style="position:relative; flex:1; overflow:visible;">
                     <div class="beautify-box-2x2 custom-widget-box" id="custom-widget-2x2-1" 
                          style="background-size:cover; background-position:center; background-repeat:no-repeat;"
                          onclick="handleCustomWidgetClick('2x2_1', '2x2')">
@@ -152,7 +152,7 @@ const beautifyHTML = `
                 <input type="file" id="custom-widget-upload-2x2_1" accept="image/*" style="display:none;" 
                        onchange="handleCustomWidgetImage(event, '2x2_1', '2x2')">
             </div>
-            <div style="position:relative;">
+            <div style="position:relative; overflow:visible;">
                 <div class="beautify-box-2x4 custom-widget-box" id="custom-widget-2x4-0" 
                      style="background-size:cover; background-position:center; background-repeat:no-repeat;"
                      onclick="handleCustomWidgetClick('2x4_0', '2x4')">
@@ -336,104 +336,222 @@ function executeClearWallpaper() {
 
 // ===== 自定义小组件 =====
 function handleCustomWidgetClick(key, size) {
+    console.log('handleCustomWidgetClick called, key:', key, 'size:', size);
     var src = localStorage.getItem('beautify_custom_widget_' + key);
+    console.log('localStorage src exists:', !!src);
     if (src) {
         confirmAddCustomWidget(key, size);
     } else {
         var uploadEl = document.getElementById('custom-widget-upload-' + key);
+        console.log('uploadEl found:', !!uploadEl);
         if (uploadEl) uploadEl.click();
     }
 }
 
 function handleCustomWidgetImage(e, key, size) {
-    if (e.target.files && e.target.files[0]) {
-        var reader = new FileReader();
-        reader.onload = function(ev) {
-            localStorage.setItem('beautify_custom_widget_' + key, ev.target.result);
-            updateCustomWidgetPreview(key);
-            showToast('图片已就绪，点击框可添加到桌面');
-        };
-        reader.readAsDataURL(e.target.files[0]);
+    console.log('handleCustomWidgetImage called, key:', key, 'size:', size);
+    var file = e.target.files[0];
+    if (!file) {
+        console.log('no file selected');
+        return;
     }
+    console.log('file:', file.name);
+    
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+        var imageData = ev.target.result;
+        console.log('file read complete, data length:', imageData.length);
+        localStorage.setItem('beautify_custom_widget_' + key, imageData);
+        console.log('saved to localStorage, calling updateCustomWidgetPreview');
+        updateCustomWidgetPreview(key);
+        showToast('图片已就绪，点击框可添加到桌面');
+    };
+    reader.onerror = function() {
+        console.error('FileReader error');
+    };
+    reader.readAsDataURL(file);
 }
 
 function updateCustomWidgetPreview(key) {
+    console.log('updateCustomWidgetPreview called, key:', key);
     var parts = key.split('_');
-    var boxId = 'custom-widget-' + parts[0] + '-' + parts[1];
+    var size = parts[0];
+    var index = parts[1];
+    var boxId = 'custom-widget-' + size + '-' + index;
+    var delBtnId = 'custom-del-' + key;
+    
     var box = document.getElementById(boxId);
+    var delBtn = document.getElementById(delBtnId);
     var src = localStorage.getItem('beautify_custom_widget_' + key);
-    if (box && src) {
-        box.style.backgroundImage = 'url(' + src + ')';
-        box.style.backgroundSize = 'cover';
-        box.style.backgroundPosition = 'center';
-        box.style.backgroundRepeat = 'no-repeat';
-        var placeholder = box.querySelector('.custom-widget-placeholder');
-        if (placeholder) placeholder.style.display = 'none';
+    
+    console.log('boxId:', boxId, 'found:', !!box);
+    console.log('delBtnId:', delBtnId, 'found:', !!delBtn);
+    console.log('src exists:', !!src);
+    
+    if (box) {
+        if (src) {
+            box.style.backgroundImage = 'url(' + src + ')';
+            box.style.backgroundSize = 'cover';
+            box.style.backgroundPosition = 'center';
+            box.style.backgroundRepeat = 'no-repeat';
+            box.style.backgroundColor = 'transparent';
+            var placeholder = box.querySelector('.custom-widget-placeholder');
+            if (placeholder) placeholder.style.display = 'none';
+            console.log('box background set');
+        } else {
+            box.style.backgroundImage = '';
+            box.style.backgroundColor = 'transparent';
+            var placeholder = box.querySelector('.custom-widget-placeholder');
+            if (placeholder) placeholder.style.display = '';
+            console.log('box background cleared');
+        }
+    } else {
+        console.error('box not found:', boxId);
     }
-    var delBtn = document.getElementById('custom-del-' + key);
+    
     if (delBtn) {
         delBtn.style.display = src ? 'flex' : 'none';
+        var parent = delBtn.parentElement;
+        if (parent) {
+            parent.style.overflow = 'visible';
+        }
+        console.log('delBtn display set to:', src ? 'flex' : 'none');
+    } else {
+        console.error('delBtn not found:', delBtnId);
     }
 }
 
 function loadCustomWidgetPreviews() {
+    console.log('=== loadCustomWidgetPreviews called ===');
     var keys = ['2x2_0', '2x2_1', '2x4_0'];
     for (var i = 0; i < keys.length; i++) {
         updateCustomWidgetPreview(keys[i]);
     }
+    console.log('=== loadCustomWidgetPreviews done ===');
 }
 
 // ===== 确认添加自定义小组件 =====
 function confirmAddCustomWidget(key, size) {
+    console.log('confirmAddCustomWidget called, key:', key, 'size:', size);
     var overlay = document.createElement('div');
     overlay.className = 'confirm-overlay';
     overlay.id = 'confirmAddCustomWidgetOverlay';
-    overlay.innerHTML = '<div class="confirm-dialog"><p>添加当前小组件？</p><div class="confirm-buttons"><div class="confirm-btn-cancel" onclick="cancelAddCustomWidget()">取消</div><div class="confirm-btn-delete" onclick="executeAddCustomWidget(\'' + key + '\',\'' + size + '\')">确定</div></div></div>';
+    overlay.innerHTML = 
+        '<div class="confirm-dialog">' +
+            '<p>添加当前小组件？</p>' +
+            '<div class="confirm-buttons">' +
+                '<div class="confirm-btn-cancel" id="cancelAddCustomWidgetBtn">取消</div>' +
+                '<div class="confirm-btn-delete" id="confirmAddCustomWidgetBtn">确定</div>' +
+            '</div>' +
+        '</div>';
     document.body.appendChild(overlay);
+    
+    document.getElementById('cancelAddCustomWidgetBtn').onclick = function() {
+        cancelAddCustomWidget();
+    };
+    document.getElementById('confirmAddCustomWidgetBtn').onclick = function() {
+        executeAddCustomWidget(key, size);
+    };
+    
+    overlay.onclick = function(e) {
+        if (e.target === overlay) cancelAddCustomWidget();
+    };
 }
 
 function cancelAddCustomWidget() {
+    console.log('cancelAddCustomWidget called');
     var overlay = document.getElementById('confirmAddCustomWidgetOverlay');
     if (overlay) overlay.remove();
 }
 
 function executeAddCustomWidget(key, size) {
+    console.log('executeAddCustomWidget called, key:', key, 'size:', size);
     var imageSrc = localStorage.getItem('beautify_custom_widget_' + key);
-    if (!imageSrc) return;
-    var widgets = typeof getWidgets === 'function' ? getWidgets() : [];
-    widgets.push({ id: 'widget-custom-' + Date.now(), type: 'custom', page: 0, image: imageSrc, size: size });
-    if (typeof saveWidgets === 'function') saveWidgets(widgets);
+    console.log('imageSrc exists:', !!imageSrc);
+    
+    if (!imageSrc) {
+        showToast('图片数据丢失，请重新选择');
+        cancelAddCustomWidget();
+        return;
+    }
+    
+    var widgets = window.getWidgets ? window.getWidgets() : [];
+    console.log('current widgets count:', widgets.length);
+    widgets.push({
+        id: 'widget-custom-' + Date.now(),
+        type: 'custom',
+        page: 0,
+        image: imageSrc,
+        size: size
+    });
+    console.log('new widgets count:', widgets.length);
+    
+    if (window.saveWidgets) {
+        window.saveWidgets(widgets);
+        console.log('widgets saved');
+    } else {
+        console.error('window.saveWidgets not available');
+    }
+    
     cancelAddCustomWidget();
     showToast('已添加');
-    if (typeof renderWidgets === 'function') renderWidgets();
+    
+    if (window.renderWidgets) {
+        window.renderWidgets();
+        console.log('renderWidgets called');
+    } else {
+        console.error('window.renderWidgets not available');
+    }
 }
 
 // ===== 删除自定义小组件图片 =====
 let pendingDeleteCustomKey = null;
 
 function confirmDeleteCustomWidget(key) {
+    console.log('confirmDeleteCustomWidget called, key:', key);
     pendingDeleteCustomKey = key;
+    
     var overlay = document.createElement('div');
     overlay.className = 'confirm-overlay';
     overlay.id = 'confirmDeleteCustomOverlay';
-    overlay.innerHTML = '<div class="confirm-dialog"><p>确认清除当前小组件？</p><div class="confirm-buttons"><div class="confirm-btn-cancel" onclick="cancelDeleteCustomWidget()">取消</div><div class="confirm-btn-delete" onclick="executeDeleteCustomWidget()">确定</div></div></div>';
+    overlay.innerHTML = 
+        '<div class="confirm-dialog">' +
+            '<p>确认清除当前小组件？</p>' +
+            '<div class="confirm-buttons">' +
+                '<div class="confirm-btn-cancel" id="cancelDeleteCustomWidgetBtn">取消</div>' +
+                '<div class="confirm-btn-delete" id="confirmDeleteCustomWidgetBtn">确定</div>' +
+            '</div>' +
+        '</div>';
     document.body.appendChild(overlay);
+    
+    document.getElementById('cancelDeleteCustomWidgetBtn').onclick = cancelDeleteCustomWidget;
+    document.getElementById('confirmDeleteCustomWidgetBtn').onclick = executeDeleteCustomWidget;
+    
+    overlay.onclick = function(e) {
+        if (e.target === overlay) cancelDeleteCustomWidget();
+    };
 }
 
 function cancelDeleteCustomWidget() {
+    console.log('cancelDeleteCustomWidget called');
     pendingDeleteCustomKey = null;
     var overlay = document.getElementById('confirmDeleteCustomOverlay');
     if (overlay) overlay.remove();
 }
 
 function executeDeleteCustomWidget() {
+    console.log('executeDeleteCustomWidget called, pendingKey:', pendingDeleteCustomKey);
     if (!pendingDeleteCustomKey) return;
-    localStorage.removeItem('beautify_custom_widget_' + pendingDeleteCustomKey);
+    
     var key = pendingDeleteCustomKey;
+    localStorage.removeItem('beautify_custom_widget_' + key);
     pendingDeleteCustomKey = null;
+    
     var overlay = document.getElementById('confirmDeleteCustomOverlay');
     if (overlay) overlay.remove();
+    
     updateCustomWidgetPreview(key);
+    
     var parts = key.split('_');
     var boxId = 'custom-widget-' + parts[0] + '-' + parts[1];
     var box = document.getElementById(boxId);
@@ -442,9 +560,12 @@ function executeDeleteCustomWidget() {
         var placeholder = box.querySelector('.custom-widget-placeholder');
         if (placeholder) placeholder.style.display = '';
     }
+    
     var delBtn = document.getElementById('custom-del-' + key);
     if (delBtn) delBtn.style.display = 'none';
+    
     showToast('已删除');
+    console.log('delete done');
 }
 
 // ===== 顶部提示弹窗 =====
@@ -553,67 +674,3 @@ function importBeautify() {
                 setTimeout(() => location.reload(), 500);
             } catch (err) { alert('导入失败：文件格式不正确。'); }
         };
-        reader.readAsText(file);
-    };
-    input.click();
-}
-
-// ===== 清空美化 =====
-let clearBeautifyClicks = 0;
-function handleClearBeautify() {
-    const btn = document.getElementById('clearBeautifyBtn');
-    if (clearBeautifyClicks === 0) {
-        clearBeautifyClicks++;
-        btn.innerText = "确认清空美化？(再次点击)"; btn.style.backgroundColor = "#ff3b30"; btn.style.color = "#fff";
-        setTimeout(() => { if (clearBeautifyClicks === 1) { clearBeautifyClicks = 0; btn.innerText = "清空所有美化"; btn.style.backgroundColor = "#fff"; btn.style.color = "#ff3b30"; } }, 3000);
-    } else {
-        const keys = [];
-        for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key.startsWith('beautify_')) keys.push(key); }
-        keys.forEach(k => localStorage.removeItem(k));
-        const desktop = document.getElementById('desktop'); if (desktop) desktop.style.backgroundImage = '';
-        registeredAppIcons.forEach((_, idx) => resetAppIcon(idx));
-        clearBeautifyClicks = 0; btn.innerText = "清空所有美化"; btn.style.backgroundColor = "#fff"; btn.style.color = "#ff3b30";
-        alert("所有美化已清空。");
-    }
-}
-
-// ===== 顶部状态栏时钟 =====
-let topBarClockInterval = null;
-function updateTopBarClock() {
-    const el = document.getElementById('topStatusBar'); if (!el) return;
-    const now = new Date(); let h = now.getHours(); const m = now.getMinutes().toString().padStart(2, '0');
-    if (localStorage.getItem('beautify_12hr') === 'true') h = h % 12 || 12;
-    el.textContent = h.toString().padStart(2, '0') + ':' + m;
-}
-function startTopBarClock() { if (topBarClockInterval) clearInterval(topBarClockInterval); updateTopBarClock(); topBarClockInterval = setInterval(updateTopBarClock, 1000); }
-function applyTopBarVisibility() {
-    const el = document.getElementById('topStatusBar');
-    if (el) el.style.display = (localStorage.getItem('beautify_top_info') === 'false') ? 'none' : 'block';
-}
-function updateClockDisplay() { localStorage.setItem('beautify_12hr', document.getElementById('sw-12hr').checked); updateTopBarClock(); }
-
-// ===== 初始化美化面板 =====
-function initBeautify() { renderBeautifyIcons(); loadSavedIcons(); loadSavedWallpaper(); }
-
-// ===== 注册美化图标到 Dock =====
-window.addEventListener('DOMContentLoaded', () => {
-    if (typeof registerModal === 'function') registerModal('beautifyModal', '美化', beautifyHTML);
-    if (typeof renderAllModals === 'function') renderAllModals();
-    startTopBarClock();
-    applyTopBarVisibility();
-    loadSavedWallpaper();
-    applyCustomCSS();
-
-    const dockBar = document.getElementById('dockBar');
-    if (!dockBar) return;
-
-    const beautifyItem = document.createElement('div');
-    beautifyItem.className = 'dock-item';
-    beautifyItem.innerHTML = '<div class="dock-icon"><div class="dock-icon-img">美</div></div><div class="dock-label">美化</div>';
-    beautifyItem.onclick = () => {
-        initBeautify();
-        openModal('beautifyModal');
-        setTimeout(() => { loadCustomWidgetPreviews(); }, 500);
-    };
-    dockBar.appendChild(beautifyItem);
-});
