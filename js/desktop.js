@@ -241,7 +241,9 @@ function openHalfPanel() {
                 <span class="toggle-arrow">&gt;</span>
             </div>
             <div id="widget-2x4" class="collapsible-section" style="display:none;">
-                <div class="widget-placeholder">2x4 占位</div>
+                <div class="widget-placeholder" data-widget-type="clock" onclick="confirmAddWidget('clock')" style="cursor:pointer;">
+                    时钟小组件<br><span style="font-size:12px; color:#8e8e93;">点击添加</span>
+                </div>
             </div>
             <div class="widget-list-item" data-target="widget-3x4">
                 <span>3x4 小组件</span>
@@ -365,9 +367,9 @@ function renderWidgets() {
             </div>
             <div class="widget-divider"></div>
             <span class="widget-signature" contenteditable="true" 
-      onblur="updateWidgetSignature('${widget.id}', this.innerText)" 
-      onclick="event.stopPropagation();"
-      onfocus="if(this.innerText==='——  ..おやすみ ..——'){this.innerText=''}">${widget.signature}</span>
+                  onblur="updateWidgetSignature('${widget.id}', this.innerText)" 
+                  onclick="event.stopPropagation();"
+                  onfocus="if(this.innerText==='——  ..おやすみ ..——'){this.innerText=''}">${widget.signature}</span>
             <div class="widget-delete-btn" onclick="event.stopPropagation(); confirmDeleteWidget('${widget.id}')">×</div>
         `;
 
@@ -621,6 +623,61 @@ function executeDeleteWidget() {
     const overlay = document.getElementById('confirmDeleteOverlay');
     if (overlay) overlay.remove();
     renderWidgets();
+}
+
+// ========== 确认添加小组件弹窗 ==========
+let pendingAddWidgetType = null;
+
+function confirmAddWidget(type) {
+    pendingAddWidgetType = type;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.id = 'confirmAddOverlay';
+    overlay.innerHTML = `
+        <div class="confirm-dialog">
+            <p>添加当前小组件？</p>
+            <div class="confirm-buttons">
+                <div class="confirm-btn-cancel" onclick="cancelAddWidget()">取消</div>
+                <div class="confirm-btn-delete" onclick="executeAddWidget()">确定</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+}
+
+function cancelAddWidget() {
+    pendingAddWidgetType = null;
+    const overlay = document.getElementById('confirmAddOverlay');
+    if (overlay) overlay.remove();
+}
+
+function executeAddWidget() {
+    if (!pendingAddWidgetType) return;
+
+    if (pendingAddWidgetType === 'clock') {
+        const widgets = getWidgets();
+        if (widgets.find(w => w.type === 'clock')) {
+            alert('时钟小组件已存在');
+        } else {
+            widgets.push({
+                id: 'widget-clock-' + Date.now(),
+                type: 'clock',
+                page: 0,
+                avatar: '',
+                signature: '——  ..おやすみ ..——',
+                temp: '24°',
+                weatherDesc: '上海·晴'
+            });
+            saveWidgets(widgets);
+            renderWidgets();
+        }
+    }
+
+    pendingAddWidgetType = null;
+    const overlay = document.getElementById('confirmAddOverlay');
+    if (overlay) overlay.remove();
+    closeHalfPanel();
 }
 
 // ========== 小组件头像上传 ==========
