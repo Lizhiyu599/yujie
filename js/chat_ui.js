@@ -579,7 +579,7 @@ document.addEventListener('touchstart', function(e) {
         const menu = document.getElementById('bubbleMenu');
         if (!menu) return;
         const rect = bubble.getBoundingClientRect();
-        menu.style.top = (rect.top - menu.offsetHeight - 8) + 'px';
+        menu.style.top = (rect.top + window.scrollY - menu.offsetHeight - 8) + 'px';
         menu.style.left = Math.max(10, rect.left + (rect.width / 2) - 130) + 'px';
         menu.classList.add('show');
     }, 500);
