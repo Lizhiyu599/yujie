@@ -121,7 +121,7 @@ function renderChatShell() {
                 <div class="nav-status-bar"></div>
                 <div class="nav-body">
                     <span class="nav-back" onclick="closeChat()">‹</span>
-                    <span class="nav-title">聊天</span>
+                    <span class="nav-title">消息</span>
                     <span class="nav-plus-btn" onclick="togglePlusMenu(event)">+</span>
                 </div>
             </div>
