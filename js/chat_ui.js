@@ -1,6 +1,6 @@
 /**
  * 玉界 - 聊天软件 UI
- * 包含：会话列表、聊天窗口、标签栏导航、心理状态窗、聊天详情半屏面板、+号功能面板
+ * 包含：会话列表、聊天窗口、标签栏导航、心理状态窗、聊天详情半屏面板、+号功能面板、长按气泡菜单
  * 消息收发已移至 chat_core.js
  */
 
@@ -146,6 +146,22 @@ function enterChat(contactId) {
             </div>
             <div class="chat-messages" id="chatMessages" style="background-image:url(${savedBg});">
                 <div style="text-align:center;color:#c7c7cc;font-size:13px;margin-top:20px;">现在可以开始聊天了</div>
+            </div>
+
+            <!-- 长按气泡功能菜单 -->
+            <div class="bubble-menu" id="bubbleMenu">
+                <div class="menu-row">
+                    <div class="menu-item" onclick="menuCopy()">复制</div>
+                    <div class="menu-item" onclick="menuFavorite()">收藏</div>
+                    <div class="menu-item" onclick="menuRegret()">重回</div>
+                    <div class="menu-item" onclick="menuMultiSelect()">多选</div>
+                </div>
+                <div class="menu-row">
+                    <div class="menu-item" onclick="menuQuote()">引用</div>
+                    <div class="menu-item" onclick="menuTranslate()">翻译</div>
+                    <div class="menu-item empty"></div>
+                    <div class="menu-item empty"></div>
+                </div>
             </div>
 
             <!-- 心理状态窗 -->
@@ -493,7 +509,146 @@ function openFileSend() {
         appendMessage('user', '[分享链接] ' + link.trim());
         saveChatHistory(window.ChatState.currentContactId);
     }
-            }
+}
+
+// ========== 长按气泡菜单 ==========
+let bubbleMenuTarget = null;
+
+document.addEventListener('touchstart', function(e) {
+    const bubble = e.target.closest('.bubble-assistant');
+    if (!bubble) {
+        document.getElementById('bubbleMenu')?.classList.remove('show');
+        return;
+    }
+    bubbleMenuTarget = bubble;
+    let pressTimer = setTimeout(function() {
+        const menu = document.getElementById('bubbleMenu');
+        if (!menu) return;
+        const rect = bubble.getBoundingClientRect();
+        menu.style.top = (rect.top - 130) + 'px';
+        menu.style.left = Math.max(10, rect.left + (rect.width / 2) - 130) + 'px';
+        menu.classList.add('show');
+    }, 500);
+
+    bubble.addEventListener('touchend', function() { clearTimeout(pressTimer); }, { once: true });
+    bubble.addEventListener('touchmove', function() { clearTimeout(pressTimer); }, { once: true });
+});
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.bubble-menu') && !e.target.closest('.bubble-assistant')) {
+        document.getElementById('bubbleMenu')?.classList.remove('show');
+    }
+});
+
+function menuCopy() {
+    if (bubbleMenuTarget) {
+        navigator.clipboard.writeText(bubbleMenuTarget.textContent).then(() => showToast('已复制'));
+    }
+    document.getElementById('bubbleMenu')?.classList.remove('show');
+}
+
+function menuFavorite() {
+    const text = bubbleMenuTarget?.textContent;
+    if (text) {
+        const saved = JSON.parse(localStorage.getItem('favorite_messages') || '[]');
+        saved.push({ text, time: new Date().toISOString() });
+        localStorage.setItem('favorite_messages', JSON.stringify(saved));
+        showToast('已收藏');
+    }
+    document.getElementById('bubbleMenu')?.classList.remove('show');
+}
+
+function menuRegret() {
+    document.getElementById('bubbleMenu')?.classList.remove('show');
+    const overlay = document.createElement('div');
+    overlay.className = 'regret-modal-overlay';
+    overlay.id = 'regretModalOverlay';
+    overlay.innerHTML = `
+        <div class="regret-modal">
+            <div class="regret-modal-title">重回</div>
+            <textarea class="regret-textarea" id="regretTextarea" placeholder="请输入想重回的原因及想往哪个方向发展，可填可不填。"></textarea>
+            <div class="regret-buttons">
+                <div class="regret-btn-cancel" onclick="closeRegretModal()">取消</div>
+                <div class="regret-btn-confirm" onclick="confirmRegret()">确认重回</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeRegretModal(); };
+}
+
+function closeRegretModal() {
+    const overlay = document.getElementById('regretModalOverlay');
+    if (overlay) overlay.remove();
+}
+
+function confirmRegret() {
+    const hint = document.getElementById('regretTextarea').value.trim();
+    closeRegretModal();
+
+    if (!bubbleMenuTarget) return;
+    const messages = document.getElementById('chatMessages');
+    if (!messages) return;
+
+    let found = false;
+    const children = Array.from(messages.children);
+    for (let i = children.length - 1; i >= 0; i--) {
+        if (children[i] === bubbleMenuTarget) found = true;
+        if (found) children[i].remove();
+    }
+
+    saveChatHistory(window.ChatState.currentContactId);
+
+    const contactId = window.ChatState.currentContactId || 'c1';
+    const contact = getContactById(contactId);
+    const contactName = contact ? contact.name : 'AI';
+
+    window.ChatState.isAITyping = true;
+    const titleEl = document.getElementById('chatTitle');
+    if (titleEl) titleEl.innerHTML = '<span class="nav-typing">输入中…</span>';
+
+    const systemPrompt = buildSystemPrompt(contactId);
+    const userMessage = hint || '请重新回复，换一种表达方式';
+
+    callChatAPI(systemPrompt, userMessage).then(reply => {
+        processAIReply(reply, contactName, contactId);
+    }).catch(error => {
+        appendMessage('assistant', '抱歉，消息发送失败：' + error.message);
+        if (titleEl) titleEl.textContent = contactName;
+        window.ChatState.isAITyping = false;
+    });
+}
+
+function menuMultiSelect() {
+    showToast('多选功能即将上线');
+    document.getElementById('bubbleMenu')?.classList.remove('show');
+}
+
+function menuQuote() {
+    if (bubbleMenuTarget) {
+        window.ChatState.quotedMsg = { n: '角色', t: bubbleMenuTarget.textContent };
+        showToast('已引用');
+    }
+    document.getElementById('bubbleMenu')?.classList.remove('show');
+}
+
+function menuTranslate() {
+    if (!bubbleMenuTarget) return;
+    const text = bubbleMenuTarget.textContent;
+    const next = bubbleMenuTarget.nextElementSibling;
+    if (next && next.classList.contains('translate-bubble')) {
+        next.style.display = next.style.display === 'none' ? 'block' : 'none';
+    } else {
+        if (typeof needsTranslation === 'function' && needsTranslation(text) && typeof translateText === 'function') {
+            translateText(text).then(translated => {
+                appendTranslation(bubbleMenuTarget, translated);
+            });
+        } else {
+            showToast('已是简体中文');
+        }
+    }
+    document.getElementById('bubbleMenu')?.classList.remove('show');
+}
 
 // ========== 聊天详情半屏面板 ==========
 function openChatSettings() {
