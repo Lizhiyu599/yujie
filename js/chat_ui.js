@@ -717,7 +717,7 @@ function menuTranslate() {
 
     const menu = document.getElementById('bubbleMenu');
     if (menu) menu.style.display = 'none';
-}
+  }
 
 // ========== 右上角 + 弹出菜单 ==========
 function togglePlusMenu(e) {
@@ -732,14 +732,20 @@ function togglePlusMenu(e) {
     menu.id = 'plusMenuPopup';
     menu.className = 'plus-menu-popup';
     menu.innerHTML = `
-        <div class="plus-menu-item" onclick="initiateGroupChat()">
-            <span>发起群聊</span>
-        </div>
+        <div class="plus-menu-item" id="menuGroupChat">发起群聊</div>
         <div class="plus-menu-divider"></div>
-        <div class="plus-menu-item" onclick="openAddFriend()">
-            <span>添加好友</span>
-        </div>
+        <div class="plus-menu-item" id="menuAddFriend">添加好友</div>
     `;
+
+    menu.querySelector('#menuGroupChat').onclick = function(e) {
+        e.stopPropagation();
+        initiateGroupChat();
+    };
+    menu.querySelector('#menuAddFriend').onclick = function(e) {
+        e.stopPropagation();
+        openAddFriend();
+    };
+
     document.body.appendChild(menu);
 
     const btn = e.target.closest('.nav-plus-btn');
@@ -749,7 +755,7 @@ function togglePlusMenu(e) {
         menu.style.right = (window.innerWidth - rect.right) + 'px';
     }
 
-    setTimeout(() => {
+    setTimeout(function() {
         document.addEventListener('click', closePlusMenu, { once: true });
         document.addEventListener('touchstart', closePlusMenu, { once: true });
     }, 10);
@@ -1114,4 +1120,7 @@ function blockContact() {
 
 function deleteContact() {
     showToast('删除功能即将上线');
-}       
+                        
+}
+
+
