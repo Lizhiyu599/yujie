@@ -347,7 +347,13 @@ function sendVoiceMessage(text) {
     const messages = document.getElementById('chatMessages');
     if (!messages) return;
 
+    if (text.length > 180) {
+        showToast('语音消息最长60秒，请精简内容');
+        return;
+    }
+
     const contactId = window.ChatState.currentContactId || 'c1';
+    const seconds = Math.max(1, Math.min(60, Math.round(text.length / 3)));
 
     const row = document.createElement('div');
     row.className = 'bubble-row user';
@@ -359,7 +365,7 @@ function sendVoiceMessage(text) {
     const voiceBubble = document.createElement('div');
     voiceBubble.className = 'bubble bubble-voice bubble-user';
 
-    const barCount = Math.floor(Math.random() * 6) + 5;
+    const barCount = Math.min(12, Math.floor(seconds * 0.25) + 3);
     let waveBars = '';
     for (let i = 0; i < barCount; i++) {
         waveBars += '<span class="voice-wave-bar"></span>';
@@ -375,6 +381,7 @@ function sendVoiceMessage(text) {
             </span>
         </span>
         <span class="voice-wave-bars">${waveBars}</span>
+        <span class="voice-duration">${seconds}"</span>
     `;
     voiceBubble.onclick = function() {
         showToast('用户发送的语音消息');
@@ -401,7 +408,7 @@ function sendVoiceMessage(text) {
     if (titleEl) titleEl.innerHTML = '<span class="nav-typing">输入中...</span>';
 
     const systemPrompt = buildSystemPrompt(contactId);
-    const userMessage = '（用户发来了一条语音消息，内容是：' + text + '）';
+    const userMessage = '（用户发来了一条' + seconds + '秒的语音消息，内容是：' + text + '）';
 
     callChatAPI([
         { role: 'system', content: systemPrompt },
@@ -420,6 +427,8 @@ function sendVoiceBubble(role, text, voiceUrl, isRealVoice) {
     const messages = document.getElementById('chatMessages');
     if (!messages) return;
 
+    const seconds = Math.max(1, Math.min(60, Math.round(text.length / 3)));
+
     const row = document.createElement('div');
     row.className = 'bubble-row ' + (role === 'assistant' ? 'assistant' : 'user');
 
@@ -432,7 +441,7 @@ function sendVoiceBubble(role, text, voiceUrl, isRealVoice) {
     voiceBubble.setAttribute('data-voice-url', voiceUrl || '');
     voiceBubble.setAttribute('data-is-real', isRealVoice ? '1' : '0');
 
-    const barCount = Math.floor(Math.random() * 6) + 5;
+    const barCount = Math.min(12, Math.floor(seconds * 0.25) + 3);
     let waveBars = '';
     for (let i = 0; i < barCount; i++) {
         waveBars += '<span class="voice-wave-bar"></span>';
@@ -448,6 +457,7 @@ function sendVoiceBubble(role, text, voiceUrl, isRealVoice) {
             </span>
         </span>
         <span class="voice-wave-bars">${waveBars}</span>
+        <span class="voice-duration">${seconds}"</span>
     `;
 
     if (isRealVoice && voiceUrl) {
@@ -745,7 +755,7 @@ function sendLocation() {
     row.appendChild(card);
     document.getElementById('chatMessages').appendChild(row);
     saveChatHistory(window.ChatState.currentContactId);
-}  
+}     
 
 // ========== 红包 ==========
 function openRedPacketModal() { toggleAddPanel(); showPaymentModal('红包', 200); }
@@ -1575,6 +1585,4 @@ function blockContact() {
 
 function deleteContact() {
     showToast('删除功能即将上线');
-}
-
-
+}         
