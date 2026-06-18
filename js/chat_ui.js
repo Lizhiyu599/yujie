@@ -50,12 +50,13 @@ window.ChatConfig = window.ChatConfig || {
     }
 };
 
-// ========== 初始化气泡菜单（挂到body上） ==========
+// ========== 初始化气泡菜单（挂到body最末尾，z-index最高） ==========
 function initBubbleMenu() {
     if (document.getElementById('bubbleMenu')) return;
     const menu = document.createElement('div');
     menu.className = 'bubble-menu';
     menu.id = 'bubbleMenu';
+    menu.style.cssText = 'position:fixed;z-index:99999;display:none;';
     menu.innerHTML = `
         <div class="menu-row">
             <div class="menu-item" onclick="menuCopy()">复制</div>
@@ -571,7 +572,8 @@ let bubbleMenuTarget = null;
 document.addEventListener('touchstart', function(e) {
     const bubble = e.target.closest('.bubble-assistant');
     if (!bubble) {
-        document.getElementById('bubbleMenu')?.classList.remove('show');
+        const menu = document.getElementById('bubbleMenu');
+        if (menu) menu.classList.remove('show');
         return;
     }
     bubbleMenuTarget = bubble;
@@ -579,7 +581,7 @@ document.addEventListener('touchstart', function(e) {
         const menu = document.getElementById('bubbleMenu');
         if (!menu) return;
         const rect = bubble.getBoundingClientRect();
-        menu.style.top = (rect.top + window.scrollY - menu.offsetHeight - 8) + 'px';
+        menu.style.top = (rect.top - menu.offsetHeight - 8) + 'px';
         menu.style.left = Math.max(10, rect.left + (rect.width / 2) - 130) + 'px';
         menu.classList.add('show');
     }, 500);
@@ -590,7 +592,8 @@ document.addEventListener('touchstart', function(e) {
 
 document.addEventListener('click', function(e) {
     if (!e.target.closest('.bubble-menu') && !e.target.closest('.bubble-assistant')) {
-        document.getElementById('bubbleMenu')?.classList.remove('show');
+        const menu = document.getElementById('bubbleMenu');
+        if (menu) menu.classList.remove('show');
     }
 });
 
@@ -598,16 +601,19 @@ function menuCopy() {
     if (bubbleMenuTarget) {
         navigator.clipboard.writeText(bubbleMenuTarget.textContent).then(() => showToast('已复制'));
     }
-    document.getElementById('bubbleMenu')?.classList.remove('show');
+    const menu = document.getElementById('bubbleMenu');
+    if (menu) menu.classList.remove('show');
 }
 
 function menuFavorite() {
     showToast('收藏功能即将上线');
-    document.getElementById('bubbleMenu')?.classList.remove('show');
+    const menu = document.getElementById('bubbleMenu');
+    if (menu) menu.classList.remove('show');
 }
 
 function menuRegret() {
-    document.getElementById('bubbleMenu')?.classList.remove('show');
+    const menu = document.getElementById('bubbleMenu');
+    if (menu) menu.classList.remove('show');
     const overlay = document.createElement('div');
     overlay.className = 'regret-modal-overlay';
     overlay.id = 'regretModalOverlay';
@@ -669,7 +675,8 @@ function confirmRegret() {
 
 function menuMultiSelect() {
     showToast('多选功能即将上线');
-    document.getElementById('bubbleMenu')?.classList.remove('show');
+    const menu = document.getElementById('bubbleMenu');
+    if (menu) menu.classList.remove('show');
 }
 
 function menuQuote() {
@@ -709,7 +716,8 @@ function menuQuote() {
         inputBar.insertBefore(preview, inputBar.firstChild);
     }
 
-    document.getElementById('bubbleMenu')?.classList.remove('show');
+    const menu = document.getElementById('bubbleMenu');
+    if (menu) menu.classList.remove('show');
     showToast('已引用');
 }
 
@@ -726,20 +734,23 @@ function menuTranslate() {
 
     if (next && next.classList.contains('translate-row')) {
         next.style.display = next.style.display === 'none' ? 'flex' : 'none';
-        document.getElementById('bubbleMenu')?.classList.remove('show');
+        const menu = document.getElementById('bubbleMenu');
+        if (menu) menu.classList.remove('show');
         return;
     }
 
     const text = bubbleMenuTarget.textContent;
     if (!needsTranslation(text)) {
         showToast('已是简体中文');
-        document.getElementById('bubbleMenu')?.classList.remove('show');
+        const menu = document.getElementById('bubbleMenu');
+        if (menu) menu.classList.remove('show');
         return;
     }
 
     if (window._translateCache[text]) {
         appendTranslationRow(row, window._translateCache[text]);
-        document.getElementById('bubbleMenu')?.classList.remove('show');
+        const menu = document.getElementById('bubbleMenu');
+        if (menu) menu.classList.remove('show');
         return;
     }
 
@@ -751,7 +762,8 @@ function menuTranslate() {
         showToast('翻译失败');
     });
 
-    document.getElementById('bubbleMenu')?.classList.remove('show');
+    const menu = document.getElementById('bubbleMenu');
+    if (menu) menu.classList.remove('show');
 }
 
 // ========== 聊天详情半屏面板 ==========
