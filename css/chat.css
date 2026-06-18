@@ -903,7 +903,7 @@
     z-index: 1100;
     display: none;
     box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    width: 210px;
+    width: 260px;
 }
 .bubble-menu.show {
     display: block;
@@ -1040,4 +1040,4 @@
     cursor: pointer;
     padding: 0 4px;
     flex-shrink: 0;
-}
+    }
