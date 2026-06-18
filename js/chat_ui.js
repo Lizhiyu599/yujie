@@ -719,7 +719,7 @@ function menuTranslate() {
 
     const menu = document.getElementById('bubbleMenu');
     if (menu) menu.style.display = 'none';
-   }     
+  }         
 
 // ========== 右上角 + 弹出菜单 ==========
 function togglePlusMenu(e) {
@@ -727,6 +727,8 @@ function togglePlusMenu(e) {
     const existing = document.getElementById('plusMenuPopup');
     if (existing) {
         existing.remove();
+        document.removeEventListener('click', closePlusMenuOutside);
+        document.removeEventListener('touchstart', closePlusMenuOutside);
         return;
     }
 
@@ -739,18 +741,29 @@ function togglePlusMenu(e) {
         <div class="plus-menu-item" id="menuAddFriend">添加好友</div>
     `;
 
-    menu.querySelector('#menuGroupChat').onclick = function(e) {
-        e.stopPropagation();
-        closePlusMenu();
+    menu.querySelector('#menuGroupChat').onclick = function(ev) {
+        ev.stopPropagation();
+        ev.preventDefault();
+        document.removeEventListener('click', closePlusMenuOutside);
+        document.removeEventListener('touchstart', closePlusMenuOutside);
+        menu.remove();
         initiateGroupChat();
     };
-    menu.querySelector('#menuAddFriend').onclick = function(e) {
-        e.stopPropagation();
-        closePlusMenu();
-        setTimeout(function() {
-            showCreateCharacterPage();
-        }, 100);
+    menu.querySelector('#menuAddFriend').onclick = function(ev) {
+        ev.stopPropagation();
+        ev.preventDefault();
+        document.removeEventListener('click', closePlusMenuOutside);
+        document.removeEventListener('touchstart', closePlusMenuOutside);
+        menu.remove();
+        showCreateCharacterPage();
     };
+
+    menu.addEventListener('click', function(ev) {
+        ev.stopPropagation();
+    });
+    menu.addEventListener('touchstart', function(ev) {
+        ev.stopPropagation();
+    });
 
     document.body.appendChild(menu);
 
@@ -762,18 +775,20 @@ function togglePlusMenu(e) {
     }
 
     setTimeout(function() {
-        document.addEventListener('click', closePlusMenu, { once: true });
-        document.addEventListener('touchstart', closePlusMenu, { once: true });
+        document.addEventListener('click', closePlusMenuOutside);
+        document.addEventListener('touchstart', closePlusMenuOutside);
     }, 10);
-}
 
-function closePlusMenu() {
-    const menu = document.getElementById('plusMenuPopup');
-    if (menu) menu.remove();
+    function closePlusMenuOutside(event) {
+        if (!menu.contains(event.target)) {
+            menu.remove();
+            document.removeEventListener('click', closePlusMenuOutside);
+            document.removeEventListener('touchstart', closePlusMenuOutside);
+        }
+    }
 }
 
 function initiateGroupChat() {
-    closePlusMenu();
     showToast('群聊功能即将上线');
 }
 
@@ -1312,4 +1327,5 @@ function blockContact() {
 
 function deleteContact() {
     showToast('删除功能即将上线');
-}       
+}
+
