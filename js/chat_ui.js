@@ -1067,7 +1067,7 @@ function openChatSettings() {
                 <div class="settings-section-title">自动翻译</div>
                 <div class="glass-card">
                     <div class="switch-row"><span>自动翻译</span><input type="checkbox" class="ios-switch-sm" ${settings.autoTranslate === true ? 'checked' : ''} onchange="toggleAutoTranslate(this.checked)"></div>
-                    <div class="hint" style="margin-top:6px;">非简体中文的内容都将自动翻译成简体中文。</div>
+                    <div style="font-size:12px;color:#8e8e93;margin-top:6px;">非简体中文的内容都将自动翻译成简体中文。</div>
                 </div>
 
                 <!-- 危险区 -->
