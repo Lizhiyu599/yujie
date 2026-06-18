@@ -717,7 +717,7 @@ function menuTranslate() {
 
     const menu = document.getElementById('bubbleMenu');
     if (menu) menu.style.display = 'none';
-}
+ }           
 
 // ========== 右上角 + 弹出菜单 ==========
 function togglePlusMenu(e) {
@@ -1034,9 +1034,8 @@ function renderContactsList() {
 
     let html = '';
 
-    // 新的朋友入口
     html += `
-        <div class="chat-list-item" onclick="showNewFriendsPage()">
+        <div class="chat-list-item" onclick="showNewFriendsPageInList()">
             <div class="contacts-new-friend-avatar">
                 <span class="person-head"></span>
                 <span class="person-body"></span>
@@ -1065,7 +1064,6 @@ function renderContactsList() {
         });
     });
 
-    // 右侧字母索引
     let indexHTML = '<div class="contacts-index-bar">';
     sortedLetters.forEach(letter => {
         indexHTML += '<span class="contacts-index-letter" onclick="scrollToGroup(\'' + letter + '\')">' + letter + '</span>';
@@ -1095,6 +1093,68 @@ function scrollToGroup(letter) {
         }
     }
 }
+
+// ========== 新的朋友页面（在列表区渲染） ==========
+function showNewFriendsPageInList() {
+    const listView = document.getElementById('chatListView');
+    if (!listView) return;
+
+    const requests = getFriendRequests();
+    const now = Date.now();
+    const threeDaysAgo = now - 3 * 24 * 60 * 60 * 1000;
+    const oneMonthAgo = now - 30 * 24 * 60 * 60 * 1000;
+
+    const recentRequests = requests.filter(r => r.timestamp > threeDaysAgo);
+    const monthRequests = requests.filter(r => r.timestamp <= threeDaysAgo && r.timestamp > oneMonthAgo);
+    const olderRequests = requests.filter(r => r.timestamp <= oneMonthAgo);
+
+    let html = '';
+
+    if (recentRequests.length > 0) {
+        html += '<div class="contacts-section-title">三天前</div>';
+        html += recentRequests.map(r => renderFriendRequestCardHTML(r)).join('');
+    }
+    if (monthRequests.length > 0) {
+        html += '<div class="contacts-section-title">三天前</div>';
+        html += monthRequests.map(r => renderFriendRequestCardHTML(r)).join('');
+    }
+    if (olderRequests.length > 0) {
+        html += '<div class="contacts-section-title">一月前</div>';
+        html += olderRequests.map(r => renderFriendRequestCardHTML(r)).join('');
+    }
+
+    if (requests.length === 0) {
+        html = '<div style="text-align:center;color:#8e8e93;padding:60px 20px;">暂无好友请求</div>';
+    }
+
+    listView.innerHTML = html;
+    listView.style.position = '';
+}
+
+function renderFriendRequestCardHTML(request) {
+    const contact = window.ChatConfig.contacts.find(c => c.id === request.contactId);
+    const name = contact ? contact.name : (request.name || '未知');
+    const avatar = contact ? contact.avatar : (request.name ? request.name.charAt(0) : '?');
+    const avatarData = contact ? contact.avatarData : '';
+
+    const statusLabel = request.status === 'accepted' ? '已通过' : '未通过';
+    const statusIcon = request.status === 'accepted' ? '↗' : '↘';
+
+    const avatarHTML = avatarData 
+        ? `<div class="chat-avatar" style="background-image:url(${avatarData});background-size:cover;background-position:center;">&nbsp;</div>`
+        : `<div class="chat-avatar">${avatar}</div>`;
+
+    return `
+        <div class="chat-list-item" onclick="openFriendRequestChat('${request.contactId}')">
+            ${avatarHTML}
+            <div class="chat-info">
+                <div class="chat-name">${name}</div>
+                <div class="chat-preview">${request.message || ''}</div>
+            </div>
+            <span style="font-size:12px;color:#8e8e93;flex-shrink:0;">${statusIcon}${statusLabel}</span>
+        </div>
+    `;
+ }        
 
 // ========== 聊天详情半屏面板 ==========
 function openChatSettings() {
