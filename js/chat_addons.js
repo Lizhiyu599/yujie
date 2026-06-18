@@ -1,0 +1,498 @@
+/**
+ * 玉界 - 聊天附加功能
+ * 包含：表情包、相册、图片查看器、位置、红包、转账、链接
+ * 从 chat_ui.js 拆分出来
+ */
+
+// ========== 表情包面板渲染 ==========
+function renderAddPanelContent(tab) {
+    const body = document.getElementById('addPanelBody');
+    if (!body) return;
+
+    if (tab === 'emoji') {
+        const savedEmojis = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
+        let emojiItems = '';
+        for (let i = savedEmojis.length - 1; i >= 0; i--) {
+            const emoji = savedEmojis[i];
+            emojiItems += `
+                <div class="emoji-item" onclick="sendSticker(${i})" oncontextmenu="return false;"
+                     ontouchstart="startEmojiLongPress(event, ${i})" ontouchend="cancelEmojiLongPress()" ontouchmove="cancelEmojiLongPress()">
+                    <img src="${emoji.src}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" alt="${emoji.note || ''}">
+                </div>
+            `;
+        }
+        body.innerHTML = `
+            <div class="emoji-grid">
+                <div class="emoji-add-box" onclick="addCustomEmoji()">+</div>
+                ${emojiItems}
+            </div>
+        `;
+    } else if (tab === 'func') {
+        body.innerHTML = `
+            <div class="func-grid">
+                <div class="func-item" onclick="openAlbum()">
+                    <div class="func-icon">册</div>
+                    <div class="func-label">相册</div>
+                </div>
+                <div class="func-item" onclick="openLocation()">
+                    <div class="func-icon">位</div>
+                    <div class="func-label">位置</div>
+                </div>
+                <div class="func-item" onclick="openRedPacketModal()">
+                    <div class="func-icon">包</div>
+                    <div class="func-label">红包</div>
+                </div>
+                <div class="func-item" onclick="openTransferModal()">
+                    <div class="func-icon">转</div>
+                    <div class="func-label">转账</div>
+                </div>
+                <div class="func-item" onclick="openFileSend()">
+                    <div class="func-icon">链</div>
+                    <div class="func-label">链接</div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// ========== 发送贴纸 ==========
+function sendSticker(idx) {
+    const savedEmojis = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
+    if (savedEmojis[idx]) {
+        const sticker = savedEmojis[idx];
+        const row = document.createElement('div');
+        row.className = 'bubble-row user';
+        const avatar = document.createElement('div');
+        avatar.className = 'bubble-avatar user-avatar';
+        avatar.textContent = '我';
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble bubble-user';
+        bubble.style.backgroundImage = `url(${sticker.src})`;
+        bubble.style.backgroundSize = 'cover';
+        bubble.style.backgroundPosition = 'center';
+        bubble.style.width = '100px';
+        bubble.style.height = '100px';
+        bubble.style.padding = '0';
+        bubble.style.borderRadius = '12px';
+        bubble.textContent = '';
+        bubble.onclick = function() { openImageViewer(sticker.src); };
+        row.appendChild(avatar);
+        row.appendChild(bubble);
+        document.getElementById('chatMessages').appendChild(row);
+        saveChatHistory(window.ChatState.currentContactId);
+        toggleAddPanel();
+    }
+}
+
+// ========== 表情包 ==========
+function addCustomEmoji() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            showEmojiNoteModal(ev.target.result);
+        };
+        reader.readAsDataURL(file);
+    };
+    input.click();
+}
+
+function showEmojiNoteModal(emojiSrc) {
+    const overlay = document.createElement('div');
+    overlay.className = 'caption-modal-overlay';
+    overlay.id = 'emojiNoteOverlay';
+    overlay.innerHTML = `
+        <div class="caption-modal">
+            <div style="font-size:14px;color:#8e8e93;margin-bottom:8px;">为这个表情包添加备注</div>
+            <textarea class="caption-textarea" id="emojiNoteTextarea" placeholder="输入备注，让AI知道它的含义"></textarea>
+            <div class="caption-buttons">
+                <div class="payment-btn-cancel" onclick="closeEmojiNoteModal()">取消</div>
+                <div class="payment-btn-confirm" onclick="confirmAddEmoji('${emojiSrc}')">确定</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeEmojiNoteModal(); };
+}
+
+function closeEmojiNoteModal() {
+    const overlay = document.getElementById('emojiNoteOverlay');
+    if (overlay) overlay.remove();
+}
+
+function confirmAddEmoji(src) {
+    const note = document.getElementById('emojiNoteTextarea').value.trim();
+    closeEmojiNoteModal();
+    const emojiData = { src: src, note: note || '' };
+    const saved = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
+    saved.push(emojiData);
+    localStorage.setItem('custom_emojis', JSON.stringify(saved));
+    showToast('表情包已添加');
+    switchAddPanelTab('emoji', document.getElementById('tabEmoji'));
+}
+
+// ========== 表情包长按删除 ==========
+let emojiLongPressTimer = null;
+let emojiLongPressTarget = null;
+let emojiLongPressElement = null;
+
+function startEmojiLongPress(e, idx) {
+    emojiLongPressTarget = idx;
+    emojiLongPressElement = e.currentTarget;
+    emojiLongPressTimer = setTimeout(function() {
+        showEmojiDeleteBtn(idx);
+    }, 600);
+}
+
+function cancelEmojiLongPress() {
+    if (emojiLongPressTimer) {
+        clearTimeout(emojiLongPressTimer);
+        emojiLongPressTimer = null;
+    }
+    emojiLongPressTarget = null;
+    emojiLongPressElement = null;
+}
+
+function showEmojiDeleteBtn(idx) {
+    const existing = document.getElementById('emojiDeleteBtn');
+    if (existing) existing.remove();
+
+    if (!emojiLongPressElement) return;
+
+    const rect = emojiLongPressElement.getBoundingClientRect();
+
+    const btn = document.createElement('div');
+    btn.id = 'emojiDeleteBtn';
+    btn.style.cssText = 'position:fixed;z-index:9999;width:22px;height:22px;background:#ff3b30;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2);';
+    btn.innerHTML = 'x';
+    btn.onclick = function(e) {
+        e.stopPropagation();
+        deleteEmoji(idx);
+    };
+
+    btn.style.top = (rect.top - 8) + 'px';
+    btn.style.left = (rect.right - 14) + 'px';
+
+    document.body.appendChild(btn);
+
+    setTimeout(function() {
+        document.addEventListener('click', function removeBtn() {
+            const b = document.getElementById('emojiDeleteBtn');
+            if (b) b.remove();
+            document.removeEventListener('click', removeBtn);
+        }, { once: true });
+    }, 10);
+}
+
+function deleteEmoji(idx) {
+    const btn = document.getElementById('emojiDeleteBtn');
+    if (btn) btn.remove();
+
+    emojiLongPressElement = null;
+
+    const saved = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
+    if (idx >= 0 && idx < saved.length) {
+        saved.splice(idx, 1);
+        localStorage.setItem('custom_emojis', JSON.stringify(saved));
+        showToast('表情包已删除');
+        switchAddPanelTab('emoji', document.getElementById('tabEmoji'));
+    }
+}
+
+// ========== 相册 ==========
+function openAlbum() {
+    toggleAddPanel();
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            const hasImageAPI = window.ChatConfig.settings.api.image > 0;
+            if (hasImageAPI) {
+                sendImageWithCaption(ev.target.result, '');
+            } else {
+                showCaptionModal(ev.target.result);
+            }
+        };
+        reader.readAsDataURL(file);
+    };
+    input.click();
+}
+
+function showCaptionModal(imageSrc) {
+    const overlay = document.createElement('div');
+    overlay.className = 'caption-modal-overlay';
+    overlay.id = 'captionModalOverlay';
+    overlay.innerHTML = `
+        <div class="caption-modal">
+            <div style="font-size:14px;color:#8e8e93;margin-bottom:8px;">请手动输入图片描述</div>
+            <textarea class="caption-textarea" id="captionTextarea" placeholder="此处输入照片描述"></textarea>
+            <div class="caption-buttons">
+                <div class="payment-btn-cancel" onclick="closeCaptionModal()">取消</div>
+                <div class="payment-btn-confirm" onclick="confirmSendImage('${imageSrc}')">发送</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeCaptionModal(); };
+}
+
+function closeCaptionModal() {
+    const overlay = document.getElementById('captionModalOverlay');
+    if (overlay) overlay.remove();
+}
+
+function confirmSendImage(imageSrc) {
+    const caption = document.getElementById('captionTextarea').value.trim();
+    closeCaptionModal();
+    sendImageWithCaption(imageSrc, caption);
+}
+
+function sendImageWithCaption(imageSrc, caption) {
+    const row = document.createElement('div');
+    row.className = 'bubble-row user';
+    const avatar = document.createElement('div');
+    avatar.className = 'bubble-avatar user-avatar';
+    avatar.textContent = '我';
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble bubble-user';
+    bubble.style.backgroundImage = `url(${imageSrc})`;
+    bubble.style.backgroundSize = 'cover';
+    bubble.style.backgroundPosition = 'center';
+    bubble.style.width = '140px';
+    bubble.style.height = '140px';
+    bubble.style.padding = '0';
+    bubble.style.borderRadius = '12px';
+    bubble.textContent = '';
+    bubble.onclick = function() { openImageViewer(imageSrc); };
+    row.appendChild(avatar);
+    row.appendChild(bubble);
+    document.getElementById('chatMessages').appendChild(row);
+    saveChatHistory(window.ChatState.currentContactId);
+}
+
+// ========== 图片查看器 ==========
+function openImageViewer(src) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    overlay.onclick = function() { overlay.remove(); };
+    const img = document.createElement('img');
+    img.src = src;
+    img.style.cssText = 'max-width:95%;max-height:95%;object-fit:contain;border-radius:8px;';
+    overlay.appendChild(img);
+    document.body.appendChild(overlay);
+}
+
+// ========== 位置 ==========
+function openLocation() {
+    toggleAddPanel();
+    const overlay = document.createElement('div');
+    overlay.className = 'caption-modal-overlay';
+    overlay.id = 'locationModalOverlay';
+    overlay.innerHTML = `
+        <div class="caption-modal">
+            <div style="font-size:16px;font-weight:600;margin-bottom:12px;color:#000;">发送位置</div>
+            <input type="text" class="payment-note" id="locationInput" placeholder="当前地点">
+            <input type="text" class="payment-note" id="distanceInput" placeholder="当前与角色相距（可不填）">
+            <div class="caption-buttons">
+                <div class="payment-btn-cancel" onclick="closeLocationModal()">取消</div>
+                <div class="payment-btn-confirm" onclick="sendLocation()">发送</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeLocationModal(); };
+}
+
+function closeLocationModal() {
+    const overlay = document.getElementById('locationModalOverlay');
+    if (overlay) overlay.remove();
+}
+
+function sendLocation() {
+    const location = document.getElementById('locationInput').value.trim();
+    const distance = document.getElementById('distanceInput').value.trim();
+    closeLocationModal();
+    if (!location) return;
+    const row = document.createElement('div');
+    row.className = 'bubble-row user';
+    const avatar = document.createElement('div');
+    avatar.className = 'bubble-avatar user-avatar';
+    avatar.textContent = '我';
+    const card = document.createElement('div');
+    card.style.cssText = 'background:rgba(255,255,255,0.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:14px;padding:0;width:220px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid rgba(255,255,255,0.4);';
+    card.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;">
+            <div style="width:56px;height:56px;background:#f2f2f7;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <div style="position:relative;width:20px;height:28px;">
+                    <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:14px;height:14px;background:#1d1d1f;border-radius:50%;"></div>
+                    <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:14px solid #1d1d1f;"></div>
+                    <div style="position:absolute;top:4px;left:50%;transform:translateX(-50%);width:6px;height:6px;background:#fff;border-radius:50%;"></div>
+                </div>
+            </div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:14px;font-weight:600;color:#000;word-break:break-all;">${location}</div>
+                ${distance ? '<div style="font-size:11px;color:#8e8e93;margin-top:2px;">相距约' + distance + '</div>' : ''}
+            </div>
+        </div>
+    `;
+    row.appendChild(avatar);
+    row.appendChild(card);
+    document.getElementById('chatMessages').appendChild(row);
+    saveChatHistory(window.ChatState.currentContactId);
+}
+
+// ========== 红包 ==========
+function openRedPacketModal() { toggleAddPanel(); showPaymentModal('红包', 200); }
+function openTransferModal() { toggleAddPanel(); showPaymentModal('转账', 20000); }
+
+function showPaymentModal(type, maxAmount) {
+    const overlay = document.createElement('div');
+    overlay.className = 'payment-modal-overlay';
+    overlay.id = 'paymentModalOverlay';
+    overlay.innerHTML = `
+        <div class="payment-modal">
+            <div class="payment-title">发送${type}</div>
+            <div class="payment-amount" id="paymentAmount" onclick="focusPaymentAmount()">00.00</div>
+            <input type="number" class="payment-note" id="paymentAmountInput" placeholder="输入金额" style="display:none;" onblur="updatePaymentAmount(this.value)" oninput="updatePaymentAmount(this.value)">
+            <input type="text" class="payment-note" id="paymentNoteInput" placeholder="备注，可填可不填">
+            <div class="payment-method-header" onclick="togglePaymentMethod()"><span>支付方式</span><span class="arrow" id="paymentArrow">></span></div>
+            <div class="payment-method-body" id="paymentMethodBody">
+                <div class="payment-method-option selected" onclick="selectPaymentMethod('balance', this)">零钱</div>
+                <div class="payment-method-option" onclick="selectPaymentMethod('relative', this)">亲属卡（暂未开放）</div>
+            </div>
+            <div class="payment-buttons">
+                <div class="payment-btn-cancel" onclick="closePaymentModal()">取消</div>
+                <div class="payment-btn-confirm" onclick="confirmPayment('${type}', ${maxAmount})">确认发送</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closePaymentModal(); };
+}
+
+function focusPaymentAmount() {
+    const display = document.getElementById('paymentAmount');
+    const input = document.getElementById('paymentAmountInput');
+    display.style.display = 'none';
+    input.style.display = 'block';
+    input.focus();
+}
+function updatePaymentAmount(val) {
+    const display = document.getElementById('paymentAmount');
+    if (val) { display.textContent = parseFloat(val).toFixed(2); display.classList.add('filled'); }
+    else { display.textContent = '00.00'; display.classList.remove('filled'); }
+}
+function togglePaymentMethod() {
+    const body = document.getElementById('paymentMethodBody');
+    const arrow = document.getElementById('paymentArrow');
+    if (body && arrow) { const show = body.classList.toggle('show'); arrow.textContent = show ? 'V' : '>'; }
+}
+function selectPaymentMethod(method, el) {
+    el.parentElement.querySelectorAll('.payment-method-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+}
+function closePaymentModal() { const overlay = document.getElementById('paymentModalOverlay'); if (overlay) overlay.remove(); }
+function confirmPayment(type, maxAmount) {
+    const amountInput = document.getElementById('paymentAmountInput');
+    const amount = parseFloat(amountInput.value);
+    if (!amount || amount <= 0) { showToast('请输入有效金额'); return; }
+    if (amount > maxAmount) { showToast(type + '最高' + maxAmount + '元'); return; }
+    const note = document.getElementById('paymentNoteInput').value.trim();
+    const method = document.querySelector('.payment-method-option.selected');
+    const methodText = method ? method.textContent : '零钱';
+    closePaymentModal();
+    sendPaymentCard(type, amount, note, methodText);
+}
+function sendPaymentCard(type, amount, note, method) {
+    const row = document.createElement('div'); row.className = 'bubble-row user';
+    const avatar = document.createElement('div'); avatar.className = 'bubble-avatar user-avatar'; avatar.textContent = '我';
+    const isRedPacket = type === '红包';
+    const card = document.createElement('div');
+    card.style.cssText = 'background:#fff;border-radius:14px;padding:0;width:220px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
+    if (isRedPacket) {
+        card.innerHTML = `
+            <div style="display:flex;align-items:center;gap:12px;padding:14px;">
+                <div style="width:50px;height:58px;background:#1d1d1f;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;">
+                    <div style="position:absolute;top:-3px;left:50%;transform:translateX(-50%);width:18px;height:10px;background:#fff;border-radius:0 0 6px 6px;"></div>
+                    <div style="color:#f5c543;font-size:20px;font-weight:800;margin-top:4px;">$</div>
+                </div>
+                <div style="flex:1;min-width:0;"><div style="font-size:13px;color:#8e8e93;margin-bottom:2px;">红包</div><div style="font-size:14px;color:#000;font-weight:500;">${note || '恭喜发财'}</div></div>
+            </div>`;
+    } else {
+        card.innerHTML = `
+            <div style="display:flex;align-items:center;gap:12px;padding:14px;">
+                <div style="width:50px;height:50px;background:#1d1d1f;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><div style="color:#fff;font-size:18px;font-weight:700;">$</div></div>
+                <div style="flex:1;min-width:0;"><div style="font-size:13px;color:#8e8e93;margin-bottom:2px;">转账</div><div style="font-size:18px;font-weight:700;color:#000;">$` + amount.toFixed(2) + `</div>${note ? '<div style="font-size:11px;color:#8e8e93;margin-top:2px;">' + note + '</div>' : ''}</div>
+            </div>`;
+    }
+    row.appendChild(avatar); row.appendChild(card);
+    document.getElementById('chatMessages').appendChild(row);
+    saveChatHistory(window.ChatState.currentContactId);
+}
+
+// ========== 链接 ==========
+function openFileSend() {
+    toggleAddPanel();
+    const overlay = document.createElement('div');
+    overlay.className = 'caption-modal-overlay';
+    overlay.id = 'linkModalOverlay';
+    overlay.innerHTML = `
+        <div class="caption-modal">
+            <div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">分享链接</div>
+            <div style="font-size:13px;color:#8e8e93;margin-bottom:10px;">复制抖音/小红书/B站链接发给角色</div>
+            <textarea class="caption-textarea" id="linkInput" placeholder="粘贴链接..." style="height:80px;"></textarea>
+            <div class="caption-buttons">
+                <div class="payment-btn-cancel" onclick="closeLinkModal()">取消</div>
+                <div class="payment-btn-confirm" onclick="confirmSendLink()">发送</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeLinkModal(); };
+}
+
+function closeLinkModal() {
+    const overlay = document.getElementById('linkModalOverlay');
+    if (overlay) overlay.remove();
+}
+
+function confirmSendLink() {
+    const link = document.getElementById('linkInput').value.trim();
+    closeLinkModal();
+    if (!link) return;
+
+    const row = document.createElement('div');
+    row.className = 'bubble-row user';
+
+    const avatar = document.createElement('div');
+    avatar.className = 'bubble-avatar user-avatar';
+    avatar.textContent = '我';
+
+    const card = document.createElement('div');
+    card.style.cssText = 'background:#fff;border-radius:14px;padding:12px 14px;max-width:220px;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
+
+    let displayLink = link;
+    try {
+        const url = new URL(link);
+        displayLink = url.hostname + url.pathname.substring(0, 15) + (url.pathname.length > 15 ? '...' : '');
+    } catch(e) {}
+
+    card.innerHTML = `
+        <div style="font-size:13px;font-weight:500;color:#000;margin-bottom:4px;">分享链接</div>
+        <div style="font-size:11px;color:#007aff;word-break:break-all;">${displayLink}</div>
+    `;
+    card.onclick = function() { window.open(link, '_blank'); };
+
+    row.appendChild(avatar);
+    row.appendChild(card);
+    document.getElementById('chatMessages').appendChild(row);
+    saveChatHistory(window.ChatState.currentContactId);
+}                               
