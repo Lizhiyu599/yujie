@@ -596,3 +596,260 @@
 .tick-dot.active {
     opacity: 1;
 }
+
+/* ===== +号面板 ===== */
+.add-panel-full {
+    background: rgba(255,255,255,0.6);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border-radius: 20px 20px 0 0;
+    border: 1px solid rgba(255,255,255,0.5);
+    padding: 16px 0 8px;
+    display: none;
+}
+
+.add-panel-tabs {
+    display: flex;
+    padding: 0 16px 8px;
+    gap: 20px;
+    border-bottom: 0.5px solid rgba(0,0,0,0.06);
+}
+.add-panel-tab {
+    font-size: 14px;
+    color: #8e8e93;
+    cursor: pointer;
+    padding: 4px 0 8px;
+    border-bottom: 2px solid transparent;
+    transition: 0.2s;
+}
+.add-panel-tab.active {
+    color: #000;
+    font-weight: 600;
+    border-bottom-color: #000;
+}
+
+.add-panel-body {
+    padding: 12px 16px 8px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* 表情包区域 */
+.emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+.emoji-add-box {
+    aspect-ratio: 1;
+    background: rgba(255,255,255,0.5);
+    border: 1.5px dashed rgba(0,0,0,0.12);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: #8e8e93;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.emoji-add-box:active {
+    background: rgba(255,255,255,0.8);
+    border-color: #000;
+}
+
+/* 功能网格 */
+.func-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+.func-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 6px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.func-item:active {
+    background: rgba(255,255,255,0.5);
+}
+.func-icon {
+    width: 44px;
+    height: 44px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+.func-label {
+    font-size: 11px;
+    color: #3a3a3c;
+}
+
+/* ===== 红包/转账弹窗 ===== */
+.payment-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.payment-modal {
+    width: 85%;
+    max-width: 340px;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-radius: 24px;
+    padding: 24px 20px 20px;
+    border: 1px solid rgba(255,255,255,0.6);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+.payment-title {
+    font-size: 17px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #000;
+}
+.payment-amount {
+    text-align: center;
+    font-size: 36px;
+    color: #b0b0b5;
+    font-weight: 400;
+    margin-bottom: 16px;
+    cursor: pointer;
+    letter-spacing: 2px;
+}
+.payment-amount.filled {
+    color: #000;
+    font-weight: 700;
+}
+.payment-note {
+    width: 100%;
+    background: rgba(255,255,255,0.5);
+    border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+    outline: none;
+    color: #000;
+    margin-bottom: 12px;
+}
+.payment-note:focus {
+    border-color: #000;
+}
+.payment-method-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    font-size: 14px;
+    color: #000;
+    cursor: pointer;
+}
+.payment-method-header .arrow {
+    font-size: 12px;
+    color: #555;
+}
+.payment-method-body {
+    display: none;
+    padding: 4px 0 10px;
+}
+.payment-method-body.show {
+    display: block;
+}
+.payment-method-option {
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #3a3a3c;
+    background: rgba(255,255,255,0.5);
+    border-radius: 8px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+}
+.payment-method-option.selected {
+    background: #000;
+    color: #fff;
+}
+.payment-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+}
+.payment-btn-cancel {
+    flex: 1;
+    background: rgba(255,255,255,0.6);
+    color: #000;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 12px;
+    padding: 13px;
+    font-size: 15px;
+    cursor: pointer;
+    text-align: center;
+}
+.payment-btn-confirm {
+    flex: 1;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 13px;
+    font-size: 15px;
+    cursor: pointer;
+    text-align: center;
+    font-weight: 600;
+}
+
+/* ===== 相册描述弹窗 ===== */
+.caption-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.caption-modal {
+    width: 80%;
+    max-width: 320px;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-radius: 20px;
+    padding: 20px;
+    border: 1px solid rgba(255,255,255,0.6);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+.caption-textarea {
+    width: 100%;
+    height: 100px;
+    background: rgba(255,255,255,0.5);
+    border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 14px;
+    resize: none;
+    outline: none;
+    color: #000;
+    font-family: inherit;
+}
+.caption-textarea:focus {
+    border-color: #000;
+}
+.caption-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+}
