@@ -1,13 +1,14 @@
 /**
  * 玉界 - 聊天核心
- * 包含：消息收发、API 对接、系统提示拼接、状态栏更新、翻译
+ * 包含：消息收发、API 对接、系统提示拼接、状态栏更新、翻译、时间戳
  */
 
 // ========== 聊天状态 ==========
 window.ChatState = window.ChatState || {
     currentContactId: null,
     isAITyping: false,
-    quotedMsg: null
+    quotedMsg: null,
+    lastMessageTime: null
 };
 
 // ========== 翻译缓存 ==========
@@ -71,7 +72,6 @@ async function sendChatMessage() {
     const contact = getContactById(contactId);
     const contactName = contact ? contact.name : 'AI';
 
-    // 判断是否为用户旁白/剧情引导（括号包裹）
     const isUserNarration = /^[\(\（].*[\)\）]$/.test(text);
     if (isUserNarration) {
         appendMessage('narration', text);
@@ -227,10 +227,33 @@ function processAIReply(rawContent, contactName, contactId) {
     }
 }
 
+// ========== 格式化时间 ==========
+function formatChatTime(date) {
+    const h = date.getHours();
+    const m = date.getMinutes().toString().padStart(2, '0');
+    const period = h < 12 ? '上午' : '下午';
+    const displayH = h % 12 || 12;
+    return period + ' ' + displayH + ':' + m;
+}
+
 // ========== 追加消息到界面 ==========
 function appendMessage(role, text) {
     const messages = document.getElementById('chatMessages');
     if (!messages) return;
+
+    const now = new Date();
+
+    // 判断是否需要显示时间戳（间隔超过3分钟或第一条消息）
+    const shouldShowTime = !window.ChatState.lastMessageTime || 
+        (now - window.ChatState.lastMessageTime) > 3 * 60 * 1000;
+
+    if (shouldShowTime && role !== 'narration') {
+        const timeStamp = document.createElement('div');
+        timeStamp.className = 'chat-time-stamp';
+        timeStamp.textContent = formatChatTime(now);
+        messages.appendChild(timeStamp);
+        window.ChatState.lastMessageTime = now;
+    }
 
     if (role === 'narration') {
         const bubble = document.createElement('div');
