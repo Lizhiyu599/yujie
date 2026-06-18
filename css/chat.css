@@ -9,14 +9,14 @@
     overflow: hidden;
 }
 
-/* ===== 导航栏（透明玻璃） ===== */
+/* ===== 导航栏（完全透明） ===== */
 .chat-nav {
     flex-shrink: 0;
     height: 90px;
     display: flex;
     flex-direction: column;
-    background: rgba(255, 255, 255, 0.2);
-    border-bottom: 0.5px solid rgba(255, 255, 255, 0.25);
+    background: transparent;
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.15);
     z-index: 100;
 }
 .nav-status-bar {
@@ -223,10 +223,10 @@
     max-width: 85%;
 }
 
-/* ===== 底部输入栏（透明玻璃） ===== */
+/* ===== 底部输入栏（完全透明） ===== */
 .chat-input-bar {
     flex-shrink: 0;
-    background: rgba(255, 255, 255, 0.2);
+    background: transparent;
     padding: 6px 16px 8px;
 }
 .input-row {
