@@ -571,6 +571,7 @@ document.addEventListener('touchstart', function(e) {
         const menu = document.getElementById('bubbleMenu');
         if (!menu) return;
         const row = bubble.closest('.bubble-row');
+        if (!row) return;
         const rowRect = row.getBoundingClientRect();
         menu.style.top = (rowRect.top - menu.offsetHeight - 4) + 'px';
         menu.style.left = Math.max(10, rowRect.left + (rowRect.width / 2) - 105) + 'px';
@@ -1048,4 +1049,4 @@ function blockContact() {
 
 function deleteContact() {
     showToast('删除功能即将上线');
-                  }
+    }
