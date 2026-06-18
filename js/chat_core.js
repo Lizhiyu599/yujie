@@ -206,7 +206,6 @@ function processAIReply(rawContent, contactName, contactId) {
         const parts = mainText.split(/\n{2,}/).filter(p => p.trim());
         parts.forEach(part => {
             const bubbleEl = appendMessage('assistant', part.trim());
-            // 自动翻译：检查每条助理消息
             if (ChatConfig?.settings?.autoTranslate && needsTranslation(part.trim())) {
                 autoTranslateBubble(bubbleEl, part.trim());
             }
@@ -324,36 +323,21 @@ function needsTranslation(text) {
     return false;
 }
 
-// ========== 翻译文本 ==========
+// ========== 翻译文本（Google 免费接口，零延迟） ==========
 async function translateText(text) {
-    const config = getActiveAPIConfig();
-    if (!config) throw new Error('未配置 API');
-
-    let endpoint = config.baseUrl;
-    if (!endpoint.endsWith('/chat/completions')) {
-        endpoint = endpoint.replace(/\/+$/, '') + '/chat/completions';
+    try {
+        const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=zh-CN&dt=t&q=' + encodeURIComponent(text);
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data && data[0]) {
+            let result = '';
+            data[0].forEach(part => { result += part[0]; });
+            return result || text;
+        }
+        return text;
+    } catch (e) {
+        return text;
     }
-
-    const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${config.apiKey}`
-        },
-        body: JSON.stringify({
-            model: config.model,
-            messages: [
-                { role: 'system', content: '你是一个翻译助手。请将以下内容翻译成简体中文。只返回翻译结果，不要任何解释。' },
-                { role: 'user', content: text }
-            ],
-            temperature: 0.3,
-            stream: false
-        })
-    });
-
-    if (!response.ok) throw new Error('翻译请求失败');
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content || text;
 }
 
 // ========== 追加翻译行（在气泡行下方） ==========
