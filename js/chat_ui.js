@@ -208,6 +208,7 @@ function enterChat(contactId) {
     window.ChatState.currentContactId = contactId;
 
     clearUnreadCount(contactId);
+    closePlusMenu();
     window._isVoiceMode = false;
 
     const appWindow = document.getElementById('chatAppWindow');
@@ -734,6 +735,7 @@ function togglePlusMenu(e) {
         <div class="plus-menu-item" onclick="initiateGroupChat()">
             <span>发起群聊</span>
         </div>
+        <div class="plus-menu-divider"></div>
         <div class="plus-menu-item" onclick="openAddFriend()">
             <span>添加好友</span>
         </div>
@@ -753,9 +755,9 @@ function togglePlusMenu(e) {
     }, 10);
 }
 
-function openAddFriend() {
-    closePlusMenu();
-    showCreateCharacterPage();
+function closePlusMenu() {
+    const menu = document.getElementById('plusMenuPopup');
+    if (menu) menu.remove();
 }
 
 function initiateGroupChat() {
@@ -765,9 +767,7 @@ function initiateGroupChat() {
 
 function openAddFriend() {
     closePlusMenu();
-    if (typeof showCreateCharacterPage === 'function') {
-        showCreateCharacterPage();
-    }
+    showCreateCharacterPage();
 }
 
 // ========== 联系人存储 ==========
@@ -1114,4 +1114,4 @@ function blockContact() {
 
 function deleteContact() {
     showToast('删除功能即将上线');
-}
+}       
