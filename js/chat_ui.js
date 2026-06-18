@@ -73,7 +73,6 @@ function initBubbleMenu() {
     `;
     document.body.appendChild(menu);
 
-    // touchend 直接绑定，移动端最可靠
     menu.querySelectorAll('.menu-item[data-action]').forEach(function(item) {
         item.addEventListener('touchend', function(e) {
             e.stopPropagation();
@@ -223,8 +222,8 @@ function enterChat(contactId) {
                 </div>
                 <div class="add-panel-full" id="addPanelFull">
                     <div class="add-panel-tabs">
-                        <span class="add-panel-tab active" onclick="switchAddPanelTab('emoji', this)">表情包</span>
-                        <span class="add-panel-tab" onclick="switchAddPanelTab('func', this)">功能</span>
+                        <span class="add-panel-tab active" id="tabEmoji" onclick="switchAddPanelTab('emoji', this)">表情包</span>
+                        <span class="add-panel-tab" id="tabFunc" onclick="switchAddPanelTab('func', this)">功能</span>
                     </div>
                     <div class="add-panel-body" id="addPanelBody"></div>
                 </div>
@@ -264,13 +263,13 @@ function toggleAddPanel() {
     if (panel) {
         panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
         if (panel.style.display === 'block') {
-            renderAddPanelContent('emoji');
+            switchAddPanelTab('emoji', document.getElementById('tabEmoji'));
         }
     }
 }
 
 function switchAddPanelTab(tab, el) {
-    el.parentElement.querySelectorAll('.add-panel-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.add-panel-tab').forEach(t => t.classList.remove('active'));
     el.classList.add('active');
     renderAddPanelContent(tab);
 }
@@ -280,8 +279,20 @@ function renderAddPanelContent(tab) {
     if (!body) return;
 
     if (tab === 'emoji') {
+        const savedEmojis = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
+        let emojiItems = '';
+        if (savedEmojis.length > 0) {
+            savedEmojis.forEach((emoji, idx) => {
+                emojiItems += `
+                    <div class="emoji-item" onclick="sendSticker('${idx}')">
+                        <img src="${emoji.src}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" alt="${emoji.note || ''}">
+                    </div>
+                `;
+            });
+        }
         body.innerHTML = `
             <div class="emoji-grid">
+                ${emojiItems}
                 <div class="emoji-add-box" onclick="addCustomEmoji()">+</div>
             </div>
         `;
@@ -289,27 +300,43 @@ function renderAddPanelContent(tab) {
         body.innerHTML = `
             <div class="func-grid">
                 <div class="func-item" onclick="openAlbum()">
-                    <div class="func-icon">[相]</div>
-                    <div class="func-label">相册</div>
+                    <div class="func-label-big">相册</div>
                 </div>
                 <div class="func-item" onclick="openLocation()">
-                    <div class="func-icon">[位]</div>
-                    <div class="func-label">位置</div>
+                    <div class="func-label-big">位置</div>
                 </div>
                 <div class="func-item" onclick="openRedPacketModal()">
-                    <div class="func-icon">[红]</div>
-                    <div class="func-label">红包</div>
+                    <div class="func-label-big">红包</div>
                 </div>
                 <div class="func-item" onclick="openTransferModal()">
-                    <div class="func-icon">[转]</div>
-                    <div class="func-label">转账</div>
+                    <div class="func-label-big">转账</div>
                 </div>
                 <div class="func-item" onclick="openFileSend()">
-                    <div class="func-icon">[文]</div>
-                    <div class="func-label">文件</div>
+                    <div class="func-label-big">文件</div>
                 </div>
             </div>
         `;
+    }
+}
+
+// ========== 发送贴纸 ==========
+function sendSticker(idx) {
+    const savedEmojis = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
+    if (savedEmojis[idx]) {
+        const sticker = savedEmojis[idx];
+        appendMessage('user', '[贴纸]' + (sticker.note ? ' ' + sticker.note : ''));
+        const imgBubble = document.createElement('div');
+        imgBubble.className = 'bubble bubble-user';
+        imgBubble.style.backgroundImage = `url(${sticker.src})`;
+        imgBubble.style.backgroundSize = 'cover';
+        imgBubble.style.backgroundPosition = 'center';
+        imgBubble.style.minHeight = '120px';
+        imgBubble.style.minWidth = '120px';
+        imgBubble.textContent = '';
+        imgBubble.onclick = function() { openImageViewer(sticker.src); };
+        document.getElementById('chatMessages').appendChild(imgBubble);
+        saveChatHistory(window.ChatState.currentContactId);
+        toggleAddPanel();
     }
 }
 
@@ -329,6 +356,7 @@ function addCustomEmoji() {
             saved.push(emojiData);
             localStorage.setItem('custom_emojis', JSON.stringify(saved));
             showToast('表情包已添加');
+            switchAddPanelTab('emoji', document.getElementById('tabEmoji'));
         };
         reader.readAsDataURL(file);
     };
@@ -348,16 +376,7 @@ function openAlbum() {
         reader.onload = function(ev) {
             const hasImageAPI = window.ChatConfig.settings.api.image > 0;
             if (hasImageAPI) {
-                appendMessage('user', '[图片]');
-                const imgBubble = document.createElement('div');
-                imgBubble.className = 'bubble bubble-user';
-                imgBubble.style.backgroundImage = `url(${ev.target.result})`;
-                imgBubble.style.backgroundSize = 'cover';
-                imgBubble.style.backgroundPosition = 'center';
-                imgBubble.style.minHeight = '120px';
-                imgBubble.textContent = '';
-                document.getElementById('chatMessages').appendChild(imgBubble);
-                saveChatHistory(window.ChatState.currentContactId);
+                sendImageWithCaption(ev.target.result, '');
             } else {
                 showCaptionModal(ev.target.result);
             }
@@ -373,10 +392,11 @@ function showCaptionModal(imageSrc) {
     overlay.id = 'captionModalOverlay';
     overlay.innerHTML = `
         <div class="caption-modal">
+            <div style="font-size:14px;color:#8e8e93;margin-bottom:8px;">未配置生图API的用户，请手动输入图片备注，已配置生图API的用户只需点击发送</div>
             <textarea class="caption-textarea" id="captionTextarea" placeholder="此处输入照片描述"></textarea>
             <div class="caption-buttons">
                 <div class="payment-btn-cancel" onclick="closeCaptionModal()">取消</div>
-                <div class="payment-btn-confirm" onclick="sendImageWithCaption('${imageSrc}')">发送</div>
+                <div class="payment-btn-confirm" onclick="confirmSendImage('${imageSrc}')">发送</div>
             </div>
         </div>
     `;
@@ -389,9 +409,13 @@ function closeCaptionModal() {
     if (overlay) overlay.remove();
 }
 
-function sendImageWithCaption(imageSrc) {
+function confirmSendImage(imageSrc) {
     const caption = document.getElementById('captionTextarea').value.trim();
     closeCaptionModal();
+    sendImageWithCaption(imageSrc, caption);
+}
+
+function sendImageWithCaption(imageSrc, caption) {
     appendMessage('user', caption || '[图片]');
     const imgBubble = document.createElement('div');
     imgBubble.className = 'bubble bubble-user';
@@ -399,9 +423,24 @@ function sendImageWithCaption(imageSrc) {
     imgBubble.style.backgroundSize = 'cover';
     imgBubble.style.backgroundPosition = 'center';
     imgBubble.style.minHeight = '120px';
+    imgBubble.style.minWidth = '120px';
+    imgBubble.style.borderRadius = '12px';
     imgBubble.textContent = '';
+    imgBubble.onclick = function() { openImageViewer(imageSrc); };
     document.getElementById('chatMessages').appendChild(imgBubble);
     saveChatHistory(window.ChatState.currentContactId);
+}
+
+// ========== 图片查看器 ==========
+function openImageViewer(src) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    overlay.onclick = function() { overlay.remove(); };
+    const img = document.createElement('img');
+    img.src = src;
+    img.style.cssText = 'max-width:95%;max-height:95%;object-fit:contain;border-radius:8px;';
+    overlay.appendChild(img);
+    document.body.appendChild(overlay);
 }
 
 // ========== 位置 ==========
@@ -567,14 +606,14 @@ function triggerAIReply() {
     const systemPrompt = buildSystemPrompt(contactId);
     const userMessage = '（用户点击了让角色先说话）';
 
-    callChatAPI(systemPrompt, userMessage).then(reply => {
+    callChatAPI([{ role: 'system', content: systemPrompt }, { role: 'user', content: userMessage }]).then(reply => {
         processAIReply(reply, contactName, contactId);
     }).catch(error => {
         appendMessage('assistant', '抱歉，消息发送失败：' + error.message);
         if (titleEl) titleEl.textContent = contactName;
         window.ChatState.isAITyping = false;
     });
-}      
+}
 
 // ========== 长按气泡菜单 ==========
 let bubbleMenuTarget = null;
@@ -686,8 +725,14 @@ function confirmRegret() {
 
     const systemPrompt = buildSystemPrompt(contactId);
     const userMessage = hint || '请重新回复，换一种表达方式';
+    const historyMessages = getRecentHistory(contactId, 20);
+    const allMessages = [
+        { role: 'system', content: systemPrompt },
+        ...historyMessages,
+        { role: 'user', content: userMessage }
+    ];
 
-    callChatAPI(systemPrompt, userMessage).then(reply => {
+    callChatAPI(allMessages).then(reply => {
         processAIReply(reply, contactName, contactId);
     }).catch(error => {
         appendMessage('assistant', '抱歉，消息发送失败：' + error.message);
@@ -1091,4 +1136,4 @@ function blockContact() {
 
 function deleteContact() {
     showToast('删除功能即将上线');
-}
+}    
