@@ -535,16 +535,6 @@ function openFileSend() {
     }
 }
 
-// ========== 发送/回复逻辑 ==========
-function handleSendOrReply() {
-    const input = document.getElementById('chatInput');
-    if (input && input.value.trim()) {
-        sendChatMessage();
-    } else {
-        triggerAIReply();
-    }
-}
-
 function triggerAIReply() {
     const contactId = window.ChatState.currentContactId || 'c1';
     const contact = getContactById(contactId);
@@ -564,7 +554,7 @@ function triggerAIReply() {
         if (titleEl) titleEl.textContent = contactName;
         window.ChatState.isAITyping = false;
     });
-}
+ }
 
 // ========== 长按气泡菜单 ==========
 let bubbleMenuTarget = null;
@@ -573,17 +563,30 @@ document.addEventListener('touchstart', function(e) {
     const bubble = e.target.closest('.bubble-assistant');
     if (!bubble) {
         const menu = document.getElementById('bubbleMenu');
-        if (menu) menu.classList.remove('show');
+        if (menu) menu.style.display = 'none';
         return;
     }
     bubbleMenuTarget = bubble;
     let pressTimer = setTimeout(function() {
         const menu = document.getElementById('bubbleMenu');
         if (!menu) return;
+
+        // 先让菜单不可见但可测量高度
+        menu.style.visibility = 'hidden';
+        menu.style.display = 'block';
+        const menuH = menu.offsetHeight || 80;
+        const menuW = menu.offsetWidth || 260;
+
         const rect = bubble.getBoundingClientRect();
-        menu.style.top = (rect.top - menu.offsetHeight - 8) + 'px';
-        menu.style.left = Math.max(10, rect.left + (rect.width / 2) - 130) + 'px';
-        menu.classList.add('show');
+        const top = Math.max(10, rect.top - menuH - 8);
+        const left = Math.max(10, Math.min(
+            rect.left,
+            window.innerWidth - menuW - 10
+        ));
+
+        menu.style.top = top + 'px';
+        menu.style.left = left + 'px';
+        menu.style.visibility = '';
     }, 500);
 
     bubble.addEventListener('touchend', function() { clearTimeout(pressTimer); }, { once: true });
@@ -593,7 +596,7 @@ document.addEventListener('touchstart', function(e) {
 document.addEventListener('click', function(e) {
     if (!e.target.closest('.bubble-menu') && !e.target.closest('.bubble-assistant')) {
         const menu = document.getElementById('bubbleMenu');
-        if (menu) menu.classList.remove('show');
+        if (menu) menu.style.display = 'none';
     }
 });
 
@@ -602,18 +605,18 @@ function menuCopy() {
         navigator.clipboard.writeText(bubbleMenuTarget.textContent).then(() => showToast('已复制'));
     }
     const menu = document.getElementById('bubbleMenu');
-    if (menu) menu.classList.remove('show');
+    if (menu) menu.style.display = 'none';
 }
 
 function menuFavorite() {
     showToast('收藏功能即将上线');
     const menu = document.getElementById('bubbleMenu');
-    if (menu) menu.classList.remove('show');
+    if (menu) menu.style.display = 'none';
 }
 
 function menuRegret() {
     const menu = document.getElementById('bubbleMenu');
-    if (menu) menu.classList.remove('show');
+    if (menu) menu.style.display = 'none';
     const overlay = document.createElement('div');
     overlay.className = 'regret-modal-overlay';
     overlay.id = 'regretModalOverlay';
@@ -676,7 +679,7 @@ function confirmRegret() {
 function menuMultiSelect() {
     showToast('多选功能即将上线');
     const menu = document.getElementById('bubbleMenu');
-    if (menu) menu.classList.remove('show');
+    if (menu) menu.style.display = 'none';
 }
 
 function menuQuote() {
@@ -717,7 +720,7 @@ function menuQuote() {
     }
 
     const menu = document.getElementById('bubbleMenu');
-    if (menu) menu.classList.remove('show');
+    if (menu) menu.style.display = 'none';
     showToast('已引用');
 }
 
@@ -735,7 +738,7 @@ function menuTranslate() {
     if (next && next.classList.contains('translate-row')) {
         next.style.display = next.style.display === 'none' ? 'flex' : 'none';
         const menu = document.getElementById('bubbleMenu');
-        if (menu) menu.classList.remove('show');
+        if (menu) menu.style.display = 'none';
         return;
     }
 
@@ -743,14 +746,14 @@ function menuTranslate() {
     if (!needsTranslation(text)) {
         showToast('已是简体中文');
         const menu = document.getElementById('bubbleMenu');
-        if (menu) menu.classList.remove('show');
+        if (menu) menu.style.display = 'none';
         return;
     }
 
     if (window._translateCache[text]) {
         appendTranslationRow(row, window._translateCache[text]);
         const menu = document.getElementById('bubbleMenu');
-        if (menu) menu.classList.remove('show');
+        if (menu) menu.style.display = 'none';
         return;
     }
 
@@ -763,7 +766,7 @@ function menuTranslate() {
     });
 
     const menu = document.getElementById('bubbleMenu');
-    if (menu) menu.classList.remove('show');
+    if (menu) menu.style.display = 'none';
 }
 
 // ========== 聊天详情半屏面板 ==========
@@ -1067,5 +1070,5 @@ function blockContact() {
 }
 
 function deleteContact() {
-    showToast('删除功能即将上线');
+    showToast('删除功能即将上线'); 
 }
