@@ -398,4 +398,4 @@ function loadChatHistory(contactId) {
         messages.innerHTML = saved;
         messages.scrollTop = messages.scrollHeight;
     }
-          }
+}
