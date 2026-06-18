@@ -10,25 +10,22 @@ window.ChatState = window.ChatState || {
     quotedMsg: null
 };
 
-// ========== 翻译缓存（不重复翻译相同内容） ==========
+// ========== 翻译缓存 ==========
 window._translateCache = window._translateCache || {};
 
 // ========== 构建系统提示 ==========
 function buildSystemPrompt(contactId) {
     let prompt = '';
 
-    // 1. 万象树核心规则 + 用户预设
     if (typeof getFullSystemPrompt === 'function') {
         prompt += getFullSystemPrompt();
     }
 
-    // 2. 角色人设（从联系人数据读取）
     const contact = getContactById(contactId);
     if (contact && contact.persona) {
         prompt += '\n\n【当前角色人设】\n' + contact.persona;
     }
 
-    // 3. 旁白开关
     const narrationEnabled = ChatConfig?.settings?.onlineNarration !== false;
     if (narrationEnabled) {
         prompt += '\n\n【旁白模式】开启。请在回复中用括号（）包含旁白内容，用于描写环境、动作、心理活动等。';
@@ -36,7 +33,6 @@ function buildSystemPrompt(contactId) {
         prompt += '\n\n【旁白模式】关闭。不需要写旁白。';
     }
 
-    // 4. 实时状态要求
     prompt += '\n\n【实时状态】每次回复必须在末尾附加一段严格的JSON格式状态信息，格式必须为：\n{"mood":"心情(10字内)","favorability":好感度数字(0-100),"action":"动作(20字内)","thought":"内心想法(30字内)"}\n该JSON将在前端解析为心理状态窗，不会显示给用户。';
 
     return prompt;
@@ -50,13 +46,11 @@ function getContactById(contactId) {
 
 // ========== 获取当前 API 配置 ==========
 function getActiveAPIConfig() {
-    // 从设置的多设备中取第一个已配置的设备
     if (typeof getDevices === 'function') {
         const devices = getDevices();
         const configured = devices.find(d => d.baseUrl && d.apiKey && d.model);
         if (configured) return configured;
     }
-    // fallback：旧版单设备 localStorage
     const baseUrl = localStorage.getItem('main_api_base_url');
     const apiKey = localStorage.getItem('main_api_key');
     const model = localStorage.getItem('main_api_model');
@@ -77,28 +71,30 @@ async function sendChatMessage() {
     const contact = getContactById(contactId);
     const contactName = contact ? contact.name : 'AI';
 
-    // 追加用户消息到界面
-    appendMessage('user', text);
+    // 判断是否为用户旁白/剧情引导（括号包裹）
+    const isUserNarration = /^[\(\（].*[\)\）]$/.test(text);
+    if (isUserNarration) {
+        appendMessage('narration', text);
+        input.value = '';
+        saveChatHistory(contactId);
+        return;
+    }
 
+    appendMessage('user', text);
     input.value = '';
 
-    // 显示输入中
     window.ChatState.isAITyping = true;
     const titleEl = document.getElementById('chatTitle');
     if (titleEl) titleEl.innerHTML = '<span class="nav-typing">输入中…</span>';
 
-    // 保存历史
     saveChatHistory(contactId);
 
-    // 构建消息
     const systemPrompt = buildSystemPrompt(contactId);
     let userMessage = text;
 
-    // 如果有引用消息，拼接到前面
     if (window.ChatState.quotedMsg) {
         userMessage = '【引用】' + window.ChatState.quotedMsg.n + '说：' + window.ChatState.quotedMsg.t + '\n\n【回复】' + userMessage;
         window.ChatState.quotedMsg = null;
-        // 隐藏引用预览
         const qv = document.getElementById('quotePreview');
         if (qv) qv.style.display = 'none';
     }
@@ -153,7 +149,6 @@ async function callChatAPI(systemPrompt, userMessage) {
         throw new Error(errMsg);
     }
 
-    // 处理流式或非流式响应
     if (config.stream !== false) {
         return await handleStreamResponse(response);
     } else {
@@ -197,7 +192,6 @@ async function handleStreamResponse(response) {
 function processAIReply(rawContent, contactName, contactId) {
     const titleEl = document.getElementById('chatTitle');
 
-    // 1. 提取状态栏 JSON
     const jsonMatch = rawContent.match(/\{[\s\S]*"mood"[\s\S]*\}/);
     let cleanContent = rawContent;
     if (jsonMatch) {
@@ -205,12 +199,9 @@ function processAIReply(rawContent, contactName, contactId) {
             const mentalData = JSON.parse(jsonMatch[0]);
             updateMentalState(mentalData);
             cleanContent = rawContent.replace(jsonMatch[0], '').trim();
-        } catch (e) {
-            // JSON 解析失败，保留原文
-        }
+        } catch (e) {}
     }
 
-    // 2. 分离旁白和正文
     const narrationRegex = /[\(\（]([^\)\）]+)[\)\）]/g;
     const narrations = [];
     let mainText = cleanContent.replace(narrationRegex, (match, content) => {
@@ -218,24 +209,19 @@ function processAIReply(rawContent, contactName, contactId) {
         return '';
     }).trim();
 
-    // 3. 渲染旁白
     narrations.forEach(n => {
         appendMessage('narration', n);
     });
 
-    // 4. 渲染正文
     if (mainText) {
         appendMessage('assistant', mainText);
     }
 
-    // 5. 恢复标题
     if (titleEl) titleEl.textContent = contactName;
     window.ChatState.isAITyping = false;
 
-    // 6. 保存历史
     saveChatHistory(contactId);
 
-    // 7. 自动翻译（如果开启了非简体中文自动翻译）
     if (ChatConfig?.settings?.autoTranslate && mainText) {
         autoTranslateLastAssistant(contactId);
     }
@@ -273,7 +259,6 @@ function updateMentalState(mentalData) {
         thought: mentalData.thought || '无'
     };
 
-    // 更新心理状态窗（如果正在显示）
     const moodEl = document.getElementById('m-mood');
     const favEl = document.getElementById('m-fav');
     const actEl = document.getElementById('m-act');
@@ -293,36 +278,26 @@ async function autoTranslateLastAssistant(contactId) {
     const lastBubble = bubbles[bubbles.length - 1];
     const text = lastBubble.textContent;
 
-    // 检测是否非简体中文
     if (!needsTranslation(text)) return;
 
-    // 检查缓存
     if (window._translateCache[text]) {
         appendTranslation(lastBubble, window._translateCache[text]);
         return;
     }
 
-    // 调用翻译 API
     try {
         const translated = await translateText(text);
         window._translateCache[text] = translated;
         appendTranslation(lastBubble, translated);
-    } catch (e) {
-        // 翻译失败静默处理
-    }
+    } catch (e) {}
 }
 
 // ========== 检测是否需要翻译 ==========
 function needsTranslation(text) {
-    // 检测是否包含中文字符（简体中文范围）
     const chineseRegex = /[\u4e00-\u9fff]/;
     const hasChinese = chineseRegex.test(text);
-
-    // 如果包含中文但全是简体中文常用字，不需要翻译
-    // 如果不包含任何中文，需要翻译
     if (!hasChinese) return true;
 
-    // 包含中文时，检测是否混入了非中文内容超过 40%
     const nonChineseChars = text.replace(/[\u4e00-\u9fff]/g, '').replace(/\s/g, '').length;
     const totalChars = text.replace(/\s/g, '').length;
     if (totalChars > 0 && nonChineseChars / totalChars > 0.4) return true;
@@ -367,7 +342,6 @@ function appendTranslation(originalBubble, translatedText) {
     const messages = document.getElementById('chatMessages');
     if (!messages) return;
 
-    // 检查是否已有翻译气泡
     const next = originalBubble.nextElementSibling;
     if (next && next.classList.contains('translate-bubble')) {
         next.textContent = translatedText;
