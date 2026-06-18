@@ -50,8 +50,32 @@ window.ChatConfig = window.ChatConfig || {
     }
 };
 
+// ========== 初始化气泡菜单（挂到body上） ==========
+function initBubbleMenu() {
+    if (document.getElementById('bubbleMenu')) return;
+    const menu = document.createElement('div');
+    menu.className = 'bubble-menu';
+    menu.id = 'bubbleMenu';
+    menu.innerHTML = `
+        <div class="menu-row">
+            <div class="menu-item" onclick="menuCopy()">复制</div>
+            <div class="menu-item" onclick="menuFavorite()">收藏</div>
+            <div class="menu-item" onclick="menuRegret()">重回</div>
+            <div class="menu-item" onclick="menuMultiSelect()">多选</div>
+        </div>
+        <div class="menu-row">
+            <div class="menu-item" onclick="menuQuote()">引用</div>
+            <div class="menu-item" onclick="menuTranslate()">翻译</div>
+            <div class="menu-item empty"></div>
+            <div class="menu-item empty"></div>
+        </div>
+    `;
+    document.body.appendChild(menu);
+}
+
 // ========== 打开聊天软件 ==========
 function openChat() {
+    initBubbleMenu();
     let appWindow = document.getElementById('chatAppWindow');
     if (!appWindow) {
         appWindow = document.createElement('div');
@@ -161,22 +185,6 @@ function enterChat(contactId) {
             </div>
             <div class="chat-messages" id="chatMessages" style="background-image:url(${savedBg});">
                 <div style="text-align:center;color:#c7c7cc;font-size:13px;margin-top:20px;">现在可以开始聊天了</div>
-            </div>
-
-            <!-- 长按气泡功能菜单 -->
-            <div class="bubble-menu" id="bubbleMenu">
-                <div class="menu-row">
-                    <div class="menu-item" onclick="menuCopy()">复制</div>
-                    <div class="menu-item" onclick="menuFavorite()">收藏</div>
-                    <div class="menu-item" onclick="menuRegret()">重回</div>
-                    <div class="menu-item" onclick="menuMultiSelect()">多选</div>
-                </div>
-                <div class="menu-row">
-                    <div class="menu-item" onclick="menuQuote()">引用</div>
-                    <div class="menu-item" onclick="menuTranslate()">翻译</div>
-                    <div class="menu-item empty"></div>
-                    <div class="menu-item empty"></div>
-                </div>
             </div>
 
             <!-- 心理状态窗 -->
@@ -570,11 +578,9 @@ document.addEventListener('touchstart', function(e) {
     let pressTimer = setTimeout(function() {
         const menu = document.getElementById('bubbleMenu');
         if (!menu) return;
-        const row = bubble.closest('.bubble-row');
-        if (!row) return;
-        const rowRect = row.getBoundingClientRect();
-        menu.style.top = (rowRect.top - menu.offsetHeight - 8) + 'px';
-        menu.style.left = Math.max(10, rowRect.left + (rowRect.width / 2) - 130) + 'px';
+        const rect = bubble.getBoundingClientRect();
+        menu.style.top = (rect.top - menu.offsetHeight - 8) + 'px';
+        menu.style.left = Math.max(10, rect.left + (rect.width / 2) - 130) + 'px';
         menu.classList.add('show');
     }, 500);
 
