@@ -468,3 +468,161 @@ function loadChatHistory(contactId) {
         messages.scrollTop = messages.scrollHeight;
     }
 }
+
+// ========== 自动发消息系统 ==========
+window._autoMsgTimer = null;
+window._autoMsgLastContact = null;
+
+function startAutoMsg() {
+    stopAutoMsg();
+
+    const settings = window.ChatConfig?.settings;
+    if (!settings || !settings.autoMsg) return;
+
+    const freqVal = settings.autoMsgFreq || 0;
+    const intervals = [3600000, 18000000, 36000000, 86400000];
+    const interval = intervals[freqVal] || 3600000;
+
+    window._autoMsgTimer = setInterval(() => {
+        triggerAutoMsg();
+    }, interval);
+
+    // 首次延迟 10 秒触发
+    setTimeout(() => {
+        triggerAutoMsg();
+    }, 10000);
+}
+
+function stopAutoMsg() {
+    if (window._autoMsgTimer) {
+        clearInterval(window._autoMsgTimer);
+        window._autoMsgTimer = null;
+    }
+}
+
+async function triggerAutoMsg() {
+    if (window.ChatState?.isAITyping) return;
+
+    const contactId = window._autoMsgLastContact || getRandomContactId();
+    if (!contactId) return;
+
+    window._autoMsgLastContact = contactId;
+
+    const contact = getContactById(contactId);
+    if (!contact) return;
+
+    const systemPrompt = buildSystemPrompt(contactId);
+    const autoPrompts = [
+        '（突然想起一件事，想跟对方说）',
+        '（刚刚发生了点事，想分享给对方）',
+        '（闲着没事，想找对方聊聊天）',
+        '（有点无聊，主动发个消息）',
+        '（看到有趣的东西，想告诉对方）',
+        '（想关心一下对方在做什么）'
+    ];
+    const prompt = autoPrompts[Math.floor(Math.random() * autoPrompts.length)];
+
+    try {
+        const reply = await callChatAPI([
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: prompt }
+        ]);
+
+        saveAutoMsgToHistory(contactId, contact.name, reply);
+
+        if (window.ChatConfig?.contacts) {
+            const c = window.ChatConfig.contacts.find(c => c.id === contactId);
+            if (c) {
+                const cleanReply = reply.replace(/\{[^}]*\}/g, '').trim();
+                c.preview = cleanReply.substring(0, 30);
+                saveContactsToStorage();
+            }
+        }
+
+        // 如果当前正在查看聊天列表，刷新显示
+        if (typeof renderChatList === 'function') {
+            const listView = document.getElementById('chatListView');
+            if (listView && listView.offsetParent !== null) {
+                renderChatList();
+            }
+        }
+    } catch (e) {
+        // 静默失败，不打扰用户
+    }
+}
+
+function getRandomContactId() {
+    const contacts = window.ChatConfig?.contacts;
+    if (!contacts || contacts.length === 0) return null;
+    const idx = Math.floor(Math.random() * contacts.length);
+    return contacts[idx].id;
+}
+
+function saveAutoMsgToHistory(contactId, contactName, rawContent) {
+    const storageKey = 'chat_history_' + contactId;
+    const saved = localStorage.getItem(storageKey);
+    let container;
+
+    if (saved) {
+        container = document.createElement('div');
+        container.innerHTML = saved;
+    }
+
+    const now = new Date();
+    const h = now.getHours();
+    const m = now.getMinutes().toString().padStart(2, '0');
+    const period = h < 12 ? '上午' : '下午';
+    const displayH = h % 12 || 12;
+    const timeStr = period + ' ' + displayH + ':' + m;
+
+    let cleanContent = rawContent.replace(/\{[^}]*\}/g, '').trim();
+
+    let htmlToAdd = '';
+    htmlToAdd += '<div class="chat-time-stamp">' + timeStr + '</div>';
+
+    const parts = cleanContent.split(/\n{2,}/).filter(p => p.trim());
+    parts.forEach(part => {
+        htmlToAdd += '<div class="bubble-row assistant" data-role="assistant">';
+        htmlToAdd += '<div class="bubble-avatar bot-avatar">' + (contactName.charAt(0) || 'AI') + '</div>';
+        htmlToAdd += '<div class="bubble bubble-assistant">' + part.trim() + '</div>';
+        htmlToAdd += '</div>';
+    });
+
+    if (saved && container) {
+        container.innerHTML += htmlToAdd;
+        localStorage.setItem(storageKey, container.innerHTML);
+    } else {
+        const newContainer = document.createElement('div');
+        newContainer.innerHTML = htmlToAdd;
+        localStorage.setItem(storageKey, newContainer.innerHTML);
+    }
+
+    // 更新预览文字到联系人
+    if (window.ChatConfig?.contacts) {
+        const contact = window.ChatConfig.contacts.find(c => c.id === contactId);
+        if (contact) {
+            contact.preview = cleanContent.substring(0, 30);
+            saveContactsToStorage();
+        }
+    }
+}
+
+// 监听自动发消息开关变化
+window.addEventListener('DOMContentLoaded', function() {
+    if (window.ChatConfig?.settings?.autoMsg) {
+        startAutoMsg();
+    }
+});
+
+// 重写 toggleAutoMsg，加入启停逻辑
+const origToggleAutoMsg = window.toggleAutoMsg;
+window.toggleAutoMsg = function(checked) {
+    if (origToggleAutoMsg) origToggleAutoMsg(checked);
+    if (checked) {
+        startAutoMsg();
+        showToast('自动发消息已开启');
+    } else {
+        stopAutoMsg();
+        showToast('自动发消息已关闭');
+    }
+};
