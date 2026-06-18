@@ -819,7 +819,7 @@ function sendPaymentCard(type, amount, note, method) {
     const avatar = document.createElement('div'); avatar.className = 'bubble-avatar user-avatar'; avatar.textContent = '我';
     const isRedPacket = type === '红包';
     const card = document.createElement('div');
-    card.style.cssText = 'background:#fff;border-radius:14px;padding:0;width:260px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
+    card.style.cssText = 'background:#fff;border-radius:14px;padding:0;width:220px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
     if (isRedPacket) {
         card.innerHTML = `
             <div style="display:flex;align-items:center;gap:12px;padding:14px;">
