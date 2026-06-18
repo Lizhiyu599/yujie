@@ -186,7 +186,7 @@ function switchChatTab(tab, el) {
         case 'contacts':
             if (plusBtn) plusBtn.style.display = '';
             if (titleEl) titleEl.textContent = '联系人';
-            listView.innerHTML = '<div style="padding:40px;text-align:center;color:#8e8e93;">联系人功能即将上线</div>';
+            if (typeof showContactsPage === 'function') { showContactsPage(); }
             break;
         case 'moments':
             if (plusBtn) plusBtn.style.display = 'none';
