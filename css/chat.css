@@ -667,7 +667,7 @@
 
 .add-panel-body {
     padding: 12px 16px 8px;
-    max-height: 200px;
+    min-height: 160px;
     overflow-y: auto;
 }
 
@@ -739,12 +739,6 @@
     font-size: 11px;
     color: #3a3a3c;
 }
-.func-label-big {
-    font-size: 18px;
-    color: #000;
-    font-weight: 500;
-    padding: 10px 0;
-}   
 
 /* ===== 红包/转账弹窗 ===== */
 .payment-modal-overlay {
