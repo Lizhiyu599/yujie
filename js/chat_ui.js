@@ -256,12 +256,7 @@ function enterChat(contactId) {
                             <span class="mic-icon-arc"></span>
                         </div>
                     </div>
-                    <span class="chat-send-btn" id="chatSendBtn" onclick="handleSendOrReply()">
-                        <span class="send-plane">
-                            <span class="send-plane-body"></span>
-                            <span class="send-plane-wing"></span>
-                        </span>
-                    </span>
+                    <span class="chat-send-btn" id="chatSendBtn" onclick="handleSendOrReply()">↑</span>
                 </div>
                 <div class="add-panel-full" id="addPanelFull">
                     <div class="add-panel-tabs">
@@ -755,7 +750,7 @@ function sendLocation() {
     row.appendChild(card);
     document.getElementById('chatMessages').appendChild(row);
     saveChatHistory(window.ChatState.currentContactId);
-}     
+}       
 
 // ========== 红包 ==========
 function openRedPacketModal() { toggleAddPanel(); showPaymentModal('红包', 200); }
@@ -1585,4 +1580,4 @@ function blockContact() {
 
 function deleteContact() {
     showToast('删除功能即将上线');
-}         
+}
