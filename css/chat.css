@@ -152,7 +152,7 @@
     -webkit-overflow-scrolling: touch;
 }
 
-/* ===== 气泡 ===== */
+/* ===== 气泡行 ===== */
 .bubble-row {
     display: flex;
     align-items: flex-start;
@@ -181,6 +181,8 @@
     background: #1d1d1f;
     color: #fff;
 }
+
+/* ===== 气泡 ===== */
 .bubble {
     max-width: 70%;
     padding: 12px 16px;
@@ -197,11 +199,10 @@
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 .bubble-assistant {
-    background: #fff;
-    color: #000;
-    border: 1px solid rgba(0,0,0,0.06);
+    background: #1d1d1f;
+    color: #fff;
     border-top-left-radius: 4px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
 }
 .bubble-narration {
     align-self: center;
@@ -220,7 +221,7 @@
     backdrop-filter: blur(30px);
     -webkit-backdrop-filter: blur(30px);
     border-top: 0.5px solid rgba(0,0,0,0.08);
-    padding: 8px 16px 24px;
+    padding: 8px 16px 16px;
 }
 .input-row {
     display: flex;
@@ -997,4 +998,4 @@
     cursor: pointer;
     text-align: center;
     font-weight: 600;
-        }
+    }
