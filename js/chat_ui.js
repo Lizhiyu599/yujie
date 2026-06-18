@@ -515,7 +515,8 @@ function renderAddPanelContent(tab) {
         for (let i = savedEmojis.length - 1; i >= 0; i--) {
             const emoji = savedEmojis[i];
             emojiItems += `
-                <div class="emoji-item" onclick="sendSticker(${i})">
+                <div class="emoji-item" onclick="sendSticker(${i})" oncontextmenu="return false;"
+                     ontouchstart="startEmojiLongPress(event, ${i})" ontouchend="cancelEmojiLongPress()" ontouchmove="cancelEmojiLongPress()">
                     <img src="${emoji.src}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" alt="${emoji.note || ''}">
                 </div>
             `;
@@ -593,17 +594,105 @@ function addCustomEmoji() {
         if (!file) return;
         const reader = new FileReader();
         reader.onload = function(ev) {
-            const note = prompt('为这个表情包添加备注：');
-            const emojiData = { src: ev.target.result, note: note || '' };
-            const saved = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
-            saved.push(emojiData);
-            localStorage.setItem('custom_emojis', JSON.stringify(saved));
-            showToast('表情包已添加');
-            switchAddPanelTab('emoji', document.getElementById('tabEmoji'));
+            showEmojiNoteModal(ev.target.result);
         };
         reader.readAsDataURL(file);
     };
     input.click();
+}
+
+function showEmojiNoteModal(emojiSrc) {
+    const overlay = document.createElement('div');
+    overlay.className = 'caption-modal-overlay';
+    overlay.id = 'emojiNoteOverlay';
+    overlay.innerHTML = `
+        <div class="caption-modal">
+            <div style="font-size:14px;color:#8e8e93;margin-bottom:8px;">为这个表情包添加备注</div>
+            <textarea class="caption-textarea" id="emojiNoteTextarea" placeholder="输入备注，让AI知道它的含义"></textarea>
+            <div class="caption-buttons">
+                <div class="payment-btn-cancel" onclick="closeEmojiNoteModal()">取消</div>
+                <div class="payment-btn-confirm" onclick="confirmAddEmoji('${emojiSrc}')">确定</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeEmojiNoteModal(); };
+}
+
+function closeEmojiNoteModal() {
+    const overlay = document.getElementById('emojiNoteOverlay');
+    if (overlay) overlay.remove();
+}
+
+function confirmAddEmoji(src) {
+    const note = document.getElementById('emojiNoteTextarea').value.trim();
+    closeEmojiNoteModal();
+    const emojiData = { src: src, note: note || '' };
+    const saved = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
+    saved.push(emojiData);
+    localStorage.setItem('custom_emojis', JSON.stringify(saved));
+    showToast('表情包已添加');
+    switchAddPanelTab('emoji', document.getElementById('tabEmoji'));
+}
+
+// ========== 表情包长按删除 ==========
+let emojiLongPressTimer = null;
+let emojiLongPressTarget = null;
+
+function startEmojiLongPress(e, idx) {
+    emojiLongPressTarget = idx;
+    emojiLongPressTimer = setTimeout(function() {
+        showEmojiDeleteBtn(e, idx);
+    }, 600);
+}
+
+function cancelEmojiLongPress() {
+    if (emojiLongPressTimer) {
+        clearTimeout(emojiLongPressTimer);
+        emojiLongPressTimer = null;
+    }
+    emojiLongPressTarget = null;
+}
+
+function showEmojiDeleteBtn(e, idx) {
+    const existing = document.getElementById('emojiDeleteBtn');
+    if (existing) existing.remove();
+
+    const btn = document.createElement('div');
+    btn.id = 'emojiDeleteBtn';
+    btn.style.cssText = 'position:fixed;z-index:9999;width:22px;height:22px;background:#ff3b30;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2);';
+    btn.innerHTML = 'x';
+    btn.onclick = function(e) {
+        e.stopPropagation();
+        deleteEmoji(idx);
+    };
+
+    const touch = e.touches ? e.touches[0] : e;
+    btn.style.top = (touch.clientY - 28) + 'px';
+    btn.style.left = (touch.clientX - 11) + 'px';
+
+    document.body.appendChild(btn);
+
+    setTimeout(function() {
+        document.addEventListener('click', function removeBtn() {
+            const b = document.getElementById('emojiDeleteBtn');
+            if (b) b.remove();
+            document.removeEventListener('click', removeBtn);
+        }, { once: true });
+    }, 10);
+}
+
+function deleteEmoji(idx) {
+    const btn = document.getElementById('emojiDeleteBtn');
+    if (btn) btn.remove();
+
+    const saved = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
+    if (idx >= 0 && idx < saved.length) {
+        saved.splice(idx, 1);
+        localStorage.setItem('custom_emojis', JSON.stringify(saved));
+        showToast('表情包已删除');
+        switchAddPanelTab('emoji', document.getElementById('tabEmoji'));
+    }
 }
 
 // ========== 相册 ==========
@@ -750,7 +839,7 @@ function sendLocation() {
     row.appendChild(card);
     document.getElementById('chatMessages').appendChild(row);
     saveChatHistory(window.ChatState.currentContactId);
-}       
+}
 
 // ========== 红包 ==========
 function openRedPacketModal() { toggleAddPanel(); showPaymentModal('红包', 200); }
