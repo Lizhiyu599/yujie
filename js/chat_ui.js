@@ -473,7 +473,7 @@ function openImageViewer(src) {
     img.style.cssText = 'max-width:95%;max-height:95%;object-fit:contain;border-radius:8px;';
     overlay.appendChild(img);
     document.body.appendChild(overlay);
-}
+}       
 
 // ========== 位置 ==========
 function openLocation() {
@@ -505,9 +505,27 @@ function sendLocation() {
     const location = document.getElementById('locationInput').value.trim();
     const distance = document.getElementById('distanceInput').value.trim();
     closeLocationModal();
-    let msg = '[位置] ' + location;
-    if (distance) msg += ' (相距约' + distance + ')';
-    appendMessage('user', msg);
+    
+    if (!location) return;
+    
+    const row = document.createElement('div');
+    row.className = 'bubble-row user';
+    
+    const avatar = document.createElement('div');
+    avatar.className = 'bubble-avatar user-avatar';
+    avatar.textContent = '我';
+    
+    const card = document.createElement('div');
+    card.style.cssText = 'background:#fff;border-radius:14px;padding:14px 16px;max-width:200px;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
+    card.innerHTML = `
+        <div style="font-size:28px;text-align:center;margin-bottom:6px;">📍</div>
+        <div style="font-size:15px;font-weight:600;color:#000;text-align:center;">${location}</div>
+        ${distance ? '<div style="font-size:12px;color:#8e8e93;text-align:center;margin-top:4px;">相距约' + distance + '</div>' : ''}
+    `;
+    
+    row.appendChild(avatar);
+    row.appendChild(card);
+    document.getElementById('chatMessages').appendChild(row);
     saveChatHistory(window.ChatState.currentContactId);
 }
 
@@ -600,21 +618,106 @@ function confirmPayment(type, maxAmount) {
         return;
     }
     const note = document.getElementById('paymentNoteInput').value.trim();
+    const method = document.querySelector('.payment-method-option.selected');
+    const methodText = method ? method.textContent : '零钱';
     closePaymentModal();
-    let msg = '[' + type + '] ' + amount.toFixed(2) + '元';
-    if (note) msg += ' 备注：' + note;
-    appendMessage('user', msg);
+    
+    sendPaymentCard(type, amount, note, methodText);
+}
+
+function sendPaymentCard(type, amount, note, method) {
+    const row = document.createElement('div');
+    row.className = 'bubble-row user';
+    
+    const avatar = document.createElement('div');
+    avatar.className = 'bubble-avatar user-avatar';
+    avatar.textContent = '我';
+    
+    const isRedPacket = type === '红包';
+    const card = document.createElement('div');
+    card.className = 'payment-card';
+    
+    if (isRedPacket) {
+        card.style.cssText = 'background:#fff;color:#000;border-radius:14px;padding:14px 16px;max-width:220px;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.08);';
+        card.innerHTML = `
+            <div style="font-size:12px;color:#8e8e93;margin-bottom:4px;">红包</div>
+            <div style="font-size:28px;font-weight:700;margin-bottom:6px;">¥${amount.toFixed(2)}</div>
+            ${note ? '<div style="font-size:11px;color:#8e8e93;margin-bottom:4px;">' + note + '</div>' : ''}
+            <div style="font-size:10px;color:#b0b0b5;">${method}</div>
+        `;
+    } else {
+        card.style.cssText = 'background:#1d1d1f;color:#fff;border-radius:14px;padding:14px 16px;max-width:220px;font-size:14px;';
+        card.innerHTML = `
+            <div style="font-size:12px;opacity:0.7;margin-bottom:4px;">转账</div>
+            <div style="font-size:28px;font-weight:700;margin-bottom:6px;">¥${amount.toFixed(2)}</div>
+            ${note ? '<div style="font-size:11px;opacity:0.6;margin-bottom:4px;">' + note + '</div>' : ''}
+            <div style="font-size:10px;opacity:0.4;">${method}</div>
+        `;
+    }
+    
+    row.appendChild(avatar);
+    row.appendChild(card);
+    document.getElementById('chatMessages').appendChild(row);
     saveChatHistory(window.ChatState.currentContactId);
 }
 
 // ========== 链接 ==========
 function openFileSend() {
     toggleAddPanel();
-    const link = prompt('粘贴抖音/小红书/B站链接发给角色：');
-    if (link && link.trim()) {
-        appendMessage('user', '[分享链接] ' + link.trim());
-        saveChatHistory(window.ChatState.currentContactId);
-    }
+    const overlay = document.createElement('div');
+    overlay.className = 'caption-modal-overlay';
+    overlay.id = 'linkModalOverlay';
+    overlay.innerHTML = `
+        <div class="caption-modal">
+            <div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">分享链接</div>
+            <div style="font-size:13px;color:#8e8e93;margin-bottom:10px;">复制抖音/小红书/B站链接发给角色</div>
+            <textarea class="caption-textarea" id="linkInput" placeholder="粘贴链接…" style="height:80px;"></textarea>
+            <div class="caption-buttons">
+                <div class="payment-btn-cancel" onclick="closeLinkModal()">取消</div>
+                <div class="payment-btn-confirm" onclick="confirmSendLink()">发送</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeLinkModal(); };
+}
+
+function closeLinkModal() {
+    const overlay = document.getElementById('linkModalOverlay');
+    if (overlay) overlay.remove();
+}
+
+function confirmSendLink() {
+    const link = document.getElementById('linkInput').value.trim();
+    closeLinkModal();
+    if (!link) return;
+    
+    const row = document.createElement('div');
+    row.className = 'bubble-row user';
+    
+    const avatar = document.createElement('div');
+    avatar.className = 'bubble-avatar user-avatar';
+    avatar.textContent = '我';
+    
+    const card = document.createElement('div');
+    card.style.cssText = 'background:#fff;border-radius:14px;padding:12px 14px;max-width:220px;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
+    
+    let displayLink = link;
+    try {
+        const url = new URL(link);
+        displayLink = url.hostname + url.pathname.substring(0, 15) + (url.pathname.length > 15 ? '…' : '');
+    } catch(e) {}
+    
+    card.innerHTML = `
+        <div style="font-size:13px;font-weight:500;color:#000;margin-bottom:4px;">分享链接</div>
+        <div style="font-size:11px;color:#007aff;word-break:break-all;">${displayLink}</div>
+    `;
+    card.onclick = function() { window.open(link, '_blank'); };
+    
+    row.appendChild(avatar);
+    row.appendChild(card);
+    document.getElementById('chatMessages').appendChild(row);
+    saveChatHistory(window.ChatState.currentContactId);
 }
 
 // ========== 发送/回复逻辑 ==========
@@ -953,7 +1056,7 @@ function openChatSettings() {
                     </div>
                 </div>
 
-                <!-- 自动翻译 -->
+                                <!-- 自动翻译 -->
                 <div class="settings-section-title">自动翻译</div>
                 <div class="glass-card">
                     <div class="switch-row"><span>自动翻译</span><input type="checkbox" class="ios-switch-sm" ${settings.autoTranslate === true ? 'checked' : ''} onchange="toggleAutoTranslate(this.checked)"></div>
@@ -1169,4 +1272,4 @@ function blockContact() {
 
 function deleteContact() {
     showToast('删除功能即将上线');
-}            
+}       
