@@ -127,7 +127,7 @@ function renderChatShell() {
             </div>
             <div class="chat-list" id="chatListView"></div>
             <div class="tab-fixed-bottom">
-                <span class="tab-item active" onclick="switchChatTab('chats', this)">聊天</span>
+                <span class="tab-item active" onclick="switchChatTab('chats', this)">消息</span>
                 <span class="tab-item" onclick="switchChatTab('contacts', this)">联系人</span>
                 <span class="tab-item" onclick="switchChatTab('moments', this)">动态</span>
                 <span class="tab-item" onclick="switchChatTab('me', this)">我的</span>
@@ -180,7 +180,7 @@ function switchChatTab(tab, el) {
     switch (tab) {
         case 'chats':
             if (plusBtn) plusBtn.style.display = '';
-            if (titleEl) titleEl.textContent = '聊天';
+            if (titleEl) titleEl.textContent = '消息';
             renderChatList();
             break;
         case 'contacts':
@@ -719,7 +719,7 @@ function menuTranslate() {
 
     const menu = document.getElementById('bubbleMenu');
     if (menu) menu.style.display = 'none';
-}       
+   }     
 
 // ========== 右上角 + 弹出菜单 ==========
 function togglePlusMenu(e) {
@@ -741,11 +741,15 @@ function togglePlusMenu(e) {
 
     menu.querySelector('#menuGroupChat').onclick = function(e) {
         e.stopPropagation();
+        closePlusMenu();
         initiateGroupChat();
     };
     menu.querySelector('#menuAddFriend').onclick = function(e) {
         e.stopPropagation();
-        showCreateCharacterPage();
+        closePlusMenu();
+        setTimeout(function() {
+            showCreateCharacterPage();
+        }, 100);
     };
 
     document.body.appendChild(menu);
@@ -1308,4 +1312,4 @@ function blockContact() {
 
 function deleteContact() {
     showToast('删除功能即将上线');
-}
+}       
