@@ -206,7 +206,10 @@ function processAIReply(rawContent, contactName, contactId) {
     const titleEl = document.getElementById('chatTitle');
 
     // 更宽松的 JSON 提取
-    let jsonMatch = rawContent.match(/\{[^{}]*"mood"[^{}]*"favorability"[^{}]*"action"[^{}]*"thought"[^{}]*\}/);
+    let jsonMatch = rawContent.match(/\{[^{}]*"mood"[^{}]*\}/);
+if (!jsonMatch) {
+    jsonMatch = rawContent.match(/\{[^}]*"mood"\s*:\s*"[^"]*"[^}]*\}/);
+}
     let cleanContent = rawContent;
     
     if (jsonMatch) {
