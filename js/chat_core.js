@@ -18,9 +18,12 @@ window._translateCache = window._translateCache || {};
 function buildSystemPrompt(contactId) {
     let prompt = '';
 
-    prompt += '【最高优先级】每次回复必须在末尾附加一段JSON状态信息，格式严格为：\n{"mood":"心情(10字内)","favorability":好感度数字(0-100),"action":"动作(20字内)","thought":"内心想法(30字内)"}\n该JSON必须放在回复的最后面，不能省略。\n\n';
+    // 最高优先级：状态栏 JSON 强制要求
+    prompt += '【最高优先级·状态更新】你的每次回复，必须在最后一行附加一段完整的JSON状态信息，格式严格如下（不要省略任何字段，不要嵌套在其他内容里，必须单独一行）：\n{"mood":"心情(10字内)","favorability":好感度数字(0-100),"action":"动作(20字内)","thought":"内心想法(30字内)"}\n这是强制要求，每次回复都必须包含此JSON，否则系统无法正确运行。\n\n';
 
-    prompt += '【重要】每条消息气泡单独发送，不要合并。一句话不超过30字。如果需要说多句话，请分成多条消息发送，每条消息用两个换行符\\n\\n分隔。这样每条消息会显示为独立气泡。\n\n';
+    // 回复条数限制
+    const replyMax = (window.ChatConfig && window.ChatConfig.settings && window.ChatConfig.settings.replyMax) || 3;
+    prompt += '【回复条数限制】每次回复最多' + replyMax + '条消息。用两个换行符\\n\\n分隔不同的消息气泡。一句话不超过30字。\n\n';
 
     prompt += '【语言规则】你的所有回复正文和旁白内容，必须且只能使用简体中文。禁止使用繁体中文、日语、英语、韩语等任何其他语言。这是最高优先级的硬性规则，不可违反。\n\n';
 
@@ -111,7 +114,6 @@ async function sendChatMessage() {
         if (qv) qv.style.display = 'none';
     }
 
-    // 提取最近 20 条历史消息
     const historyMessages = getRecentHistory(contactId, 20);
     const allMessages = [
         { role: 'system', content: systemPrompt },
@@ -172,6 +174,26 @@ async function callChatAPI(messages) {
         }
 
         const data = await response.json();
+        
+        // 更新 API 消耗
+        if (data.usage && data.usage.total_tokens) {
+            if (!window.ChatConfig) window.ChatConfig = { settings: { api: {} } };
+            if (!window.ChatConfig.settings) window.ChatConfig.settings = { api: {} };
+            if (!window.ChatConfig.settings.api) window.ChatConfig.settings.api = {};
+            
+            const api = window.ChatConfig.settings.api;
+            api.total = (api.total || 0) + data.usage.total_tokens;
+            api.online = (api.online || 0) + data.usage.total_tokens;
+            localStorage.setItem('api_total', api.total);
+            localStorage.setItem('api_online', api.online);
+            
+            // 更新 UI 显示
+            const totalEl = document.getElementById('apiTotal');
+            const onlineEl = document.getElementById('apiOnline');
+            if (totalEl) totalEl.textContent = api.total + ' token';
+            if (onlineEl) onlineEl.textContent = api.online + ' token';
+        }
+        
         return data.choices?.[0]?.message?.content || '';
     } catch (error) {
         clearTimeout(timeout);
@@ -186,14 +208,49 @@ async function callChatAPI(messages) {
 function processAIReply(rawContent, contactName, contactId) {
     const titleEl = document.getElementById('chatTitle');
 
-    const jsonMatch = rawContent.match(/\{[\s\S]*"mood"[\s\S]*\}/);
+    // 更宽松的 JSON 提取——先尝试完整匹配，失败后尝试逐字段提取
+    let jsonMatch = rawContent.match(/\{[^{}]*"mood"[^{}]*"favorability"[^{}]*"action"[^{}]*"thought"[^{}]*\}/);
     let cleanContent = rawContent;
+    
     if (jsonMatch) {
         try {
             const mentalData = JSON.parse(jsonMatch[0]);
             updateMentalState(mentalData);
             cleanContent = rawContent.replace(jsonMatch[0], '').trim();
-        } catch (e) {}
+        } catch (e) {
+            // JSON 解析失败，尝试从 rawContent 中提取各个字段
+            const moodMatch = rawContent.match(/"mood"\s*:\s*"([^"]+)"/);
+            const favMatch = rawContent.match(/"favorability"\s*:\s*(\d+)/);
+            const actMatch = rawContent.match(/"action"\s*:\s*"([^"]+)"/);
+            const thtMatch = rawContent.match(/"thought"\s*:\s*"([^"]+)"/);
+            
+            if (moodMatch || favMatch || actMatch || thtMatch) {
+                updateMentalState({
+                    mood: moodMatch ? moodMatch[1] : (window.ChatConfig?.mental?.mood || '未知'),
+                    favorability: favMatch ? parseInt(favMatch[1]) : (window.ChatConfig?.mental?.favorability || 0),
+                    action: actMatch ? actMatch[1] : (window.ChatConfig?.mental?.action || '无'),
+                    thought: thtMatch ? thtMatch[1] : (window.ChatConfig?.mental?.thought || '无')
+                });
+            }
+            // 清理内容时去掉所有可能的 JSON 残留
+            cleanContent = rawContent.replace(/\{[^{}]*"mood"[^{}]*\}/g, '').replace(/\{[^{}]*"favorability"[^{}]*\}/g, '').trim();
+        }
+    } else {
+        // 完全没找到 JSON，尝试逐字段提取
+        const moodMatch = rawContent.match(/"mood"\s*:\s*"([^"]+)"/);
+        const favMatch = rawContent.match(/"favorability"\s*:\s*(\d+)/);
+        const actMatch = rawContent.match(/"action"\s*:\s*"([^"]+)"/);
+        const thtMatch = rawContent.match(/"thought"\s*:\s*"([^"]+)"/);
+        
+        if (moodMatch || favMatch || actMatch || thtMatch) {
+            updateMentalState({
+                mood: moodMatch ? moodMatch[1] : (window.ChatConfig?.mental?.mood || '未知'),
+                favorability: favMatch ? parseInt(favMatch[1]) : (window.ChatConfig?.mental?.favorability || 0),
+                action: actMatch ? actMatch[1] : (window.ChatConfig?.mental?.action || '无'),
+                thought: thtMatch ? thtMatch[1] : (window.ChatConfig?.mental?.thought || '无')
+            });
+        }
+        cleanContent = rawContent;
     }
 
     const narrationRegex = /[\(\（]([^\)\）]+)[\)\）]/g;
@@ -281,6 +338,7 @@ function appendMessage(role, text) {
     } else {
         const row = document.createElement('div');
         row.className = 'bubble-row ' + (role === 'user' ? 'user' : 'assistant');
+        row.setAttribute('data-role', role);
 
         const avatar = document.createElement('div');
         avatar.className = 'bubble-avatar ' + (role === 'user' ? 'user-avatar' : 'bot-avatar');
@@ -412,4 +470,4 @@ function loadChatHistory(contactId) {
         messages.innerHTML = saved;
         messages.scrollTop = messages.scrollHeight;
     }
-                                                      }
+}
