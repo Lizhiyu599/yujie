@@ -896,28 +896,42 @@
     position: fixed;
     z-index: 99999;
     display: none;
-    background: rgba(30, 30, 30, 0.92);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
     border-radius: 14px;
-    padding: 6px 4px;
-    box-shadow: 0 6px 24px rgba(0,0,0,0.35);
-    min-width: 260px;
+    padding: 4px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    width: 260px;
 }
 .bubble-menu .menu-row {
     display: flex;
-    justify-content: space-around;
+    border-bottom: 0.5px dashed rgba(0,0,0,0.05);
+}
+.bubble-menu .menu-row:last-child {
+    border-bottom: none;
 }
 .bubble-menu .menu-item {
     flex: 1;
     text-align: center;
     padding: 10px 4px;
-    font-size: 13px;
-    color: #fff;
+    font-size: 12px;
+    color: #000;
     cursor: pointer;
-    border-radius: 8px;
-    user-select: none;
-    -webkit-user-select: none;
+    border-right: 0.5px dashed rgba(0,0,0,0.05);
+    transition: 0.15s;
+}
+.bubble-menu .menu-item:last-child {
+    border-right: none;
+}
+.bubble-menu .menu-item:active {
+    background: rgba(0,0,0,0.03);
+    border-radius: 10px;
+}
+.bubble-menu .menu-item.empty {
+    color: #c7c7cc;
+    pointer-events: none;
 }
 .bubble-menu .menu-item:active {
     background: rgba(255,255,255,0.18);
