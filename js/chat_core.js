@@ -22,6 +22,8 @@ function buildSystemPrompt(contactId) {
 
     prompt += '【重要】每条消息气泡单独发送，不要合并。一句话不超过30字。如果需要说多句话，请分成多条消息发送，每条消息用两个换行符\\n\\n分隔。这样每条消息会显示为独立气泡。\n\n';
 
+    prompt += '【语言规则】所有回复必须使用简体中文。旁白内容也必须使用简体中文。禁止使用繁体中文、英文或其他任何语言。\n\n';
+
     if (typeof getFullSystemPrompt === 'function') {
         prompt += getFullSystemPrompt();
     }
@@ -33,7 +35,7 @@ function buildSystemPrompt(contactId) {
 
     const narrationEnabled = ChatConfig?.settings?.onlineNarration !== false;
     if (narrationEnabled) {
-        prompt += '\n\n【旁白模式】开启。请在回复中用括号（）包含旁白内容，用于描写环境、动作、心理活动等。';
+        prompt += '\n\n【旁白模式】开启。请在回复中用括号（）包含旁白内容，用于描写环境、动作、心理活动等。旁白必须使用简体中文。';
     } else {
         prompt += '\n\n【旁白模式】关闭。不需要写旁白。';
     }
@@ -205,7 +207,7 @@ function processAIReply(rawContent, contactName, contactId) {
     if (mainText) {
         const parts = mainText.split(/\n{2,}/).filter(p => p.trim());
         parts.forEach(part => {
-            const trimmed = part.trim();
+            const trimmed = part.trim().replace(/^[\n]+/, '');
             const row = appendMessage('assistant', trimmed);
             if (ChatConfig?.settings?.autoTranslate && needsTranslation(trimmed)) {
                 appendTranslationRow(row, '翻译中…');
@@ -219,7 +221,7 @@ function processAIReply(rawContent, contactName, contactId) {
             }
         });
         if (parts.length === 0 && mainText.trim()) {
-            const trimmed = mainText.trim();
+            const trimmed = mainText.trim().replace(/^[\n]+/, '');
             const row = appendMessage('assistant', trimmed);
             if (ChatConfig?.settings?.autoTranslate && needsTranslation(trimmed)) {
                 appendTranslationRow(row, '翻译中…');
@@ -314,19 +316,25 @@ function updateMentalState(mentalData) {
     if (thtEl) thtEl.textContent = window.ChatConfig.mental.thought;
 }
 
-// ========== 检测是否需要翻译 ==========
+// ========== 检测是否需要翻译（包含繁体中文） ==========
 function needsTranslation(text) {
     if (!text) return false;
-    const chineseRegex = /[\u4e00-\u9fff]/;
-    const hasChinese = chineseRegex.test(text);
-    if (!hasChinese) return true;
-    const nonChineseChars = text.replace(/[\u4e00-\u9fff]/g, '').replace(/\s/g, '').length;
-    const totalChars = text.replace(/\s/g, '').length;
-    if (totalChars > 0 && nonChineseChars / totalChars > 0.4) return true;
+    // 检测是否包含非简体中文字符
+    const simplifiedOnlyRegex = /^[\u4e00-\u9fff\u3000-\u303f\uff00-\uffef\s\d\w\p{P}]+$/u;
+    if (!simplifiedOnlyRegex.test(text)) return true;
+    // 检测是否包含繁体中文（通过繁简差异字符判断）
+    const traditionalChars = /[爲豈雲歷麗倫眾麼專業義達對號與臺灣區風龍龜]/;
+    if (traditionalChars.test(text)) return true;
+    // 检测是否包含非中文字符超过40%
+    const chineseChars = text.match(/[\u4e00-\u9fff]/g);
+    if (!chineseChars) return true;
+    const nonChinese = text.replace(/[\u4e00-\u9fff\s\d\w]/g, '').length;
+    const total = text.replace(/\s/g, '').length;
+    if (total > 0 && nonChinese / total > 0.4) return true;
     return false;
 }
 
-// ========== 翻译文本（Google 免费接口，零延迟） ==========
+// ========== 翻译文本（Google 免费接口） ==========
 async function translateText(text) {
     try {
         const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=zh-CN&dt=t&q=' + encodeURIComponent(text);
@@ -355,7 +363,6 @@ function appendTranslationRow(originalRow, translatedText) {
         return;
     }
 
-    // 消除气泡行的 margin-bottom，让翻译行紧贴
     if (originalRow) originalRow.style.marginBottom = '0';
 
     const transRow = document.createElement('div');
