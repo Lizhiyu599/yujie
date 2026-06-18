@@ -485,12 +485,18 @@ function searchChatHistory(query) {
     }
     const messages = document.getElementById('chatMessages');
     if (!messages) return;
-    const text = messages.innerText.toLowerCase();
+    const fullText = messages.innerText;
     const q = query.toLowerCase();
-    if (text.includes(q)) {
-        const idx = text.indexOf(q);
-        const snippet = text.substring(Math.max(0, idx - 20), idx + q.length + 30);
-        result.innerHTML = '<div onclick="jumpToSearchResult()">' + snippet.replace(q, '<b>' + q + '</b>') + '</div>';
+
+    const sentences = fullText.split(/[。\n？！!?]/);
+    const matches = sentences.filter(s => s.toLowerCase().includes(q));
+
+    if (matches.length > 0) {
+        result.innerHTML = matches.slice(0, 5).map(s =>
+            '<div onclick="jumpToSearchResult()" style="padding:4px 0;border-bottom:0.5px dashed rgba(0,0,0,0.05);">' +
+            s.trim().replace(new RegExp(q, 'gi'), '<b>$&</b>') +
+            '</div>'
+        ).join('');
         result.classList.add('show');
     } else {
         result.innerHTML = '<div style="color:#8e8e93;">未找到相关内容</div>';
@@ -523,4 +529,4 @@ function blockContact() {
 
 function deleteContact() {
     showToast('删除功能即将上线');
-        }
+}
