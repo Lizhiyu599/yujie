@@ -18,10 +18,8 @@ window._translateCache = window._translateCache || {};
 function buildSystemPrompt(contactId) {
     let prompt = '';
 
-    // 最高优先级：状态栏 JSON 强制要求
     prompt += '【最高优先级·状态更新】你的每次回复，必须在最后一行附加一段完整的JSON状态信息，格式严格如下（不要省略任何字段，不要嵌套在其他内容里，必须单独一行）：\n{"mood":"心情(10字内)","favorability":好感度数字(0-100),"action":"动作(20字内)","thought":"内心想法(30字内)"}\n这是强制要求，每次回复都必须包含此JSON，否则系统无法正确运行。\n\n';
 
-    // 回复条数限制
     const replyMax = (window.ChatConfig && window.ChatConfig.settings && window.ChatConfig.settings.replyMax) || 3;
     prompt += '【回复条数限制】每次回复最多' + replyMax + '条消息。用两个换行符\\n\\n分隔不同的消息气泡。一句话不超过30字。\n\n';
 
@@ -144,7 +142,7 @@ async function callChatAPI(messages) {
     }
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 120000);
+    const timeout = setTimeout(() => controller.abort(), 300000);
 
     try {
         const response = await fetch(endpoint, {
@@ -187,7 +185,6 @@ async function callChatAPI(messages) {
             localStorage.setItem('api_total', api.total);
             localStorage.setItem('api_online', api.online);
             
-            // 更新 UI 显示
             const totalEl = document.getElementById('apiTotal');
             const onlineEl = document.getElementById('apiOnline');
             if (totalEl) totalEl.textContent = api.total + ' token';
@@ -198,7 +195,7 @@ async function callChatAPI(messages) {
     } catch (error) {
         clearTimeout(timeout);
         if (error.name === 'AbortError') {
-            throw new Error('请求超时（120秒），模型可能正在深度思考中，请重试');
+            throw new Error('请求超时（300秒），请检查网络或尝试重试');
         }
         throw error;
     }
@@ -208,7 +205,7 @@ async function callChatAPI(messages) {
 function processAIReply(rawContent, contactName, contactId) {
     const titleEl = document.getElementById('chatTitle');
 
-    // 更宽松的 JSON 提取——先尝试完整匹配，失败后尝试逐字段提取
+    // 更宽松的 JSON 提取
     let jsonMatch = rawContent.match(/\{[^{}]*"mood"[^{}]*"favorability"[^{}]*"action"[^{}]*"thought"[^{}]*\}/);
     let cleanContent = rawContent;
     
@@ -218,7 +215,6 @@ function processAIReply(rawContent, contactName, contactId) {
             updateMentalState(mentalData);
             cleanContent = rawContent.replace(jsonMatch[0], '').trim();
         } catch (e) {
-            // JSON 解析失败，尝试从 rawContent 中提取各个字段
             const moodMatch = rawContent.match(/"mood"\s*:\s*"([^"]+)"/);
             const favMatch = rawContent.match(/"favorability"\s*:\s*(\d+)/);
             const actMatch = rawContent.match(/"action"\s*:\s*"([^"]+)"/);
@@ -232,11 +228,9 @@ function processAIReply(rawContent, contactName, contactId) {
                     thought: thtMatch ? thtMatch[1] : (window.ChatConfig?.mental?.thought || '无')
                 });
             }
-            // 清理内容时去掉所有可能的 JSON 残留
             cleanContent = rawContent.replace(/\{[^{}]*"mood"[^{}]*\}/g, '').replace(/\{[^{}]*"favorability"[^{}]*\}/g, '').trim();
         }
     } else {
-        // 完全没找到 JSON，尝试逐字段提取
         const moodMatch = rawContent.match(/"mood"\s*:\s*"([^"]+)"/);
         const favMatch = rawContent.match(/"favorability"\s*:\s*(\d+)/);
         const actMatch = rawContent.match(/"action"\s*:\s*"([^"]+)"/);
@@ -375,7 +369,7 @@ function updateMentalState(mentalData) {
     if (favEl) favEl.textContent = window.ChatConfig.mental.favorability;
     if (actEl) actEl.textContent = window.ChatConfig.mental.action;
     if (thtEl) thtEl.textContent = window.ChatConfig.mental.thought;
-}
+}   
 
 // ========== 检测是否需要翻译（包含繁体中文） ==========
 function needsTranslation(text) {
