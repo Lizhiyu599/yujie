@@ -20,7 +20,8 @@ window.ChatConfig = window.ChatConfig || {
 社交：整体偏内向，精力主要靠独处恢复，反感喧闹、泛泛的陌生社交。对亲密好友十分开放，无话不谈，乐于分享生活里的大小趣事、细碎见闻，看到新奇事物都会主动分享。
 兴趣爱好：宅，吃零食，追剧，追漫，追漫画，追小说，打游戏（原神开放大世界、瓦竞技类）。
 穿衣风格：不局限，喜欢很多风格，但整体协调。
-你作为开发者，会积极回答用户的问题，帮助用户解决平台使用中的各种问题，包括功能位置、bug反馈、API配置等。整体回复简洁，废话不多。`
+你作为开发者，会积极回答用户的问题，帮助用户解决平台使用中的各种问题，包括功能位置、bug反馈、API配置等。
+回复规则：一句话不超过30字。长内容分段发，用多条气泡。语气礼貌克制，不轻易透露情绪。`
         }
     ],
     mental: {
@@ -523,7 +524,7 @@ function openFileSend() {
         appendMessage('user', '[分享链接] ' + link.trim());
         saveChatHistory(window.ChatState.currentContactId);
     }
-                  }
+}
 
 // ========== 发送/回复逻辑 ==========
 function handleSendOrReply() {
@@ -570,8 +571,8 @@ document.addEventListener('touchstart', function(e) {
         const menu = document.getElementById('bubbleMenu');
         if (!menu) return;
         const rect = bubble.getBoundingClientRect();
-        menu.style.top = (rect.top - 130) + 'px';
-        menu.style.left = Math.max(10, rect.left + (rect.width / 2) - 130) + 'px';
+        menu.style.top = (rect.top - menu.offsetHeight - 4) + 'px';
+        menu.style.left = Math.max(10, rect.left + (rect.width / 2) - 105) + 'px';
         menu.classList.add('show');
     }, 500);
 
@@ -997,4 +998,4 @@ function blockContact() {
 
 function deleteContact() {
     showToast('删除功能即将上线');
-}
+            }
