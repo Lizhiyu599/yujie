@@ -1,7 +1,7 @@
 /**
  * 玉界 - 聊天软件 UI（精简版）
  * 包含：会话列表、聊天窗口、标签栏导航、心理状态窗、语音模式、语音消息、
- *       发送逻辑、长按气泡菜单、右上角+弹出菜单、添加好友页面、聊天详情半屏面板
+ *       发送逻辑、长按气泡菜单、右上角+弹出菜单、添加好友页面、联系人列表、聊天详情半屏面板
  * 附加功能已移至 chat_addons.js
  */
 
@@ -186,7 +186,7 @@ function switchChatTab(tab, el) {
         case 'contacts':
             if (plusBtn) plusBtn.style.display = '';
             if (titleEl) titleEl.textContent = '联系人';
-            if (typeof showContactsPage === 'function') { showContactsPage(); }
+            renderContactsList();
             break;
         case 'moments':
             if (plusBtn) plusBtn.style.display = 'none';
@@ -717,8 +717,7 @@ function menuTranslate() {
 
     const menu = document.getElementById('bubbleMenu');
     if (menu) menu.style.display = 'none';
-   }
-
+}
 
 // ========== 右上角 + 弹出菜单 ==========
 function togglePlusMenu(e) {
@@ -1010,6 +1009,92 @@ function loadContactsFromStorage() {
 window.addEventListener('DOMContentLoaded', function() {
     loadContactsFromStorage();
 });
+
+// ========== 联系人列表渲染（微信风格） ==========
+function renderContactsList() {
+    const listView = document.getElementById('chatListView');
+    if (!listView) return;
+
+    const contacts = window.ChatConfig.contacts || [];
+
+    const groups = {};
+    contacts.forEach(c => {
+        const displayName = c.name || '';
+        const firstChar = displayName.charAt(0).toUpperCase();
+        const letter = /[A-Z]/.test(firstChar) ? firstChar : '#';
+        if (!groups[letter]) groups[letter] = [];
+        groups[letter].push(c);
+    });
+
+    const sortedLetters = Object.keys(groups).sort((a, b) => {
+        if (a === '#') return 1;
+        if (b === '#') return -1;
+        return a.localeCompare(b);
+    });
+
+    let html = '';
+
+    // 新的朋友入口
+    html += `
+        <div class="chat-list-item" onclick="showNewFriendsPage()">
+            <div class="contacts-new-friend-avatar">
+                <span class="person-head"></span>
+                <span class="person-body"></span>
+            </div>
+            <div class="chat-info">
+                <div class="chat-name">新的朋友</div>
+            </div>
+        </div>
+    `;
+
+    sortedLetters.forEach(letter => {
+        html += '<div class="contacts-section-title">' + letter + '</div>';
+        groups[letter].forEach(c => {
+            const avatarData = c.avatarData || '';
+            const avatarHTML = avatarData 
+                ? `<div class="chat-avatar" style="background-image:url(${avatarData});background-size:cover;background-position:center;">&nbsp;</div>`
+                : `<div class="chat-avatar">${c.avatar}</div>`;
+            html += `
+                <div class="chat-list-item" onclick="editContactPersona('${c.id}')">
+                    ${avatarHTML}
+                    <div class="chat-info">
+                        <div class="chat-name">${c.name}</div>
+                    </div>
+                </div>
+            `;
+        });
+    });
+
+    // 右侧字母索引
+    let indexHTML = '<div class="contacts-index-bar">';
+    sortedLetters.forEach(letter => {
+        indexHTML += '<span class="contacts-index-letter" onclick="scrollToGroup(\'' + letter + '\')">' + letter + '</span>';
+    });
+    indexHTML += '</div>';
+
+    listView.innerHTML = html;
+    listView.style.position = 'relative';
+
+    const oldIndex = listView.querySelector('.contacts-index-bar');
+    if (oldIndex) oldIndex.remove();
+    listView.insertAdjacentHTML('beforeend', indexHTML);
+
+    listView.querySelectorAll('.contacts-section-title').forEach(title => {
+        title.style.cssText = 'background:#f2f2f7;padding:6px 16px;font-size:13px;color:#8e8e93;font-weight:500;';
+    });
+}
+
+function scrollToGroup(letter) {
+    const listView = document.getElementById('chatListView');
+    if (!listView) return;
+    const titles = listView.querySelectorAll('.contacts-section-title');
+    for (let i = 0; i < titles.length; i++) {
+        if (titles[i].textContent === letter) {
+            titles[i].scrollIntoView({ behavior: 'smooth', block: 'start' });
+            break;
+        }
+    }
+}
 
 // ========== 聊天详情半屏面板 ==========
 function openChatSettings() {
