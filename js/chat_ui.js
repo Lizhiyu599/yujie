@@ -503,7 +503,7 @@ function sendLocation() {
     avatar.textContent = '我';
     
     const card = document.createElement('div');
-    card.style.cssText = 'background:rgba(255,255,255,0.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:14px;padding:0;max-width:260px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid rgba(255,255,255,0.4);';
+    card.style.cssText = 'background:rgba(255,255,255,0.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:14px;padding:0;width:220px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid rgba(255,255,255,0.4);';
     card.innerHTML = `
         <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;">
             <div style="width:56px;height:56px;background:#f2f2f7;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -514,7 +514,7 @@ function sendLocation() {
                 </div>
             </div>
             <div style="flex:1;min-width:0;">
-                <div style="font-size:14px;font-weight:600;color:#000;">${location}</div>
+                <div style="font-size:14px;font-weight:600;color:#000;word-break:break-all;">${location}</div>
                 ${distance ? '<div style="font-size:11px;color:#8e8e93;margin-top:2px;">相距约' + distance + '</div>' : ''}
             </div>
         </div>
@@ -632,7 +632,7 @@ function sendPaymentCard(type, amount, note, method) {
     
     const isRedPacket = type === '红包';
     const card = document.createElement('div');
-    card.style.cssText = 'background:#fff;border-radius:14px;padding:0;max-width:260px;width:260px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
+    card.style.cssText = 'background:#fff;border-radius:14px;padding:0;width:260px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
     
     if (isRedPacket) {
         card.innerHTML = `
@@ -1279,4 +1279,4 @@ function blockContact() {
 
 function deleteContact() {
     showToast('删除功能即将上线');
-}
+}       
