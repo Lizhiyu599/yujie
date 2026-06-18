@@ -254,7 +254,10 @@ function enterChat(contactId) {
                     <div class="add-circle" onclick="toggleAddPanel()">+</div>
                     <div class="chat-input-wrapper" id="chatInputWrapper">
                         <input type="text" class="chat-input" id="chatInput" placeholder="输入消息…" onkeypress="if(event.key==='Enter') handleSendOrReply()">
-                        <span class="mic-btn" id="micBtn" onclick="toggleVoiceMode()">&#127908;</span>
+                        <div class="mic-btn" id="micBtn" onclick="toggleVoiceMode()">
+                            <span class="mic-icon-body"></span>
+                            <span class="mic-icon-arc"></span>
+                        </div>
                     </div>
                     <span class="chat-send-btn" id="chatSendBtn" onclick="handleSendOrReply()">↑</span>
                 </div>
@@ -270,469 +273,6 @@ function enterChat(contactId) {
     `;
 
     loadChatHistory(contactId);
-}
-
-// ========== 返回会话列表 ==========
-function backToChatList() {
-    window.ChatState.currentContactId = null;
-    closePlusMenu();
-    window._isVoiceMode = false;
-    renderChatShell();
-}
-
-// ========== 心理状态窗切换 ==========
-function toggleChatMental() {
-    const popup = document.getElementById('chatMentalPopup');
-    if (popup) {
-        popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
-        const m = window.ChatConfig.mental;
-        const moodEl = document.getElementById('m-mood');
-        const favEl = document.getElementById('m-fav');
-        const actEl = document.getElementById('m-act');
-        const thtEl = document.getElementById('m-tht');
-        if (moodEl) moodEl.textContent = m.mood;
-        if (favEl) favEl.textContent = m.favorability;
-        if (actEl) actEl.textContent = m.action;
-        if (thtEl) thtEl.textContent = m.thought;
-    }
-}
-
-// ========== 语音模式切换 ==========
-function toggleVoiceMode() {
-    window._isVoiceMode = !window._isVoiceMode;
-    const input = document.getElementById('chatInput');
-    const micBtn = document.getElementById('micBtn');
-    const wrapper = document.getElementById('chatInputWrapper');
-
-    if (window._isVoiceMode) {
-        if (input) input.placeholder = '输入语音消息文本…';
-        if (micBtn) micBtn.classList.add('active');
-        if (wrapper) wrapper.classList.add('voice-mode');
-    } else {
-        if (input) input.placeholder = '输入消息…';
-        if (micBtn) micBtn.classList.remove('active');
-        if (wrapper) wrapper.classList.remove('voice-mode');
-    }
-}
-
-// ========== 发送/回复逻辑 ==========
-function handleSendOrReply() {
-    const input = document.getElementById('chatInput');
-    if (!input) return;
-
-    if (window._isVoiceMode) {
-        // 语音模式：文本内容 → 语音气泡
-        const text = input.value.trim();
-        if (!text) {
-            triggerAIReply();
-            return;
-        }
-        sendVoiceMessage(text);
-        input.value = '';
-    } else {
-        // 文本模式
-        if (input.value.trim()) {
-            sendChatMessage();
-        } else {
-            triggerAIReply();
-        }
-    }
-}
-
-// ========== 发送语音消息（用户发文本 → 语音气泡） ==========
-function sendVoiceMessage(text) {
-    const messages = document.getElementById('chatMessages');
-    if (!messages) return;
-
-    const contactId = window.ChatState.currentContactId || 'c1';
-
-    // 语音气泡
-    const row = document.createElement('div');
-    row.className = 'bubble-row user';
-
-    const avatar = document.createElement('div');
-    avatar.className = 'bubble-avatar user-avatar';
-    avatar.textContent = '我';
-
-    const voiceBubble = document.createElement('div');
-    voiceBubble.className = 'bubble bubble-voice bubble-user';
-    voiceBubble.setAttribute('data-is-real', '0');
-
-    const barCount = Math.floor(Math.random() * 7) + 6;
-    let fakeBars = '';
-    for (let i = 0; i < barCount; i++) {
-        const height = Math.floor(Math.random() * 16) + 6;
-        fakeBars += `<span class="fake-voice-bar" style="height:${height}px;"></span>`;
-    }
-
-    voiceBubble.innerHTML = `
-        <span class="voice-play-icon">&#9835;</span>
-        <span class="voice-duration-text">假语音</span>
-        <span class="fake-voice-bars">${fakeBars}</span>
-    `;
-    voiceBubble.onclick = function() {
-        showToast('用户发送的语音消息');
-    };
-
-    row.appendChild(avatar);
-    row.appendChild(voiceBubble);
-    messages.appendChild(row);
-
-    // 转文字吸附行
-    const transRow = document.createElement('div');
-    transRow.className = 'voice-transcript-row';
-    transRow.innerHTML = `
-        <div class="bubble voice-transcript-bubble">${text}</div>
-    `;
-    messages.appendChild(transRow);
-
-    messages.scrollTop = messages.scrollHeight;
-    saveChatHistory(contactId);
-
-    // 调用 AI 回复（带语音上下文）
-    const contact = getContactById(contactId);
-    const contactName = contact ? contact.name : 'AI';
-    window.ChatState.isAITyping = true;
-    const titleEl = document.getElementById('chatTitle');
-    if (titleEl) titleEl.innerHTML = '<span class="nav-typing">输入中...</span>';
-
-    const systemPrompt = buildSystemPrompt(contactId);
-    const userMessage = '（用户发来了一条语音消息，内容是：' + text + '）';
-
-    callChatAPI([
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage }
-    ]).then(reply => {
-        processAIReply(reply, contactName, contactId);
-    }).catch(error => {
-        appendMessage('assistant', '抱歉，消息发送失败：' + error.message);
-        if (titleEl) titleEl.textContent = contactName;
-        window.ChatState.isAITyping = false;
-    });
-}
-
-// ========== 发送语音气泡（角色发语音，给 chat_core 调用） ==========
-function sendVoiceBubble(role, text, voiceUrl, isRealVoice) {
-    const messages = document.getElementById('chatMessages');
-    if (!messages) return;
-
-    const row = document.createElement('div');
-    row.className = 'bubble-row ' + (role === 'assistant' ? 'assistant' : 'user');
-
-    const avatar = document.createElement('div');
-    avatar.className = 'bubble-avatar ' + (role === 'assistant' ? 'bot-avatar' : 'user-avatar');
-    avatar.textContent = role === 'assistant' ? (getContactById(window.ChatState.currentContactId)?.avatar || 'AI') : '我';
-
-    const voiceBubble = document.createElement('div');
-    voiceBubble.className = 'bubble bubble-voice ' + (role === 'assistant' ? 'bubble-assistant' : 'bubble-user');
-    voiceBubble.setAttribute('data-voice-url', voiceUrl || '');
-    voiceBubble.setAttribute('data-is-real', isRealVoice ? '1' : '0');
-
-    const barCount = isRealVoice ? 0 : Math.floor(Math.random() * 7) + 6;
-    let fakeBars = '';
-    if (!isRealVoice) {
-        for (let i = 0; i < barCount; i++) {
-            const height = Math.floor(Math.random() * 16) + 6;
-            fakeBars += `<span class="fake-voice-bar" style="height:${height}px;"></span>`;
-        }
-    }
-
-    voiceBubble.innerHTML = `
-        <span class="voice-play-icon">${isRealVoice ? '&#9654;' : '&#9835;'}</span>
-        <span class="voice-duration-text">${isRealVoice ? '语音' : '假语音'}</span>
-        ${!isRealVoice ? '<span class="fake-voice-bars">' + fakeBars + '</span>' : ''}
-    `;
-
-    if (isRealVoice && voiceUrl) {
-        voiceBubble.onclick = function() {
-            const audio = new Audio(voiceUrl);
-            audio.play().catch(function() {
-                showToast('语音播放失败');
-            });
-        };
-    } else {
-        voiceBubble.onclick = function() {
-            showToast('未配置语音API，无法播放');
-        };
-    }
-
-    row.appendChild(avatar);
-    row.appendChild(voiceBubble);
-    messages.appendChild(row);
-
-    const transRow = document.createElement('div');
-    transRow.className = 'voice-transcript-row';
-    transRow.innerHTML = `
-        <div class="bubble voice-transcript-bubble">${text}</div>
-    `;
-    messages.appendChild(transRow);
-
-    messages.scrollTop = messages.scrollHeight;
-    return row;
-}
-
-// ========== + 号功能面板 ==========
-function toggleAddPanel() {
-    const panel = document.getElementById('addPanelFull');
-    if (panel) {
-        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-        if (panel.style.display === 'block') {
-            switchAddPanelTab('emoji', document.getElementById('tabEmoji'));
-        }
-    }
-}
-
-function switchAddPanelTab(tab, el) {
-    document.querySelectorAll('.add-panel-tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-    renderAddPanelContent(tab);
-}
-
-function renderAddPanelContent(tab) {
-    const body = document.getElementById('addPanelBody');
-    if (!body) return;
-
-    if (tab === 'emoji') {
-        const savedEmojis = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
-        let emojiItems = '';
-        for (let i = savedEmojis.length - 1; i >= 0; i--) {
-            const emoji = savedEmojis[i];
-            emojiItems += `
-                <div class="emoji-item" onclick="sendSticker(${i})">
-                    <img src="${emoji.src}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" alt="${emoji.note || ''}">
-                </div>
-            `;
-        }
-        body.innerHTML = `
-            <div class="emoji-grid">
-                <div class="emoji-add-box" onclick="addCustomEmoji()">+</div>
-                ${emojiItems}
-            </div>
-        `;
-    } else if (tab === 'func') {
-        body.innerHTML = `
-            <div class="func-grid">
-                <div class="func-item" onclick="openAlbum()">
-                    <div class="func-icon">册</div>
-                    <div class="func-label">相册</div>
-                </div>
-                <div class="func-item" onclick="openLocation()">
-                    <div class="func-icon">位</div>
-                    <div class="func-label">位置</div>
-                </div>
-                <div class="func-item" onclick="openRedPacketModal()">
-                    <div class="func-icon">包</div>
-                    <div class="func-label">红包</div>
-                </div>
-                <div class="func-item" onclick="openTransferModal()">
-                    <div class="func-icon">转</div>
-                    <div class="func-label">转账</div>
-                </div>
-                <div class="func-item" onclick="openFileSend()">
-                    <div class="func-icon">链</div>
-                    <div class="func-label">链接</div>
-                </div>
-            </div>
-        `;
-    }
-}
-
-// ========== 发送贴纸 ==========
-function sendSticker(idx) {
-    const savedEmojis = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
-    if (savedEmojis[idx]) {
-        const sticker = savedEmojis[idx];
-        const row = document.createElement('div');
-        row.className = 'bubble-row user';
-        const avatar = document.createElement('div');
-        avatar.className = 'bubble-avatar user-avatar';
-        avatar.textContent = '我';
-        const bubble = document.createElement('div');
-        bubble.className = 'bubble bubble-user';
-        bubble.style.backgroundImage = `url(${sticker.src})`;
-        bubble.style.backgroundSize = 'cover';
-        bubble.style.backgroundPosition = 'center';
-        bubble.style.width = '100px';
-        bubble.style.height = '100px';
-        bubble.style.padding = '0';
-        bubble.style.borderRadius = '12px';
-        bubble.textContent = '';
-        bubble.onclick = function() { openImageViewer(sticker.src); };
-        row.appendChild(avatar);
-        row.appendChild(bubble);
-        document.getElementById('chatMessages').appendChild(row);
-        saveChatHistory(window.ChatState.currentContactId);
-        toggleAddPanel();
-    }
-}
-
-// ========== 表情包 ==========
-function addCustomEmoji() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(ev) {
-            const note = prompt('为这个表情包添加备注：');
-            const emojiData = { src: ev.target.result, note: note || '' };
-            const saved = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
-            saved.push(emojiData);
-            localStorage.setItem('custom_emojis', JSON.stringify(saved));
-            showToast('表情包已添加');
-            switchAddPanelTab('emoji', document.getElementById('tabEmoji'));
-        };
-        reader.readAsDataURL(file);
-    };
-    input.click();
-}
-
-// ========== 相册 ==========
-function openAlbum() {
-    toggleAddPanel();
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(ev) {
-            const hasImageAPI = window.ChatConfig.settings.api.image > 0;
-            if (hasImageAPI) {
-                sendImageWithCaption(ev.target.result, '');
-            } else {
-                showCaptionModal(ev.target.result);
-            }
-        };
-        reader.readAsDataURL(file);
-    };
-    input.click();
-}
-
-function showCaptionModal(imageSrc) {
-    const overlay = document.createElement('div');
-    overlay.className = 'caption-modal-overlay';
-    overlay.id = 'captionModalOverlay';
-    overlay.innerHTML = `
-        <div class="caption-modal">
-            <div style="font-size:14px;color:#8e8e93;margin-bottom:8px;">请手动输入图片描述</div>
-            <textarea class="caption-textarea" id="captionTextarea" placeholder="此处输入照片描述"></textarea>
-            <div class="caption-buttons">
-                <div class="payment-btn-cancel" onclick="closeCaptionModal()">取消</div>
-                <div class="payment-btn-confirm" onclick="confirmSendImage('${imageSrc}')">发送</div>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(overlay);
-    overlay.onclick = function(e) { if (e.target === overlay) closeCaptionModal(); };
-}
-
-function closeCaptionModal() {
-    const overlay = document.getElementById('captionModalOverlay');
-    if (overlay) overlay.remove();
-}
-
-function confirmSendImage(imageSrc) {
-    const caption = document.getElementById('captionTextarea').value.trim();
-    closeCaptionModal();
-    sendImageWithCaption(imageSrc, caption);
-}
-
-function sendImageWithCaption(imageSrc, caption) {
-    const row = document.createElement('div');
-    row.className = 'bubble-row user';
-    const avatar = document.createElement('div');
-    avatar.className = 'bubble-avatar user-avatar';
-    avatar.textContent = '我';
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble bubble-user';
-    bubble.style.backgroundImage = `url(${imageSrc})`;
-    bubble.style.backgroundSize = 'cover';
-    bubble.style.backgroundPosition = 'center';
-    bubble.style.width = '140px';
-    bubble.style.height = '140px';
-    bubble.style.padding = '0';
-    bubble.style.borderRadius = '12px';
-    bubble.textContent = '';
-    bubble.onclick = function() { openImageViewer(imageSrc); };
-    row.appendChild(avatar);
-    row.appendChild(bubble);
-    document.getElementById('chatMessages').appendChild(row);
-    saveChatHistory(window.ChatState.currentContactId);
-}
-
-// ========== 图片查看器 ==========
-function openImageViewer(src) {
-    const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;';
-    overlay.onclick = function() { overlay.remove(); };
-    const img = document.createElement('img');
-    img.src = src;
-    img.style.cssText = 'max-width:95%;max-height:95%;object-fit:contain;border-radius:8px;';
-    overlay.appendChild(img);
-    document.body.appendChild(overlay);
-}
-
-// ========== 位置 ==========
-function openLocation() {
-    toggleAddPanel();
-    const overlay = document.createElement('div');
-    overlay.className = 'caption-modal-overlay';
-    overlay.id = 'locationModalOverlay';
-    overlay.innerHTML = `
-        <div class="caption-modal">
-            <div style="font-size:16px;font-weight:600;margin-bottom:12px;color:#000;">发送位置</div>
-            <input type="text" class="payment-note" id="locationInput" placeholder="当前地点">
-            <input type="text" class="payment-note" id="distanceInput" placeholder="当前与角色相距（可不填）">
-            <div class="caption-buttons">
-                <div class="payment-btn-cancel" onclick="closeLocationModal()">取消</div>
-                <div class="payment-btn-confirm" onclick="sendLocation()">发送</div>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(overlay);
-    overlay.onclick = function(e) { if (e.target === overlay) closeLocationModal(); };
-}
-
-function closeLocationModal() {
-    const overlay = document.getElementById('locationModalOverlay');
-    if (overlay) overlay.remove();
-}
-
-function sendLocation() {
-    const location = document.getElementById('locationInput').value.trim();
-    const distance = document.getElementById('distanceInput').value.trim();
-    closeLocationModal();
-    if (!location) return;
-    const row = document.createElement('div');
-    row.className = 'bubble-row user';
-    const avatar = document.createElement('div');
-    avatar.className = 'bubble-avatar user-avatar';
-    avatar.textContent = '我';
-    const card = document.createElement('div');
-    card.style.cssText = 'background:rgba(255,255,255,0.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:14px;padding:0;width:220px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid rgba(255,255,255,0.4);';
-    card.innerHTML = `
-        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;">
-            <div style="width:56px;height:56px;background:#f2f2f7;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                <div style="position:relative;width:20px;height:28px;">
-                    <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:14px;height:14px;background:#1d1d1f;border-radius:50%;"></div>
-                    <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:14px solid #1d1d1f;"></div>
-                    <div style="position:absolute;top:4px;left:50%;transform:translateX(-50%);width:6px;height:6px;background:#fff;border-radius:50%;"></div>
-                </div>
-            </div>
-            <div style="flex:1;min-width:0;">
-                <div style="font-size:14px;font-weight:600;color:#000;word-break:break-all;">${location}</div>
-                ${distance ? '<div style="font-size:11px;color:#8e8e93;margin-top:2px;">相距约' + distance + '</div>' : ''}
-            </div>
-        </div>
-    `;
-    row.appendChild(avatar);
-    row.appendChild(card);
-    document.getElementById('chatMessages').appendChild(row);
-    saveChatHistory(window.ChatState.currentContactId);
 }
 
 // ========== 红包 ==========
@@ -833,26 +373,52 @@ function openFileSend() {
     overlay.innerHTML = `
         <div class="caption-modal">
             <div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">分享链接</div>
+            <div style="font-size:13px;color:#8e8e93;margin-bottom:10px;">复制抖音/小红书/B站链接发给角色</div>
             <textarea class="caption-textarea" id="linkInput" placeholder="粘贴链接..." style="height:80px;"></textarea>
-            <div class="caption-buttons"><div class="payment-btn-cancel" onclick="closeLinkModal()">取消</div><div class="payment-btn-confirm" onclick="confirmSendLink()">发送</div></div>
-        </div>`;
+            <div class="caption-buttons">
+                <div class="payment-btn-cancel" onclick="closeLinkModal()">取消</div>
+                <div class="payment-btn-confirm" onclick="confirmSendLink()">发送</div>
+            </div>
+        </div>
+    `;
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) closeLinkModal(); };
 }
-function closeLinkModal() { const overlay = document.getElementById('linkModalOverlay'); if (overlay) overlay.remove(); }
+
+function closeLinkModal() {
+    const overlay = document.getElementById('linkModalOverlay');
+    if (overlay) overlay.remove();
+}
+
 function confirmSendLink() {
     const link = document.getElementById('linkInput').value.trim();
     closeLinkModal();
     if (!link) return;
-    const row = document.createElement('div'); row.className = 'bubble-row user';
-    const avatar = document.createElement('div'); avatar.className = 'bubble-avatar user-avatar'; avatar.textContent = '我';
+
+    const row = document.createElement('div');
+    row.className = 'bubble-row user';
+
+    const avatar = document.createElement('div');
+    avatar.className = 'bubble-avatar user-avatar';
+    avatar.textContent = '我';
+
     const card = document.createElement('div');
     card.style.cssText = 'background:#fff;border-radius:14px;padding:12px 14px;max-width:220px;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
+
     let displayLink = link;
-    try { const url = new URL(link); displayLink = url.hostname + url.pathname.substring(0, 15) + (url.pathname.length > 15 ? '...' : ''); } catch(e) {}
-    card.innerHTML = `<div style="font-size:13px;font-weight:500;color:#000;margin-bottom:4px;">分享链接</div><div style="font-size:11px;color:#007aff;word-break:break-all;">${displayLink}</div>`;
+    try {
+        const url = new URL(link);
+        displayLink = url.hostname + url.pathname.substring(0, 15) + (url.pathname.length > 15 ? '...' : '');
+    } catch(e) {}
+
+    card.innerHTML = `
+        <div style="font-size:13px;font-weight:500;color:#000;margin-bottom:4px;">分享链接</div>
+        <div style="font-size:11px;color:#007aff;word-break:break-all;">${displayLink}</div>
+    `;
     card.onclick = function() { window.open(link, '_blank'); };
-    row.appendChild(avatar); row.appendChild(card);
+
+    row.appendChild(avatar);
+    row.appendChild(card);
     document.getElementById('chatMessages').appendChild(row);
     saveChatHistory(window.ChatState.currentContactId);
 }
@@ -1012,7 +578,7 @@ function menuQuote() {
                 <div class="quote-line">${line1}</div>
                 ${line2 ? '<div class="quote-line">' + line2 + '</div>' : ''}
             </div>
-            <span class="quote-close" onclick="cancelQuote()">×</span>
+            <span class="quote-close" onclick="cancelQuote()">x</span>
         `;
         inputBar.insertBefore(preview, inputBar.firstChild);
     }
