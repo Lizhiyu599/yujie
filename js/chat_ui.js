@@ -753,9 +753,9 @@ function togglePlusMenu(e) {
     }, 10);
 }
 
-function closePlusMenu() {
-    const menu = document.getElementById('plusMenuPopup');
-    if (menu) menu.remove();
+function openAddFriend() {
+    closePlusMenu();
+    showCreateCharacterPage();
 }
 
 function initiateGroupChat() {
