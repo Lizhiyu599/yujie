@@ -694,6 +694,17 @@
     background: rgba(255,255,255,0.8);
     border-color: #000;
 }
+.emoji-item {
+    aspect-ratio: 1;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.emoji-item:active {
+    transform: scale(0.92);
+    opacity: 0.8;
+}
 
 /* 功能网格 */
 .func-grid {
@@ -728,6 +739,12 @@
     font-size: 11px;
     color: #3a3a3c;
 }
+.func-label-big {
+    font-size: 18px;
+    color: #000;
+    font-weight: 500;
+    padding: 10px 0;
+}   
 
 /* ===== 红包/转账弹窗 ===== */
 .payment-modal-overlay {
@@ -889,7 +906,7 @@
     display: flex;
     gap: 10px;
     margin-top: 12px;
-}   
+}
 
 /* ===== 长按气泡功能菜单 ===== */
 .bubble-menu {
