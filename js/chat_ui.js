@@ -171,10 +171,12 @@ function enterChat(contactId) {
                     <input type="text" class="chat-input" id="chatInput" placeholder="输入消息…" onkeypress="if(event.key==='Enter') sendChatMessage()">
                     <span class="chat-send-btn" onclick="sendChatMessage()">↑</span>
                 </div>
-                <div class="add-panel" id="addPanel" style="display:none;">
-                    <div class="add-panel-item" onclick="openRedPacket()">🧧 红包</div>
-                    <div class="add-panel-item" onclick="openTransfer()">💳 转账</div>
-                    <div class="add-panel-item" onclick="openFileSend()">📎 文件</div>
+                <div class="add-panel-full" id="addPanelFull">
+                    <div class="add-panel-tabs">
+                        <span class="add-panel-tab active" onclick="switchAddPanelTab('emoji', this)">表情包</span>
+                        <span class="add-panel-tab" onclick="switchAddPanelTab('func', this)">功能</span>
+                    </div>
+                    <div class="add-panel-body" id="addPanelBody"></div>
                 </div>
             </div>
         </div>
@@ -208,24 +210,290 @@ function toggleChatMental() {
 
 // ========== + 号功能面板 ==========
 function toggleAddPanel() {
-    const panel = document.getElementById('addPanel');
-    if (panel) panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+    const panel = document.getElementById('addPanelFull');
+    if (panel) {
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        if (panel.style.display === 'block') {
+            renderAddPanelContent('emoji');
+        }
+    }
 }
 
-function openRedPacket() {
+function switchAddPanelTab(tab, el) {
+    el.parentElement.querySelectorAll('.add-panel-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    renderAddPanelContent(tab);
+}
+
+function renderAddPanelContent(tab) {
+    const body = document.getElementById('addPanelBody');
+    if (!body) return;
+
+    if (tab === 'emoji') {
+        body.innerHTML = `
+            <div class="emoji-grid">
+                <div class="emoji-add-box" onclick="addCustomEmoji()">+</div>
+            </div>
+        `;
+    } else if (tab === 'func') {
+        body.innerHTML = `
+            <div class="func-grid">
+                <div class="func-item" onclick="openAlbum()">
+                    <div class="func-icon">[相]</div>
+                    <div class="func-label">相册</div>
+                </div>
+                <div class="func-item" onclick="openLocation()">
+                    <div class="func-icon">[位]</div>
+                    <div class="func-label">位置</div>
+                </div>
+                <div class="func-item" onclick="openRedPacketModal()">
+                    <div class="func-icon">[红]</div>
+                    <div class="func-label">红包</div>
+                </div>
+                <div class="func-item" onclick="openTransferModal()">
+                    <div class="func-icon">[转]</div>
+                    <div class="func-label">转账</div>
+                </div>
+                <div class="func-item" onclick="openFileSend()">
+                    <div class="func-icon">[文]</div>
+                    <div class="func-label">文件</div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// ========== 表情包 ==========
+function addCustomEmoji() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            const note = prompt('为这个表情包添加备注，让AI知道它的含义：');
+            const emojiData = { src: ev.target.result, note: note || '' };
+            const saved = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
+            saved.push(emojiData);
+            localStorage.setItem('custom_emojis', JSON.stringify(saved));
+            showToast('表情包已添加');
+        };
+        reader.readAsDataURL(file);
+    };
+    input.click();
+}
+
+// ========== 相册 ==========
+function openAlbum() {
     toggleAddPanel();
-    showToast('红包功能即将上线');
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            const hasImageAPI = window.ChatConfig.settings.api.image > 0;
+            if (hasImageAPI) {
+                appendMessage('user', '[图片]');
+                const imgBubble = document.createElement('div');
+                imgBubble.className = 'bubble bubble-user';
+                imgBubble.style.backgroundImage = `url(${ev.target.result})`;
+                imgBubble.style.backgroundSize = 'cover';
+                imgBubble.style.backgroundPosition = 'center';
+                imgBubble.style.minHeight = '120px';
+                imgBubble.textContent = '';
+                document.getElementById('chatMessages').appendChild(imgBubble);
+                saveChatHistory(window.ChatState.currentContactId);
+            } else {
+                showCaptionModal(ev.target.result);
+            }
+        };
+        reader.readAsDataURL(file);
+    };
+    input.click();
 }
 
-function openTransfer() {
+function showCaptionModal(imageSrc) {
+    const overlay = document.createElement('div');
+    overlay.className = 'caption-modal-overlay';
+    overlay.id = 'captionModalOverlay';
+    overlay.innerHTML = `
+        <div class="caption-modal">
+            <textarea class="caption-textarea" id="captionTextarea" placeholder="此处输入照片描述"></textarea>
+            <div class="caption-buttons">
+                <div class="payment-btn-cancel" onclick="closeCaptionModal()">取消</div>
+                <div class="payment-btn-confirm" onclick="sendImageWithCaption('${imageSrc}')">发送</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeCaptionModal(); };
+}
+
+function closeCaptionModal() {
+    const overlay = document.getElementById('captionModalOverlay');
+    if (overlay) overlay.remove();
+}
+
+function sendImageWithCaption(imageSrc) {
+    const caption = document.getElementById('captionTextarea').value.trim();
+    closeCaptionModal();
+    appendMessage('user', caption || '[图片]');
+    const imgBubble = document.createElement('div');
+    imgBubble.className = 'bubble bubble-user';
+    imgBubble.style.backgroundImage = `url(${imageSrc})`;
+    imgBubble.style.backgroundSize = 'cover';
+    imgBubble.style.backgroundPosition = 'center';
+    imgBubble.style.minHeight = '120px';
+    imgBubble.textContent = '';
+    document.getElementById('chatMessages').appendChild(imgBubble);
+    saveChatHistory(window.ChatState.currentContactId);
+}
+
+// ========== 位置 ==========
+function openLocation() {
     toggleAddPanel();
-    showToast('转账功能即将上线');
+    const overlay = document.createElement('div');
+    overlay.className = 'caption-modal-overlay';
+    overlay.id = 'locationModalOverlay';
+    overlay.innerHTML = `
+        <div class="caption-modal">
+            <div style="font-size:16px;font-weight:600;margin-bottom:12px;color:#000;">发送位置</div>
+            <input type="text" class="payment-note" id="locationInput" placeholder="当前地点">
+            <input type="text" class="payment-note" id="distanceInput" placeholder="当前与角色相距（可不填详细距离）">
+            <div class="caption-buttons">
+                <div class="payment-btn-cancel" onclick="closeLocationModal()">取消</div>
+                <div class="payment-btn-confirm" onclick="sendLocation()">发送</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeLocationModal(); };
 }
 
+function closeLocationModal() {
+    const overlay = document.getElementById('locationModalOverlay');
+    if (overlay) overlay.remove();
+}
+
+function sendLocation() {
+    const location = document.getElementById('locationInput').value.trim();
+    const distance = document.getElementById('distanceInput').value.trim();
+    closeLocationModal();
+    let msg = '[位置] ' + location;
+    if (distance) msg += ' (相距约' + distance + ')';
+    appendMessage('user', msg);
+    saveChatHistory(window.ChatState.currentContactId);
+}
+
+// ========== 红包 ==========
+function openRedPacketModal() {
+    toggleAddPanel();
+    showPaymentModal('红包', 200);
+}
+
+// ========== 转账 ==========
+function openTransferModal() {
+    toggleAddPanel();
+    showPaymentModal('转账', 20000);
+}
+
+function showPaymentModal(type, maxAmount) {
+    const overlay = document.createElement('div');
+    overlay.className = 'payment-modal-overlay';
+    overlay.id = 'paymentModalOverlay';
+    overlay.innerHTML = `
+        <div class="payment-modal">
+            <div class="payment-title">发送${type}</div>
+            <div class="payment-amount" id="paymentAmount" onclick="focusPaymentAmount()">00.00</div>
+            <input type="number" class="payment-note" id="paymentAmountInput" placeholder="输入金额" style="display:none;" onblur="updatePaymentAmount(this.value)" oninput="updatePaymentAmount(this.value)">
+            <input type="text" class="payment-note" id="paymentNoteInput" placeholder="备注，可填可不填">
+            <div class="payment-method-header" onclick="togglePaymentMethod()">
+                <span>支付方式</span><span class="arrow" id="paymentArrow">></span>
+            </div>
+            <div class="payment-method-body" id="paymentMethodBody">
+                <div class="payment-method-option selected" onclick="selectPaymentMethod('balance', this)">零钱</div>
+            </div>
+            <div class="payment-buttons">
+                <div class="payment-btn-cancel" onclick="closePaymentModal()">取消</div>
+                <div class="payment-btn-confirm" onclick="confirmPayment('${type}', ${maxAmount})">确认发送</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closePaymentModal(); };
+}
+
+function focusPaymentAmount() {
+    const display = document.getElementById('paymentAmount');
+    const input = document.getElementById('paymentAmountInput');
+    display.style.display = 'none';
+    input.style.display = 'block';
+    input.focus();
+}
+
+function updatePaymentAmount(val) {
+    const display = document.getElementById('paymentAmount');
+    if (val) {
+        display.textContent = parseFloat(val).toFixed(2);
+        display.classList.add('filled');
+    } else {
+        display.textContent = '00.00';
+        display.classList.remove('filled');
+    }
+}
+
+function togglePaymentMethod() {
+    const body = document.getElementById('paymentMethodBody');
+    const arrow = document.getElementById('paymentArrow');
+    if (body && arrow) {
+        const show = body.classList.toggle('show');
+        arrow.textContent = show ? 'V' : '>';
+    }
+}
+
+function selectPaymentMethod(method, el) {
+    el.parentElement.querySelectorAll('.payment-method-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+}
+
+function closePaymentModal() {
+    const overlay = document.getElementById('paymentModalOverlay');
+    if (overlay) overlay.remove();
+}
+
+function confirmPayment(type, maxAmount) {
+    const amountInput = document.getElementById('paymentAmountInput');
+    const amount = parseFloat(amountInput.value);
+    if (!amount || amount <= 0) {
+        showToast('请输入有效金额');
+        return;
+    }
+    if (amount > maxAmount) {
+        showToast(type + '最高' + maxAmount + '元');
+        return;
+    }
+    const note = document.getElementById('paymentNoteInput').value.trim();
+    closePaymentModal();
+    let msg = '[' + type + '] ' + amount.toFixed(2) + '元';
+    if (note) msg += ' 备注：' + note;
+    appendMessage('user', msg);
+    saveChatHistory(window.ChatState.currentContactId);
+}
+
+// ========== 文件 ==========
 function openFileSend() {
     toggleAddPanel();
-    showToast('文件功能即将上线');
-}
+    const link = prompt('粘贴抖音/小红书/B站链接发给角色：');
+    if (link && link.trim()) {
+        appendMessage('user', '[分享链接] ' + link.trim());
+        saveChatHistory(window.ChatState.currentContactId);
+    }
+            }
 
 // ========== 聊天详情半屏面板 ==========
 function openChatSettings() {
