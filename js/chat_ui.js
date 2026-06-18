@@ -1,6 +1,7 @@
 /**
  * 玉界 - 聊天软件 UI
- * 包含：会话列表、聊天窗口、标签栏导航、心理状态窗、聊天详情半屏面板、+号功能面板、长按气泡菜单
+ * 包含：会话列表、聊天窗口、标签栏导航、心理状态窗、聊天详情半屏面板、
+ *       +号功能面板、长按气泡菜单、右上角+弹出菜单、创建角色、语音输入、语音气泡
  * 消息收发已移至 chat_core.js
  */
 
@@ -86,6 +87,7 @@ function initBubbleMenu() {
 // ========== 打开聊天软件 ==========
 function openChat() {
     initBubbleMenu();
+    loadContactsFromStorage();
     let appWindow = document.getElementById('chatAppWindow');
     if (!appWindow) {
         appWindow = document.createElement('div');
@@ -114,6 +116,7 @@ function renderChatShell() {
                 <div class="nav-body">
                     <span class="nav-back" onclick="closeChat()">‹</span>
                     <span class="nav-title">聊天</span>
+                    <span class="nav-plus-btn" onclick="togglePlusMenu(event)">+</span>
                 </div>
             </div>
             <div class="chat-list" id="chatListView"></div>
@@ -134,15 +137,26 @@ function renderChatList() {
     const listView = document.getElementById('chatListView');
     if (!listView) return;
 
-    listView.innerHTML = window.ChatConfig.contacts.map(c => `
-        <div class="chat-list-item" onclick="enterChat('${c.id}')">
-            <div class="chat-avatar">${c.avatar}</div>
-            <div class="chat-info">
-                <div class="chat-name">${c.name}</div>
-                <div class="chat-preview">${c.preview || ''}</div>
+    const contacts = window.ChatConfig.contacts;
+    if (contacts.length === 0) {
+        listView.innerHTML = '<div style="padding:60px 20px;text-align:center;color:#8e8e93;">暂无联系人<br><br>点击右上角 + 添加好友</div>';
+        return;
+    }
+
+    listView.innerHTML = contacts.map(c => {
+        const avatarContent = c.avatarData 
+            ? `<div class="chat-avatar" style="background-image:url(${c.avatarData});background-size:cover;background-position:center;">&nbsp;</div>`
+            : `<div class="chat-avatar">${c.avatar}</div>`;
+        return `
+            <div class="chat-list-item" onclick="enterChat('${c.id}')">
+                ${avatarContent}
+                <div class="chat-info">
+                    <div class="chat-name">${c.name}</div>
+                    <div class="chat-preview">${c.preview || ''}</div>
+                </div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 // ========== 切换标签栏 ==========
@@ -218,6 +232,7 @@ function enterChat(contactId) {
                 <div class="input-row">
                     <div class="add-circle" onclick="toggleAddPanel()">+</div>
                     <input type="text" class="chat-input" id="chatInput" placeholder="输入消息…" onkeypress="if(event.key==='Enter') sendChatMessage()">
+                    <span class="voice-btn" id="voiceBtn" onclick="toggleVoiceInput()">&#9835;</span>
                     <span class="chat-send-btn" id="chatSendBtn" onclick="handleSendOrReply()">↑</span>
                 </div>
                 <div class="add-panel-full" id="addPanelFull">
@@ -226,6 +241,12 @@ function enterChat(contactId) {
                         <span class="add-panel-tab" id="tabFunc" onclick="switchAddPanelTab('func', this)">功能</span>
                     </div>
                     <div class="add-panel-body" id="addPanelBody"></div>
+                </div>
+                <!-- 语音识别状态条 -->
+                <div class="voice-recording-bar" id="voiceRecordingBar">
+                    <span class="voice-recording-dot"></span>
+                    <span class="voice-recording-text">正在聆听...</span>
+                    <span class="voice-recording-cancel" onclick="cancelVoiceInput()">取消</span>
                 </div>
             </div>
         </div>
@@ -237,6 +258,7 @@ function enterChat(contactId) {
 // ========== 返回会话列表 ==========
 function backToChatList() {
     window.ChatState.currentContactId = null;
+    closePlusMenu();
     renderChatShell();
 }
 
@@ -323,6 +345,141 @@ function renderAddPanelContent(tab) {
     }
 }
 
+// ========== 语音输入 ==========
+let voiceRecognition = null;
+let isVoiceListening = false;
+
+function toggleVoiceInput() {
+    const bar = document.getElementById('voiceRecordingBar');
+    if (isVoiceListening) {
+        cancelVoiceInput();
+        return;
+    }
+
+    // 检查浏览器是否支持语音识别
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        showToast('当前浏览器不支持语音输入');
+        return;
+    }
+
+    voiceRecognition = new SpeechRecognition();
+    voiceRecognition.lang = 'zh-CN';
+    voiceRecognition.interimResults = false;
+    voiceRecognition.continuous = false;
+
+    voiceRecognition.onstart = function() {
+        isVoiceListening = true;
+        if (bar) bar.classList.add('active');
+        const btn = document.getElementById('voiceBtn');
+        if (btn) btn.classList.add('listening');
+    };
+
+    voiceRecognition.onresult = function(event) {
+        const text = event.results[0][0].transcript;
+        const input = document.getElementById('chatInput');
+        if (input) {
+            input.value = text;
+            input.focus();
+        }
+        stopVoiceListening();
+    };
+
+    voiceRecognition.onerror = function(event) {
+        stopVoiceListening();
+        if (event.error === 'not-allowed') {
+            showToast('请允许麦克风权限');
+        } else {
+            showToast('语音识别失败，请重试');
+        }
+    };
+
+    voiceRecognition.onend = function() {
+        stopVoiceListening();
+    };
+
+    voiceRecognition.start();
+}
+
+function cancelVoiceInput() {
+    stopVoiceListening();
+    showToast('已取消语音输入');
+}
+
+function stopVoiceListening() {
+    if (voiceRecognition) {
+        try { voiceRecognition.stop(); } catch(e) {}
+        voiceRecognition = null;
+    }
+    isVoiceListening = false;
+    const bar = document.getElementById('voiceRecordingBar');
+    if (bar) bar.classList.remove('active');
+    const btn = document.getElementById('voiceBtn');
+    if (btn) btn.classList.remove('listening');
+}
+
+// ========== 发送语音气泡（角色发语音） ==========
+function sendVoiceBubble(role, text, voiceUrl, isRealVoice) {
+    const messages = document.getElementById('chatMessages');
+    if (!messages) return;
+
+    const row = document.createElement('div');
+    row.className = 'bubble-row ' + (role === 'assistant' ? 'assistant' : 'user');
+
+    const avatar = document.createElement('div');
+    avatar.className = 'bubble-avatar ' + (role === 'assistant' ? 'bot-avatar' : 'user-avatar');
+    avatar.textContent = role === 'assistant' ? (getContactById(window.ChatState.currentContactId)?.avatar || 'AI') : '我';
+
+    const voiceBubble = document.createElement('div');
+    voiceBubble.className = 'bubble bubble-voice ' + (role === 'assistant' ? 'bubble-assistant' : 'bubble-user');
+    voiceBubble.setAttribute('data-voice-url', voiceUrl || '');
+    voiceBubble.setAttribute('data-is-real', isRealVoice ? '1' : '0');
+
+    // 假语音的随机波形条数（6-12条）
+    const barCount = isRealVoice ? 0 : Math.floor(Math.random() * 7) + 6;
+    let fakeBars = '';
+    if (!isRealVoice) {
+        for (let i = 0; i < barCount; i++) {
+            const height = Math.floor(Math.random() * 16) + 6;
+            fakeBars += `<span class="fake-voice-bar" style="height:${height}px;"></span>`;
+        }
+    }
+
+    voiceBubble.innerHTML = `
+        <span class="voice-play-icon">${isRealVoice ? '&#9654;' : '&#9835;'}</span>
+        <span class="voice-duration-text">${isRealVoice ? '语音' : '假语音'}</span>
+        ${!isRealVoice ? '<span class="fake-voice-bars">' + fakeBars + '</span>' : ''}
+    `;
+
+    if (isRealVoice && voiceUrl) {
+        voiceBubble.onclick = function() {
+            const audio = new Audio(voiceUrl);
+            audio.play().catch(function() {
+                showToast('语音播放失败');
+            });
+        };
+    } else {
+        voiceBubble.onclick = function() {
+            showToast('未配置语音API，无法播放');
+        };
+    }
+
+    row.appendChild(avatar);
+    row.appendChild(voiceBubble);
+    messages.appendChild(row);
+
+    // 紧贴的转文字气泡
+    const transRow = document.createElement('div');
+    transRow.className = 'voice-transcript-row';
+    transRow.innerHTML = `
+        <div class="bubble voice-transcript-bubble">${text}</div>
+    `;
+    messages.appendChild(transRow);
+
+    messages.scrollTop = messages.scrollHeight;
+    return row;
+}
+
 // ========== 发送贴纸 ==========
 function sendSticker(idx) {
     const savedEmojis = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
@@ -362,7 +519,7 @@ function addCustomEmoji() {
         if (!file) return;
         const reader = new FileReader();
         reader.onload = function(ev) {
-            const note = prompt('为这个表情包添加备注，让AI知道它的含义：');
+            const note = prompt('为这个表情包添加备注：');
             const emojiData = { src: ev.target.result, note: note || '' };
             const saved = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
             saved.push(emojiData);
@@ -404,7 +561,7 @@ function showCaptionModal(imageSrc) {
     overlay.id = 'captionModalOverlay';
     overlay.innerHTML = `
         <div class="caption-modal">
-            <div style="font-size:14px;color:#8e8e93;margin-bottom:8px;">未配置生图API的用户，请手动输入图片备注，已配置生图API的用户只需点击发送</div>
+            <div style="font-size:14px;color:#8e8e93;margin-bottom:8px;">请手动输入图片描述</div>
             <textarea class="caption-textarea" id="captionTextarea" placeholder="此处输入照片描述"></textarea>
             <div class="caption-buttons">
                 <div class="payment-btn-cancel" onclick="closeCaptionModal()">取消</div>
@@ -472,7 +629,7 @@ function openLocation() {
         <div class="caption-modal">
             <div style="font-size:16px;font-weight:600;margin-bottom:12px;color:#000;">发送位置</div>
             <input type="text" class="payment-note" id="locationInput" placeholder="当前地点">
-            <input type="text" class="payment-note" id="distanceInput" placeholder="当前与角色相距（可不填详细距离）">
+            <input type="text" class="payment-note" id="distanceInput" placeholder="当前与角色相距（可不填）">
             <div class="caption-buttons">
                 <div class="payment-btn-cancel" onclick="closeLocationModal()">取消</div>
                 <div class="payment-btn-confirm" onclick="sendLocation()">发送</div>
@@ -492,16 +649,12 @@ function sendLocation() {
     const location = document.getElementById('locationInput').value.trim();
     const distance = document.getElementById('distanceInput').value.trim();
     closeLocationModal();
-    
     if (!location) return;
-    
     const row = document.createElement('div');
     row.className = 'bubble-row user';
-    
     const avatar = document.createElement('div');
     avatar.className = 'bubble-avatar user-avatar';
     avatar.textContent = '我';
-    
     const card = document.createElement('div');
     card.style.cssText = 'background:rgba(255,255,255,0.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:14px;padding:0;width:220px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid rgba(255,255,255,0.4);';
     card.innerHTML = `
@@ -519,7 +672,6 @@ function sendLocation() {
             </div>
         </div>
     `;
-    
     row.appendChild(avatar);
     row.appendChild(card);
     document.getElementById('chatMessages').appendChild(row);
@@ -527,16 +679,8 @@ function sendLocation() {
 }
 
 // ========== 红包 ==========
-function openRedPacketModal() {
-    toggleAddPanel();
-    showPaymentModal('红包', 200);
-}
-
-// ========== 转账 ==========
-function openTransferModal() {
-    toggleAddPanel();
-    showPaymentModal('转账', 20000);
-}
+function openRedPacketModal() { toggleAddPanel(); showPaymentModal('红包', 200); }
+function openTransferModal() { toggleAddPanel(); showPaymentModal('转账', 20000); }
 
 function showPaymentModal(type, maxAmount) {
     const overlay = document.createElement('div');
@@ -548,9 +692,7 @@ function showPaymentModal(type, maxAmount) {
             <div class="payment-amount" id="paymentAmount" onclick="focusPaymentAmount()">00.00</div>
             <input type="number" class="payment-note" id="paymentAmountInput" placeholder="输入金额" style="display:none;" onblur="updatePaymentAmount(this.value)" oninput="updatePaymentAmount(this.value)">
             <input type="text" class="payment-note" id="paymentNoteInput" placeholder="备注，可填可不填">
-            <div class="payment-method-header" onclick="togglePaymentMethod()">
-                <span>支付方式</span><span class="arrow" id="paymentArrow">></span>
-            </div>
+            <div class="payment-method-header" onclick="togglePaymentMethod()"><span>支付方式</span><span class="arrow" id="paymentArrow">></span></div>
             <div class="payment-method-body" id="paymentMethodBody">
                 <div class="payment-method-option selected" onclick="selectPaymentMethod('balance', this)">零钱</div>
                 <div class="payment-method-option" onclick="selectPaymentMethod('relative', this)">亲属卡（暂未开放）</div>
@@ -572,98 +714,55 @@ function focusPaymentAmount() {
     input.style.display = 'block';
     input.focus();
 }
-
 function updatePaymentAmount(val) {
     const display = document.getElementById('paymentAmount');
-    if (val) {
-        display.textContent = parseFloat(val).toFixed(2);
-        display.classList.add('filled');
-    } else {
-        display.textContent = '00.00';
-        display.classList.remove('filled');
-    }
+    if (val) { display.textContent = parseFloat(val).toFixed(2); display.classList.add('filled'); }
+    else { display.textContent = '00.00'; display.classList.remove('filled'); }
 }
-
 function togglePaymentMethod() {
     const body = document.getElementById('paymentMethodBody');
     const arrow = document.getElementById('paymentArrow');
-    if (body && arrow) {
-        const show = body.classList.toggle('show');
-        arrow.textContent = show ? 'V' : '>';
-    }
+    if (body && arrow) { const show = body.classList.toggle('show'); arrow.textContent = show ? 'V' : '>'; }
 }
-
 function selectPaymentMethod(method, el) {
     el.parentElement.querySelectorAll('.payment-method-option').forEach(o => o.classList.remove('selected'));
     el.classList.add('selected');
 }
-
-function closePaymentModal() {
-    const overlay = document.getElementById('paymentModalOverlay');
-    if (overlay) overlay.remove();
-}
-
+function closePaymentModal() { const overlay = document.getElementById('paymentModalOverlay'); if (overlay) overlay.remove(); }
 function confirmPayment(type, maxAmount) {
     const amountInput = document.getElementById('paymentAmountInput');
     const amount = parseFloat(amountInput.value);
-    if (!amount || amount <= 0) {
-        showToast('请输入有效金额');
-        return;
-    }
-    if (amount > maxAmount) {
-        showToast(type + '最高' + maxAmount + '元');
-        return;
-    }
+    if (!amount || amount <= 0) { showToast('请输入有效金额'); return; }
+    if (amount > maxAmount) { showToast(type + '最高' + maxAmount + '元'); return; }
     const note = document.getElementById('paymentNoteInput').value.trim();
     const method = document.querySelector('.payment-method-option.selected');
     const methodText = method ? method.textContent : '零钱';
     closePaymentModal();
-    
     sendPaymentCard(type, amount, note, methodText);
 }
-
 function sendPaymentCard(type, amount, note, method) {
-    const row = document.createElement('div');
-    row.className = 'bubble-row user';
-    
-    const avatar = document.createElement('div');
-    avatar.className = 'bubble-avatar user-avatar';
-    avatar.textContent = '我';
-    
+    const row = document.createElement('div'); row.className = 'bubble-row user';
+    const avatar = document.createElement('div'); avatar.className = 'bubble-avatar user-avatar'; avatar.textContent = '我';
     const isRedPacket = type === '红包';
     const card = document.createElement('div');
     card.style.cssText = 'background:#fff;border-radius:14px;padding:0;width:260px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
-    
     if (isRedPacket) {
         card.innerHTML = `
             <div style="display:flex;align-items:center;gap:12px;padding:14px;">
                 <div style="width:50px;height:58px;background:#1d1d1f;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;">
                     <div style="position:absolute;top:-3px;left:50%;transform:translateX(-50%);width:18px;height:10px;background:#fff;border-radius:0 0 6px 6px;"></div>
-                    <div style="color:#f5c543;font-size:20px;font-weight:800;margin-top:4px;">￥</div>
+                    <div style="color:#f5c543;font-size:20px;font-weight:800;margin-top:4px;">$</div>
                 </div>
-                <div style="flex:1;min-width:0;">
-                    <div style="font-size:13px;color:#8e8e93;margin-bottom:2px;">红包</div>
-                    <div style="font-size:14px;color:#000;font-weight:500;">${note || '恭喜发财，大吉大利'}</div>
-                </div>
-            </div>
-        `;
+                <div style="flex:1;min-width:0;"><div style="font-size:13px;color:#8e8e93;margin-bottom:2px;">红包</div><div style="font-size:14px;color:#000;font-weight:500;">${note || '恭喜发财，大吉大利'}</div></div>
+            </div>`;
     } else {
         card.innerHTML = `
             <div style="display:flex;align-items:center;gap:12px;padding:14px;">
-                <div style="width:50px;height:50px;background:#1d1d1f;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                    <div style="color:#fff;font-size:18px;font-weight:700;">￥</div>
-                </div>
-                <div style="flex:1;min-width:0;">
-                    <div style="font-size:13px;color:#8e8e93;margin-bottom:2px;">转账</div>
-                    <div style="font-size:18px;font-weight:700;color:#000;">¥${amount.toFixed(2)}</div>
-                    ${note ? '<div style="font-size:11px;color:#8e8e93;margin-top:2px;">' + note + '</div>' : ''}
-                </div>
-            </div>
-        `;
+                <div style="width:50px;height:50px;background:#1d1d1f;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><div style="color:#fff;font-size:18px;font-weight:700;">$</div></div>
+                <div style="flex:1;min-width:0;"><div style="font-size:13px;color:#8e8e93;margin-bottom:2px;">转账</div><div style="font-size:18px;font-weight:700;color:#000;">$` + amount.toFixed(2) + `</div>${note ? '<div style="font-size:11px;color:#8e8e93;margin-top:2px;">' + note + '</div>' : ''}</div>
+            </div>`;
     }
-    
-    row.appendChild(avatar);
-    row.appendChild(card);
+    row.appendChild(avatar); row.appendChild(card);
     document.getElementById('chatMessages').appendChild(row);
     saveChatHistory(window.ChatState.currentContactId);
 }
@@ -678,51 +777,26 @@ function openFileSend() {
         <div class="caption-modal">
             <div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">分享链接</div>
             <div style="font-size:13px;color:#8e8e93;margin-bottom:10px;">复制抖音/小红书/B站链接发给角色</div>
-            <textarea class="caption-textarea" id="linkInput" placeholder="粘贴链接…" style="height:80px;"></textarea>
-            <div class="caption-buttons">
-                <div class="payment-btn-cancel" onclick="closeLinkModal()">取消</div>
-                <div class="payment-btn-confirm" onclick="confirmSendLink()">发送</div>
-            </div>
-        </div>
-    `;
+            <textarea class="caption-textarea" id="linkInput" placeholder="粘贴链接..." style="height:80px;"></textarea>
+            <div class="caption-buttons"><div class="payment-btn-cancel" onclick="closeLinkModal()">取消</div><div class="payment-btn-confirm" onclick="confirmSendLink()">发送</div></div>
+        </div>`;
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) closeLinkModal(); };
 }
-
-function closeLinkModal() {
-    const overlay = document.getElementById('linkModalOverlay');
-    if (overlay) overlay.remove();
-}
-
+function closeLinkModal() { const overlay = document.getElementById('linkModalOverlay'); if (overlay) overlay.remove(); }
 function confirmSendLink() {
     const link = document.getElementById('linkInput').value.trim();
     closeLinkModal();
     if (!link) return;
-    
-    const row = document.createElement('div');
-    row.className = 'bubble-row user';
-    
-    const avatar = document.createElement('div');
-    avatar.className = 'bubble-avatar user-avatar';
-    avatar.textContent = '我';
-    
+    const row = document.createElement('div'); row.className = 'bubble-row user';
+    const avatar = document.createElement('div'); avatar.className = 'bubble-avatar user-avatar'; avatar.textContent = '我';
     const card = document.createElement('div');
     card.style.cssText = 'background:#fff;border-radius:14px;padding:12px 14px;max-width:220px;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
-    
     let displayLink = link;
-    try {
-        const url = new URL(link);
-        displayLink = url.hostname + url.pathname.substring(0, 15) + (url.pathname.length > 15 ? '…' : '');
-    } catch(e) {}
-    
-    card.innerHTML = `
-        <div style="font-size:13px;font-weight:500;color:#000;margin-bottom:4px;">分享链接</div>
-        <div style="font-size:11px;color:#007aff;word-break:break-all;">${displayLink}</div>
-    `;
+    try { const url = new URL(link); displayLink = url.hostname + url.pathname.substring(0, 15) + (url.pathname.length > 15 ? '...' : ''); } catch(e) {}
+    card.innerHTML = `<div style="font-size:13px;font-weight:500;color:#000;margin-bottom:4px;">分享链接</div><div style="font-size:11px;color:#007aff;word-break:break-all;">${displayLink}</div>`;
     card.onclick = function() { window.open(link, '_blank'); };
-    
-    row.appendChild(avatar);
-    row.appendChild(card);
+    row.appendChild(avatar); row.appendChild(card);
     document.getElementById('chatMessages').appendChild(row);
     saveChatHistory(window.ChatState.currentContactId);
 }
@@ -741,14 +815,11 @@ function triggerAIReply() {
     const contactId = window.ChatState.currentContactId || 'c1';
     const contact = getContactById(contactId);
     const contactName = contact ? contact.name : 'AI';
-
     window.ChatState.isAITyping = true;
     const titleEl = document.getElementById('chatTitle');
-    if (titleEl) titleEl.innerHTML = '<span class="nav-typing">输入中…</span>';
-
+    if (titleEl) titleEl.innerHTML = '<span class="nav-typing">输入中...</span>';
     const systemPrompt = buildSystemPrompt(contactId);
     const userMessage = '（用户点击了让角色先说话）';
-
     callChatAPI([{ role: 'system', content: systemPrompt }, { role: 'user', content: userMessage }]).then(reply => {
         processAIReply(reply, contactName, contactId);
     }).catch(error => {
@@ -977,6 +1048,161 @@ function menuTranslate() {
     if (menu) menu.style.display = 'none';
 }
 
+// ========== 右上角 + 弹出菜单 ==========
+function togglePlusMenu(e) {
+    e.stopPropagation();
+    const existing = document.getElementById('plusMenuPopup');
+    if (existing) {
+        existing.remove();
+        return;
+    }
+
+    const menu = document.createElement('div');
+    menu.id = 'plusMenuPopup';
+    menu.className = 'plus-menu-popup';
+    menu.innerHTML = `
+        <div class="plus-menu-item" onclick="initiateGroupChat()">
+            <span>发起群聊</span>
+        </div>
+        <div class="plus-menu-item" onclick="openAddFriend()">
+            <span>添加好友</span>
+        </div>
+    `;
+    document.body.appendChild(menu);
+
+    const btn = e.target.closest('.nav-plus-btn');
+    if (btn) {
+        const rect = btn.getBoundingClientRect();
+        menu.style.top = (rect.bottom + 8) + 'px';
+        menu.style.right = (window.innerWidth - rect.right) + 'px';
+    }
+
+    setTimeout(() => {
+        document.addEventListener('click', closePlusMenu, { once: true });
+        document.addEventListener('touchstart', closePlusMenu, { once: true });
+    }, 10);
+}
+
+function closePlusMenu() {
+    const menu = document.getElementById('plusMenuPopup');
+    if (menu) menu.remove();
+}
+
+function initiateGroupChat() {
+    closePlusMenu();
+    showToast('群聊功能即将上线');
+}
+
+function openAddFriend() {
+    closePlusMenu();
+    showCreateCharacterPage();
+}
+
+// ========== 创建角色（添加好友）页面 ==========
+function showCreateCharacterPage() {
+    const appWindow = document.getElementById('chatAppWindow');
+    if (!appWindow) return;
+
+    appWindow.innerHTML = `
+        <div class="chat-shell">
+            <div class="chat-nav">
+                <div class="nav-status-bar"></div>
+                <div class="nav-body">
+                    <span class="nav-back" onclick="renderChatShell()">‹</span>
+                    <span class="nav-title">创建角色</span>
+                </div>
+            </div>
+            <div style="flex:1;overflow-y:auto;padding:16px;background:#f2f2f7;">
+                <div class="settings-section-title">角色头像</div>
+                <div class="glass-card" style="text-align:center;">
+                    <div id="charAvatarPreview" style="width:80px;height:80px;border-radius:40px;background:#e5e5ea;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:32px;color:#8e8e93;cursor:pointer;background-size:cover;background-position:center;" onclick="document.getElementById('charAvatarInput').click()">+</div>
+                    <input type="file" id="charAvatarInput" accept="image/*" style="display:none;" onchange="previewCharAvatar(event)">
+                    <div style="font-size:11px;color:#8e8e93;">点击上传头像</div>
+                </div>
+
+                <div class="settings-section-title">角色名称</div>
+                <div class="glass-card">
+                    <input type="text" id="charNameInput" class="search-input" placeholder="给角色起个名字">
+                </div>
+
+                <div class="settings-section-title">角色人设</div>
+                <div class="glass-card">
+                    <textarea id="charPersonaInput" style="width:100%;height:200px;background:rgba(255,255,255,0.6);border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:12px;font-size:14px;font-family:inherit;resize:none;outline:none;color:#000;line-height:1.6;" placeholder="描写角色的性格、身份、说话风格、兴趣爱好等..."></textarea>
+                    <div style="font-size:11px;color:#8e8e93;margin-top:6px;">提示：人设越详细，角色越真实</div>
+                </div>
+
+                <button class="black-btn" onclick="createNewCharacter()" style="margin-top:16px;">创建角色</button>
+            </div>
+        </div>
+    `;
+}
+
+let charAvatarData = '';
+function previewCharAvatar(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        charAvatarData = ev.target.result;
+        const preview = document.getElementById('charAvatarPreview');
+        if (preview) {
+            preview.style.backgroundImage = `url(${ev.target.result})`;
+            preview.innerText = '';
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+function createNewCharacter() {
+    const name = document.getElementById('charNameInput').value.trim();
+    const persona = document.getElementById('charPersonaInput').value.trim();
+
+    if (!name) { showToast('请填写角色名称'); return; }
+    if (!persona) { showToast('请填写角色人设'); return; }
+
+    const newContact = {
+        id: 'c_' + Date.now(),
+        name: name,
+        avatar: name.charAt(0),
+        avatarData: charAvatarData || '',
+        persona: persona,
+        preview: '点击开始对话'
+    };
+
+    window.ChatConfig.contacts.push(newContact);
+    saveContactsToStorage();
+    showToast('角色 ' + name + ' 创建成功');
+    renderChatShell();
+}
+
+function saveContactsToStorage() {
+    const data = window.ChatConfig.contacts.map(c => ({
+        id: c.id,
+        name: c.name,
+        avatar: c.avatar,
+        avatarData: c.avatarData || '',
+        persona: c.persona || '',
+        preview: c.preview || ''
+    }));
+    localStorage.setItem('yujie_contacts', JSON.stringify(data));
+}
+
+function loadContactsFromStorage() {
+    const saved = localStorage.getItem('yujie_contacts');
+    if (saved) {
+        try {
+            const data = JSON.parse(saved);
+            if (data.length > 0) {
+                window.ChatConfig.contacts = data;
+            }
+        } catch(e) {}
+    }
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+    loadContactsFromStorage();
+});
+
 // ========== 聊天详情半屏面板 ==========
 function openChatSettings() {
     const oldMask = document.getElementById('chatSettingsMask');
@@ -996,7 +1222,6 @@ function openChatSettings() {
             </div>
             <div class="sheet-scroll">
 
-                <!-- API 消耗详情 -->
                 <div class="settings-section-title">API消耗详情</div>
                 <div class="glass-card">
                     <div class="api-row"><span class="label">全部点数</span><span class="value" id="apiTotal">${api.total || 0} token</span></div>
@@ -1004,14 +1229,12 @@ function openChatSettings() {
                     <div class="api-row"><span class="label">生图</span><span class="value" id="apiImage">${api.image || 0} token</span><span class="label">语音</span><span class="value" id="apiVoice">${api.voice || 0} token</span></div>
                 </div>
 
-                <!-- 搜索聊天记录 -->
                 <div class="settings-section-title">搜索聊天记录</div>
                 <div class="glass-card">
                     <input type="text" class="search-input" id="chatSearchInput" placeholder="请输入内容…" oninput="searchChatHistory(this.value)">
                     <div class="search-result" id="chatSearchResult"></div>
                 </div>
 
-                <!-- 聊天总结 -->
                 <div class="settings-section-title">聊天总结</div>
                 <div class="glass-card">
                     <div class="slider-row"><span class="hint">提示：默认50轮自动总结，你可调自动总结轮数又或是手动总结。</span></div>
@@ -1020,14 +1243,12 @@ function openChatSettings() {
                     <button class="black-btn" onclick="manualSummary()">手动总结</button>
                 </div>
 
-                <!-- 聊天背景图 -->
                 <div class="settings-section-title">聊天背景图</div>
                 <div class="glass-card">
                     <div class="bg-preview-2x4" id="chatBgPreview" style="background-image:url(${config.chatBg || ''});" onclick="pickChatBg()">${!config.chatBg ? '点击添加聊天背景图' : ''}</div>
                     <button class="black-btn" onclick="clearChatBg()">清除当前背景</button>
                 </div>
 
-                <!-- 角色回复条数 -->
                 <div class="settings-section-title">角色回复条数</div>
                 <div class="glass-card">
                     <div class="slider-row"><span class="hint">回复最少</span><span class="val" id="replyMinVal">${settings.replyMin || 1}</span></div>
@@ -1036,13 +1257,11 @@ function openChatSettings() {
                     <input type="range" min="1" max="10" value="${settings.replyMax || 3}" class="ios-slider" oninput="updateReplyMax(this.value)">
                 </div>
 
-                <!-- 线上聊天旁白 -->
                 <div class="settings-section-title">线上聊天旁白</div>
                 <div class="glass-card">
                     <div class="switch-row"><span>开启旁白</span><input type="checkbox" class="ios-switch-sm" ${settings.onlineNarration !== false ? 'checked' : ''} onchange="toggleNarration(this.checked)"></div>
                 </div>
 
-                <!-- 人称选择 -->
                 <div class="settings-section-title">人称选择</div>
                 <div class="glass-card">
                     <div class="switch-row"><span>第一人称"我"</span><input type="checkbox" class="ios-switch-sm" ${settings.pronoun === 'me' ? 'checked' : ''} onchange="setPronoun('me', this)"></div>
@@ -1050,7 +1269,6 @@ function openChatSettings() {
                     <div class="switch-row"><span>第三人称"ta"</span><input type="checkbox" class="ios-switch-sm" ${settings.pronoun === 'ta' ? 'checked' : ''} onchange="setPronoun('ta', this)"></div>
                 </div>
 
-                <!-- 自动发消息 -->
                 <div class="settings-section-title">自动发消息</div>
                 <div class="glass-card">
                     <div class="switch-row"><span>自动发消息</span><input type="checkbox" class="ios-switch-sm" ${settings.autoMsg === true ? 'checked' : ''} onchange="toggleAutoMsg(this.checked)"></div>
@@ -1063,14 +1281,12 @@ function openChatSettings() {
                     </div>
                 </div>
 
-                <!-- 自动翻译 -->
                 <div class="settings-section-title">自动翻译</div>
                 <div class="glass-card">
                     <div class="switch-row"><span>自动翻译</span><input type="checkbox" class="ios-switch-sm" ${settings.autoTranslate === true ? 'checked' : ''} onchange="toggleAutoTranslate(this.checked)"></div>
                     <div style="font-size:12px;color:#8e8e93;margin-top:6px;">非简体中文的内容都将自动翻译成简体中文。</div>
                 </div>
 
-                <!-- 危险区 -->
                 <div class="settings-section-title">危险区</div>
                 <div class="danger-fold" onclick="toggleDangerZone()">
                     <span>危险区</span><span class="arrow" id="dangerArrow">></span>
@@ -1108,7 +1324,6 @@ function closeChatSettings() {
     if (mask) mask.remove();
 }
 
-// ========== 详情面板交互函数 ==========
 function updateSummaryCount(val) {
     document.getElementById('summaryVal').textContent = val + '轮';
     window.ChatConfig.settings.summaryCount = parseInt(val);
@@ -1225,7 +1440,6 @@ function clearChatBg() {
     if (messages) messages.style.backgroundImage = '';
 }
 
-// ========== 搜索聊天记录 ==========
 function searchChatHistory(query) {
     const result = document.getElementById('chatSearchResult');
     if (!result) return;
@@ -1285,7 +1499,6 @@ function jumpToSearchResult() {
     }
 }
 
-// ========== 占位函数 ==========
 function manualSummary() {
     showToast('总结功能即将上线（拾忆林开发中）');
 }
@@ -1305,4 +1518,4 @@ function blockContact() {
 
 function deleteContact() {
     showToast('删除功能即将上线');
-}       
+}        
