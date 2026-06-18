@@ -18,6 +18,9 @@ window._translateCache = window._translateCache || {};
 function buildSystemPrompt(contactId) {
     let prompt = '';
 
+    // 最高优先级：状态栏 JSON
+    prompt += '【最高优先级】每次回复必须在末尾附加一段JSON状态信息，格式严格为：\n{"mood":"心情(10字内)","favorability":好感度数字(0-100),"action":"动作(20字内)","thought":"内心想法(30字内)"}\n该JSON必须放在回复的最后面，不能省略。\n\n';
+
     if (typeof getFullSystemPrompt === 'function') {
         prompt += getFullSystemPrompt();
     }
@@ -33,8 +36,6 @@ function buildSystemPrompt(contactId) {
     } else {
         prompt += '\n\n【旁白模式】关闭。不需要写旁白。';
     }
-
-    prompt += '\n\n【实时状态】每次回复必须在末尾附加一段严格的JSON格式状态信息，格式必须为：\n{"mood":"心情(10字内)","favorability":好感度数字(0-100),"action":"动作(20字内)","thought":"内心想法(30字内)"}\n该JSON将在前端解析为心理状态窗，不会显示给用户。';
 
     return prompt;
 }
@@ -243,7 +244,6 @@ function appendMessage(role, text) {
 
     const now = new Date();
 
-    // 判断是否需要显示时间戳（间隔超过3分钟或第一条消息）
     const shouldShowTime = !window.ChatState.lastMessageTime || 
         (now - window.ChatState.lastMessageTime) > 3 * 60 * 1000;
 
