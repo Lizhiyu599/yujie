@@ -1010,6 +1010,42 @@
     font-weight: 600;
 }
 
+/* ===== 长按气泡菜单 ===== */
+.bubble-menu {
+    position: fixed;
+    z-index: 99999;
+    display: none;
+    background: rgba(30, 30, 30, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 14px;
+    padding: 6px 4px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+    min-width: 260px;
+}
+.bubble-menu .menu-row {
+    display: flex;
+    justify-content: space-around;
+}
+.bubble-menu .menu-item {
+    flex: 1;
+    text-align: center;
+    padding: 10px 4px;
+    font-size: 13px;
+    color: #fff;
+    cursor: pointer;
+    border-radius: 8px;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.bubble-menu .menu-item:active {
+    background: rgba(255,255,255,0.18);
+}
+.bubble-menu .menu-item.empty {
+    pointer-events: none;
+    opacity: 0;
+}
+
 /* ===== 引用预览 ===== */
 .quote-preview {
     background: rgba(255,255,255,0.5);
@@ -1039,5 +1075,5 @@
     color: #555;
     cursor: pointer;
     padding: 0 4px;
-    flex-shrink: 0;
-    }
+    flex-shrink: 0; 
+}
