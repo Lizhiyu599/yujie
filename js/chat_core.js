@@ -20,6 +20,8 @@ function buildSystemPrompt(contactId) {
 
     prompt += '【最高优先级】每次回复必须在末尾附加一段JSON状态信息，格式严格为：\n{"mood":"心情(10字内)","favorability":好感度数字(0-100),"action":"动作(20字内)","thought":"内心想法(30字内)"}\n该JSON必须放在回复的最后面，不能省略。\n\n';
 
+    prompt += '【重要】每条消息气泡单独发送，不要合并。一句话不超过30字。如果需要说多句话，请分成多条消息发送，每条消息用两个换行符\\n\\n分隔。这样每条消息会显示为独立气泡。\n\n';
+
     if (typeof getFullSystemPrompt === 'function') {
         prompt += getFullSystemPrompt();
     }
@@ -189,6 +191,7 @@ function processAIReply(rawContent, contactName, contactId) {
         } catch (e) {}
     }
 
+    // 分离旁白
     const narrationRegex = /[\(\（]([^\)\）]+)[\)\）]/g;
     const narrations = [];
     let mainText = cleanContent.replace(narrationRegex, (match, content) => {
@@ -196,12 +199,20 @@ function processAIReply(rawContent, contactName, contactId) {
         return '';
     }).trim();
 
+    // 先渲染旁白
     narrations.forEach(n => {
         appendMessage('narration', n);
     });
 
+    // 按双换行符拆分成多条消息，分别显示为独立气泡
     if (mainText) {
-        appendMessage('assistant', mainText);
+        const parts = mainText.split(/\n{2,}/).filter(p => p.trim());
+        parts.forEach(part => {
+            appendMessage('assistant', part.trim());
+        });
+        if (parts.length === 0 && mainText.trim()) {
+            appendMessage('assistant', mainText.trim());
+        }
     }
 
     if (titleEl) titleEl.textContent = contactName;
@@ -209,6 +220,7 @@ function processAIReply(rawContent, contactName, contactId) {
 
     saveChatHistory(contactId);
 
+    // 自动翻译检查（检查最后一条）
     if (ChatConfig?.settings?.autoTranslate && mainText) {
         autoTranslateLastAssistant(contactId);
     }
@@ -290,22 +302,24 @@ function updateMentalState(mentalData) {
 async function autoTranslateLastAssistant(contactId) {
     const messages = document.getElementById('chatMessages');
     if (!messages) return;
-    const bubbles = messages.querySelectorAll('.bubble-assistant');
-    if (bubbles.length === 0) return;
-    const lastBubble = bubbles[bubbles.length - 1];
-    const text = lastBubble.textContent;
+    const rows = messages.querySelectorAll('.bubble-row.assistant');
+    if (rows.length === 0) return;
+    const lastRow = rows[rows.length - 1];
+    const bubble = lastRow.querySelector('.bubble-assistant');
+    if (!bubble) return;
+    const text = bubble.textContent;
 
     if (!needsTranslation(text)) return;
 
     if (window._translateCache[text]) {
-        appendTranslation(lastBubble, window._translateCache[text]);
+        appendTranslationRow(lastRow, window._translateCache[text]);
         return;
     }
 
     try {
         const translated = await translateText(text);
         window._translateCache[text] = translated;
-        appendTranslation(lastBubble, translated);
+        appendTranslationRow(lastRow, translated);
     } catch (e) {}
 }
 
@@ -354,23 +368,26 @@ async function translateText(text) {
     return data.choices?.[0]?.message?.content || text;
 }
 
-// ========== 追加翻译气泡 ==========
-function appendTranslation(originalBubble, translatedText) {
+// ========== 追加翻译行（在气泡行下方） ==========
+function appendTranslationRow(originalRow, translatedText) {
     const messages = document.getElementById('chatMessages');
     if (!messages) return;
 
-    const next = originalBubble.nextElementSibling;
-    if (next && next.classList.contains('translate-bubble')) {
-        next.textContent = translatedText;
+    const next = originalRow.nextElementSibling;
+    if (next && next.classList.contains('translate-row')) {
+        next.querySelector('.bubble').textContent = translatedText;
+        next.style.display = 'flex';
         return;
     }
 
-    const transBubble = document.createElement('div');
-    transBubble.className = 'bubble translate-bubble';
-    transBubble.style.cssText = 'align-self:flex-start;background:rgba(255,255,255,0.3);backdrop-filter:blur(15px);font-size:13px;color:#3a3a3c;margin-top:-4px;margin-bottom:8px;border-radius:12px;padding:8px 12px;max-width:70%;';
-    transBubble.textContent = translatedText;
+    const transRow = document.createElement('div');
+    transRow.className = 'translate-row';
+    transRow.style.cssText = 'display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;padding-left:48px;';
+    transRow.innerHTML = `
+        <div class="bubble" style="background:rgba(255,255,255,0.35);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);font-size:13px;color:#3a3a3c;border-radius:14px;padding:8px 12px;max-width:70%;">${translatedText}</div>
+    `;
 
-    originalBubble.parentNode.insertBefore(transBubble, originalBubble.nextSibling);
+    originalRow.parentNode.insertBefore(transRow, originalRow.nextSibling);
 }
 
 // ========== 聊天历史存储 ==========
