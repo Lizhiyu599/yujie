@@ -135,7 +135,7 @@ async function callChatAPI(systemPrompt, userMessage) {
     ];
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
+    const timeout = setTimeout(() => controller.abort(), 120000);
 
     try {
         const response = await fetch(endpoint, {
@@ -169,7 +169,7 @@ async function callChatAPI(systemPrompt, userMessage) {
     } catch (error) {
         clearTimeout(timeout);
         if (error.name === 'AbortError') {
-            throw new Error('请求超时，请检查API是否可用');
+            throw new Error('请求超时（120秒），模型可能正在深度思考中，请重试');
         }
         throw error;
     }
