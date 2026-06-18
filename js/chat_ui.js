@@ -210,7 +210,6 @@ function enterChat(contactId) {
     window.ChatState.currentContactId = contactId;
 
     clearUnreadCount(contactId);
-    closePlusMenu();
     window._isVoiceMode = false;
 
     const appWindow = document.getElementById('chatAppWindow');
@@ -279,7 +278,6 @@ function enterChat(contactId) {
 // ========== 返回会话列表 ==========
 function backToChatList() {
     window.ChatState.currentContactId = null;
-    closePlusMenu();
     window._isVoiceMode = false;
     renderChatShell();
 }
@@ -719,7 +717,8 @@ function menuTranslate() {
 
     const menu = document.getElementById('bubbleMenu');
     if (menu) menu.style.display = 'none';
-  }         
+   }
+
 
 // ========== 右上角 + 弹出菜单 ==========
 function togglePlusMenu(e) {
@@ -1328,4 +1327,3 @@ function blockContact() {
 function deleteContact() {
     showToast('删除功能即将上线');
 }
-
