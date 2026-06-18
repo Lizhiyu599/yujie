@@ -1255,8 +1255,34 @@ function searchChatHistory(query) {
 }
 
 function jumpToSearchResult() {
+    const query = document.getElementById('chatSearchInput').value.trim();
     closeChatSettings();
-    showToast('已定位到聊天记录');
+    if (!query) return;
+    
+    const messages = document.getElementById('chatMessages');
+    if (!messages) return;
+    
+    const allBubbles = messages.querySelectorAll('.bubble-assistant, .bubble-user');
+    let found = null;
+    const q = query.toLowerCase();
+    
+    allBubbles.forEach(bubble => {
+        if (bubble.textContent.toLowerCase().includes(q) && !found) {
+            found = bubble;
+        }
+    });
+    
+    if (found) {
+        found.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        found.style.transition = '0.3s';
+        found.style.boxShadow = '0 0 0 3px rgba(0,122,255,0.5)';
+        setTimeout(() => {
+            found.style.boxShadow = '';
+        }, 2000);
+        showToast('已定位到聊天记录');
+    } else {
+        showToast('未找到相关消息');
+    }
 }
 
 // ========== 占位函数 ==========
