@@ -185,7 +185,7 @@ function enterChat(contactId) {
                 <div class="input-row">
                     <div class="add-circle" onclick="toggleAddPanel()">+</div>
                     <input type="text" class="chat-input" id="chatInput" placeholder="输入消息…" onkeypress="if(event.key==='Enter') sendChatMessage()">
-                    <span class="chat-send-btn" onclick="sendChatMessage()">↑</span>
+                    <span class="chat-send-btn" id="chatSendBtn" onclick="handleSendOrReply()">↑</span>
                 </div>
                 <div class="add-panel-full" id="addPanelFull">
                     <div class="add-panel-tabs">
@@ -509,6 +509,37 @@ function openFileSend() {
         appendMessage('user', '[分享链接] ' + link.trim());
         saveChatHistory(window.ChatState.currentContactId);
     }
+}
+
+// ========== 发送/回复逻辑 ==========
+function handleSendOrReply() {
+    const input = document.getElementById('chatInput');
+    if (input && input.value.trim()) {
+        sendChatMessage();
+    } else {
+        triggerAIReply();
+    }
+}
+
+function triggerAIReply() {
+    const contactId = window.ChatState.currentContactId || 'c1';
+    const contact = getContactById(contactId);
+    const contactName = contact ? contact.name : 'AI';
+
+    window.ChatState.isAITyping = true;
+    const titleEl = document.getElementById('chatTitle');
+    if (titleEl) titleEl.innerHTML = '<span class="nav-typing">输入中…</span>';
+
+    const systemPrompt = buildSystemPrompt(contactId);
+    const userMessage = '（用户点击了让角色先说话）';
+
+    callChatAPI(systemPrompt, userMessage).then(reply => {
+        processAIReply(reply, contactName, contactId);
+    }).catch(error => {
+        appendMessage('assistant', '抱歉，消息发送失败：' + error.message);
+        if (titleEl) titleEl.textContent = contactName;
+        window.ChatState.isAITyping = false;
+    });
 }
 
 // ========== 长按气泡菜单 ==========
@@ -952,4 +983,4 @@ function blockContact() {
 
 function deleteContact() {
     showToast('删除功能即将上线');
-}
+            }
