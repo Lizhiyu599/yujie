@@ -516,11 +516,19 @@ function sendLocation() {
     avatar.textContent = '我';
     
     const card = document.createElement('div');
-    card.style.cssText = 'background:#fff;border-radius:14px;padding:14px 16px;max-width:200px;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
+    card.style.cssText = 'background:rgba(255,255,255,0.7);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);border-radius:16px;padding:0;max-width:220px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid rgba(255,255,255,0.5);';
     card.innerHTML = `
-        <div style="font-size:28px;text-align:center;margin-bottom:6px;">📍</div>
-        <div style="font-size:15px;font-weight:600;color:#000;text-align:center;">${location}</div>
-        ${distance ? '<div style="font-size:12px;color:#8e8e93;text-align:center;margin-top:4px;">相距约' + distance + '</div>' : ''}
+        <div style="background:#f2f2f7;height:100px;display:flex;align-items:center;justify-content:center;position:relative;">
+            <div style="position:relative;width:24px;height:34px;">
+                <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:18px;height:18px;background:#1d1d1f;border-radius:50%;"></div>
+                <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-top:18px solid #1d1d1f;"></div>
+                <div style="position:absolute;top:5px;left:50%;transform:translateX(-50%);width:8px;height:8px;background:#fff;border-radius:50%;"></div>
+            </div>
+        </div>
+        <div style="padding:12px 14px;">
+            <div style="font-size:15px;font-weight:600;color:#000;">${location}</div>
+            ${distance ? '<div style="font-size:12px;color:#8e8e93;margin-top:2px;">相距约' + distance + '</div>' : ''}
+        </div>
     `;
     
     row.appendChild(avatar);
@@ -528,7 +536,7 @@ function sendLocation() {
     document.getElementById('chatMessages').appendChild(row);
     saveChatHistory(window.ChatState.currentContactId);
 }
-
+    
 // ========== 红包 ==========
 function openRedPacketModal() {
     toggleAddPanel();
