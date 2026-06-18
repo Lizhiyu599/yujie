@@ -299,24 +299,24 @@ function renderAddPanelContent(tab) {
         body.innerHTML = `
             <div class="func-grid">
                 <div class="func-item" onclick="openAlbum()">
-                    <div class="func-icon">相册</div>
+                    <div class="func-icon">册</div>
                     <div class="func-label">相册</div>
                 </div>
                 <div class="func-item" onclick="openLocation()">
-                    <div class="func-icon">位置</div>
+                    <div class="func-icon">位</div>
                     <div class="func-label">位置</div>
                 </div>
                 <div class="func-item" onclick="openRedPacketModal()">
-                    <div class="func-icon">红包</div>
+                    <div class="func-icon">包</div>
                     <div class="func-label">红包</div>
                 </div>
                 <div class="func-item" onclick="openTransferModal()">
-                    <div class="func-icon">转账</div>
+                    <div class="func-icon">转</div>
                     <div class="func-label">转账</div>
                 </div>
                 <div class="func-item" onclick="openFileSend()">
-                    <div class="func-icon">文件</div>
-                    <div class="func-label">文件</div>
+                    <div class="func-icon">链</div>
+                    <div class="func-label">链接</div>
                 </div>
             </div>
         `;
@@ -473,7 +473,7 @@ function openImageViewer(src) {
     img.style.cssText = 'max-width:95%;max-height:95%;object-fit:contain;border-radius:8px;';
     overlay.appendChild(img);
     document.body.appendChild(overlay);
-}   
+}
 
 // ========== 位置 ==========
 function openLocation() {
@@ -538,6 +538,7 @@ function showPaymentModal(type, maxAmount) {
             </div>
             <div class="payment-method-body" id="paymentMethodBody">
                 <div class="payment-method-option selected" onclick="selectPaymentMethod('balance', this)">零钱</div>
+                <div class="payment-method-option" onclick="selectPaymentMethod('relative', this)">亲属卡（暂未开放）</div>
             </div>
             <div class="payment-buttons">
                 <div class="payment-btn-cancel" onclick="closePaymentModal()">取消</div>
@@ -606,7 +607,7 @@ function confirmPayment(type, maxAmount) {
     saveChatHistory(window.ChatState.currentContactId);
 }
 
-// ========== 文件 ==========
+// ========== 链接 ==========
 function openFileSend() {
     toggleAddPanel();
     const link = prompt('粘贴抖音/小红书/B站链接发给角色：');
@@ -1168,4 +1169,4 @@ function blockContact() {
 
 function deleteContact() {
     showToast('删除功能即将上线');
-}
+}            
