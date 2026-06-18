@@ -281,38 +281,42 @@ function renderAddPanelContent(tab) {
     if (tab === 'emoji') {
         const savedEmojis = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
         let emojiItems = '';
-        if (savedEmojis.length > 0) {
-            savedEmojis.forEach((emoji, idx) => {
-                emojiItems += `
-                    <div class="emoji-item" onclick="sendSticker('${idx}')">
-                        <img src="${emoji.src}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" alt="${emoji.note || ''}">
-                    </div>
-                `;
-            });
+        for (let i = savedEmojis.length - 1; i >= 0; i--) {
+            const emoji = savedEmojis[i];
+            emojiItems += `
+                <div class="emoji-item" onclick="sendSticker(${i})">
+                    <img src="${emoji.src}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" alt="${emoji.note || ''}">
+                </div>
+            `;
         }
         body.innerHTML = `
             <div class="emoji-grid">
-                ${emojiItems}
                 <div class="emoji-add-box" onclick="addCustomEmoji()">+</div>
+                ${emojiItems}
             </div>
         `;
     } else if (tab === 'func') {
         body.innerHTML = `
             <div class="func-grid">
                 <div class="func-item" onclick="openAlbum()">
-                    <div class="func-label-big">相册</div>
+                    <div class="func-icon">相册</div>
+                    <div class="func-label">相册</div>
                 </div>
                 <div class="func-item" onclick="openLocation()">
-                    <div class="func-label-big">位置</div>
+                    <div class="func-icon">位置</div>
+                    <div class="func-label">位置</div>
                 </div>
                 <div class="func-item" onclick="openRedPacketModal()">
-                    <div class="func-label-big">红包</div>
+                    <div class="func-icon">红包</div>
+                    <div class="func-label">红包</div>
                 </div>
                 <div class="func-item" onclick="openTransferModal()">
-                    <div class="func-label-big">转账</div>
+                    <div class="func-icon">转账</div>
+                    <div class="func-label">转账</div>
                 </div>
                 <div class="func-item" onclick="openFileSend()">
-                    <div class="func-label-big">文件</div>
+                    <div class="func-icon">文件</div>
+                    <div class="func-label">文件</div>
                 </div>
             </div>
         `;
@@ -324,17 +328,25 @@ function sendSticker(idx) {
     const savedEmojis = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
     if (savedEmojis[idx]) {
         const sticker = savedEmojis[idx];
-        appendMessage('user', '[贴纸]' + (sticker.note ? ' ' + sticker.note : ''));
-        const imgBubble = document.createElement('div');
-        imgBubble.className = 'bubble bubble-user';
-        imgBubble.style.backgroundImage = `url(${sticker.src})`;
-        imgBubble.style.backgroundSize = 'cover';
-        imgBubble.style.backgroundPosition = 'center';
-        imgBubble.style.minHeight = '120px';
-        imgBubble.style.minWidth = '120px';
-        imgBubble.textContent = '';
-        imgBubble.onclick = function() { openImageViewer(sticker.src); };
-        document.getElementById('chatMessages').appendChild(imgBubble);
+        const row = document.createElement('div');
+        row.className = 'bubble-row user';
+        const avatar = document.createElement('div');
+        avatar.className = 'bubble-avatar user-avatar';
+        avatar.textContent = '我';
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble bubble-user';
+        bubble.style.backgroundImage = `url(${sticker.src})`;
+        bubble.style.backgroundSize = 'cover';
+        bubble.style.backgroundPosition = 'center';
+        bubble.style.width = '100px';
+        bubble.style.height = '100px';
+        bubble.style.padding = '0';
+        bubble.style.borderRadius = '12px';
+        bubble.textContent = '';
+        bubble.onclick = function() { openImageViewer(sticker.src); };
+        row.appendChild(avatar);
+        row.appendChild(bubble);
+        document.getElementById('chatMessages').appendChild(row);
         saveChatHistory(window.ChatState.currentContactId);
         toggleAddPanel();
     }
@@ -416,18 +428,38 @@ function confirmSendImage(imageSrc) {
 }
 
 function sendImageWithCaption(imageSrc, caption) {
-    appendMessage('user', caption || '[图片]');
-    const imgBubble = document.createElement('div');
-    imgBubble.className = 'bubble bubble-user';
-    imgBubble.style.backgroundImage = `url(${imageSrc})`;
-    imgBubble.style.backgroundSize = 'cover';
-    imgBubble.style.backgroundPosition = 'center';
-    imgBubble.style.minHeight = '120px';
-    imgBubble.style.minWidth = '120px';
-    imgBubble.style.borderRadius = '12px';
-    imgBubble.textContent = '';
-    imgBubble.onclick = function() { openImageViewer(imageSrc); };
-    document.getElementById('chatMessages').appendChild(imgBubble);
+    const row = document.createElement('div');
+    row.className = 'bubble-row user';
+    const avatar = document.createElement('div');
+    avatar.className = 'bubble-avatar user-avatar';
+    avatar.textContent = '我';
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble bubble-user';
+    bubble.style.backgroundImage = `url(${imageSrc})`;
+    bubble.style.backgroundSize = 'cover';
+    bubble.style.backgroundPosition = 'center';
+    bubble.style.width = '140px';
+    bubble.style.height = '140px';
+    bubble.style.padding = '0';
+    bubble.style.borderRadius = '12px';
+    bubble.textContent = '';
+    bubble.onclick = function() { openImageViewer(imageSrc); };
+    row.appendChild(avatar);
+    row.appendChild(bubble);
+    document.getElementById('chatMessages').appendChild(row);
+    if (caption) {
+        const captionRow = document.createElement('div');
+        captionRow.className = 'bubble-row user';
+        const captionAvatar = document.createElement('div');
+        captionAvatar.className = 'bubble-avatar user-avatar';
+        captionAvatar.textContent = '我';
+        const captionBubble = document.createElement('div');
+        captionBubble.className = 'bubble bubble-user';
+        captionBubble.textContent = caption;
+        captionRow.appendChild(captionAvatar);
+        captionRow.appendChild(captionBubble);
+        document.getElementById('chatMessages').appendChild(captionRow);
+    }
     saveChatHistory(window.ChatState.currentContactId);
 }
 
@@ -441,7 +473,7 @@ function openImageViewer(src) {
     img.style.cssText = 'max-width:95%;max-height:95%;object-fit:contain;border-radius:8px;';
     overlay.appendChild(img);
     document.body.appendChild(overlay);
-}
+}   
 
 // ========== 位置 ==========
 function openLocation() {
@@ -1136,4 +1168,4 @@ function blockContact() {
 
 function deleteContact() {
     showToast('删除功能即将上线');
-}    
+}
