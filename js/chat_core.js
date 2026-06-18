@@ -232,20 +232,28 @@ function appendMessage(role, text) {
     const messages = document.getElementById('chatMessages');
     if (!messages) return;
 
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble';
+    if (role === 'narration') {
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble bubble-narration';
+        bubble.textContent = text;
+        messages.appendChild(bubble);
+    } else {
+        const row = document.createElement('div');
+        row.className = 'bubble-row ' + (role === 'user' ? 'user' : 'assistant');
 
-    if (role === 'user') {
-        bubble.classList.add('bubble-user');
-    } else if (role === 'assistant') {
-        bubble.classList.add('bubble-assistant');
-    } else if (role === 'narration') {
-        bubble.classList.add('bubble-narration');
+        const avatar = document.createElement('div');
+        avatar.className = 'bubble-avatar ' + (role === 'user' ? 'user-avatar' : 'bot-avatar');
+        avatar.textContent = role === 'user' ? '我' : (getContactById(window.ChatState.currentContactId)?.avatar || 'AI');
+
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble bubble-' + role;
+        bubble.textContent = text;
+        bubble.id = 'msg-' + Date.now();
+
+        row.appendChild(avatar);
+        row.appendChild(bubble);
+        messages.appendChild(row);
     }
-
-    bubble.textContent = text;
-    bubble.id = 'msg-' + Date.now();
-    messages.appendChild(bubble);
     messages.scrollTop = messages.scrollHeight;
 }
 
