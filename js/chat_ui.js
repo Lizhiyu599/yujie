@@ -1,6 +1,6 @@
 /**
  * 玉界 - 聊天软件 UI
- * 包含：会话列表、聊天窗口、标签栏导航、心理状态窗、聊天详情半屏面板
+ * 包含：会话列表、聊天窗口、标签栏导航、心理状态窗、聊天详情半屏面板、+号功能面板
  * 消息收发已移至 chat_core.js
  */
 
@@ -53,7 +53,7 @@ function closeChat() {
     if (appWindow) appWindow.style.display = 'none';
 }
 
-// ========== 渲染聊天外壳（会话列表 + 标签栏） ==========
+// ========== 渲染聊天外壳 ==========
 function renderChatShell() {
     const appWindow = document.getElementById('chatAppWindow');
     if (!appWindow) return;
@@ -167,8 +167,14 @@ function enterChat(contactId) {
             <!-- 底部输入栏 -->
             <div class="chat-input-bar">
                 <div class="input-row">
+                    <div class="add-circle" onclick="toggleAddPanel()">+</div>
                     <input type="text" class="chat-input" id="chatInput" placeholder="输入消息…" onkeypress="if(event.key==='Enter') sendChatMessage()">
                     <span class="chat-send-btn" onclick="sendChatMessage()">↑</span>
+                </div>
+                <div class="add-panel" id="addPanel" style="display:none;">
+                    <div class="add-panel-item" onclick="openRedPacket()">🧧 红包</div>
+                    <div class="add-panel-item" onclick="openTransfer()">💳 转账</div>
+                    <div class="add-panel-item" onclick="openFileSend()">📎 文件</div>
                 </div>
             </div>
         </div>
@@ -198,6 +204,27 @@ function toggleChatMental() {
         if (actEl) actEl.textContent = m.action;
         if (thtEl) thtEl.textContent = m.thought;
     }
+}
+
+// ========== + 号功能面板 ==========
+function toggleAddPanel() {
+    const panel = document.getElementById('addPanel');
+    if (panel) panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+}
+
+function openRedPacket() {
+    toggleAddPanel();
+    showToast('红包功能即将上线');
+}
+
+function openTransfer() {
+    toggleAddPanel();
+    showToast('转账功能即将上线');
+}
+
+function openFileSend() {
+    toggleAddPanel();
+    showToast('文件功能即将上线');
 }
 
 // ========== 聊天详情半屏面板 ==========
@@ -496,4 +523,4 @@ function blockContact() {
 
 function deleteContact() {
     showToast('删除功能即将上线');
-}
+        }
