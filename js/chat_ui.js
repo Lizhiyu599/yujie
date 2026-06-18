@@ -573,7 +573,7 @@ document.addEventListener('touchstart', function(e) {
         const row = bubble.closest('.bubble-row');
         if (!row) return;
         const rowRect = row.getBoundingClientRect();
-        menu.style.top = (rowRect.top - menu.offsetHeight - 4) + 'px';
+        menu.style.top = (rowRect.top - menu.offsetHeight - 8) + 'px';
         menu.style.left = Math.max(10, rowRect.left + (rowRect.width / 2) - 105) + 'px';
         menu.classList.add('show');
     }, 500);
@@ -715,36 +715,37 @@ function cancelQuote() {
 
 function menuTranslate() {
     if (!bubbleMenuTarget) return;
-    const text = bubbleMenuTarget.textContent;
     const row = bubbleMenuTarget.closest('.bubble-row');
     const next = row ? row.nextElementSibling : null;
 
     if (next && next.classList.contains('translate-row')) {
         next.style.display = next.style.display === 'none' ? 'flex' : 'none';
-    } else {
-        if (typeof needsTranslation === 'function' && needsTranslation(text) && typeof translateText === 'function') {
-            translateText(text).then(translated => {
-                appendTranslationRow(row, translated);
-            });
-        } else {
-            showToast('已是简体中文');
-        }
+        document.getElementById('bubbleMenu')?.classList.remove('show');
+        return;
     }
+
+    const text = bubbleMenuTarget.textContent;
+    if (!needsTranslation(text)) {
+        showToast('已是简体中文');
+        document.getElementById('bubbleMenu')?.classList.remove('show');
+        return;
+    }
+
+    if (window._translateCache[text]) {
+        appendTranslationRow(row, window._translateCache[text]);
+        document.getElementById('bubbleMenu')?.classList.remove('show');
+        return;
+    }
+
+    showToast('翻译中…');
+    translateText(text).then(translated => {
+        window._translateCache[text] = translated;
+        appendTranslationRow(row, translated);
+    }).catch(() => {
+        showToast('翻译失败');
+    });
+
     document.getElementById('bubbleMenu')?.classList.remove('show');
-}
-
-function appendTranslationRow(originalRow, translatedText) {
-    const messages = document.getElementById('chatMessages');
-    if (!messages) return;
-
-    const transRow = document.createElement('div');
-    transRow.className = 'translate-row';
-    transRow.style.cssText = 'display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;padding-left:48px;';
-    transRow.innerHTML = `
-        <div class="bubble" style="background:rgba(255,255,255,0.35);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);font-size:13px;color:#3a3a3c;border-radius:14px;padding:8px 12px;max-width:70%;">${translatedText}</div>
-    `;
-
-    originalRow.parentNode.insertBefore(transRow, originalRow.nextSibling);
 }
 
 // ========== 聊天详情半屏面板 ==========
@@ -1049,4 +1050,4 @@ function blockContact() {
 
 function deleteContact() {
     showToast('删除功能即将上线');
-    }
+}
