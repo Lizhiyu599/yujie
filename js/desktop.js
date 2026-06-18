@@ -756,6 +756,9 @@ window.addEventListener('DOMContentLoaded', () => {
     setupWidgetAvatarUpload();
     renderWidgets();
 
+    // 注册聊天图标到桌面第一页
+    addDesktopIcon({ id: 'chat', name: '聊天', icon: '聊', action: 'openChat' });
+
     const dockBar = document.getElementById('dockBar');
     if (!dockBar) return;
 
