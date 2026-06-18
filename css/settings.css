@@ -1,6 +1,7 @@
 /* ===== 设置面板容器 ===== */
 .settings-container {
     padding: 10px 0 60px;
+    background: #f2f2f7;
 }
 
 /* ===== 折叠区块标题 ===== */
@@ -9,12 +10,16 @@
     justify-content: space-between;
     align-items: center;
     padding: 14px 20px;
-    margin: 16px 16px 8px;
+    margin: 8px 16px;
     font-weight: 500;
     cursor: pointer;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    color: #000;
 }
 
 .danger-zone-header {
@@ -26,22 +31,20 @@
 }
 
 @keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* ===== iOS 风格分组 ===== */
 .ios-group {
-    background: #fff;
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 14px;
     margin: 8px 16px 16px;
     overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
 }
 
 .ios-row {
@@ -49,7 +52,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 14px 16px;
-    border-bottom: 0.5px solid #e5e5ea;
+    border-bottom: 0.5px solid rgba(0,0,0,0.06);
     font-size: 16px;
     color: #000;
 }
@@ -60,8 +63,8 @@
 
 .ios-label {
     display: block;
-    font-size: 14px;
-    color: #1d1d1f;
+    font-size: 13px;
+    color: #8e8e93;
     margin: 12px 0 6px;
     font-weight: 500;
 }
@@ -69,19 +72,21 @@
 /* ===== 输入框 ===== */
 .ios-input {
     width: 100%;
-    background: #f2f2f7;
-    border: 1px solid #e5e5ea;
-    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 10px;
     padding: 12px;
     margin: 0;
     font-size: 15px;
     box-sizing: border-box;
     outline: none;
     appearance: none;
+    color: #000;
 }
 
 .ios-input:focus {
-    border-color: #007aff;
+    border-color: #000;
+    background: #fff;
 }
 
 /* ===== 按钮 ===== */
@@ -94,20 +99,19 @@
     width: 100%;
     margin-top: 12px;
     font-size: 16px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     transition: 0.2s;
 }
-
 .ios-btn-black:active {
+    background: #3a3a3c;
     transform: scale(0.98);
-    opacity: 0.8;
 }
 
 .ios-btn-white {
-    background: #fff;
+    background: rgba(255, 255, 255, 0.7);
     color: #1d1d1f;
-    border: 1px solid #e5e5ea;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: 10px;
     padding: 14px;
     width: 100%;
@@ -117,10 +121,9 @@
     cursor: pointer;
     transition: 0.2s;
 }
-
 .ios-btn-white:active {
+    background: #fff;
     transform: scale(0.98);
-    background: #f2f2f7;
 }
 
 /* ===== iOS 开关 ===== */
@@ -165,7 +168,7 @@
     width: 100%;
     height: 6px;
     background: #fff;
-    border: 1px solid #d1d1d6;
+    border: 1px solid rgba(0,0,0,0.08);
     border-radius: 3px;
     outline: none;
     margin: 10px 0;
@@ -178,12 +181,12 @@
     background: #000;
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 /* ===== 折叠箭头 ===== */
 .toggle-arrow {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 400;
     color: #8e8e93;
     transition: transform 0.2s;
