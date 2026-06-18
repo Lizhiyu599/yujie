@@ -22,7 +22,7 @@ function buildSystemPrompt(contactId) {
 
     prompt += '【重要】每条消息气泡单独发送，不要合并。一句话不超过30字。如果需要说多句话，请分成多条消息发送，每条消息用两个换行符\\n\\n分隔。这样每条消息会显示为独立气泡。\n\n';
 
-    prompt += '【语言规则】所有回复必须使用简体中文。旁白内容也必须使用简体中文。禁止使用繁体中文、英文或其他任何语言。\n\n';
+    prompt += '【语言规则】你的所有回复正文和旁白内容，必须且只能使用简体中文。禁止使用繁体中文、日语、英语、韩语等任何其他语言。这是最高优先级的硬性规则，不可违反。\n\n';
 
     if (typeof getFullSystemPrompt === 'function') {
         prompt += getFullSystemPrompt();
@@ -35,7 +35,7 @@ function buildSystemPrompt(contactId) {
 
     const narrationEnabled = ChatConfig?.settings?.onlineNarration !== false;
     if (narrationEnabled) {
-        prompt += '\n\n【旁白模式】开启。请在回复中用括号（）包含旁白内容，用于描写环境、动作、心理活动等。旁白必须使用简体中文。';
+        prompt += '\n\n【旁白模式】开启。请在回复中用括号（）包含旁白内容，用于描写环境、动作、心理活动等。旁白必须且只能使用简体中文，严禁使用日语、英语、繁体中文等任何非简体中文语言。';
     } else {
         prompt += '\n\n【旁白模式】关闭。不需要写旁白。';
     }
@@ -319,13 +319,10 @@ function updateMentalState(mentalData) {
 // ========== 检测是否需要翻译（包含繁体中文） ==========
 function needsTranslation(text) {
     if (!text) return false;
-    // 检测是否包含非简体中文字符
     const simplifiedOnlyRegex = /^[\u4e00-\u9fff\u3000-\u303f\uff00-\uffef\s\d\w\p{P}]+$/u;
     if (!simplifiedOnlyRegex.test(text)) return true;
-    // 检测是否包含繁体中文（通过繁简差异字符判断）
     const traditionalChars = /[爲豈雲歷麗倫眾麼專業義達對號與臺灣區風龍龜]/;
     if (traditionalChars.test(text)) return true;
-    // 检测是否包含非中文字符超过40%
     const chineseChars = text.match(/[\u4e00-\u9fff]/g);
     if (!chineseChars) return true;
     const nonChinese = text.replace(/[\u4e00-\u9fff\s\d\w]/g, '').length;
