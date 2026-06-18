@@ -496,4 +496,4 @@ function blockContact() {
 
 function deleteContact() {
     showToast('删除功能即将上线');
-            }
+}
