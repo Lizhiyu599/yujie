@@ -759,3 +759,63 @@ window.triggerAutoMsg = async function() {
         // 静默失败
     }
 };
+
+// ========== 语音 TTS 调用（MiniMax） ==========
+async function callTTS(text) {
+    const groupId = localStorage.getItem('voice_group_id');
+    const apiKey = localStorage.getItem('voice_api_key');
+    const voiceId = localStorage.getItem('voice_voice_id') || 'male-qn-qingse';
+
+    if (!groupId || !apiKey) return null;
+
+    try {
+        const response = await fetch('https://api.minimax.chat/v1/t2a_v2', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + apiKey
+            },
+            body: JSON.stringify({
+                model: 'speech-01',
+                text: text,
+                voice_setting: {
+                    voice_id: voiceId,
+                    speed: 1.0,
+                    vol: 1.0,
+                    pitch: 0
+                },
+                audio_setting: {
+                    sample_rate: 16000,
+                    format: 'mp3'
+                }
+            })
+        });
+
+        const data = await response.json();
+        if (data.audio && data.audio.audio_data) {
+            return 'data:audio/mp3;base64,' + data.audio.audio_data;
+        }
+        return null;
+    } catch (e) {
+        return null;
+    }
+}
+
+// ========== 检查是否配置了语音API ==========
+function hasVoiceAPI() {
+    const groupId = localStorage.getItem('voice_group_id');
+    const apiKey = localStorage.getItem('voice_api_key');
+    return !!(groupId && apiKey);
+}
+
+// ========== 角色发语音（AI回复时调用） ==========
+async function sendBotVoice(text) {
+    if (hasVoiceAPI()) {
+        const voiceUrl = await callTTS(text);
+        if (voiceUrl) {
+            sendVoiceBubble('assistant', text, voiceUrl, true);
+            return;
+        }
+    }
+    sendVoiceBubble('assistant', text, null, false);
+}
