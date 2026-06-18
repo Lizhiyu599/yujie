@@ -447,19 +447,6 @@ function sendImageWithCaption(imageSrc, caption) {
     row.appendChild(avatar);
     row.appendChild(bubble);
     document.getElementById('chatMessages').appendChild(row);
-    if (caption) {
-        const captionRow = document.createElement('div');
-        captionRow.className = 'bubble-row user';
-        const captionAvatar = document.createElement('div');
-        captionAvatar.className = 'bubble-avatar user-avatar';
-        captionAvatar.textContent = '我';
-        const captionBubble = document.createElement('div');
-        captionBubble.className = 'bubble bubble-user';
-        captionBubble.textContent = caption;
-        captionRow.appendChild(captionAvatar);
-        captionRow.appendChild(captionBubble);
-        document.getElementById('chatMessages').appendChild(captionRow);
-    }
     saveChatHistory(window.ChatState.currentContactId);
 }
 
@@ -473,7 +460,7 @@ function openImageViewer(src) {
     img.style.cssText = 'max-width:95%;max-height:95%;object-fit:contain;border-radius:8px;';
     overlay.appendChild(img);
     document.body.appendChild(overlay);
-}       
+}
 
 // ========== 位置 ==========
 function openLocation() {
@@ -516,18 +503,20 @@ function sendLocation() {
     avatar.textContent = '我';
     
     const card = document.createElement('div');
-    card.style.cssText = 'background:rgba(255,255,255,0.7);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);border-radius:16px;padding:0;max-width:220px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid rgba(255,255,255,0.5);';
+    card.style.cssText = 'background:rgba(255,255,255,0.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:14px;padding:0;max-width:260px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid rgba(255,255,255,0.4);';
     card.innerHTML = `
-        <div style="background:#f2f2f7;height:100px;display:flex;align-items:center;justify-content:center;position:relative;">
-            <div style="position:relative;width:24px;height:34px;">
-                <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:18px;height:18px;background:#1d1d1f;border-radius:50%;"></div>
-                <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-top:18px solid #1d1d1f;"></div>
-                <div style="position:absolute;top:5px;left:50%;transform:translateX(-50%);width:8px;height:8px;background:#fff;border-radius:50%;"></div>
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;">
+            <div style="width:56px;height:56px;background:#f2f2f7;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <div style="position:relative;width:20px;height:28px;">
+                    <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:14px;height:14px;background:#1d1d1f;border-radius:50%;"></div>
+                    <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:14px solid #1d1d1f;"></div>
+                    <div style="position:absolute;top:4px;left:50%;transform:translateX(-50%);width:6px;height:6px;background:#fff;border-radius:50%;"></div>
+                </div>
             </div>
-        </div>
-        <div style="padding:12px 14px;">
-            <div style="font-size:15px;font-weight:600;color:#000;">${location}</div>
-            ${distance ? '<div style="font-size:12px;color:#8e8e93;margin-top:2px;">相距约' + distance + '</div>' : ''}
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:14px;font-weight:600;color:#000;">${location}</div>
+                ${distance ? '<div style="font-size:11px;color:#8e8e93;margin-top:2px;">相距约' + distance + '</div>' : ''}
+            </div>
         </div>
     `;
     
@@ -536,7 +525,7 @@ function sendLocation() {
     document.getElementById('chatMessages').appendChild(row);
     saveChatHistory(window.ChatState.currentContactId);
 }
-    
+
 // ========== 红包 ==========
 function openRedPacketModal() {
     toggleAddPanel();
@@ -643,23 +632,33 @@ function sendPaymentCard(type, amount, note, method) {
     
     const isRedPacket = type === '红包';
     const card = document.createElement('div');
-    card.className = 'payment-card';
+    card.style.cssText = 'background:#fff;border-radius:14px;padding:0;max-width:260px;width:260px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
     
     if (isRedPacket) {
-        card.style.cssText = 'background:#fff;color:#000;border-radius:14px;padding:14px 16px;max-width:220px;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.08);';
         card.innerHTML = `
-            <div style="font-size:12px;color:#8e8e93;margin-bottom:4px;">红包</div>
-            <div style="font-size:28px;font-weight:700;margin-bottom:6px;">¥${amount.toFixed(2)}</div>
-            ${note ? '<div style="font-size:11px;color:#8e8e93;margin-bottom:4px;">' + note + '</div>' : ''}
-            <div style="font-size:10px;color:#b0b0b5;">${method}</div>
+            <div style="display:flex;align-items:center;gap:12px;padding:14px;">
+                <div style="width:50px;height:58px;background:#1d1d1f;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;">
+                    <div style="position:absolute;top:-3px;left:50%;transform:translateX(-50%);width:18px;height:10px;background:#fff;border-radius:0 0 6px 6px;"></div>
+                    <div style="color:#f5c543;font-size:20px;font-weight:800;margin-top:4px;">￥</div>
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:13px;color:#8e8e93;margin-bottom:2px;">红包</div>
+                    <div style="font-size:14px;color:#000;font-weight:500;">${note || '恭喜发财，大吉大利'}</div>
+                </div>
+            </div>
         `;
     } else {
-        card.style.cssText = 'background:#1d1d1f;color:#fff;border-radius:14px;padding:14px 16px;max-width:220px;font-size:14px;';
         card.innerHTML = `
-            <div style="font-size:12px;opacity:0.7;margin-bottom:4px;">转账</div>
-            <div style="font-size:28px;font-weight:700;margin-bottom:6px;">¥${amount.toFixed(2)}</div>
-            ${note ? '<div style="font-size:11px;opacity:0.6;margin-bottom:4px;">' + note + '</div>' : ''}
-            <div style="font-size:10px;opacity:0.4;">${method}</div>
+            <div style="display:flex;align-items:center;gap:12px;padding:14px;">
+                <div style="width:50px;height:50px;background:#1d1d1f;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <div style="color:#fff;font-size:18px;font-weight:700;">￥</div>
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:13px;color:#8e8e93;margin-bottom:2px;">转账</div>
+                    <div style="font-size:18px;font-weight:700;color:#000;">¥${amount.toFixed(2)}</div>
+                    ${note ? '<div style="font-size:11px;color:#8e8e93;margin-top:2px;">' + note + '</div>' : ''}
+                </div>
+            </div>
         `;
     }
     
@@ -1064,7 +1063,7 @@ function openChatSettings() {
                     </div>
                 </div>
 
-                                <!-- 自动翻译 -->
+                <!-- 自动翻译 -->
                 <div class="settings-section-title">自动翻译</div>
                 <div class="glass-card">
                     <div class="switch-row"><span>自动翻译</span><input type="checkbox" class="ios-switch-sm" ${settings.autoTranslate === true ? 'checked' : ''} onchange="toggleAutoTranslate(this.checked)"></div>
@@ -1280,4 +1279,4 @@ function blockContact() {
 
 function deleteContact() {
     showToast('删除功能即将上线');
-}       
+}
