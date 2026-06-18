@@ -50,7 +50,7 @@ window.ChatConfig = window.ChatConfig || {
     }
 };
 
-// ========== 初始化气泡菜单（挂到body最末尾，z-index最高） ==========
+// ========== 初始化气泡菜单 ==========
 function initBubbleMenu() {
     if (document.getElementById('bubbleMenu')) return;
     const menu = document.createElement('div');
@@ -59,19 +59,29 @@ function initBubbleMenu() {
     menu.style.cssText = 'position:fixed;z-index:99999;display:none;';
     menu.innerHTML = `
         <div class="menu-row">
-            <div class="menu-item" onclick="menuCopy()">复制</div>
-            <div class="menu-item" onclick="menuFavorite()">收藏</div>
-            <div class="menu-item" onclick="menuRegret()">重回</div>
-            <div class="menu-item" onclick="menuMultiSelect()">多选</div>
+            <div class="menu-item" data-action="menuCopy">复制</div>
+            <div class="menu-item" data-action="menuFavorite">收藏</div>
+            <div class="menu-item" data-action="menuRegret">重回</div>
+            <div class="menu-item" data-action="menuMultiSelect">多选</div>
         </div>
         <div class="menu-row">
-            <div class="menu-item" onclick="menuQuote()">引用</div>
-            <div class="menu-item" onclick="menuTranslate()">翻译</div>
+            <div class="menu-item" data-action="menuQuote">引用</div>
+            <div class="menu-item" data-action="menuTranslate">翻译</div>
             <div class="menu-item empty"></div>
             <div class="menu-item empty"></div>
         </div>
     `;
     document.body.appendChild(menu);
+
+    // touchend 直接绑定，移动端最可靠
+    menu.querySelectorAll('.menu-item[data-action]').forEach(function(item) {
+        item.addEventListener('touchend', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            const fn = window[this.getAttribute('data-action')];
+            if (typeof fn === 'function') fn();
+        });
+    });
 }
 
 // ========== 打开聊天软件 ==========
@@ -535,6 +545,16 @@ function openFileSend() {
     }
 }
 
+// ========== 发送/回复逻辑 ==========
+function handleSendOrReply() {
+    const input = document.getElementById('chatInput');
+    if (input && input.value.trim()) {
+        sendChatMessage();
+    } else {
+        triggerAIReply();
+    }
+}
+
 function triggerAIReply() {
     const contactId = window.ChatState.currentContactId || 'c1';
     const contact = getContactById(contactId);
@@ -554,7 +574,7 @@ function triggerAIReply() {
         if (titleEl) titleEl.textContent = contactName;
         window.ChatState.isAITyping = false;
     });
- }
+}      
 
 // ========== 长按气泡菜单 ==========
 let bubbleMenuTarget = null;
@@ -562,6 +582,7 @@ let bubbleMenuTarget = null;
 document.addEventListener('touchstart', function(e) {
     const bubble = e.target.closest('.bubble-assistant');
     if (!bubble) {
+        if (e.target.closest('.bubble-menu')) return;
         const menu = document.getElementById('bubbleMenu');
         if (menu) menu.style.display = 'none';
         return;
@@ -571,7 +592,6 @@ document.addEventListener('touchstart', function(e) {
         const menu = document.getElementById('bubbleMenu');
         if (!menu) return;
 
-        // 先让菜单不可见但可测量高度
         menu.style.visibility = 'hidden';
         menu.style.display = 'block';
         const menuH = menu.offsetHeight || 80;
@@ -1070,5 +1090,5 @@ function blockContact() {
 }
 
 function deleteContact() {
-    showToast('删除功能即将上线'); 
+    showToast('删除功能即将上线');
 }
