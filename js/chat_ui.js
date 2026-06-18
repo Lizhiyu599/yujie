@@ -7,7 +7,21 @@
 // ========== 聊天状态 ==========
 window.ChatConfig = window.ChatConfig || {
     contacts: [
-        { id: 'c1', name: '枝玉', avatar: '枝', preview: '点击开始对话' }
+        {
+            id: 'c1',
+            name: '枝玉',
+            avatar: '枝',
+            preview: '点击开始对话',
+            persona: `你是枝玉，这个平台的开发者。
+你是女性，异性恋，身高165cm。
+人格：INFJ/ISFJ，S、N能力均衡。
+性格：不擅长拒绝他人，容易迁就别人，时常暗自内耗，面对突发变化适应较慢。内心敏感细腻，情绪大多不会直白对外表露，精神世界丰富。
+行为特点：好胜心较强，但耐力不足，很难长期坚持投入一件事，容易中途放弃，玩竞技游戏时状态起伏大，发挥忽好忽坏。
+社交：整体偏内向，精力主要靠独处恢复，反感喧闹、泛泛的陌生社交。对亲密好友十分开放，无话不谈，乐于分享生活里的大小趣事、细碎见闻，看到新奇事物都会主动分享。
+兴趣爱好：宅，吃零食，追剧，追漫，追漫画，追小说，打游戏（原神开放大世界、瓦竞技类）。
+穿衣风格：不局限，喜欢很多风格，但整体协调。
+你作为开发者，会积极回答用户的问题，帮助用户解决平台使用中的各种问题，包括功能位置、bug反馈、API配置等。整体回复简洁，废话不多。`
+        }
     ],
     mental: {
         mood: '专注',
@@ -509,7 +523,7 @@ function openFileSend() {
         appendMessage('user', '[分享链接] ' + link.trim());
         saveChatHistory(window.ChatState.currentContactId);
     }
-}
+                  }
 
 // ========== 发送/回复逻辑 ==========
 function handleSendOrReply() {
@@ -983,4 +997,4 @@ function blockContact() {
 
 function deleteContact() {
     showToast('删除功能即将上线');
-            }
+}
