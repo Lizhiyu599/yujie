@@ -626,3 +626,136 @@ window.toggleAutoMsg = function(checked) {
         showToast('自动发消息已关闭');
     }
 };
+
+// ========== 未读消息计数 ==========
+function getUnreadCount(contactId) {
+    const raw = localStorage.getItem('unread_' + contactId);
+    return raw ? parseInt(raw) : 0;
+}
+
+function addUnreadCount(contactId) {
+    const count = getUnreadCount(contactId) + 1;
+    localStorage.setItem('unread_' + contactId, count);
+    return count;
+}
+
+function clearUnreadCount(contactId) {
+    localStorage.removeItem('unread_' + contactId);
+}
+
+// ========== 通知弹窗 ==========
+function showAutoMsgNotification(contactName, contactId, message) {
+    const existing = document.getElementById('autoMsgNotification');
+    if (existing) existing.remove();
+
+    // 截断消息，分两行显示
+    let line1 = '';
+    let line2 = '';
+    const maxChars = 22;
+    if (message.length <= maxChars) {
+        line1 = message;
+    } else {
+        line1 = message.substring(0, maxChars);
+        const remaining = message.substring(maxChars);
+        if (remaining.length > maxChars) {
+            line2 = remaining.substring(0, maxChars) + '...';
+        } else {
+            line2 = remaining;
+        }
+    }
+
+    const noti = document.createElement('div');
+    noti.id = 'autoMsgNotification';
+    noti.className = 'auto-msg-notification';
+    noti.innerHTML = `
+        <div class="auto-msg-noti-avatar">${contactName.charAt(0)}</div>
+        <div class="auto-msg-noti-body">
+            <div class="auto-msg-noti-name">${contactName}</div>
+            <div class="auto-msg-noti-text">${line1}</div>
+            ${line2 ? '<div class="auto-msg-noti-text">' + line2 + '</div>' : ''}
+        </div>
+    `;
+    noti.onclick = function() {
+        noti.remove();
+        clearUnreadCount(contactId);
+        if (typeof openChat === 'function') openChat();
+        setTimeout(function() {
+            if (typeof enterChat === 'function') enterChat(contactId);
+        }, 300);
+    };
+
+    document.body.appendChild(noti);
+
+    // 4秒后自动消失
+    setTimeout(function() {
+        if (noti.parentNode) {
+            noti.style.opacity = '0';
+            noti.style.transform = 'translateY(-20px)';
+            setTimeout(function() {
+                if (noti.parentNode) noti.remove();
+            }, 300);
+        }
+    }, 4000);
+}
+
+// ========== 修改 triggerAutoMsg，加入通知和未读 ==========
+const origTriggerAutoMsg = window.triggerAutoMsg;
+window.triggerAutoMsg = async function() {
+    if (window.ChatState?.isAITyping) return;
+
+    const contactId = window._autoMsgLastContact || getRandomContactId();
+    if (!contactId) return;
+
+    window._autoMsgLastContact = contactId;
+
+    const contact = getContactById(contactId);
+    if (!contact) return;
+
+    const systemPrompt = buildSystemPrompt(contactId);
+    const autoPrompts = [
+        '（突然想起一件事，想跟对方说）',
+        '（刚刚发生了点事，想分享给对方）',
+        '（闲着没事，想找对方聊聊天）',
+        '（有点无聊，主动发个消息）',
+        '（看到有趣的东西，想告诉对方）',
+        '（想关心一下对方在做什么）'
+    ];
+    const prompt = autoPrompts[Math.floor(Math.random() * autoPrompts.length)];
+
+    try {
+        const reply = await callChatAPI([
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: prompt }
+        ]);
+
+        const cleanReply = reply.replace(/\{[^}]*\}/g, '').trim();
+
+        // 保存到聊天历史
+        saveAutoMsgToHistory(contactId, contact.name, reply);
+
+        // 增加未读计数
+        const unreadCount = addUnreadCount(contactId);
+
+        // 更新联系人预览
+        if (window.ChatConfig?.contacts) {
+            const c = window.ChatConfig.contacts.find(c => c.id === contactId);
+            if (c) {
+                c.preview = cleanReply.substring(0, 30);
+                saveContactsToStorage();
+            }
+        }
+
+        // 弹出通知弹窗
+        showAutoMsgNotification(contact.name, contactId, cleanReply);
+
+        // 刷新会话列表
+        if (typeof renderChatList === 'function') {
+            const listView = document.getElementById('chatListView');
+            if (listView && listView.offsetParent !== null) {
+                renderChatList();
+            }
+        }
+    } catch (e) {
+        // 静默失败
+    }
+};
