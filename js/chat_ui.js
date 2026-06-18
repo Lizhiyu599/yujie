@@ -638,11 +638,13 @@ function confirmAddEmoji(src) {
 // ========== 表情包长按删除 ==========
 let emojiLongPressTimer = null;
 let emojiLongPressTarget = null;
+let emojiLongPressElement = null;
 
 function startEmojiLongPress(e, idx) {
     emojiLongPressTarget = idx;
+    emojiLongPressElement = e.currentTarget;
     emojiLongPressTimer = setTimeout(function() {
-        showEmojiDeleteBtn(e, idx);
+        showEmojiDeleteBtn(idx);
     }, 600);
 }
 
@@ -652,11 +654,16 @@ function cancelEmojiLongPress() {
         emojiLongPressTimer = null;
     }
     emojiLongPressTarget = null;
+    emojiLongPressElement = null;
 }
 
-function showEmojiDeleteBtn(e, idx) {
+function showEmojiDeleteBtn(idx) {
     const existing = document.getElementById('emojiDeleteBtn');
     if (existing) existing.remove();
+
+    if (!emojiLongPressElement) return;
+
+    const rect = emojiLongPressElement.getBoundingClientRect();
 
     const btn = document.createElement('div');
     btn.id = 'emojiDeleteBtn';
@@ -667,9 +674,9 @@ function showEmojiDeleteBtn(e, idx) {
         deleteEmoji(idx);
     };
 
-    const touch = e.touches ? e.touches[0] : e;
-    btn.style.top = (touch.clientY - 28) + 'px';
-    btn.style.left = (touch.clientX - 11) + 'px';
+    // 精确定位在表情包右上角
+    btn.style.top = (rect.top - 8) + 'px';
+    btn.style.left = (rect.right - 14) + 'px';
 
     document.body.appendChild(btn);
 
@@ -685,6 +692,8 @@ function showEmojiDeleteBtn(e, idx) {
 function deleteEmoji(idx) {
     const btn = document.getElementById('emojiDeleteBtn');
     if (btn) btn.remove();
+
+    emojiLongPressElement = null;
 
     const saved = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
     if (idx >= 0 && idx < saved.length) {
