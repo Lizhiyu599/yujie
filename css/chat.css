@@ -1400,3 +1400,10 @@
     max-width: 70%;
     margin-top: 0;
 }
+
+/* ===== 弹出菜单虚线分隔 ===== */
+.plus-menu-divider {
+    height: 0;
+    border-bottom: 0.5px dashed rgba(0,0,0,0.1);
+    margin: 2px 8px;
+}
