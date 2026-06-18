@@ -1,6 +1,6 @@
 /**
  * 玉界 - 聊天软件 UI
- * 包含：会话列表、聊天窗口、标签栏导航、心理状态窗
+ * 包含：会话列表、聊天窗口、标签栏导航、心理状态窗、聊天详情半屏面板
  * 消息收发已移至 chat_core.js
  */
 
@@ -15,7 +15,24 @@ window.ChatConfig = window.ChatConfig || {
         action: '等待对话',
         thought: '今天会聊什么呢？'
     },
-    chatBg: localStorage.getItem('yujie_chat_bg') || ''
+    chatBg: localStorage.getItem('yujie_chat_bg') || '',
+    settings: {
+        api: {
+            total: parseInt(localStorage.getItem('api_total') || 0),
+            online: parseInt(localStorage.getItem('api_online') || 0),
+            offline: parseInt(localStorage.getItem('api_offline') || 0),
+            image: parseInt(localStorage.getItem('api_image') || 0),
+            voice: parseInt(localStorage.getItem('api_voice') || 0)
+        },
+        summaryCount: parseInt(localStorage.getItem('yujie_summary_count') || 50),
+        replyMin: parseInt(localStorage.getItem('yujie_reply_min') || 1),
+        replyMax: parseInt(localStorage.getItem('yujie_reply_max') || 3),
+        onlineNarration: localStorage.getItem('yujie_narration') !== 'false',
+        autoTranslate: localStorage.getItem('yujie_translate') === 'true',
+        autoMsg: localStorage.getItem('yujie_auto_msg') === 'true',
+        autoMsgFreq: parseInt(localStorage.getItem('yujie_auto_msg_freq') || 0),
+        pronoun: localStorage.getItem('yujie_pronoun') || 'me'
+    }
 };
 
 // ========== 打开聊天软件 ==========
@@ -108,12 +125,14 @@ function enterChat(contactId) {
     const contact = window.ChatConfig.contacts.find(c => c.id === contactId);
     if (!contact) return;
 
+    window.ChatState = window.ChatState || {};
     window.ChatState.currentContactId = contactId;
 
     const appWindow = document.getElementById('chatAppWindow');
     if (!appWindow) return;
 
     const savedBg = window.ChatConfig.chatBg;
+    const mental = window.ChatConfig.mental;
 
     appWindow.innerHTML = `
         <div class="chat-overlay" id="chatOverlay">
@@ -133,16 +152,16 @@ function enterChat(contactId) {
             <div class="mental-popup" id="chatMentalPopup" onclick="toggleChatMental()">
                 <div class="mental-title">窥视ta...</div>
                 <div class="mental-label">心情</div>
-                <div class="mental-value" id="m-mood">${window.ChatConfig.mental.mood}</div>
+                <div class="mental-value" id="m-mood">${mental.mood}</div>
                 <div class="mental-divider"></div>
                 <div class="mental-label">好感值</div>
-                <div class="mental-value" id="m-fav">${window.ChatConfig.mental.favorability}</div>
+                <div class="mental-value" id="m-fav">${mental.favorability}</div>
                 <div class="mental-divider"></div>
                 <div class="mental-label">当前动作</div>
-                <div class="mental-value" id="m-act">${window.ChatConfig.mental.action}</div>
+                <div class="mental-value" id="m-act">${mental.action}</div>
                 <div class="mental-divider"></div>
                 <div class="mental-label">内心想法</div>
-                <div class="mental-value" id="m-tht">${window.ChatConfig.mental.thought}</div>
+                <div class="mental-value" id="m-tht">${mental.thought}</div>
             </div>
 
             <!-- 底部输入栏 -->
@@ -169,18 +188,312 @@ function toggleChatMental() {
     const popup = document.getElementById('chatMentalPopup');
     if (popup) {
         popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
+        const m = window.ChatConfig.mental;
         const moodEl = document.getElementById('m-mood');
         const favEl = document.getElementById('m-fav');
         const actEl = document.getElementById('m-act');
         const thtEl = document.getElementById('m-tht');
-        if (moodEl) moodEl.textContent = window.ChatConfig.mental.mood;
-        if (favEl) favEl.textContent = window.ChatConfig.mental.favorability;
-        if (actEl) actEl.textContent = window.ChatConfig.mental.action;
-        if (thtEl) thtEl.textContent = window.ChatConfig.mental.thought;
+        if (moodEl) moodEl.textContent = m.mood;
+        if (favEl) favEl.textContent = m.favorability;
+        if (actEl) actEl.textContent = m.action;
+        if (thtEl) thtEl.textContent = m.thought;
     }
 }
 
-// ========== 聊天详情半屏面板（占位） ==========
+// ========== 聊天详情半屏面板 ==========
 function openChatSettings() {
-    showToast('聊天详情功能即将上线');
+    const oldMask = document.getElementById('chatSettingsMask');
+    if (oldMask) oldMask.remove();
+
+    const config = window.ChatConfig || {};
+    const settings = config.settings || {};
+    const api = settings.api || {};
+
+    const mask = document.createElement('div');
+    mask.className = 'sheet-mask show';
+    mask.id = 'chatSettingsMask';
+    mask.innerHTML = `
+        <div class="half-sheet" id="chatSettingsSheet" onclick="event.stopPropagation()">
+            <div class="sheet-handle" id="sheetHandle">
+                <div class="handle-bar"></div>
+            </div>
+            <div class="sheet-scroll">
+
+                <!-- API 消耗详情 -->
+                <div class="settings-section-title">API消耗详情</div>
+                <div class="glass-card">
+                    <div class="api-row"><span class="label">全部点数</span><span class="value" id="apiTotal">${api.total || 0} token</span></div>
+                    <div class="api-row"><span class="label">API</span><span class="value" id="apiOnline">${api.online || 0} token</span><span class="label">副API</span><span class="value" id="apiOffline">${api.offline || 0} token</span></div>
+                    <div class="api-row"><span class="label">生图</span><span class="value" id="apiImage">${api.image || 0} token</span><span class="label">语音</span><span class="value" id="apiVoice">${api.voice || 0} token</span></div>
+                </div>
+
+                <!-- 搜索聊天记录 -->
+                <div class="settings-section-title">搜索聊天记录</div>
+                <div class="glass-card">
+                    <input type="text" class="search-input" id="chatSearchInput" placeholder="请输入内容…" oninput="searchChatHistory(this.value)">
+                    <div class="search-result" id="chatSearchResult"></div>
+                </div>
+
+                <!-- 聊天总结 -->
+                <div class="settings-section-title">聊天总结</div>
+                <div class="glass-card">
+                    <div class="slider-row"><span class="hint">提示：默认50轮自动总结，你可调自动总结轮数又或是手动总结。</span></div>
+                    <div class="slider-row" style="margin-top:8px;"><span class="hint">自动总结轮数</span><span class="val" id="summaryVal">${settings.summaryCount || 50}轮</span></div>
+                    <input type="range" min="10" max="200" value="${settings.summaryCount || 50}" class="ios-slider" oninput="updateSummaryCount(this.value)">
+                    <button class="black-btn" onclick="manualSummary()">手动总结</button>
+                </div>
+
+                <!-- 聊天背景图 -->
+                <div class="settings-section-title">聊天背景图</div>
+                <div class="glass-card">
+                    <div class="bg-preview-2x4" id="chatBgPreview" style="background-image:url(${config.chatBg || ''});" onclick="pickChatBg()">${!config.chatBg ? '点击添加聊天背景图' : ''}</div>
+                    <button class="black-btn" onclick="clearChatBg()">清除当前背景</button>
+                </div>
+
+                <!-- 角色回复条数 -->
+                <div class="settings-section-title">角色回复条数</div>
+                <div class="glass-card">
+                    <div class="slider-row"><span class="hint">回复最少</span><span class="val" id="replyMinVal">${settings.replyMin || 1}</span></div>
+                    <input type="range" min="1" max="10" value="${settings.replyMin || 1}" class="ios-slider" oninput="updateReplyMin(this.value)">
+                    <div class="slider-row" style="margin-top:10px;"><span class="hint">回复最多</span><span class="val" id="replyMaxVal">${settings.replyMax || 3}</span></div>
+                    <input type="range" min="1" max="10" value="${settings.replyMax || 3}" class="ios-slider" oninput="updateReplyMax(this.value)">
+                </div>
+
+                <!-- 线上聊天旁白 -->
+                <div class="settings-section-title">线上聊天旁白</div>
+                <div class="glass-card">
+                    <div class="switch-row"><span>开启旁白</span><input type="checkbox" class="ios-switch-sm" ${settings.onlineNarration !== false ? 'checked' : ''} onchange="toggleNarration(this.checked)"></div>
+                </div>
+
+                <!-- 人称选择 -->
+                <div class="settings-section-title">人称选择</div>
+                <div class="glass-card">
+                    <div class="switch-row"><span>第一人称"我"</span><input type="checkbox" class="ios-switch-sm" ${settings.pronoun === 'me' ? 'checked' : ''} onchange="setPronoun('me', this)"></div>
+                    <div class="switch-row"><span>第二人称"你"</span><input type="checkbox" class="ios-switch-sm" ${settings.pronoun === 'you' ? 'checked' : ''} onchange="setPronoun('you', this)"></div>
+                    <div class="switch-row"><span>第三人称"ta"</span><input type="checkbox" class="ios-switch-sm" ${settings.pronoun === 'ta' ? 'checked' : ''} onchange="setPronoun('ta', this)"></div>
+                </div>
+
+                <!-- 自动发消息 -->
+                <div class="settings-section-title">自动发消息</div>
+                <div class="glass-card">
+                    <div class="switch-row"><span>自动发消息</span><input type="checkbox" class="ios-switch-sm" ${settings.autoMsg === true ? 'checked' : ''} onchange="toggleAutoMsg(this.checked)"></div>
+                    <div class="slider-row" style="margin-top:8px;"><span class="hint">提示：角色会主动向你发消息。</span></div>
+                    <div class="slider-row" style="margin-top:6px;"><span class="hint">角色发消息的频率</span><span class="val" id="autoMsgFreqVal">${getAutoMsgLabel(settings.autoMsgFreq || 0)}</span></div>
+                    <div class="tick-slider-wrapper">
+                        <div class="tick-labels"><span>1h</span><span>5h</span><span>10h</span><span>24h</span></div>
+                        <div class="tick-dots" id="tickDots"></div>
+                        <input type="range" min="0" max="3" value="${settings.autoMsgFreq || 0}" class="ios-slider" step="1" oninput="updateAutoMsgFreq(this.value)">
+                    </div>
+                </div>
+
+                <!-- 自动翻译 -->
+                <div class="settings-section-title">自动翻译</div>
+                <div class="glass-card">
+                    <div class="switch-row"><span>自动翻译</span><input type="checkbox" class="ios-switch-sm" ${settings.autoTranslate === true ? 'checked' : ''} onchange="toggleAutoTranslate(this.checked)"></div>
+                    <div class="hint" style="margin-top:6px;">非简体中文的内容都将自动翻译成简体中文。</div>
+                </div>
+
+                <!-- 危险区 -->
+                <div class="settings-section-title">危险区</div>
+                <div class="danger-fold" onclick="toggleDangerZone()">
+                    <span>危险区</span><span class="arrow" id="dangerArrow">></span>
+                </div>
+                <div class="danger-content" id="dangerContent">
+                    <div class="hint" style="color:#ff3b30; margin-bottom:8px;">提示：请谨慎操作</div>
+                    <button class="white-btn" onclick="clearChatHistory()">清空聊天记录</button>
+                    <button class="black-btn" onclick="blockContact()">拉黑联系人</button>
+                    <button class="white-btn" onclick="deleteContact()">删除联系人</button>
+                </div>
+
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(mask);
+
+    mask.onclick = function(e) {
+        if (e.target === mask) closeChatSettings();
+    };
+
+    const handle = document.getElementById('sheetHandle');
+    let startY = 0;
+    handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
+    handle.addEventListener('touchmove', function(e) {
+        if (e.touches[0].clientY - startY > 60) closeChatSettings();
+    });
+    handle.addEventListener('click', function() { closeChatSettings(); });
+
+    updateTickDots(settings.autoMsgFreq || 0);
 }
+
+function closeChatSettings() {
+    const mask = document.getElementById('chatSettingsMask');
+    if (mask) mask.remove();
+}
+
+// ========== 详情面板交互函数 ==========
+function updateSummaryCount(val) {
+    document.getElementById('summaryVal').textContent = val + '轮';
+    window.ChatConfig.settings.summaryCount = parseInt(val);
+    localStorage.setItem('yujie_summary_count', val);
+}
+
+function updateReplyMin(val) {
+    document.getElementById('replyMinVal').textContent = val;
+    window.ChatConfig.settings.replyMin = parseInt(val);
+    localStorage.setItem('yujie_reply_min', val);
+}
+
+function updateReplyMax(val) {
+    document.getElementById('replyMaxVal').textContent = val;
+    window.ChatConfig.settings.replyMax = parseInt(val);
+    localStorage.setItem('yujie_reply_max', val);
+}
+
+function toggleNarration(checked) {
+    window.ChatConfig.settings.onlineNarration = checked;
+    localStorage.setItem('yujie_narration', checked);
+}
+
+function setPronoun(type, el) {
+    window.ChatConfig.settings.pronoun = type;
+    localStorage.setItem('yujie_pronoun', type);
+    const sheet = document.getElementById('chatSettingsSheet');
+    if (sheet) {
+        const switches = sheet.querySelectorAll('.ios-switch-sm');
+        const types = ['me', 'you', 'ta'];
+        switches.forEach((sw, i) => {
+            if (types[i] !== type) sw.checked = false;
+        });
+    }
+    el.checked = true;
+}
+
+function toggleAutoMsg(checked) {
+    window.ChatConfig.settings.autoMsg = checked;
+    localStorage.setItem('yujie_auto_msg', checked);
+}
+
+function getAutoMsgLabel(val) {
+    const labels = ['1小时', '5小时', '10小时', '24小时'];
+    return labels[val] || '1小时';
+}
+
+function updateAutoMsgFreq(val) {
+    document.getElementById('autoMsgFreqVal').textContent = getAutoMsgLabel(parseInt(val));
+    window.ChatConfig.settings.autoMsgFreq = parseInt(val);
+    localStorage.setItem('yujie_auto_msg_freq', val);
+    updateTickDots(parseInt(val));
+}
+
+function updateTickDots(val) {
+    const dots = document.getElementById('tickDots');
+    if (!dots) return;
+    dots.innerHTML = '';
+    for (let i = 0; i < 4; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'tick-dot' + (i === val ? ' active' : '');
+        dots.appendChild(dot);
+    }
+}
+
+function toggleAutoTranslate(checked) {
+    window.ChatConfig.settings.autoTranslate = checked;
+    localStorage.setItem('yujie_translate', checked);
+}
+
+function toggleDangerZone() {
+    const content = document.getElementById('dangerContent');
+    const arrow = document.getElementById('dangerArrow');
+    if (content && arrow) {
+        const show = content.classList.toggle('show');
+        arrow.textContent = show ? '∨' : '>';
+    }
+}
+
+function pickChatBg() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            const bg = ev.target.result;
+            window.ChatConfig.chatBg = bg;
+            localStorage.setItem('yujie_chat_bg', bg);
+            const preview = document.getElementById('chatBgPreview');
+            if (preview) {
+                preview.style.backgroundImage = `url(${bg})`;
+                preview.textContent = '';
+            }
+            const messages = document.getElementById('chatMessages');
+            if (messages) messages.style.backgroundImage = `url(${bg})`;
+        };
+        reader.readAsDataURL(file);
+    };
+    input.click();
+}
+
+function clearChatBg() {
+    window.ChatConfig.chatBg = '';
+    localStorage.removeItem('yujie_chat_bg');
+    const preview = document.getElementById('chatBgPreview');
+    if (preview) {
+        preview.style.backgroundImage = '';
+        preview.textContent = '点击添加聊天背景图';
+    }
+    const messages = document.getElementById('chatMessages');
+    if (messages) messages.style.backgroundImage = '';
+}
+
+// ========== 搜索聊天记录 ==========
+function searchChatHistory(query) {
+    const result = document.getElementById('chatSearchResult');
+    if (!result) return;
+    if (!query.trim()) {
+        result.classList.remove('show');
+        return;
+    }
+    const messages = document.getElementById('chatMessages');
+    if (!messages) return;
+    const text = messages.innerText.toLowerCase();
+    const q = query.toLowerCase();
+    if (text.includes(q)) {
+        const idx = text.indexOf(q);
+        const snippet = text.substring(Math.max(0, idx - 20), idx + q.length + 30);
+        result.innerHTML = '<div onclick="jumpToSearchResult()">' + snippet.replace(q, '<b>' + q + '</b>') + '</div>';
+        result.classList.add('show');
+    } else {
+        result.innerHTML = '<div style="color:#8e8e93;">未找到相关内容</div>';
+        result.classList.add('show');
+    }
+}
+
+function jumpToSearchResult() {
+    closeChatSettings();
+    showToast('已定位到聊天记录');
+}
+
+// ========== 占位函数 ==========
+function manualSummary() {
+    showToast('总结功能即将上线（拾忆林开发中）');
+}
+
+function clearChatHistory() {
+    const contactId = window.ChatState?.currentContactId || 'c1';
+    localStorage.removeItem('chat_history_' + contactId);
+    const messages = document.getElementById('chatMessages');
+    if (messages) messages.innerHTML = '<div style="text-align:center;color:#c7c7cc;font-size:13px;margin-top:20px;">聊天记录已清空</div>';
+    closeChatSettings();
+    showToast('聊天记录已清空');
+}
+
+function blockContact() {
+    showToast('拉黑功能即将上线');
+}
+
+function deleteContact() {
+    showToast('删除功能即将上线');
+            }
