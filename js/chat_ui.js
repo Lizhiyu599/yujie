@@ -51,6 +51,9 @@ window.ChatConfig = window.ChatConfig || {
     }
 };
 
+// ========== 语音模式状态 ==========
+window._isVoiceMode = false;
+
 // ========== 初始化气泡菜单 ==========
 function initBubbleMenu() {
     if (document.getElementById('bubbleMenu')) return;
@@ -144,6 +147,8 @@ function renderChatList() {
     }
 
     listView.innerHTML = contacts.map(c => {
+        const unread = getUnreadCount(c.id);
+        const badgeHTML = unread > 0 ? '<span class="chat-unread-badge">' + (unread > 99 ? '99+' : unread) + '</span>' : '';
         const avatarContent = c.avatarData 
             ? `<div class="chat-avatar" style="background-image:url(${c.avatarData});background-size:cover;background-position:center;">&nbsp;</div>`
             : `<div class="chat-avatar">${c.avatar}</div>`;
@@ -154,6 +159,7 @@ function renderChatList() {
                     <div class="chat-name">${c.name}</div>
                     <div class="chat-preview">${c.preview || ''}</div>
                 </div>
+                ${badgeHTML}
             </div>
         `;
     }).join('');
@@ -165,19 +171,28 @@ function switchChatTab(tab, el) {
     el.classList.add('active');
 
     const listView = document.getElementById('chatListView');
-    if (!listView) return;
+    const plusBtn = document.querySelector('.nav-plus-btn');
+    const titleEl = document.querySelector('.nav-title');
 
     switch (tab) {
         case 'chats':
+            if (plusBtn) plusBtn.style.display = '';
+            if (titleEl) titleEl.textContent = '聊天';
             renderChatList();
             break;
         case 'contacts':
+            if (plusBtn) plusBtn.style.display = '';
+            if (titleEl) titleEl.textContent = '联系人';
             listView.innerHTML = '<div style="padding:40px;text-align:center;color:#8e8e93;">联系人功能即将上线</div>';
             break;
         case 'moments':
+            if (plusBtn) plusBtn.style.display = 'none';
+            if (titleEl) titleEl.textContent = '动态';
             listView.innerHTML = '<div style="padding:40px;text-align:center;color:#8e8e93;">动态功能即将上线</div>';
             break;
         case 'me':
+            if (plusBtn) plusBtn.style.display = 'none';
+            if (titleEl) titleEl.textContent = '我的';
             listView.innerHTML = '<div style="padding:40px;text-align:center;color:#8e8e93;">个人中心即将上线</div>';
             break;
     }
@@ -190,6 +205,12 @@ function enterChat(contactId) {
 
     window.ChatState = window.ChatState || {};
     window.ChatState.currentContactId = contactId;
+
+    // 清零未读
+    clearUnreadCount(contactId);
+
+    // 重置语音模式
+    window._isVoiceMode = false;
 
     const appWindow = document.getElementById('chatAppWindow');
     if (!appWindow) return;
@@ -231,8 +252,10 @@ function enterChat(contactId) {
             <div class="chat-input-bar">
                 <div class="input-row">
                     <div class="add-circle" onclick="toggleAddPanel()">+</div>
-                    <input type="text" class="chat-input" id="chatInput" placeholder="输入消息…" onkeypress="if(event.key==='Enter') sendChatMessage()">
-                    <span class="voice-btn" id="voiceBtn" onclick="toggleVoiceInput()">&#9835;</span>
+                    <div class="chat-input-wrapper" id="chatInputWrapper">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="输入消息…" onkeypress="if(event.key==='Enter') handleSendOrReply()">
+                        <span class="mic-btn" id="micBtn" onclick="toggleVoiceMode()">&#127908;</span>
+                    </div>
                     <span class="chat-send-btn" id="chatSendBtn" onclick="handleSendOrReply()">↑</span>
                 </div>
                 <div class="add-panel-full" id="addPanelFull">
@@ -241,12 +264,6 @@ function enterChat(contactId) {
                         <span class="add-panel-tab" id="tabFunc" onclick="switchAddPanelTab('func', this)">功能</span>
                     </div>
                     <div class="add-panel-body" id="addPanelBody"></div>
-                </div>
-                <!-- 语音识别状态条 -->
-                <div class="voice-recording-bar" id="voiceRecordingBar">
-                    <span class="voice-recording-dot"></span>
-                    <span class="voice-recording-text">正在聆听...</span>
-                    <span class="voice-recording-cancel" onclick="cancelVoiceInput()">取消</span>
                 </div>
             </div>
         </div>
@@ -259,6 +276,7 @@ function enterChat(contactId) {
 function backToChatList() {
     window.ChatState.currentContactId = null;
     closePlusMenu();
+    window._isVoiceMode = false;
     renderChatShell();
 }
 
@@ -277,6 +295,180 @@ function toggleChatMental() {
         if (actEl) actEl.textContent = m.action;
         if (thtEl) thtEl.textContent = m.thought;
     }
+}
+
+// ========== 语音模式切换 ==========
+function toggleVoiceMode() {
+    window._isVoiceMode = !window._isVoiceMode;
+    const input = document.getElementById('chatInput');
+    const micBtn = document.getElementById('micBtn');
+    const wrapper = document.getElementById('chatInputWrapper');
+
+    if (window._isVoiceMode) {
+        if (input) input.placeholder = '输入语音消息文本…';
+        if (micBtn) micBtn.classList.add('active');
+        if (wrapper) wrapper.classList.add('voice-mode');
+    } else {
+        if (input) input.placeholder = '输入消息…';
+        if (micBtn) micBtn.classList.remove('active');
+        if (wrapper) wrapper.classList.remove('voice-mode');
+    }
+}
+
+// ========== 发送/回复逻辑 ==========
+function handleSendOrReply() {
+    const input = document.getElementById('chatInput');
+    if (!input) return;
+
+    if (window._isVoiceMode) {
+        // 语音模式：文本内容 → 语音气泡
+        const text = input.value.trim();
+        if (!text) {
+            triggerAIReply();
+            return;
+        }
+        sendVoiceMessage(text);
+        input.value = '';
+    } else {
+        // 文本模式
+        if (input.value.trim()) {
+            sendChatMessage();
+        } else {
+            triggerAIReply();
+        }
+    }
+}
+
+// ========== 发送语音消息（用户发文本 → 语音气泡） ==========
+function sendVoiceMessage(text) {
+    const messages = document.getElementById('chatMessages');
+    if (!messages) return;
+
+    const contactId = window.ChatState.currentContactId || 'c1';
+
+    // 语音气泡
+    const row = document.createElement('div');
+    row.className = 'bubble-row user';
+
+    const avatar = document.createElement('div');
+    avatar.className = 'bubble-avatar user-avatar';
+    avatar.textContent = '我';
+
+    const voiceBubble = document.createElement('div');
+    voiceBubble.className = 'bubble bubble-voice bubble-user';
+    voiceBubble.setAttribute('data-is-real', '0');
+
+    const barCount = Math.floor(Math.random() * 7) + 6;
+    let fakeBars = '';
+    for (let i = 0; i < barCount; i++) {
+        const height = Math.floor(Math.random() * 16) + 6;
+        fakeBars += `<span class="fake-voice-bar" style="height:${height}px;"></span>`;
+    }
+
+    voiceBubble.innerHTML = `
+        <span class="voice-play-icon">&#9835;</span>
+        <span class="voice-duration-text">假语音</span>
+        <span class="fake-voice-bars">${fakeBars}</span>
+    `;
+    voiceBubble.onclick = function() {
+        showToast('用户发送的语音消息');
+    };
+
+    row.appendChild(avatar);
+    row.appendChild(voiceBubble);
+    messages.appendChild(row);
+
+    // 转文字吸附行
+    const transRow = document.createElement('div');
+    transRow.className = 'voice-transcript-row';
+    transRow.innerHTML = `
+        <div class="bubble voice-transcript-bubble">${text}</div>
+    `;
+    messages.appendChild(transRow);
+
+    messages.scrollTop = messages.scrollHeight;
+    saveChatHistory(contactId);
+
+    // 调用 AI 回复（带语音上下文）
+    const contact = getContactById(contactId);
+    const contactName = contact ? contact.name : 'AI';
+    window.ChatState.isAITyping = true;
+    const titleEl = document.getElementById('chatTitle');
+    if (titleEl) titleEl.innerHTML = '<span class="nav-typing">输入中...</span>';
+
+    const systemPrompt = buildSystemPrompt(contactId);
+    const userMessage = '（用户发来了一条语音消息，内容是：' + text + '）';
+
+    callChatAPI([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage }
+    ]).then(reply => {
+        processAIReply(reply, contactName, contactId);
+    }).catch(error => {
+        appendMessage('assistant', '抱歉，消息发送失败：' + error.message);
+        if (titleEl) titleEl.textContent = contactName;
+        window.ChatState.isAITyping = false;
+    });
+}
+
+// ========== 发送语音气泡（角色发语音，给 chat_core 调用） ==========
+function sendVoiceBubble(role, text, voiceUrl, isRealVoice) {
+    const messages = document.getElementById('chatMessages');
+    if (!messages) return;
+
+    const row = document.createElement('div');
+    row.className = 'bubble-row ' + (role === 'assistant' ? 'assistant' : 'user');
+
+    const avatar = document.createElement('div');
+    avatar.className = 'bubble-avatar ' + (role === 'assistant' ? 'bot-avatar' : 'user-avatar');
+    avatar.textContent = role === 'assistant' ? (getContactById(window.ChatState.currentContactId)?.avatar || 'AI') : '我';
+
+    const voiceBubble = document.createElement('div');
+    voiceBubble.className = 'bubble bubble-voice ' + (role === 'assistant' ? 'bubble-assistant' : 'bubble-user');
+    voiceBubble.setAttribute('data-voice-url', voiceUrl || '');
+    voiceBubble.setAttribute('data-is-real', isRealVoice ? '1' : '0');
+
+    const barCount = isRealVoice ? 0 : Math.floor(Math.random() * 7) + 6;
+    let fakeBars = '';
+    if (!isRealVoice) {
+        for (let i = 0; i < barCount; i++) {
+            const height = Math.floor(Math.random() * 16) + 6;
+            fakeBars += `<span class="fake-voice-bar" style="height:${height}px;"></span>`;
+        }
+    }
+
+    voiceBubble.innerHTML = `
+        <span class="voice-play-icon">${isRealVoice ? '&#9654;' : '&#9835;'}</span>
+        <span class="voice-duration-text">${isRealVoice ? '语音' : '假语音'}</span>
+        ${!isRealVoice ? '<span class="fake-voice-bars">' + fakeBars + '</span>' : ''}
+    `;
+
+    if (isRealVoice && voiceUrl) {
+        voiceBubble.onclick = function() {
+            const audio = new Audio(voiceUrl);
+            audio.play().catch(function() {
+                showToast('语音播放失败');
+            });
+        };
+    } else {
+        voiceBubble.onclick = function() {
+            showToast('未配置语音API，无法播放');
+        };
+    }
+
+    row.appendChild(avatar);
+    row.appendChild(voiceBubble);
+    messages.appendChild(row);
+
+    const transRow = document.createElement('div');
+    transRow.className = 'voice-transcript-row';
+    transRow.innerHTML = `
+        <div class="bubble voice-transcript-bubble">${text}</div>
+    `;
+    messages.appendChild(transRow);
+
+    messages.scrollTop = messages.scrollHeight;
+    return row;
 }
 
 // ========== + 号功能面板 ==========
@@ -343,141 +535,6 @@ function renderAddPanelContent(tab) {
             </div>
         `;
     }
-}
-
-// ========== 语音输入 ==========
-let voiceRecognition = null;
-let isVoiceListening = false;
-
-function toggleVoiceInput() {
-    const bar = document.getElementById('voiceRecordingBar');
-    if (isVoiceListening) {
-        cancelVoiceInput();
-        return;
-    }
-
-    // 检查浏览器是否支持语音识别
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-        showToast('当前浏览器不支持语音输入');
-        return;
-    }
-
-    voiceRecognition = new SpeechRecognition();
-    voiceRecognition.lang = 'zh-CN';
-    voiceRecognition.interimResults = false;
-    voiceRecognition.continuous = false;
-
-    voiceRecognition.onstart = function() {
-        isVoiceListening = true;
-        if (bar) bar.classList.add('active');
-        const btn = document.getElementById('voiceBtn');
-        if (btn) btn.classList.add('listening');
-    };
-
-    voiceRecognition.onresult = function(event) {
-        const text = event.results[0][0].transcript;
-        const input = document.getElementById('chatInput');
-        if (input) {
-            input.value = text;
-            input.focus();
-        }
-        stopVoiceListening();
-    };
-
-    voiceRecognition.onerror = function(event) {
-        stopVoiceListening();
-        if (event.error === 'not-allowed') {
-            showToast('请允许麦克风权限');
-        } else {
-            showToast('语音识别失败，请重试');
-        }
-    };
-
-    voiceRecognition.onend = function() {
-        stopVoiceListening();
-    };
-
-    voiceRecognition.start();
-}
-
-function cancelVoiceInput() {
-    stopVoiceListening();
-    showToast('已取消语音输入');
-}
-
-function stopVoiceListening() {
-    if (voiceRecognition) {
-        try { voiceRecognition.stop(); } catch(e) {}
-        voiceRecognition = null;
-    }
-    isVoiceListening = false;
-    const bar = document.getElementById('voiceRecordingBar');
-    if (bar) bar.classList.remove('active');
-    const btn = document.getElementById('voiceBtn');
-    if (btn) btn.classList.remove('listening');
-}
-
-// ========== 发送语音气泡（角色发语音） ==========
-function sendVoiceBubble(role, text, voiceUrl, isRealVoice) {
-    const messages = document.getElementById('chatMessages');
-    if (!messages) return;
-
-    const row = document.createElement('div');
-    row.className = 'bubble-row ' + (role === 'assistant' ? 'assistant' : 'user');
-
-    const avatar = document.createElement('div');
-    avatar.className = 'bubble-avatar ' + (role === 'assistant' ? 'bot-avatar' : 'user-avatar');
-    avatar.textContent = role === 'assistant' ? (getContactById(window.ChatState.currentContactId)?.avatar || 'AI') : '我';
-
-    const voiceBubble = document.createElement('div');
-    voiceBubble.className = 'bubble bubble-voice ' + (role === 'assistant' ? 'bubble-assistant' : 'bubble-user');
-    voiceBubble.setAttribute('data-voice-url', voiceUrl || '');
-    voiceBubble.setAttribute('data-is-real', isRealVoice ? '1' : '0');
-
-    // 假语音的随机波形条数（6-12条）
-    const barCount = isRealVoice ? 0 : Math.floor(Math.random() * 7) + 6;
-    let fakeBars = '';
-    if (!isRealVoice) {
-        for (let i = 0; i < barCount; i++) {
-            const height = Math.floor(Math.random() * 16) + 6;
-            fakeBars += `<span class="fake-voice-bar" style="height:${height}px;"></span>`;
-        }
-    }
-
-    voiceBubble.innerHTML = `
-        <span class="voice-play-icon">${isRealVoice ? '&#9654;' : '&#9835;'}</span>
-        <span class="voice-duration-text">${isRealVoice ? '语音' : '假语音'}</span>
-        ${!isRealVoice ? '<span class="fake-voice-bars">' + fakeBars + '</span>' : ''}
-    `;
-
-    if (isRealVoice && voiceUrl) {
-        voiceBubble.onclick = function() {
-            const audio = new Audio(voiceUrl);
-            audio.play().catch(function() {
-                showToast('语音播放失败');
-            });
-        };
-    } else {
-        voiceBubble.onclick = function() {
-            showToast('未配置语音API，无法播放');
-        };
-    }
-
-    row.appendChild(avatar);
-    row.appendChild(voiceBubble);
-    messages.appendChild(row);
-
-    // 紧贴的转文字气泡
-    const transRow = document.createElement('div');
-    transRow.className = 'voice-transcript-row';
-    transRow.innerHTML = `
-        <div class="bubble voice-transcript-bubble">${text}</div>
-    `;
-    messages.appendChild(transRow);
-
-    messages.scrollTop = messages.scrollHeight;
-    return row;
 }
 
 // ========== 发送贴纸 ==========
@@ -753,7 +810,7 @@ function sendPaymentCard(type, amount, note, method) {
                     <div style="position:absolute;top:-3px;left:50%;transform:translateX(-50%);width:18px;height:10px;background:#fff;border-radius:0 0 6px 6px;"></div>
                     <div style="color:#f5c543;font-size:20px;font-weight:800;margin-top:4px;">$</div>
                 </div>
-                <div style="flex:1;min-width:0;"><div style="font-size:13px;color:#8e8e93;margin-bottom:2px;">红包</div><div style="font-size:14px;color:#000;font-weight:500;">${note || '恭喜发财，大吉大利'}</div></div>
+                <div style="flex:1;min-width:0;"><div style="font-size:13px;color:#8e8e93;margin-bottom:2px;">红包</div><div style="font-size:14px;color:#000;font-weight:500;">${note || '恭喜发财'}</div></div>
             </div>`;
     } else {
         card.innerHTML = `
@@ -776,7 +833,6 @@ function openFileSend() {
     overlay.innerHTML = `
         <div class="caption-modal">
             <div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">分享链接</div>
-            <div style="font-size:13px;color:#8e8e93;margin-bottom:10px;">复制抖音/小红书/B站链接发给角色</div>
             <textarea class="caption-textarea" id="linkInput" placeholder="粘贴链接..." style="height:80px;"></textarea>
             <div class="caption-buttons"><div class="payment-btn-cancel" onclick="closeLinkModal()">取消</div><div class="payment-btn-confirm" onclick="confirmSendLink()">发送</div></div>
         </div>`;
@@ -801,34 +857,6 @@ function confirmSendLink() {
     saveChatHistory(window.ChatState.currentContactId);
 }
 
-// ========== 发送/回复逻辑 ==========
-function handleSendOrReply() {
-    const input = document.getElementById('chatInput');
-    if (input && input.value.trim()) {
-        sendChatMessage();
-    } else {
-        triggerAIReply();
-    }
-}
-
-function triggerAIReply() {
-    const contactId = window.ChatState.currentContactId || 'c1';
-    const contact = getContactById(contactId);
-    const contactName = contact ? contact.name : 'AI';
-    window.ChatState.isAITyping = true;
-    const titleEl = document.getElementById('chatTitle');
-    if (titleEl) titleEl.innerHTML = '<span class="nav-typing">输入中...</span>';
-    const systemPrompt = buildSystemPrompt(contactId);
-    const userMessage = '（用户点击了让角色先说话）';
-    callChatAPI([{ role: 'system', content: systemPrompt }, { role: 'user', content: userMessage }]).then(reply => {
-        processAIReply(reply, contactName, contactId);
-    }).catch(error => {
-        appendMessage('assistant', '抱歉，消息发送失败：' + error.message);
-        if (titleEl) titleEl.textContent = contactName;
-        window.ChatState.isAITyping = false;
-    });
-}
-
 // ========== 长按气泡菜单 ==========
 let bubbleMenuTarget = null;
 
@@ -844,24 +872,15 @@ document.addEventListener('touchstart', function(e) {
     let pressTimer = setTimeout(function() {
         const menu = document.getElementById('bubbleMenu');
         if (!menu) return;
-
         menu.style.visibility = 'hidden';
         menu.style.display = 'block';
         const menuH = menu.offsetHeight || 80;
         const menuW = menu.offsetWidth || 260;
-
         const rect = bubble.getBoundingClientRect();
-        const top = Math.max(10, rect.top - menuH - 8);
-        const left = Math.max(10, Math.min(
-            rect.left,
-            window.innerWidth - menuW - 10
-        ));
-
-        menu.style.top = top + 'px';
-        menu.style.left = left + 'px';
+        menu.style.top = Math.max(10, rect.top - menuH - 8) + 'px';
+        menu.style.left = Math.max(10, Math.min(rect.left, window.innerWidth - menuW - 10)) + 'px';
         menu.style.visibility = '';
     }, 500);
-
     bubble.addEventListener('touchend', function() { clearTimeout(pressTimer); }, { once: true });
     bubble.addEventListener('touchmove', function() { clearTimeout(pressTimer); }, { once: true });
 });
@@ -1518,4 +1537,4 @@ function blockContact() {
 
 function deleteContact() {
     showToast('删除功能即将上线');
-}        
+}
