@@ -889,7 +889,7 @@
     display: flex;
     gap: 10px;
     margin-top: 12px;
-}
+}   
 
 /* ===== 长按气泡功能菜单 ===== */
 .bubble-menu {
@@ -932,13 +932,6 @@
 .bubble-menu .menu-item.empty {
     color: #c7c7cc;
     pointer-events: none;
-}
-.bubble-menu .menu-item:active {
-    background: rgba(255,255,255,0.18);
-}
-.bubble-menu .menu-item.empty {
-    pointer-events: none;
-    opacity: 0;
 }
 
 /* ===== 重回弹窗 ===== */
