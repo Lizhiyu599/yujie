@@ -205,15 +205,26 @@ function processAIReply(rawContent, contactName, contactId) {
     if (mainText) {
         const parts = mainText.split(/\n{2,}/).filter(p => p.trim());
         parts.forEach(part => {
-            const bubbleEl = appendMessage('assistant', part.trim());
-            if (ChatConfig?.settings?.autoTranslate && needsTranslation(part.trim())) {
-                autoTranslateBubble(bubbleEl, part.trim());
+            const trimmed = part.trim();
+            const row = appendMessage('assistant', trimmed);
+            if (ChatConfig?.settings?.autoTranslate && needsTranslation(trimmed)) {
+                // 立即发起翻译请求
+                translateText(trimmed).then(translated => {
+                    window._translateCache[trimmed] = translated;
+                    appendTranslationRow(row, translated);
+                    saveChatHistory(contactId);
+                }).catch(() => {});
             }
         });
         if (parts.length === 0 && mainText.trim()) {
-            const bubbleEl = appendMessage('assistant', mainText.trim());
-            if (ChatConfig?.settings?.autoTranslate && needsTranslation(mainText.trim())) {
-                autoTranslateBubble(bubbleEl, mainText.trim());
+            const trimmed = mainText.trim();
+            const row = appendMessage('assistant', trimmed);
+            if (ChatConfig?.settings?.autoTranslate && needsTranslation(trimmed)) {
+                translateText(trimmed).then(translated => {
+                    window._translateCache[trimmed] = translated;
+                    appendTranslationRow(row, translated);
+                    saveChatHistory(contactId);
+                }).catch(() => {});
             }
         }
     }
@@ -241,7 +252,7 @@ function appendMessage(role, text) {
     const now = new Date();
 
     const shouldShowTime = !window.ChatState.lastMessageTime || 
-        (now - window.ChatState.lastMessageTime) > 3 * 60 * 1000;
+        (now - window.ChatState.lastMessageTime) > 6 * 60 * 1000;
 
     if (shouldShowTime && role !== 'narration') {
         const timeStamp = document.createElement('div');
@@ -276,19 +287,6 @@ function appendMessage(role, text) {
         messages.scrollTop = messages.scrollHeight;
         return row;
     }
-}
-
-// ========== 自动翻译单条气泡 ==========
-async function autoTranslateBubble(row, text) {
-    if (window._translateCache[text]) {
-        appendTranslationRow(row, window._translateCache[text]);
-        return;
-    }
-    try {
-        const translated = await translateText(text);
-        window._translateCache[text] = translated;
-        appendTranslationRow(row, translated);
-    } catch (e) {}
 }
 
 // ========== 更新心理状态 ==========
@@ -340,7 +338,7 @@ async function translateText(text) {
     }
 }
 
-// ========== 追加翻译行（在气泡行下方） ==========
+// ========== 追加翻译行（紧贴气泡行下方） ==========
 function appendTranslationRow(originalRow, translatedText) {
     const messages = document.getElementById('chatMessages');
     if (!messages) return;
@@ -354,7 +352,7 @@ function appendTranslationRow(originalRow, translatedText) {
 
     const transRow = document.createElement('div');
     transRow.className = 'translate-row';
-    transRow.style.cssText = 'display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;padding-left:48px;';
+    transRow.style.cssText = 'display:flex;align-items:flex-start;gap:8px;margin-top:0;margin-bottom:0;padding-left:48px;';
     transRow.innerHTML = `
         <div class="bubble" style="background:rgba(255,255,255,0.35);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);font-size:13px;color:#3a3a3c;border-radius:14px;padding:8px 12px;max-width:70%;">${translatedText}</div>
     `;
