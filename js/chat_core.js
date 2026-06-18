@@ -191,7 +191,6 @@ function processAIReply(rawContent, contactName, contactId) {
         } catch (e) {}
     }
 
-    // 分离旁白
     const narrationRegex = /[\(\（]([^\)\）]+)[\)\）]/g;
     const narrations = [];
     let mainText = cleanContent.replace(narrationRegex, (match, content) => {
@@ -199,19 +198,24 @@ function processAIReply(rawContent, contactName, contactId) {
         return '';
     }).trim();
 
-    // 先渲染旁白
     narrations.forEach(n => {
         appendMessage('narration', n);
     });
 
-    // 按双换行符拆分成多条消息，分别显示为独立气泡
     if (mainText) {
         const parts = mainText.split(/\n{2,}/).filter(p => p.trim());
         parts.forEach(part => {
-            appendMessage('assistant', part.trim());
+            const bubbleEl = appendMessage('assistant', part.trim());
+            // 自动翻译：检查每条助理消息
+            if (ChatConfig?.settings?.autoTranslate && needsTranslation(part.trim())) {
+                autoTranslateBubble(bubbleEl, part.trim());
+            }
         });
         if (parts.length === 0 && mainText.trim()) {
-            appendMessage('assistant', mainText.trim());
+            const bubbleEl = appendMessage('assistant', mainText.trim());
+            if (ChatConfig?.settings?.autoTranslate && needsTranslation(mainText.trim())) {
+                autoTranslateBubble(bubbleEl, mainText.trim());
+            }
         }
     }
 
@@ -219,11 +223,6 @@ function processAIReply(rawContent, contactName, contactId) {
     window.ChatState.isAITyping = false;
 
     saveChatHistory(contactId);
-
-    // 自动翻译检查（检查最后一条）
-    if (ChatConfig?.settings?.autoTranslate && mainText) {
-        autoTranslateLastAssistant(contactId);
-    }
 }
 
 // ========== 格式化时间 ==========
@@ -238,7 +237,7 @@ function formatChatTime(date) {
 // ========== 追加消息到界面 ==========
 function appendMessage(role, text) {
     const messages = document.getElementById('chatMessages');
-    if (!messages) return;
+    if (!messages) return null;
 
     const now = new Date();
 
@@ -258,6 +257,7 @@ function appendMessage(role, text) {
         bubble.className = 'bubble bubble-narration';
         bubble.textContent = text;
         messages.appendChild(bubble);
+        return null;
     } else {
         const row = document.createElement('div');
         row.className = 'bubble-row ' + (role === 'user' ? 'user' : 'assistant');
@@ -274,8 +274,22 @@ function appendMessage(role, text) {
         row.appendChild(avatar);
         row.appendChild(bubble);
         messages.appendChild(row);
+        messages.scrollTop = messages.scrollHeight;
+        return row;
     }
-    messages.scrollTop = messages.scrollHeight;
+}
+
+// ========== 自动翻译单条气泡 ==========
+async function autoTranslateBubble(row, text) {
+    if (window._translateCache[text]) {
+        appendTranslationRow(row, window._translateCache[text]);
+        return;
+    }
+    try {
+        const translated = await translateText(text);
+        window._translateCache[text] = translated;
+        appendTranslationRow(row, translated);
+    } catch (e) {}
 }
 
 // ========== 更新心理状态 ==========
@@ -298,41 +312,15 @@ function updateMentalState(mentalData) {
     if (thtEl) thtEl.textContent = window.ChatConfig.mental.thought;
 }
 
-// ========== 自动翻译 ==========
-async function autoTranslateLastAssistant(contactId) {
-    const messages = document.getElementById('chatMessages');
-    if (!messages) return;
-    const rows = messages.querySelectorAll('.bubble-row.assistant');
-    if (rows.length === 0) return;
-    const lastRow = rows[rows.length - 1];
-    const bubble = lastRow.querySelector('.bubble-assistant');
-    if (!bubble) return;
-    const text = bubble.textContent;
-
-    if (!needsTranslation(text)) return;
-
-    if (window._translateCache[text]) {
-        appendTranslationRow(lastRow, window._translateCache[text]);
-        return;
-    }
-
-    try {
-        const translated = await translateText(text);
-        window._translateCache[text] = translated;
-        appendTranslationRow(lastRow, translated);
-    } catch (e) {}
-}
-
 // ========== 检测是否需要翻译 ==========
 function needsTranslation(text) {
+    if (!text) return false;
     const chineseRegex = /[\u4e00-\u9fff]/;
     const hasChinese = chineseRegex.test(text);
     if (!hasChinese) return true;
-
     const nonChineseChars = text.replace(/[\u4e00-\u9fff]/g, '').replace(/\s/g, '').length;
     const totalChars = text.replace(/\s/g, '').length;
     if (totalChars > 0 && nonChineseChars / totalChars > 0.4) return true;
-
     return false;
 }
 
