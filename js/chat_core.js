@@ -1,6 +1,6 @@
 /**
  * 玉界 - 聊天核心
- * 包含：消息收发、API 对接、系统提示拼接、状态栏更新、翻译、时间戳
+ * 包含：消息收发、API 对接、系统提示拼接、状态栏更新、翻译、时间戳、上下文记忆
  */
 
 // ========== 聊天状态 ==========
@@ -111,8 +111,16 @@ async function sendChatMessage() {
         if (qv) qv.style.display = 'none';
     }
 
+    // 提取最近 20 条历史消息
+    const historyMessages = getRecentHistory(contactId, 20);
+    const allMessages = [
+        { role: 'system', content: systemPrompt },
+        ...historyMessages,
+        { role: 'user', content: userMessage }
+    ];
+
     try {
-        const reply = await callChatAPI(systemPrompt, userMessage);
+        const reply = await callChatAPI(allMessages);
         processAIReply(reply, contactName, contactId);
     } catch (error) {
         appendMessage('assistant', '抱歉，消息发送失败：' + error.message);
@@ -122,7 +130,7 @@ async function sendChatMessage() {
 }
 
 // ========== 调用聊天 API ==========
-async function callChatAPI(systemPrompt, userMessage) {
+async function callChatAPI(messages) {
     const config = getActiveAPIConfig();
     if (!config) {
         throw new Error('请先在设置中配置 API');
@@ -132,11 +140,6 @@ async function callChatAPI(systemPrompt, userMessage) {
     if (!endpoint.endsWith('/chat/completions')) {
         endpoint = endpoint.replace(/\/+$/, '') + '/chat/completions';
     }
-
-    const messages = [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage }
-    ];
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 120000);
@@ -372,6 +375,27 @@ function appendTranslationRow(originalRow, translatedText) {
     originalRow.parentNode.insertBefore(transRow, originalRow.nextSibling);
 }
 
+// ========== 提取最近 N 条历史消息（用于上下文记忆） ==========
+function getRecentHistory(contactId, maxCount) {
+    const messages = document.getElementById('chatMessages');
+    if (!messages) return [];
+
+    const result = [];
+    const rows = messages.querySelectorAll('.bubble-row');
+    const total = rows.length;
+    const start = Math.max(0, total - maxCount);
+
+    for (let i = start; i < total; i++) {
+        const row = rows[i];
+        const bubble = row.querySelector('.bubble');
+        if (!bubble) continue;
+        const role = row.classList.contains('user') ? 'user' : 'assistant';
+        result.push({ role: role, content: bubble.textContent });
+    }
+
+    return result;
+}
+
 // ========== 聊天历史存储 ==========
 function saveChatHistory(contactId) {
     const messages = document.getElementById('chatMessages');
@@ -388,4 +412,4 @@ function loadChatHistory(contactId) {
         messages.innerHTML = saved;
         messages.scrollTop = messages.scrollHeight;
     }
-}
+                                                      }
