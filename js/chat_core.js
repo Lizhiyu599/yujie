@@ -208,23 +208,28 @@ function processAIReply(rawContent, contactName, contactId) {
             const trimmed = part.trim();
             const row = appendMessage('assistant', trimmed);
             if (ChatConfig?.settings?.autoTranslate && needsTranslation(trimmed)) {
-                // 立即发起翻译请求
+                appendTranslationRow(row, '翻译中…');
                 translateText(trimmed).then(translated => {
                     window._translateCache[trimmed] = translated;
                     appendTranslationRow(row, translated);
                     saveChatHistory(contactId);
-                }).catch(() => {});
+                }).catch(() => {
+                    appendTranslationRow(row, '翻译失败');
+                });
             }
         });
         if (parts.length === 0 && mainText.trim()) {
             const trimmed = mainText.trim();
             const row = appendMessage('assistant', trimmed);
             if (ChatConfig?.settings?.autoTranslate && needsTranslation(trimmed)) {
+                appendTranslationRow(row, '翻译中…');
                 translateText(trimmed).then(translated => {
                     window._translateCache[trimmed] = translated;
                     appendTranslationRow(row, translated);
                     saveChatHistory(contactId);
-                }).catch(() => {});
+                }).catch(() => {
+                    appendTranslationRow(row, '翻译失败');
+                });
             }
         }
     }
@@ -350,9 +355,12 @@ function appendTranslationRow(originalRow, translatedText) {
         return;
     }
 
+    // 消除气泡行的 margin-bottom，让翻译行紧贴
+    if (originalRow) originalRow.style.marginBottom = '0';
+
     const transRow = document.createElement('div');
     transRow.className = 'translate-row';
-    transRow.style.cssText = 'display:flex;align-items:flex-start;gap:8px;margin-top:0;margin-bottom:0;padding-left:48px;';
+    transRow.style.cssText = 'display:flex;align-items:flex-start;gap:8px;margin-top:0;margin-bottom:8px;padding-left:48px;';
     transRow.innerHTML = `
         <div class="bubble" style="background:rgba(255,255,255,0.35);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);font-size:13px;color:#3a3a3c;border-radius:14px;padding:8px 12px;max-width:70%;">${translatedText}</div>
     `;
