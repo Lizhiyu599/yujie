@@ -301,13 +301,10 @@ function renderWorldbook() {
 
             <div class="wb-body">
                 <div class="wb-section-title">自定义预设</div>
-                <div style="padding: 0 0 12px;">
-                    <input type="text" class="ios-input" id="wbSearchInput" placeholder="搜索预设..." value="${wbSearchQuery}" 
-                           style="background: rgba(255,255,255,0.8); border-radius: 10px;" 
-                           oninput="wbSearchQuery = this.value; renderWorldbook();">
-                </div>
+                <input type="text" class="wb-search-input" id="wbSearchInput" placeholder="搜索预设..." value="${wbSearchQuery}" 
+                       oninput="wbSearchQuery = this.value; renderWorldbook();">
                 ${cardsHTML}
-                <button class="wb-add-btn" style="font-weight: 700;" onclick="addNewPreset()">+ 新建预设</button>
+                <button class="wb-add-btn" onclick="addNewPreset()">+ 新建预设</button>
             </div>
 
             <div class="wb-bottom-bar">
@@ -411,7 +408,6 @@ function wbSwitchType(type) {
     wbEditType = type;
     document.getElementById('wbSegGlobal').classList.toggle('active', type === 'global');
     document.getElementById('wbSegLocal').classList.toggle('active', type === 'local');
-    // 刷新角色选择区域
     const charSection = document.getElementById('wbCharSelect');
     if (type === 'local' && !charSection) {
         const segment = document.querySelector('.wb-editor-segment');
