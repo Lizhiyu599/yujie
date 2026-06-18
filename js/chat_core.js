@@ -18,7 +18,6 @@ window._translateCache = window._translateCache || {};
 function buildSystemPrompt(contactId) {
     let prompt = '';
 
-    // 最高优先级：状态栏 JSON
     prompt += '【最高优先级】每次回复必须在末尾附加一段JSON状态信息，格式严格为：\n{"mood":"心情(10字内)","favorability":好感度数字(0-100),"action":"动作(20字内)","thought":"内心想法(30字内)"}\n该JSON必须放在回复的最后面，不能省略。\n\n';
 
     if (typeof getFullSystemPrompt === 'function') {
@@ -51,13 +50,21 @@ function getActiveAPIConfig() {
     if (typeof getDevices === 'function') {
         const devices = getDevices();
         const configured = devices.find(d => d.baseUrl && d.apiKey && d.model);
-        if (configured) return configured;
+        if (configured) {
+            return {
+                baseUrl: configured.baseUrl,
+                apiKey: configured.apiKey,
+                model: configured.model,
+                temperature: configured.temperature || 1.0,
+                stream: false
+            };
+        }
     }
     const baseUrl = localStorage.getItem('main_api_base_url');
     const apiKey = localStorage.getItem('main_api_key');
     const model = localStorage.getItem('main_api_model');
     if (baseUrl && apiKey && model) {
-        return { baseUrl, apiKey, model, temperature: 1.0, stream: true };
+        return { baseUrl, apiKey, model, temperature: 1.0, stream: false };
     }
     return null;
 }
@@ -127,66 +134,45 @@ async function callChatAPI(systemPrompt, userMessage) {
         { role: 'user', content: userMessage }
     ];
 
-    const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${config.apiKey}`
-        },
-        body: JSON.stringify({
-            model: config.model,
-            messages: messages,
-            temperature: config.temperature || 1.0,
-            stream: config.stream !== false
-        })
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
 
-    if (!response.ok) {
-        let errMsg = `HTTP ${response.status}`;
-        try {
-            const errData = await response.json();
-            errMsg = errData.error?.message || errMsg;
-        } catch (e) {}
-        throw new Error(errMsg);
-    }
+    try {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${config.apiKey}`
+            },
+            body: JSON.stringify({
+                model: config.model,
+                messages: messages,
+                temperature: config.temperature || 1.0,
+                stream: false
+            }),
+            signal: controller.signal
+        });
 
-    if (config.stream !== false) {
-        return await handleStreamResponse(response);
-    } else {
+        clearTimeout(timeout);
+
+        if (!response.ok) {
+            let errMsg = `HTTP ${response.status}`;
+            try {
+                const errData = await response.json();
+                errMsg = errData.error?.message || errMsg;
+            } catch (e) {}
+            throw new Error(errMsg);
+        }
+
         const data = await response.json();
         return data.choices?.[0]?.message?.content || '';
-    }
-}
-
-// ========== 处理流式响应 ==========
-async function handleStreamResponse(response) {
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let fullContent = '';
-    let buffer = '';
-
-    while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed || !trimmed.startsWith('data: ')) continue;
-            const data = trimmed.slice(6);
-            if (data === '[DONE]') break;
-            try {
-                const json = JSON.parse(data);
-                const content = json.choices?.[0]?.delta?.content;
-                if (content) fullContent += content;
-            } catch (e) {}
+    } catch (error) {
+        clearTimeout(timeout);
+        if (error.name === 'AbortError') {
+            throw new Error('请求超时，请检查API是否可用');
         }
+        throw error;
     }
-
-    return fullContent;
 }
 
 // ========== 处理 AI 回复 ==========
