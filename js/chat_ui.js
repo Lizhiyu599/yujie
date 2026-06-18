@@ -574,7 +574,7 @@ document.addEventListener('touchstart', function(e) {
         if (!row) return;
         const rowRect = row.getBoundingClientRect();
         menu.style.top = (rowRect.top - menu.offsetHeight - 8) + 'px';
-        menu.style.left = Math.max(10, rowRect.left + (rowRect.width / 2) - 105) + 'px';
+        menu.style.left = Math.max(10, rowRect.left + (rowRect.width / 2) - 130) + 'px';
         menu.classList.add('show');
     }, 500);
 
