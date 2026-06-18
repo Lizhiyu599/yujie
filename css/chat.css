@@ -152,6 +152,15 @@
     -webkit-overflow-scrolling: touch;
 }
 
+/* ===== 时间戳 ===== */
+.chat-time-stamp {
+    text-align: center;
+    font-size: 11px;
+    color: #b0b0b5;
+    margin: 12px 0 4px;
+    letter-spacing: 1px;
+}
+
 /* ===== 气泡行 ===== */
 .bubble-row {
     display: flex;
@@ -172,6 +181,7 @@
     justify-content: center;
     font-size: 14px;
     font-weight: 600;
+    margin-top: 6px;
 }
 .bubble-avatar.user-avatar {
     background: #e8e8ed;
