@@ -54,6 +54,32 @@ window.ChatConfig = window.ChatConfig || {
     }
 };
 
+// ========== 获取/设置联系人独立配置 ==========
+function getContactSetting(contactId, key, defaultValue) {
+    var raw = localStorage.getItem('contact_setting_' + contactId + '_' + key);
+    if (raw === null) return defaultValue;
+    if (defaultValue === true || defaultValue === false) return raw === 'true';
+    return raw;
+}
+
+function setContactSetting(contactId, key, value) {
+    localStorage.setItem('contact_setting_' + contactId + '_' + key, value);
+}
+
+function loadContactSettings(contactId) {
+    var settings = window.ChatConfig.settings;
+    settings.onlineNarration = getContactSetting(contactId, 'narration', true);
+    settings.autoTranslate = getContactSetting(contactId, 'translate', false);
+    settings.autoMsg = getContactSetting(contactId, 'autoMsg', false);
+    settings.autoMsgFreq = parseInt(getContactSetting(contactId, 'autoMsgFreq', '0'));
+    settings.pronoun = getContactSetting(contactId, 'pronoun', 'you');
+    settings.autoMoment = getContactSetting(contactId, 'autoMoment', false);
+    settings.autoMomentFreq = parseInt(getContactSetting(contactId, 'autoMomentFreq', '0'));
+    settings.summaryCount = parseInt(getContactSetting(contactId, 'summaryCount', '50'));
+    settings.replyMin = parseInt(getContactSetting(contactId, 'replyMin', '1'));
+    settings.replyMax = parseInt(getContactSetting(contactId, 'replyMax', '3'));
+}
+
 // ========== 语音模式状态 ==========
 window._isVoiceMode = false;
 
@@ -255,6 +281,7 @@ function enterChat(contactId) {
 
     window.ChatState = window.ChatState || {};
     window.ChatState.currentContactId = contactId;
+    loadContactSettings(contactId);
 
     clearUnreadCount(contactId);
     window._isVoiceMode = false;
@@ -764,7 +791,7 @@ function menuTranslate() {
 
     const menu = document.getElementById('bubbleMenu');
     if (menu) menu.style.display = 'none';
-}    
+}
 
 // ========== 右上角 + 弹出菜单 ==========
 function togglePlusMenu(e) {
@@ -1446,7 +1473,7 @@ function deleteContactFromEdit(contactId) {
         showToast('角色已删除');
         backToContactsFromEdit();
     }
-}
+        }
 
 // ========== 动态页面 ==========
 let momentsData = [];
@@ -1459,6 +1486,7 @@ let publishLocation = '';
 
 function showMomentsPage() {
     momentsCoverBg = localStorage.getItem('moments_cover_bg') || '';
+    loadMomentsData();
     const appWindow = document.getElementById('chatAppWindow');
     if (!appWindow) return;
 
@@ -1515,9 +1543,31 @@ function showMomentsPage() {
 
     momentsPage = 0;
     momentsAllLoaded = false;
-    momentsData = [];
     loadMomentsCoverInfo();
-    loadInitialMoments();
+    if (momentsData.length === 0) {
+        loadInitialMoments();
+    }
+    renderMomentsFeed();
+}
+
+// ========== 动态数据持久化 ==========
+function saveMomentsData() {
+    try {
+        localStorage.setItem('moments_data', JSON.stringify(momentsData));
+    } catch(e) {}
+}
+
+function loadMomentsData() {
+    var raw = localStorage.getItem('moments_data');
+    if (raw) {
+        try {
+            momentsData = JSON.parse(raw);
+        } catch(e) {
+            momentsData = [];
+        }
+    } else {
+        momentsData = [];
+    }
 }
 
 function loadInitialMoments() {
@@ -1533,7 +1583,7 @@ function loadInitialMoments() {
         comments: [],
         liked: false
     });
-    renderMomentsFeed();
+    saveMomentsData();
 }
 
 function loadMomentsCoverInfo() {
@@ -1603,6 +1653,7 @@ async function loadMoreMoments() {
         if (hint) hint.innerHTML = '<span style="color:#8e8e93;font-size:12px;">动态到底了</span>';
     } else {
         momentsData = momentsData.concat(newMoments);
+        saveMomentsData();
         renderMomentsFeed();
     }
     momentsLoading = false;
@@ -1747,6 +1798,7 @@ function toggleLike(momentId) {
     likesCountMap[momentId] = m.likes;
     localStorage.setItem('moments_likes_count', JSON.stringify(likesCountMap));
 
+    saveMomentsData();
     renderMomentsFeed();
 }
 
@@ -1796,6 +1848,7 @@ function submitComment(momentId) {
     var commentText = input.value.trim();
     m.comments.push({ user: '我', text: commentText });
     input.value = '';
+    saveMomentsData();
 
     var commentList = document.getElementById('commentList');
     if (commentList) {
@@ -1887,6 +1940,7 @@ function publishMoment() {
         liked: false
     };
     momentsData.unshift(newMoment);
+    saveMomentsData();
     renderMomentsFeed();
     closePublishModal();
     showToast('发布成功');
@@ -1925,13 +1979,15 @@ function confirmLocationInput() {
     if (btns.length >= 2 && publishLocation) {
         btns[1].textContent = publishLocation;
     }
-}       
+}     
 
-// ========== 聊天详情半屏面板 ==========
+// ========== 聊天详情半屏面板（独立联系人配置） ==========
 function openChatSettings() {
     const oldMask = document.getElementById('chatSettingsMask');
     if (oldMask) oldMask.remove();
 
+    const contactId = window.ChatState.currentContactId || 'c1';
+    loadContactSettings(contactId);
     const config = window.ChatConfig || {};
     const settings = config.settings || {};
     const api = settings.api || {};
@@ -1983,19 +2039,19 @@ function openChatSettings() {
 
                 <div class="settings-section-title">线上聊天旁白</div>
                 <div class="glass-card">
-                    <div class="switch-row"><span>开启旁白</span><input type="checkbox" class="ios-switch-sm" ${settings.onlineNarration !== false ? 'checked' : ''} onchange="toggleNarration(this.checked)"></div>
+                    <div class="switch-row"><span>开启旁白</span><input type="checkbox" class="ios-switch-sm" id="swNarration" ${settings.onlineNarration !== false ? 'checked' : ''} onchange="toggleNarration(this.checked)"></div>
                 </div>
 
                 <div class="settings-section-title">人称选择</div>
                 <div class="glass-card">
-                    <div class="switch-row"><span>第一人称"我"</span><input type="checkbox" class="ios-switch-sm" ${settings.pronoun === 'me' ? 'checked' : ''} onchange="setPronoun('me', this)"></div>
-                    <div class="switch-row"><span>第二人称"你"</span><input type="checkbox" class="ios-switch-sm" ${settings.pronoun !== 'me' && settings.pronoun !== 'ta' ? 'checked' : ''} onchange="setPronoun('you', this)"></div>
-                    <div class="switch-row"><span>第三人称"ta"</span><input type="checkbox" class="ios-switch-sm" ${settings.pronoun === 'ta' ? 'checked' : ''} onchange="setPronoun('ta', this)"></div>
+                    <div class="switch-row"><span>第一人称"我"</span><input type="checkbox" class="ios-switch-sm" id="swPronounMe" ${settings.pronoun === 'me' ? 'checked' : ''} onchange="setPronoun('me', this)"></div>
+                    <div class="switch-row"><span>第二人称"你"</span><input type="checkbox" class="ios-switch-sm" id="swPronounYou" ${settings.pronoun !== 'me' && settings.pronoun !== 'ta' ? 'checked' : ''} onchange="setPronoun('you', this)"></div>
+                    <div class="switch-row"><span>第三人称"ta"</span><input type="checkbox" class="ios-switch-sm" id="swPronounTa" ${settings.pronoun === 'ta' ? 'checked' : ''} onchange="setPronoun('ta', this)"></div>
                 </div>
 
                 <div class="settings-section-title">自动发消息</div>
                 <div class="glass-card">
-                    <div class="switch-row"><span>自动发消息</span><input type="checkbox" class="ios-switch-sm" ${settings.autoMsg === true ? 'checked' : ''} onchange="toggleAutoMsg(this.checked)"></div>
+                    <div class="switch-row"><span>自动发消息</span><input type="checkbox" class="ios-switch-sm" id="swAutoMsg" ${settings.autoMsg === true ? 'checked' : ''} onchange="toggleAutoMsg(this.checked)"></div>
                     <div class="slider-row" style="margin-top:8px;"><span class="hint">提示：角色会主动向你发消息。</span></div>
                     <div class="slider-row" style="margin-top:6px;"><span class="hint">角色发消息的频率</span><span class="val" id="autoMsgFreqVal">${getAutoMsgLabel(settings.autoMsgFreq || 0)}</span></div>
                     <div class="tick-slider-wrapper">
@@ -2007,13 +2063,13 @@ function openChatSettings() {
 
                 <div class="settings-section-title">自动翻译</div>
                 <div class="glass-card">
-                    <div class="switch-row"><span>自动翻译</span><input type="checkbox" class="ios-switch-sm" ${settings.autoTranslate === true ? 'checked' : ''} onchange="toggleAutoTranslate(this.checked)"></div>
+                    <div class="switch-row"><span>自动翻译</span><input type="checkbox" class="ios-switch-sm" id="swAutoTranslate" ${settings.autoTranslate === true ? 'checked' : ''} onchange="toggleAutoTranslate(this.checked)"></div>
                     <div style="font-size:12px;color:#8e8e93;margin-top:6px;">提示：非简体中文的内容都将自动翻译成简体中文。</div>
                 </div>
 
                 <div class="settings-section-title">自动发动态</div>
                 <div class="glass-card">
-                    <div class="switch-row"><span>自动发动态</span><input type="checkbox" class="ios-switch-sm" ${settings.autoMoment === true ? 'checked' : ''} onchange="toggleAutoMoment(this.checked)"></div>
+                    <div class="switch-row"><span>自动发动态</span><input type="checkbox" class="ios-switch-sm" id="swAutoMoment" ${settings.autoMoment === true ? 'checked' : ''} onchange="toggleAutoMoment(this.checked)"></div>
                     <div class="slider-row" style="margin-top:8px;"><span class="hint">提示：角色会自动发布动态。</span></div>
                     <div class="slider-row" style="margin-top:6px;"><span class="hint">动态频率</span><span class="val" id="autoMomentFreqVal">${getAutoMomentLabel(settings.autoMomentFreq || 0)}</span></div>
                     <div class="tick-slider-wrapper">
@@ -2064,29 +2120,34 @@ function closeChatSettings() {
 function updateSummaryCount(val) {
     document.getElementById('summaryVal').textContent = val + '轮';
     window.ChatConfig.settings.summaryCount = parseInt(val);
-    localStorage.setItem('yujie_summary_count', val);
+    var contactId = window.ChatState.currentContactId || 'c1';
+    setContactSetting(contactId, 'summaryCount', val);
 }
 
 function updateReplyMin(val) {
     document.getElementById('replyMinVal').textContent = val;
     window.ChatConfig.settings.replyMin = parseInt(val);
-    localStorage.setItem('yujie_reply_min', val);
+    var contactId = window.ChatState.currentContactId || 'c1';
+    setContactSetting(contactId, 'replyMin', val);
 }
 
 function updateReplyMax(val) {
     document.getElementById('replyMaxVal').textContent = val;
     window.ChatConfig.settings.replyMax = parseInt(val);
-    localStorage.setItem('yujie_reply_max', val);
+    var contactId = window.ChatState.currentContactId || 'c1';
+    setContactSetting(contactId, 'replyMax', val);
 }
 
 function toggleNarration(checked) {
     window.ChatConfig.settings.onlineNarration = checked;
-    localStorage.setItem('yujie_narration', checked);
+    var contactId = window.ChatState.currentContactId || 'c1';
+    setContactSetting(contactId, 'narration', checked);
 }
 
 function setPronoun(type, el) {
     window.ChatConfig.settings.pronoun = type;
-    localStorage.setItem('yujie_pronoun', type);
+    var contactId = window.ChatState.currentContactId || 'c1';
+    setContactSetting(contactId, 'pronoun', type);
     const sheet = document.getElementById('chatSettingsSheet');
     if (sheet) {
         const switches = sheet.querySelectorAll('.ios-switch-sm');
@@ -2100,7 +2161,8 @@ function setPronoun(type, el) {
 
 function toggleAutoMsg(checked) {
     window.ChatConfig.settings.autoMsg = checked;
-    localStorage.setItem('yujie_auto_msg', checked);
+    var contactId = window.ChatState.currentContactId || 'c1';
+    setContactSetting(contactId, 'autoMsg', checked);
 }
 
 function getAutoMsgLabel(val) {
@@ -2111,7 +2173,8 @@ function getAutoMsgLabel(val) {
 function updateAutoMsgFreq(val) {
     document.getElementById('autoMsgFreqVal').textContent = getAutoMsgLabel(parseInt(val));
     window.ChatConfig.settings.autoMsgFreq = parseInt(val);
-    localStorage.setItem('yujie_auto_msg_freq', val);
+    var contactId = window.ChatState.currentContactId || 'c1';
+    setContactSetting(contactId, 'autoMsgFreq', val);
     updateTickDots(parseInt(val));
 }
 
@@ -2128,12 +2191,14 @@ function updateTickDots(val) {
 
 function toggleAutoTranslate(checked) {
     window.ChatConfig.settings.autoTranslate = checked;
-    localStorage.setItem('yujie_translate', checked);
+    var contactId = window.ChatState.currentContactId || 'c1';
+    setContactSetting(contactId, 'translate', checked);
 }
 
 function toggleAutoMoment(checked) {
     window.ChatConfig.settings.autoMoment = checked;
-    localStorage.setItem('yujie_auto_moment', checked);
+    var contactId = window.ChatState.currentContactId || 'c1';
+    setContactSetting(contactId, 'autoMoment', checked);
 }
 
 function getAutoMomentLabel(val) {
@@ -2144,7 +2209,8 @@ function getAutoMomentLabel(val) {
 function updateAutoMomentFreq(val) {
     document.getElementById('autoMomentFreqVal').textContent = getAutoMomentLabel(parseInt(val));
     window.ChatConfig.settings.autoMomentFreq = parseInt(val);
-    localStorage.setItem('yujie_auto_moment_freq', val);
+    var contactId = window.ChatState.currentContactId || 'c1';
+    setContactSetting(contactId, 'autoMomentFreq', val);
     updateMomentTickDots(parseInt(val));
 }
 
