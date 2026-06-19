@@ -1650,12 +1650,17 @@ function renderMomentsFeed() {
     if (!feed) return;
     
     var likedMap = {};
-    try { likedMap = JSON.parse(localStorage.getItem('moments_liked') || '{}'); } catch(e) {}
-    momentsData.forEach(function(m) {
-        if (likedMap[m.id]) {
-            m.liked = true;
-        }
-    });
+try { likedMap = JSON.parse(localStorage.getItem('moments_liked') || '{}'); } catch(e) {}
+var likesCountMap = {};
+try { likesCountMap = JSON.parse(localStorage.getItem('moments_likes_count') || '{}'); } catch(e) {}
+momentsData.forEach(function(m) {
+    if (likedMap[m.id]) {
+        m.liked = true;
+    }
+    if (likesCountMap[m.id] !== undefined) {
+        m.likes = likesCountMap[m.id];
+    }
+});
     
     var html = '';
     momentsData.forEach(function(m) {
@@ -1734,6 +1739,10 @@ function toggleLike(momentId) {
         delete likedMap[momentId];
     }
     localStorage.setItem('moments_liked', JSON.stringify(likedMap));
+    var likesCountMap = {};
+    try { likesCountMap = JSON.parse(localStorage.getItem('moments_likes_count') || '{}'); } catch(e) {}
+    likesCountMap[momentId] = m.likes;
+    localStorage.setItem('moments_likes_count', JSON.stringify(likesCountMap));
     
     renderMomentsFeed();
 }
