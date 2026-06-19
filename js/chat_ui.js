@@ -48,7 +48,9 @@ window.ChatConfig = window.ChatConfig || {
         autoTranslate: localStorage.getItem('yujie_translate') === 'true',
         autoMsg: localStorage.getItem('yujie_auto_msg') === 'true',
         autoMsgFreq: parseInt(localStorage.getItem('yujie_auto_msg_freq') || 0),
-        pronoun: localStorage.getItem('yujie_pronoun') || 'me'
+        pronoun: localStorage.getItem('yujie_pronoun') || 'you',
+        autoMoment: localStorage.getItem('yujie_auto_moment') === 'true',
+        autoMomentFreq: parseInt(localStorage.getItem('yujie_auto_moment_freq') || 0)
     }
 };
 
@@ -85,7 +87,7 @@ function getPinyinFirstLetter(char) {
             'P': '爬帕怕拍排牌派攀盘判叛盼旁胖抛炮跑泡培赔佩配喷盆朋棚蓬鹏捧碰批皮疲脾匹屁譬片偏篇骗漂飘拼贫品平评凭苹瓶萍坡泼颇婆迫破剖扑铺朴普',
             'Q': '七妻栖期欺齐其奇骑棋旗企启起气弃汽器恰千迁牵铅谦签前钱潜浅遣枪腔强墙抢悄敲乔桥瞧巧切茄且窃亲侵秦琴勤青轻倾清情晴庆穷丘秋求球区曲驱屈取去趣圈全权泉拳犬劝缺却雀确群',
             'R': '然燃染让扰绕热人仁忍认任扔仍日绒荣容融柔肉如儒乳辱入软瑞锐润若弱',
-            'S': '宋撒洒塞赛三伞散桑扫色森杀沙纱傻晒山衫闪陕扇善伤商赏上尚梢烧稍少绍哨舌蛇舍设社射涉申伸身深神审婶肾甚渗慎升生声牲省圣盛剩尸失师诗施狮湿十什石时识实拾食史使始驶士氏世市示式事侍势视试饰室是适逝收手守首寿受兽售书叔殊梳舒疏输蔬熟暑属署鼠数术束述树竖恕庶数摔衰甩帅双爽谁水税睡顺瞬说丝司私思斯撕死四寺似饲松耸宋送搜艘苏俗诉肃素速宿塑酸蒜算虽随岁碎遂孙损缩所索锁',
+            'S': '撒洒塞赛三伞散桑扫色森杀沙纱傻晒山衫闪陕扇善伤商赏上尚梢烧稍少绍哨舌蛇舍设社射涉申伸身深神审婶肾甚渗慎升生声牲省圣盛剩尸失师诗施狮湿十什石时识实拾食史使始驶士氏世市示式事侍势视试饰室是适逝收手守首寿受兽售书叔殊梳舒疏输蔬熟暑属署鼠数术束述树竖恕庶数摔衰甩帅双爽谁水税睡顺瞬说丝司私思斯撕死四寺似饲松耸宋送搜艘苏俗诉肃素速宿塑酸蒜算虽随岁碎遂孙损缩所索锁',
             'T': '他它她塌塔踏太态泰贪摊滩坛谈弹坦叹探汤唐堂塘糖躺趟涛掏逃桃陶讨套特疼腾藤剔梯踢提题体替天添田甜挑条跳贴铁厅听庭停挺通同桐铜童统筒痛偷头投透突图徒涂屠土吐兔团推腿退吞拖脱驼妥拓',
             'W': '挖蛙娃瓦歪外弯丸完玩顽晚碗万汪王亡网往忘旺望危威微为围违唯维伟伪尾纬未味位畏胃喂温文纹闻蚊稳问翁窝我沃卧握乌污屋无吴五午伍武舞务物误悟雾',
             'X': '西吸希析息牺悉惜晰稀溪锡熙习席袭洗喜戏系细虾瞎峡狭霞下吓夏仙先纤掀鲜闲弦咸显险县现线限宪陷献乡相香箱详享响想向巷象像橡削消萧销小晓孝效校笑些歇协邪胁斜携鞋写泄谢蟹心辛欣新信兴星刑行形醒杏性姓凶兄匈胸雄熊休修羞朽秀绣袖需虚须徐许序叙畜绪续宣旋选穴学雪血寻巡询循训迅',
@@ -762,7 +764,7 @@ function menuTranslate() {
 
     const menu = document.getElementById('bubbleMenu');
     if (menu) menu.style.display = 'none';
-}     
+}    
 
 // ========== 右上角 + 弹出菜单 ==========
 function togglePlusMenu(e) {
@@ -1443,7 +1445,7 @@ function deleteContactFromEdit(contactId) {
         saveContactsToStorage();
         showToast('角色已删除');
         backToContactsFromEdit();
-     }
+    }
 }
 
 // ========== 动态页面 ==========
@@ -1648,20 +1650,20 @@ function getRelativeTime(timestamp) {
 function renderMomentsFeed() {
     var feed = document.getElementById('momentsFeed');
     if (!feed) return;
-    
+
     var likedMap = {};
-try { likedMap = JSON.parse(localStorage.getItem('moments_liked') || '{}'); } catch(e) {}
-var likesCountMap = {};
-try { likesCountMap = JSON.parse(localStorage.getItem('moments_likes_count') || '{}'); } catch(e) {}
-momentsData.forEach(function(m) {
-    if (likedMap[m.id]) {
-        m.liked = true;
-    }
-    if (likesCountMap[m.id] !== undefined) {
-        m.likes = likesCountMap[m.id];
-    }
-});
-    
+    try { likedMap = JSON.parse(localStorage.getItem('moments_liked') || '{}'); } catch(e) {}
+    var likesCountMap = {};
+    try { likesCountMap = JSON.parse(localStorage.getItem('moments_likes_count') || '{}'); } catch(e) {}
+    momentsData.forEach(function(m) {
+        if (likedMap[m.id]) {
+            m.liked = true;
+        }
+        if (likesCountMap[m.id] !== undefined) {
+            m.likes = likesCountMap[m.id];
+        }
+    });
+
     var html = '';
     momentsData.forEach(function(m) {
         var imgHTML = '';
@@ -1730,7 +1732,7 @@ function toggleLike(momentId) {
     if (!m) return;
     m.liked = !m.liked;
     m.likes = m.liked ? (m.likes || 0) + 1 : Math.max(0, (m.likes || 0) - 1);
-    
+
     var likedMap = {};
     try { likedMap = JSON.parse(localStorage.getItem('moments_liked') || '{}'); } catch(e) {}
     if (m.liked) {
@@ -1739,11 +1741,12 @@ function toggleLike(momentId) {
         delete likedMap[momentId];
     }
     localStorage.setItem('moments_liked', JSON.stringify(likedMap));
+
     var likesCountMap = {};
     try { likesCountMap = JSON.parse(localStorage.getItem('moments_likes_count') || '{}'); } catch(e) {}
     likesCountMap[momentId] = m.likes;
     localStorage.setItem('moments_likes_count', JSON.stringify(likesCountMap));
-    
+
     renderMomentsFeed();
 }
 
@@ -1922,7 +1925,7 @@ function confirmLocationInput() {
     if (btns.length >= 2 && publishLocation) {
         btns[1].textContent = publishLocation;
     }
-}
+}       
 
 // ========== 聊天详情半屏面板 ==========
 function openChatSettings() {
@@ -1986,7 +1989,7 @@ function openChatSettings() {
                 <div class="settings-section-title">人称选择</div>
                 <div class="glass-card">
                     <div class="switch-row"><span>第一人称"我"</span><input type="checkbox" class="ios-switch-sm" ${settings.pronoun === 'me' ? 'checked' : ''} onchange="setPronoun('me', this)"></div>
-                    <div class="switch-row"><span>第二人称"你"</span><input type="checkbox" class="ios-switch-sm" ${settings.pronoun === 'you' ? 'checked' : ''} onchange="setPronoun('you', this)"></div>
+                    <div class="switch-row"><span>第二人称"你"</span><input type="checkbox" class="ios-switch-sm" ${settings.pronoun !== 'me' && settings.pronoun !== 'ta' ? 'checked' : ''} onchange="setPronoun('you', this)"></div>
                     <div class="switch-row"><span>第三人称"ta"</span><input type="checkbox" class="ios-switch-sm" ${settings.pronoun === 'ta' ? 'checked' : ''} onchange="setPronoun('ta', this)"></div>
                 </div>
 
@@ -2005,7 +2008,19 @@ function openChatSettings() {
                 <div class="settings-section-title">自动翻译</div>
                 <div class="glass-card">
                     <div class="switch-row"><span>自动翻译</span><input type="checkbox" class="ios-switch-sm" ${settings.autoTranslate === true ? 'checked' : ''} onchange="toggleAutoTranslate(this.checked)"></div>
-                    <div style="font-size:12px;color:#8e8e93;margin-top:6px;">非简体中文的内容都将自动翻译成简体中文。</div>
+                    <div style="font-size:12px;color:#8e8e93;margin-top:6px;">提示：非简体中文的内容都将自动翻译成简体中文。</div>
+                </div>
+
+                <div class="settings-section-title">自动发动态</div>
+                <div class="glass-card">
+                    <div class="switch-row"><span>自动发动态</span><input type="checkbox" class="ios-switch-sm" ${settings.autoMoment === true ? 'checked' : ''} onchange="toggleAutoMoment(this.checked)"></div>
+                    <div class="slider-row" style="margin-top:8px;"><span class="hint">提示：角色会自动发布动态。</span></div>
+                    <div class="slider-row" style="margin-top:6px;"><span class="hint">动态频率</span><span class="val" id="autoMomentFreqVal">${getAutoMomentLabel(settings.autoMomentFreq || 0)}</span></div>
+                    <div class="tick-slider-wrapper">
+                        <div class="tick-labels"><span>12h</span><span>24h</span><span>36h</span><span>48h</span></div>
+                        <div class="tick-dots" id="momentTickDots"></div>
+                        <input type="range" min="0" max="3" value="${settings.autoMomentFreq || 0}" class="ios-slider" step="1" oninput="updateAutoMomentFreq(this.value)">
+                    </div>
                 </div>
 
                 <div class="settings-section-title">危险区</div>
@@ -2038,6 +2053,7 @@ function openChatSettings() {
     handle.addEventListener('click', function() { closeChatSettings(); });
 
     updateTickDots(settings.autoMsgFreq || 0);
+    updateMomentTickDots(settings.autoMomentFreq || 0);
 }
 
 function closeChatSettings() {
@@ -2113,6 +2129,34 @@ function updateTickDots(val) {
 function toggleAutoTranslate(checked) {
     window.ChatConfig.settings.autoTranslate = checked;
     localStorage.setItem('yujie_translate', checked);
+}
+
+function toggleAutoMoment(checked) {
+    window.ChatConfig.settings.autoMoment = checked;
+    localStorage.setItem('yujie_auto_moment', checked);
+}
+
+function getAutoMomentLabel(val) {
+    const labels = ['12小时', '24小时', '36小时', '48小时'];
+    return labels[val] || '12小时';
+}
+
+function updateAutoMomentFreq(val) {
+    document.getElementById('autoMomentFreqVal').textContent = getAutoMomentLabel(parseInt(val));
+    window.ChatConfig.settings.autoMomentFreq = parseInt(val);
+    localStorage.setItem('yujie_auto_moment_freq', val);
+    updateMomentTickDots(parseInt(val));
+}
+
+function updateMomentTickDots(val) {
+    const dots = document.getElementById('momentTickDots');
+    if (!dots) return;
+    dots.innerHTML = '';
+    for (let i = 0; i < 4; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'tick-dot' + (i === val ? ' active' : '');
+        dots.appendChild(dot);
+    }
 }
 
 function toggleDangerZone() {
@@ -2239,4 +2283,4 @@ function blockContact() {
 
 function deleteContact() {
     showToast('删除功能即将上线');
-}                         
+}
