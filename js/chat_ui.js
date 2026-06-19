@@ -61,7 +61,7 @@ let charAvatarData = '';
 // ========== 编辑角色头像数据 ==========
 let editAvatarData = '';
 
-// ========== 拼音首字母映射（常用汉字） ==========
+// ========== 拼音首字母映射（常用汉字·扩展版） ==========
 var _pinyinMap = null;
 function getPinyinFirstLetter(char) {
     if (!/[^\u0000-\u00ff]/.test(char)) return char.toUpperCase();
@@ -99,8 +99,8 @@ function getPinyinFirstLetter(char) {
             }
         }
     }
-    return _pinyinMap[char] || '#';    
-  }
+    return _pinyinMap[char] || '#';
+ }
 
 // ========== 初始化气泡菜单 ==========
 function initBubbleMenu() {
@@ -762,7 +762,7 @@ function menuTranslate() {
 
     const menu = document.getElementById('bubbleMenu');
     if (menu) menu.style.display = 'none';
-  }
+ }
 
 // ========== 右上角 + 弹出菜单 ==========
 function togglePlusMenu(e) {
@@ -1079,7 +1079,6 @@ function renderContactsList() {
 
     let html = '';
 
-    // 新的朋友入口
     html += `
         <div class="chat-list-item" onclick="showNewFriendsPageInList()">
             <div class="contacts-new-friend-avatar">
@@ -1110,7 +1109,6 @@ function renderContactsList() {
         });
     });
 
-    // 右侧字母索引
     let indexHTML = '<div class="contacts-index-bar">';
     sortedLetters.forEach(letter => {
         indexHTML += '<span class="contacts-index-letter" onclick="scrollToGroup(\'' + letter + '\')">' + letter + '</span>';
@@ -1146,10 +1144,11 @@ function showNewFriendsPageInList() {
     const listView = document.getElementById('chatListView');
     if (!listView) return;
 
-    // 切换导航栏
     const titleEl = document.querySelector('.nav-title');
     const backBtn = document.querySelector('.nav-back');
+    const plusBtn = document.querySelector('.nav-plus-btn');
     if (titleEl) titleEl.textContent = '新的朋友';
+    if (plusBtn) plusBtn.style.display = 'none';
     if (backBtn) {
         backBtn.onclick = function() {
             renderContactsList();
@@ -1221,7 +1220,15 @@ function renderFriendRequestCardHTML(request) {
     `;
 }
 
-// ========== 编辑角色人设页面 ==========
+// ========== 返回联系人列表辅助函数 ==========
+function backToContactsFromEdit() {
+    renderChatShell();
+    setTimeout(function() {
+        switchChatTab('contacts', document.querySelector('.tab-item:nth-child(2)'));
+    }, 50);
+}
+
+// ========== 编辑角色人设页面（和添加好友同款样式） ==========
 function editContactPersona(contactId) {
     const contact = window.ChatConfig.contacts.find(c => c.id === contactId);
     if (!contact) return;
@@ -1229,32 +1236,107 @@ function editContactPersona(contactId) {
     const appWindow = document.getElementById('chatAppWindow');
     if (!appWindow) return;
 
+    editAvatarData = '';
+
+    // 解析现有人设
+    var existingName = contact.name || '';
+    var existingNote = '';
+    var existingGender = '女';
+    var existingAge = '';
+    var existingPersonality = '';
+    var existingBackground = '';
+    var existingAppearance = '';
+
+    if (contact.persona) {
+        var nameMatch = contact.persona.match(/【姓名】(.+)/);
+        var noteMatch = contact.persona.match(/【昵称\/备注】(.+)/);
+        var genderMatch = contact.persona.match(/【性别】(.+)/);
+        var ageMatch = contact.persona.match(/【年龄】(.+)/);
+        var personalityMatch = contact.persona.match(/【性格】(.+)/);
+        var backgroundMatch = contact.persona.match(/【背景故事】(.+)/);
+        var appearanceMatch = contact.persona.match(/【外貌描述】(.+)/);
+        if (nameMatch) existingName = nameMatch[1];
+        if (noteMatch) existingNote = noteMatch[1];
+        if (genderMatch) existingGender = genderMatch[1];
+        if (ageMatch) existingAge = ageMatch[1];
+        if (personalityMatch) existingPersonality = personalityMatch[1];
+        if (backgroundMatch) existingBackground = backgroundMatch[1];
+        if (appearanceMatch) existingAppearance = appearanceMatch[1];
+    }
+
+    var femaleChecked = existingGender === '女' ? 'checked' : '';
+    var maleChecked = existingGender === '男' ? 'checked' : '';
+    var nonHumanChecked = existingGender === '非人类' ? 'checked' : '';
+
     appWindow.innerHTML = `
         <div class="chat-shell">
             <div class="chat-nav">
                 <div class="nav-status-bar"></div>
                 <div class="nav-body">
-                    <span class="nav-back" onclick="switchChatTab('contacts', document.querySelector('.tab-item:nth-child(2)'))">‹</span>
+                    <span class="nav-back" onclick="backToContactsFromEdit()">‹</span>
                     <span class="nav-title">编辑角色</span>
                 </div>
             </div>
             <div style="flex:1;overflow-y:auto;padding:16px;background:#f2f2f7;">
 
-                <div class="settings-section-title">角色头像</div>
-                <div class="glass-card" style="text-align:center;">
+                <!-- 头像 -->
+                <div style="text-align:center;margin-bottom:20px;">
                     <div id="editAvatarPreview" style="width:80px;height:80px;border-radius:40px;background:#e5e5ea;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:32px;color:#8e8e93;cursor:pointer;background-size:cover;background-position:center;${contact.avatarData ? 'background-image:url(' + contact.avatarData + ');' : ''}" onclick="document.getElementById('editAvatarInput').click()">${contact.avatarData ? '' : contact.avatar}</div>
                     <input type="file" id="editAvatarInput" accept="image/*" style="display:none;" onchange="updateEditAvatar(event)">
                     <div style="font-size:11px;color:#8e8e93;">点击更换头像</div>
                 </div>
 
-                <div class="settings-section-title">角色名称</div>
+                <!-- 姓名 -->
+                <div class="settings-section-title">姓名</div>
                 <div class="glass-card">
-                    <input type="text" id="editCharName" class="search-input" value="${contact.name}" placeholder="角色名称">
+                    <input type="text" id="editCharName" class="search-input" value="${existingName}" placeholder="角色姓名">
                 </div>
 
-                <div class="settings-section-title">角色人设</div>
+                <!-- 备注 -->
+                <div class="settings-section-title">备注</div>
                 <div class="glass-card">
-                    <textarea id="editCharPersona" style="width:100%;height:250px;background:rgba(255,255,255,0.6);border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:12px;font-size:14px;font-family:inherit;resize:none;outline:none;color:#000;line-height:1.6;">${contact.persona || ''}</textarea>
+                    <input type="text" id="editCharNote" class="search-input" value="${existingNote}" placeholder="请输入你给角色的备注">
+                </div>
+
+                <!-- 性别 -->
+                <div class="settings-section-title">性别</div>
+                <div class="glass-card">
+                    <div style="display:flex;gap:16px;align-items:center;">
+                        <label style="display:flex;align-items:center;gap:6px;font-size:15px;color:#000;cursor:pointer;">
+                            <input type="radio" name="editCharGender" value="女" ${femaleChecked} style="appearance:none;width:20px;height:20px;border:2px solid #c7c7cc;border-radius:50%;outline:none;cursor:pointer;transition:0.2s;position:relative;" onchange="updateEditGenderRadio()"> 女
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;font-size:15px;color:#000;cursor:pointer;">
+                            <input type="radio" name="editCharGender" value="男" ${maleChecked} style="appearance:none;width:20px;height:20px;border:2px solid #c7c7cc;border-radius:50%;outline:none;cursor:pointer;transition:0.2s;position:relative;" onchange="updateEditGenderRadio()"> 男
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;font-size:15px;color:#000;cursor:pointer;">
+                            <input type="radio" name="editCharGender" value="非人类" ${nonHumanChecked} style="appearance:none;width:20px;height:20px;border:2px solid #c7c7cc;border-radius:50%;outline:none;cursor:pointer;transition:0.2s;position:relative;" onchange="updateEditGenderRadio()"> 非人类
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 年龄 -->
+                <div class="settings-section-title">年龄</div>
+                <div class="glass-card">
+                    <input type="text" id="editCharAge" class="search-input" value="${existingAge}" placeholder="请输入该角色的年龄">
+                </div>
+
+                <!-- 性格 -->
+                <div class="settings-section-title">性格</div>
+                <div class="glass-card">
+                    <textarea id="editCharPersonality" style="width:100%;height:100px;background:rgba(255,255,255,0.6);border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:12px;font-size:14px;font-family:inherit;resize:none;outline:none;color:#000;line-height:1.6;" placeholder="请输入该角色的性格、人格类型、语言风格">${existingPersonality}</textarea>
+                </div>
+
+                <!-- 背景故事 -->
+                <div class="settings-section-title">背景故事</div>
+                <div class="glass-card">
+                    <textarea id="editCharBackground" style="width:100%;height:100px;background:rgba(255,255,255,0.6);border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:12px;font-size:14px;font-family:inherit;resize:none;outline:none;color:#000;line-height:1.6;" placeholder="请输入该角色的人生经历、原生家庭、与你如何相识">${existingBackground}</textarea>
+                </div>
+
+                <!-- 外貌描述 -->
+                <div class="settings-section-title">外貌描述</div>
+                <div class="glass-card">
+                    <textarea id="editCharAppearance" style="width:100%;height:100px;background:rgba(255,255,255,0.6);border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:12px;font-size:14px;font-family:inherit;resize:none;outline:none;color:#000;line-height:1.6;" placeholder="请输入该角色的外貌描述，用于引导生图API，未配置可填可不填">${existingAppearance}</textarea>
+                    <div style="font-size:11px;color:#8e8e93;margin-top:6px;">选填，用于生图API生成角色形象</div>
                 </div>
 
                 <button class="black-btn" onclick="saveContactEdit('${contactId}')" style="margin-top:16px;">保存修改</button>
@@ -1262,6 +1344,9 @@ function editContactPersona(contactId) {
             </div>
         </div>
     `;
+
+    // 初始化性别单选样式
+    setTimeout(updateEditGenderRadio, 50);
 }
 
 function updateEditAvatar(e) {
@@ -1279,21 +1364,52 @@ function updateEditAvatar(e) {
     reader.readAsDataURL(file);
 }
 
+function updateEditGenderRadio() {
+    const radios = document.querySelectorAll('input[name="editCharGender"]');
+    radios.forEach(r => {
+        if (r.checked) {
+            r.style.borderColor = '#1d1d1f';
+            r.style.background = '#1d1d1f';
+            r.style.boxShadow = 'inset 0 0 0 4px #fff';
+        } else {
+            r.style.borderColor = '#c7c7cc';
+            r.style.background = 'transparent';
+            r.style.boxShadow = 'none';
+        }
+    });
+}
+
 function saveContactEdit(contactId) {
     const name = document.getElementById('editCharName').value.trim();
-    const persona = document.getElementById('editCharPersona').value.trim();
+    const note = document.getElementById('editCharNote').value.trim();
+    const genderEl = document.querySelector('input[name="editCharGender"]:checked');
+    const gender = genderEl ? genderEl.value : '女';
+    const age = document.getElementById('editCharAge').value.trim();
+    const personality = document.getElementById('editCharPersonality').value.trim();
+    const background = document.getElementById('editCharBackground').value.trim();
+    const appearance = document.getElementById('editCharAppearance').value.trim();
 
     if (!name) { showToast('请填写角色名称'); return; }
 
     const contact = window.ChatConfig.contacts.find(c => c.id === contactId);
     if (contact) {
-        contact.name = name;
+        contact.name = note || name;
         contact.avatar = name.charAt(0);
         if (editAvatarData) contact.avatarData = editAvatarData;
-        if (persona) contact.persona = persona;
+
+        var persona = '';
+        persona += '【姓名】' + name + '\n';
+        if (note && note !== name) persona += '【昵称/备注】' + note + '\n';
+        persona += '【性别】' + gender + '\n';
+        persona += '【年龄】' + age + '\n';
+        persona += '【性格】' + personality + '\n';
+        persona += '【背景故事】' + background + '\n';
+        if (appearance) persona += '【外貌描述】' + appearance + '\n';
+        contact.persona = persona;
+
         saveContactsToStorage();
         showToast('角色信息已更新');
-        switchChatTab('contacts', document.querySelector('.tab-item:nth-child(2)'));
+        backToContactsFromEdit();
     }
 }
 
@@ -1315,7 +1431,7 @@ function deleteContactFromEdit(contactId) {
         window.ChatConfig.contacts = window.ChatConfig.contacts.filter(c => c.id !== contactId);
         saveContactsToStorage();
         showToast('角色已删除');
-        switchChatTab('contacts', document.querySelector('.tab-item:nth-child(2)'));
+        backToContactsFromEdit();
     }
 }
 
@@ -1635,3 +1751,4 @@ function blockContact() {
 function deleteContact() {
     showToast('删除功能即将上线');
 }
+
