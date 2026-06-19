@@ -819,3 +819,135 @@ async function sendBotVoice(text) {
     }
     sendVoiceBubble('assistant', text, null, false);
 }
+
+// ========== 自动发动态系统 ==========
+window._autoMomentTimers = {};
+
+function startAutoMoment(contactId) {
+    stopAutoMoment(contactId);
+    
+    var enabled = getContactSetting(contactId, 'autoMoment', false);
+    if (!enabled) return;
+    
+    var freqVal = parseInt(getContactSetting(contactId, 'autoMomentFreq', '0'));
+    var intervals = [43200000, 86400000, 129600000, 172800000];
+    var interval = intervals[freqVal] || 43200000;
+    
+    window._autoMomentTimers[contactId] = setInterval(function() {
+        triggerAutoMoment(contactId);
+    }, interval);
+    
+    // 首次延迟30秒触发
+    setTimeout(function() {
+        triggerAutoMoment(contactId);
+    }, 30000);
+}
+
+function stopAutoMoment(contactId) {
+    if (window._autoMomentTimers[contactId]) {
+        clearInterval(window._autoMomentTimers[contactId]);
+        delete window._autoMomentTimers[contactId];
+    }
+}
+
+async function triggerAutoMoment(contactId) {
+    var contact = getContactById(contactId);
+    if (!contact) return;
+    
+    var systemPrompt = buildSystemPrompt(contactId);
+    var momentPrompt = getRandomMomentPrompt(contact);
+    
+    try {
+        var reply = await callChatAPI([
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: momentPrompt }
+        ]);
+        
+        var cleanContent = reply.replace(/\{[^}]*\}/g, '').trim();
+        if (!cleanContent) return;
+        
+        var newMoment = {
+            id: 'm_auto_' + Date.now(),
+            userName: contact.name,
+            userAvatar: contact.avatar,
+            text: cleanContent,
+            images: [],
+            time: getRelativeTimeForMoment(Date.now()),
+            location: '',
+            likes: 0,
+            comments: [],
+            liked: false
+        };
+        
+        // 加载现有动态
+        var raw = localStorage.getItem('moments_data');
+        var momentsData = raw ? JSON.parse(raw) : [];
+        momentsData.unshift(newMoment);
+        localStorage.setItem('moments_data', JSON.stringify(momentsData));
+        
+    } catch(e) {
+        // 静默失败
+    }
+}
+
+function getRandomMomentPrompt(contact) {
+    var prompts = [
+        '（分享一件今天发生的小事，发一条朋友圈）',
+        '（突然有感而发，想发一条动态）',
+        '（看到了有趣的东西，想分享到朋友圈）',
+        '（心情不错，发一条动态表达一下）',
+        '（夜深了，有些感慨想发出来）',
+        '（最近发生了一些事，想在朋友圈说说）',
+        '（随手发一条日常动态）',
+        '（想分享一下此刻的心情）'
+    ];
+    
+    // 根据人设调整
+    if (contact.persona && contact.persona.indexOf('内向') >= 0) {
+        prompts = [
+            '（夜深人静时，有了一些感悟，想发一条仅自己可见的动态）',
+            '（偶尔想分享一下心情，但不想太多人看到）',
+            '（有些话想说，发一条私密动态吧）'
+        ];
+    }
+    
+    return prompts[Math.floor(Math.random() * prompts.length)];
+}
+
+function getRelativeTimeForMoment(timestamp) {
+    var d = new Date(timestamp);
+    return (d.getMonth() + 1) + '.' + d.getDate() + ' ' + d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+}
+
+// 监听自动发动态开关，启停定时器
+var origToggleAutoMoment = toggleAutoMoment;
+toggleAutoMoment = function(checked) {
+    origToggleAutoMoment(checked);
+    var contactId = window.ChatState.currentContactId || 'c1';
+    if (checked) {
+        startAutoMoment(contactId);
+        showToast('自动发动态已开启');
+    } else {
+        stopAutoMoment(contactId);
+        showToast('自动发动态已关闭');
+    }
+};
+
+// 进入聊天窗口时启动自动发动态
+var origEnterChat = enterChat;
+enterChat = function(contactId) {
+    origEnterChat(contactId);
+    var enabled = getContactSetting(contactId, 'autoMoment', false);
+    if (enabled) {
+        startAutoMoment(contactId);
+    }
+};
+
+// 返回会话列表时停止所有定时器
+var origBackToChatList = backToChatList;
+backToChatList = function() {
+    for (var id in window._autoMomentTimers) {
+        stopAutoMoment(id);
+    }
+    origBackToChatList();
+};
