@@ -671,7 +671,7 @@ window.addEventListener('DOMContentLoaded', () => {
     dockBar.appendChild(beautifyItem);
 });
 
-// ========== 电量实时更新 ==========
+ // ========== 电量实时更新 ==========
 function updateBatteryFill() {
     var fill = document.querySelector('.battery-fill');
     var percent = document.getElementById('batteryPercent');
@@ -682,9 +682,8 @@ function updateBatteryFill() {
         navigator.getBattery().then(function(battery) {
             var level = Math.round(battery.level * 100);
             fill.style.width = level + '%';
-            percent.textContent = level + '%';
+            percent.textContent = level;
 
-            // 充电状态
             if (battery.charging) {
                 icon.classList.add('charging');
                 icon.classList.remove('low');
@@ -699,11 +698,11 @@ function updateBatteryFill() {
             battery.addEventListener('chargingchange', updateBatteryFill);
         }).catch(function() {
             fill.style.width = '80%';
-            percent.textContent = '80%';
+            percent.textContent = '80';
         });
     } else {
         fill.style.width = '80%';
-        percent.textContent = '80%';
+        percent.textContent = '80';
     }
 }
 
