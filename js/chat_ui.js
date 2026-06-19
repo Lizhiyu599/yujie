@@ -1456,6 +1456,7 @@ let publishImages = [];
 let publishLocation = '';
 
 function showMomentsPage() {
+    momentsCoverBg = localStorage.getItem('moments_cover_bg') || '';
     const appWindow = document.getElementById('chatAppWindow');
     if (!appWindow) return;
 
@@ -1647,6 +1648,15 @@ function getRelativeTime(timestamp) {
 function renderMomentsFeed() {
     var feed = document.getElementById('momentsFeed');
     if (!feed) return;
+    
+    var likedMap = {};
+    try { likedMap = JSON.parse(localStorage.getItem('moments_liked') || '{}'); } catch(e) {}
+    momentsData.forEach(function(m) {
+        if (likedMap[m.id]) {
+            m.liked = true;
+        }
+    });
+    
     var html = '';
     momentsData.forEach(function(m) {
         var imgHTML = '';
@@ -1715,6 +1725,16 @@ function toggleLike(momentId) {
     if (!m) return;
     m.liked = !m.liked;
     m.likes = m.liked ? (m.likes || 0) + 1 : Math.max(0, (m.likes || 0) - 1);
+    
+    var likedMap = {};
+    try { likedMap = JSON.parse(localStorage.getItem('moments_liked') || '{}'); } catch(e) {}
+    if (m.liked) {
+        likedMap[momentId] = true;
+    } else {
+        delete likedMap[momentId];
+    }
+    localStorage.setItem('moments_liked', JSON.stringify(likedMap));
+    
     renderMomentsFeed();
 }
 
