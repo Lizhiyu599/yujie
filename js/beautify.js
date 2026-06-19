@@ -670,3 +670,42 @@ window.addEventListener('DOMContentLoaded', () => {
     };
     dockBar.appendChild(beautifyItem);
 });
+
+// ========== 电量实时更新 ==========
+function updateBatteryFill() {
+    var fill = document.querySelector('.battery-fill');
+    if (!fill) return;
+
+    // 检测浏览器是否支持 Battery API
+    if (navigator.getBattery) {
+        navigator.getBattery().then(function(battery) {
+            var level = battery.level * 100;
+            fill.style.width = level + '%';
+
+            // 电量低于20%变色
+            if (level <= 20) {
+                fill.style.background = '#ff3b30';
+            } else {
+                fill.style.background = '#1d1d1f';
+            }
+
+            battery.addEventListener('levelchange', function() {
+                updateBatteryFill();
+            });
+        }).catch(function() {
+            // 不支持时默认满电
+            fill.style.width = '80%';
+        });
+    } else {
+        // 不支持 Battery API，默认80%
+        fill.style.width = '80%';
+    }
+}
+
+// 在顶部时钟启动时一起启动电池更新
+var _origStartTopBarClock = startTopBarClock;
+startTopBarClock = function() {
+    _origStartTopBarClock();
+    updateBatteryFill();
+    setInterval(updateBatteryFill, 30000);
+};
