@@ -749,36 +749,11 @@ body, html {
     }
     }
 
-/* ===== 苹果风格状态栏图标 ===== */
-.status-bar-icons {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 14px;
-}
-
-/* 信号图标（4根竖条） */
-.signal-icon {
-    display: flex;
-    align-items: flex-end;
-    gap: 1.5px;
-    height: 12px;
-}
-.signal-bar {
-    width: 2.5px;
-    background: #1d1d1f;
-    border-radius: 1px;
-}
-.signal-bar:nth-child(1) { height: 4px; }
-.signal-bar:nth-child(2) { height: 6px; }
-.signal-bar:nth-child(3) { height: 9px; }
-.signal-bar:nth-child(4) { height: 12px; }
-
 /* 电池图标 */
 .battery-icon {
     display: flex;
     align-items: center;
-    gap: 0;
+    gap: 3px;
     position: relative;
 }
 .battery-body {
@@ -790,13 +765,14 @@ body, html {
     overflow: hidden;
 }
 .battery-fill {
-    width: 100%;
+    width: 80%;
     height: 100%;
     background: #1d1d1f;
     position: absolute;
     left: 0;
     top: 0;
     border-radius: 1px;
+    transition: width 0.5s, background 0.3s;
 }
 .battery-cap {
     width: 2px;
@@ -804,4 +780,42 @@ body, html {
     background: #1d1d1f;
     border-radius: 0 2px 2px 0;
     margin-left: 1px;
+}
+/* 充电闪电 */
+.battery-lightning {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 8px solid #fff;
+    display: none;
+    z-index: 2;
+}
+/* 充电中 */
+.battery-icon.charging .battery-body {
+    border-color: #34c759;
+}
+.battery-icon.charging .battery-fill {
+    background: #34c759;
+}
+.battery-icon.charging .battery-lightning {
+    display: block;
+}
+/* 低电量 */
+.battery-icon.low .battery-body {
+    border-color: #ff9500;
+}
+.battery-icon.low .battery-fill {
+    background: #ff9500;
+}
+/* 电量数字 */
+.battery-percent {
+    font-size: 11px;
+    color: #1d1d1f;
+    font-weight: 500;
+    margin-left: 2px;
 }
