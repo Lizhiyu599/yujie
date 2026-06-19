@@ -674,35 +674,39 @@ window.addEventListener('DOMContentLoaded', () => {
 // ========== 电量实时更新 ==========
 function updateBatteryFill() {
     var fill = document.querySelector('.battery-fill');
-    if (!fill) return;
+    var percent = document.getElementById('batteryPercent');
+    var icon = document.getElementById('batteryIcon');
+    if (!fill || !percent) return;
 
-    // 检测浏览器是否支持 Battery API
     if (navigator.getBattery) {
         navigator.getBattery().then(function(battery) {
-            var level = battery.level * 100;
+            var level = Math.round(battery.level * 100);
             fill.style.width = level + '%';
+            percent.textContent = level + '%';
 
-            // 电量低于20%变色
-            if (level <= 20) {
-                fill.style.background = '#ff3b30';
+            // 充电状态
+            if (battery.charging) {
+                icon.classList.add('charging');
+                icon.classList.remove('low');
+            } else if (level <= 20) {
+                icon.classList.remove('charging');
+                icon.classList.add('low');
             } else {
-                fill.style.background = '#1d1d1f';
+                icon.classList.remove('charging', 'low');
             }
 
-            battery.addEventListener('levelchange', function() {
-                updateBatteryFill();
-            });
+            battery.addEventListener('levelchange', updateBatteryFill);
+            battery.addEventListener('chargingchange', updateBatteryFill);
         }).catch(function() {
-            // 不支持时默认满电
             fill.style.width = '80%';
+            percent.textContent = '80%';
         });
     } else {
-        // 不支持 Battery API，默认80%
         fill.style.width = '80%';
+        percent.textContent = '80%';
     }
 }
 
-// 在顶部时钟启动时一起启动电池更新
 var _origStartTopBarClock = startTopBarClock;
 startTopBarClock = function() {
     _origStartTopBarClock();
