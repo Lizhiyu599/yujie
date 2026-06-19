@@ -748,3 +748,60 @@ body, html {
         transform: translateX(-50%) translateY(-10px);
     }
     }
+
+/* ===== 苹果风格状态栏图标 ===== */
+.status-bar-icons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+}
+
+/* 信号图标（4根竖条） */
+.signal-icon {
+    display: flex;
+    align-items: flex-end;
+    gap: 1.5px;
+    height: 12px;
+}
+.signal-bar {
+    width: 2.5px;
+    background: #1d1d1f;
+    border-radius: 1px;
+}
+.signal-bar:nth-child(1) { height: 4px; }
+.signal-bar:nth-child(2) { height: 6px; }
+.signal-bar:nth-child(3) { height: 9px; }
+.signal-bar:nth-child(4) { height: 12px; }
+
+/* 电池图标 */
+.battery-icon {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    position: relative;
+}
+.battery-body {
+    width: 22px;
+    height: 11px;
+    border: 1.5px solid #1d1d1f;
+    border-radius: 3px;
+    position: relative;
+    overflow: hidden;
+}
+.battery-fill {
+    width: 100%;
+    height: 100%;
+    background: #1d1d1f;
+    position: absolute;
+    left: 0;
+    top: 0;
+    border-radius: 1px;
+}
+.battery-cap {
+    width: 2px;
+    height: 5px;
+    background: #1d1d1f;
+    border-radius: 0 2px 2px 0;
+    margin-left: 1px;
+}
