@@ -236,7 +236,7 @@ function switchChatTab(tab, el) {
         case 'moments':
             if (plusBtn) plusBtn.style.display = 'none';
             if (titleEl) titleEl.textContent = '动态';
-            listView.innerHTML = '<div style="padding:40px;text-align:center;color:#8e8e93;">动态功能即将上线</div>';
+           showMomentsPage();
             break;
         case 'me':
             if (plusBtn) plusBtn.style.display = 'none';
@@ -1772,3 +1772,423 @@ function deleteContact() {
     showToast('删除功能即将上线');
 }
 
+// ========== 动态页面 ==========
+let momentsData = [];
+let momentsPage = 0;
+let momentsLoading = false;
+let momentsAllLoaded = false;
+let momentsCoverBg = localStorage.getItem('moments_cover_bg') || '';
+
+function showMomentsPage() {
+    const appWindow = document.getElementById('chatAppWindow');
+    if (!appWindow) return;
+
+    appWindow.innerHTML = `
+        <div class="chat-shell" style="background:#f2f2f7;">
+            <div class="chat-nav" style="background:rgba(255,255,255,0.7);">
+                <div class="nav-status-bar"></div>
+                <div class="nav-body">
+                    <span class="nav-back" onclick="renderChatShell()">‹</span>
+                    <span class="nav-title">动态</span>
+                </div>
+            </div>
+            <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;" id="momentsScrollArea" onscroll="handleMomentsScroll()">
+                <!-- 封面背景区 -->
+                <div class="moments-cover" id="momentsCover" onclick="changeMomentsCover()" style="background-image:url(${momentsCoverBg});">
+                    <div class="moments-cover-gradient"></div>
+                    <div class="moments-cover-info">
+                        <div class="moments-cover-avatar" id="momentsCoverAvatar"></div>
+                        <div class="moments-cover-name" id="momentsCoverName">用户</div>
+                    </div>
+                    <div class="moments-publish-btn" onclick="event.stopPropagation(); openPublishModal()">
+                        <span class="publish-icon-body"></span>
+                        <span class="publish-icon-lens"></span>
+                    </div>
+                </div>
+                <!-- 动态列表 -->
+                <div class="moments-feed" id="momentsFeed"></div>
+                <div class="moments-bottom-hint" id="momentsBottomHint"></div>
+            </div>
+            <!-- 回顶按钮 -->
+            <div class="moments-back-top" id="momentsBackTop" onclick="scrollMomentsToTop()">↑</div>
+        </div>
+        <!-- 全屏图片预览 -->
+        <div class="moments-image-viewer" id="momentsImageViewer" onclick="closeMomentsImageViewer()">
+            <img id="momentsViewerImg" src="" style="max-width:95%;max-height:95%;object-fit:contain;border-radius:8px;">
+        </div>
+        <!-- 互动面板 -->
+        <div class="moments-interact-panel" id="momentsInteractPanel" onclick="event.stopPropagation()">
+            <div class="interact-panel-header">
+                <span>互动</span>
+                <span class="interact-panel-close" onclick="closeInteractPanel()">x</span>
+            </div>
+            <div class="interact-panel-body" id="interactPanelBody"></div>
+        </div>
+        <!-- 发布动态弹窗 -->
+        <div class="moments-publish-overlay" id="momentsPublishOverlay" onclick="closePublishModal()">
+            <div class="moments-publish-modal" onclick="event.stopPropagation()">
+                <div style="font-size:16px;font-weight:600;margin-bottom:12px;color:#000;">发布动态</div>
+                <textarea class="caption-textarea" id="publishText" placeholder="分享你的想法..." style="height:100px;"></textarea>
+                <div style="display:flex;gap:8px;margin-top:8px;">
+                    <button class="white-btn" onclick="document.getElementById('publishImageInput').click()">添加图片</button>
+                    <button class="white-btn" onclick="showToast('位置功能即将上线')">添加位置</button>
+                </div>
+                <input type="file" id="publishImageInput" accept="image/*" multiple style="display:none;" onchange="handlePublishImages(event)">
+                <div class="publish-image-preview" id="publishImagePreview"></div>
+                <button class="black-btn" onclick="publishMoment()" style="margin-top:12px;">发布</button>
+            </div>
+        </div>
+    `;
+
+    momentsPage = 0;
+    momentsAllLoaded = false;
+    momentsData = [];
+    loadMomentsCoverInfo();
+    loadMoreMoments();
+}
+
+// ========== 封面信息加载 ==========
+function loadMomentsCoverInfo() {
+    var avatar = document.getElementById('momentsCoverAvatar');
+    var name = document.getElementById('momentsCoverName');
+    var maskData = localStorage.getItem('active_mask');
+    if (maskData) {
+        try {
+            var mask = JSON.parse(maskData);
+            if (mask.avatar && avatar) {
+                avatar.style.backgroundImage = 'url(' + mask.avatar + ')';
+                avatar.style.backgroundSize = 'cover';
+                avatar.style.backgroundPosition = 'center';
+                avatar.innerText = '';
+            }
+            if (mask.name && name) name.textContent = mask.name;
+        } catch(e) {}
+    }
+}
+
+function changeMomentsCover() {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+            momentsCoverBg = ev.target.result;
+            localStorage.setItem('moments_cover_bg', momentsCoverBg);
+            var cover = document.getElementById('momentsCover');
+            if (cover) cover.style.backgroundImage = 'url(' + momentsCoverBg + ')';
+        };
+        reader.readAsDataURL(file);
+    };
+    input.click();
+}
+
+// ========== 无限滚动加载 ==========
+function handleMomentsScroll() {
+    var area = document.getElementById('momentsScrollArea');
+    var hint = document.getElementById('momentsBottomHint');
+    var btn = document.getElementById('momentsBackTop');
+    if (!area) return;
+
+    // 回顶按钮显隐
+    if (btn) {
+        btn.style.display = area.scrollTop > 500 ? 'flex' : 'none';
+    }
+
+    if (momentsLoading || momentsAllLoaded) return;
+    var scrollBottom = area.scrollHeight - area.scrollTop - area.clientHeight;
+    if (scrollBottom < 200) {
+        loadMoreMoments();
+    }
+}
+
+function scrollMomentsToTop() {
+    var area = document.getElementById('momentsScrollArea');
+    if (area) area.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function loadMoreMoments() {
+    if (momentsLoading || momentsAllLoaded) return;
+    momentsLoading = true;
+    momentsPage++;
+    
+    // 模拟加载动态（实际应调API）
+    var newMoments = generateMockMoments(momentsPage);
+    if (newMoments.length === 0) {
+        momentsAllLoaded = true;
+        var hint = document.getElementById('momentsBottomHint');
+        if (hint) hint.innerHTML = '<span style="color:#8e8e93;font-size:12px;">动态到底了</span>';
+    } else {
+        momentsData = momentsData.concat(newMoments);
+        renderMomentsFeed();
+    }
+    momentsLoading = false;
+}
+
+function generateMockMoments(page) {
+    if (page > 2) return [];
+    var mockTexts = [
+        '今天天气真好，适合出去走走。',
+        '分享一本最近在读的书，很有意思。',
+        '好久不见，大家都还好吗？最近在忙什么呢？有空一起出来聚聚吧。',
+        '新学的菜谱，第一次尝试，味道还不错。生活中的小确幸就藏在厨房里。',
+        '深夜加班中，只有咖啡陪伴。',
+        '周末愉快！享受难得的闲暇时光。'
+    ];
+    var result = [];
+    var count = page === 1 ? 4 : 3;
+    for (var i = 0; i < count; i++) {
+        var idx = Math.floor(Math.random() * mockTexts.length);
+        result.push({
+            id: 'm_' + Date.now() + '_' + i,
+            userName: '枝玉',
+            userAvatar: '枝',
+            text: mockTexts[idx],
+            images: [],
+            time: getRelativeTime(Date.now() - Math.floor(Math.random() * 86400000 * 7)),
+            location: Math.random() > 0.5 ? '上海' : '',
+            likes: Math.floor(Math.random() * 20),
+            comments: [],
+            liked: false
+        });
+    }
+    return result;
+}
+
+function getRelativeTime(timestamp) {
+    var now = Date.now();
+    var diff = now - timestamp;
+    if (diff < 60000) return '刚刚';
+    if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
+    var d = new Date(timestamp);
+    return (d.getMonth() + 1) + '.' + d.getDate() + ' ' + d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+}
+
+// ========== 渲染动态列表 ==========
+function renderMomentsFeed() {
+    var feed = document.getElementById('momentsFeed');
+    if (!feed) return;
+
+    var html = '';
+    momentsData.forEach(function(m) {
+        var imgHTML = '';
+        if (m.images && m.images.length > 0) {
+            imgHTML = renderMomentImages(m.images);
+        }
+        var locationHTML = m.location ? '<div class="moment-location">' + m.location + '</div>' : '';
+        var textClass = 'moment-text';
+        html += `
+            <div class="moment-card">
+                <div class="moment-header">
+                    <div class="moment-avatar">${m.userAvatar}</div>
+                    <div class="moment-user-info">
+                        <div class="moment-user-name">${m.userName}</div>
+                        <div class="moment-time">${m.time}${locationHTML ? ' · ' + m.location : ''}</div>
+                    </div>
+                </div>
+                <div class="${textClass}" id="text-${m.id}" onclick="toggleMomentText('${m.id}')">${m.text}</div>
+                ${imgHTML}
+                <div class="moment-actions">
+                    <span onclick="toggleLike('${m.id}')">${m.liked ? '♥' : '♡'} ${m.likes || 0}</span>
+                    <span onclick="openInteractPanel('${m.id}')">...</span>
+                </div>
+            </div>
+        `;
+    });
+    feed.innerHTML = html;
+
+    // 检查文字是否需要折叠
+    momentsData.forEach(function(m) {
+        checkTextOverflow('text-' + m.id, m.text);
+    });
+}
+
+function checkTextOverflow(id, fullText) {
+    setTimeout(function() {
+        var el = document.getElementById(id);
+        if (!el) return;
+        if (el.scrollHeight > el.clientHeight + 2) {
+            el.classList.add('collapsed');
+            el.setAttribute('data-full', fullText);
+            el.setAttribute('data-collapsed', 'true');
+        }
+    }, 100);
+}
+
+function toggleMomentText(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (el.classList.contains('collapsed')) {
+        el.classList.remove('collapsed');
+        el.textContent = el.getAttribute('data-full');
+    }
+}
+
+function renderMomentImages(images) {
+    var count = images.length;
+    var gridClass = 'moment-images grid-' + Math.min(count, 9);
+    var html = '<div class="' + gridClass + '">';
+    var max = Math.min(count, 9);
+    for (var i = 0; i < max; i++) {
+        html += '<div class="moment-image-item" onclick="event.stopPropagation(); openMomentImageViewer(\'' + images[i] + '\')" style="background-image:url(' + images[i] + ');background-size:cover;background-position:center;"></div>';
+    }
+    html += '</div>';
+    return html;
+}
+
+// ========== 点赞 ==========
+function toggleLike(momentId) {
+    var m = momentsData.find(function(item) { return item.id === momentId; });
+    if (!m) return;
+    m.liked = !m.liked;
+    m.likes = m.liked ? (m.likes || 0) + 1 : Math.max(0, (m.likes || 0) - 1);
+    renderMomentsFeed();
+}
+
+// ========== 互动面板 ==========
+let interactTargetId = null;
+
+function openInteractPanel(momentId) {
+    interactTargetId = momentId;
+    var panel = document.getElementById('momentsInteractPanel');
+    var body = document.getElementById('interactPanelBody');
+    if (!panel || !body) return;
+
+    var m = momentsData.find(function(item) { return item.id === momentId; });
+    if (!m) return;
+
+    var html = '';
+    html += '<div style="margin-bottom:12px;">';
+    html += '<span onclick="toggleLike(\'' + momentId + '\'); closeInteractPanel();" style="cursor:pointer;margin-right:16px;">' + (m.liked ? '♥ 已赞' : '♡ 点赞') + '</span>';
+    html += '<span style="color:#8e8e93;">' + (m.likes || 0) + '人赞过</span>';
+    html += '</div>';
+
+    // 评论区
+    html += '<div style="border-top:0.5px solid rgba(0,0,0,0.05);padding-top:8px;">';
+    if (m.comments && m.comments.length > 0) {
+        m.comments.forEach(function(c) {
+            html += '<div style="margin-bottom:6px;font-size:13px;"><b>' + c.user + '：</b>' + c.text + '</div>';
+        });
+    } else {
+        html += '<div style="color:#8e8e93;font-size:12px;">暂无评论</div>';
+    }
+    html += '</div>';
+
+    // 发表评论
+    html += '<div style="display:flex;gap:8px;margin-top:10px;">';
+    html += '<input type="text" id="interactCommentInput" class="chat-input" placeholder="写评论..." style="flex:1;height:32px;font-size:13px;">';
+    html += '<button class="black-btn" style="width:auto;padding:6px 14px;font-size:13px;margin:0;" onclick="submitComment(\'' + momentId + '\')">发送</button>';
+    html += '</div>';
+
+    body.innerHTML = html;
+    panel.classList.add('show');
+}
+
+function closeInteractPanel() {
+    var panel = document.getElementById('momentsInteractPanel');
+    if (panel) panel.classList.remove('show');
+    interactTargetId = null;
+}
+
+function submitComment(momentId) {
+    var input = document.getElementById('interactCommentInput');
+    if (!input || !input.value.trim()) return;
+    var m = momentsData.find(function(item) { return item.id === momentId; });
+    if (!m) return;
+    if (!m.comments) m.comments = [];
+    m.comments.push({ user: '我', text: input.value.trim() });
+    input.value = '';
+    openInteractPanel(momentId);
+    renderMomentsFeed();
+}
+
+// ========== 图片预览 ==========
+function openMomentImageViewer(src) {
+    var viewer = document.getElementById('momentsImageViewer');
+    var img = document.getElementById('momentsViewerImg');
+    if (!viewer || !img) return;
+    img.src = src;
+    viewer.style.display = 'flex';
+}
+
+function closeMomentsImageViewer() {
+    var viewer = document.getElementById('momentsImageViewer');
+    if (viewer) viewer.style.display = 'none';
+}
+
+// ========== 发布动态 ==========
+let publishImages = [];
+
+function openPublishModal() {
+    var overlay = document.getElementById('momentsPublishOverlay');
+    if (overlay) overlay.style.display = 'flex';
+}
+
+function closePublishModal() {
+    var overlay = document.getElementById('momentsPublishOverlay');
+    if (overlay) overlay.style.display = 'none';
+    document.getElementById('publishText').value = '';
+    publishImages = [];
+    document.getElementById('publishImagePreview').innerHTML = '';
+}
+
+function handlePublishImages(e) {
+    var files = e.target.files;
+    if (!files || files.length === 0) return;
+    for (var i = 0; i < Math.min(files.length, 9); i++) {
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+            publishImages.push(ev.target.result);
+            renderPublishImagePreview();
+        };
+        reader.readAsDataURL(files[i]);
+    }
+}
+
+function renderPublishImagePreview() {
+    var container = document.getElementById('publishImagePreview');
+    if (!container) return;
+    var html = '';
+    publishImages.forEach(function(src, idx) {
+        html += '<div style="width:60px;height:60px;background-image:url(' + src + ');background-size:cover;background-position:center;border-radius:8px;position:relative;display:inline-block;margin:4px;">';
+        html += '<span style="position:absolute;top:-6px;right:-6px;width:16px;height:16px;background:#ff3b30;color:#fff;border-radius:50%;font-size:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="removePublishImage(' + idx + ')">x</span>';
+        html += '</div>';
+    });
+    container.innerHTML = html;
+}
+
+function removePublishImage(idx) {
+    publishImages.splice(idx, 1);
+    renderPublishImagePreview();
+}
+
+function publishMoment() {
+    var text = document.getElementById('publishText').value.trim();
+    if (!text && publishImages.length === 0) {
+        showToast('请输入内容或添加图片');
+        return;
+    }
+
+    var newMoment = {
+        id: 'm_' + Date.now(),
+        userName: '我',
+        userAvatar: '我',
+        text: text || '',
+        images: publishImages.slice(),
+        time: '刚刚',
+        location: '',
+        likes: 0,
+        comments: [],
+        liked: false
+    };
+
+    momentsData.unshift(newMoment);
+    renderMomentsFeed();
+    closePublishModal();
+    showToast('发布成功');
+    var area = document.getElementById('momentsScrollArea');
+    if (area) area.scrollTo({ top: 0 });
+}
