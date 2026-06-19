@@ -1,7 +1,8 @@
 /**
  * 玉界 - 聊天软件 UI（精简版）
  * 包含：会话列表、聊天窗口、标签栏导航、心理状态窗、语音模式、语音消息、
- *       发送逻辑、长按气泡菜单、右上角+弹出菜单、添加好友页面、联系人列表、聊天详情半屏面板
+ *       发送逻辑、长按气泡菜单、右上角+弹出菜单、添加好友页面、
+ *       联系人列表（字母索引+拼音首字母）、编辑角色、聊天详情半屏面板
  * 附加功能已移至 chat_addons.js
  */
 
@@ -56,6 +57,50 @@ window._isVoiceMode = false;
 
 // ========== 添加好友头像数据 ==========
 let charAvatarData = '';
+
+// ========== 编辑角色头像数据 ==========
+let editAvatarData = '';
+
+// ========== 拼音首字母映射（常用汉字） ==========
+var _pinyinMap = null;
+function getPinyinFirstLetter(char) {
+    if (!/[^\u0000-\u00ff]/.test(char)) return char.toUpperCase();
+    if (!_pinyinMap) {
+        _pinyinMap = {};
+        var data = {
+            'A': '阿啊哀挨哎癌矮艾碍爱氨俺按案暗昂凹敖熬袄傲奥澳',
+            'B': '八巴扒吧疤拔把坝爸罢霸白百柏摆败拜班般颁斑搬板版扮拌伴半办帮傍棒包胞雹宝饱保堡报抱豹暴爆杯悲碑北贝备背倍被辈本奔鼻比彼笔鄙币必毕闭辟碧蔽壁避鞭边编扁便变遍辨辩标表别宾滨冰兵丙柄饼并病拨波玻剥播脖伯驳泊博薄卜补捕不布步部',
+            'C': '擦猜才材财采彩踩菜参餐残蚕惨灿仓苍舱藏操曹槽草册侧测策层叉插查茶察差拆柴产阐颤昌长肠尝偿常厂场畅倡唱抄超朝潮吵炒车彻撤尘臣沉陈衬称趁成呈承诚城乘惩程吃池驰迟持尺齿耻斥赤翅充冲崇抽仇绸愁筹酬丑初出除础储楚处触传船喘串窗床创吹垂春纯唇词慈辞磁此次从丛粗促醋窜催摧脆存寸措错',
+            'D': '达答打大呆代带待怠袋逮戴丹单担耽胆旦但诞弹淡蛋当挡党档刀导岛倒蹈到盗道稻得德地的灯登等低敌笛抵底地弟帝递第颠典点电店垫雕吊钓调掉跌叠碟蝶丁叮盯顶订定丢东冬懂动栋洞都斗抖陡豆督毒读独堵赌杜肚度渡端短段断锻堆队对吨蹲盾顿多夺躲惰',
+            'E': '鹅额恶饿恩儿而尔耳二',
+            'F': '发乏伐罚阀法帆番翻凡烦繁反返犯泛饭范方坊芳防妨房仿访纺放飞非菲肥匪废沸肺费分纷芬坟粉份奋愤丰风枫封疯峰锋蜂冯逢缝讽凤佛否夫肤扶服浮符幅福抚府辅腐父付妇负附复赴副傅富腹覆',
+            'G': '该改概盖干甘杆肝赶敢感刚岗纲钢港高稿告戈哥鸽割歌革阁格葛隔个各给根跟更耕工弓公功攻供宫恭巩共贡勾沟狗构购够估孤姑古谷股骨鼓固故顾瓜刮挂拐怪关观官冠馆管贯惯灌罐光广归龟规硅鬼柜贵桂滚棍锅国果过',
+            'H': '哈还孩海害含寒喊汉汗旱航豪好号浩耗喝合何和河核荷盒贺黑痕很狠恨哼恒横衡轰哄红宏虹洪鸿侯喉猴后候厚乎呼忽胡壶湖糊虎互户护花华滑化划画话怀坏欢还环缓幻换唤荒慌皇黄煌晃灰挥恢辉回毁悔汇会绘惠慧昏婚浑魂混活火伙或货获祸惑霍',
+            'J': '击机肌鸡积基激及吉级即急疾集籍几己挤计记纪技际剂季既继寄加夹佳家嘉甲假价驾架嫁尖坚间肩艰兼监减剪检简见件建剑健舰渐践鉴键箭江姜将浆讲奖降酱交郊娇浇骄胶焦角饺脚搅叫轿较教阶接揭街节劫杰洁结捷截竭姐解介戒届界借今斤金津筋仅紧尽劲近进晋浸禁京经惊晶睛精井景警净径竞竟敬境静镜纠久九酒旧救就舅拘居鞠局菊橘举矩句巨拒具俱剧据距惧锯聚捐卷倦决绝觉掘军均君菌俊峻',
+            'K': '卡开凯慨刊堪砍看康抗考烤靠科棵颗壳咳可渴克刻客课肯垦恳空孔恐控口扣枯哭苦库裤酷夸跨块快宽款狂况矿框亏葵愧溃昆困扩括阔',
+            'L': '拉喇腊蜡辣啦来赖兰栏蓝篮览懒烂滥郎狼廊朗浪劳牢老乐勒雷泪类累冷厘梨狸离李里理力历厉立丽利例隶粒连怜帘莲联廉脸练炼恋链良凉梁粮两亮辆量辽疗聊了料列劣烈猎裂邻林临淋灵铃陵零龄领另令刘流留硫柳六龙笼隆楼漏露卢芦炉鲁陆录鹿碌路驴旅铝履律率绿卵乱掠略伦轮论罗萝螺洛落',
+            'M': '妈麻马玛码骂吗买麦卖脉蛮满曼慢忙芒盲茫猫毛矛茅茂冒贸帽貌么没玫眉梅媒煤每美妹门闷们萌盟猛梦弥迷谜米密蜜眠绵棉免勉面苗描秒妙灭民敏名明鸣命摸模膜摩磨魔抹末沫陌莫漠墨默谋某母亩牡木目牧墓幕暮慕',
+            'N': '拿哪内那纳娜乃奶耐男南难囊挠恼脑闹呢嫩能尼泥你年念娘酿鸟尿捏您宁凝牛扭纽农浓弄奴努怒女暖挪诺',
+            'O': '欧偶',
+            'P': '爬帕怕拍排牌派攀盘判叛盼旁胖抛炮跑泡培赔佩配喷盆朋棚蓬鹏捧碰批皮疲脾匹屁譬片偏篇骗漂飘拼贫品平评凭苹瓶萍坡泼颇婆迫破剖扑铺朴普',
+            'Q': '七妻栖期欺齐其奇骑棋旗企启起气弃汽器恰千迁牵铅谦签前钱潜浅遣枪腔强墙抢悄敲乔桥瞧巧切茄且窃亲侵秦琴勤青轻倾清情晴庆穷丘秋求球区曲驱屈取去趣圈全权泉拳犬劝缺却雀确群',
+            'R': '然燃染让扰绕热人仁忍认任扔仍日绒荣容融柔肉如儒乳辱入软瑞锐润若弱',
+            'S': '撒洒塞赛三伞散桑扫色森杀沙纱傻晒山衫闪陕扇善伤商赏上尚梢烧稍少绍哨舌蛇舍设社射涉申伸身深神审婶肾甚渗慎升生声牲省圣盛剩尸失师诗施狮湿十什石时识实拾食史使始驶士氏世市示式事侍势视试饰室是适逝收手守首寿受兽售书叔殊梳舒疏输蔬熟暑属署鼠数术束述树竖恕庶数摔衰甩帅双爽谁水税睡顺瞬说丝司私思斯撕死四寺似饲松耸送搜艘苏俗诉肃素速宿塑酸蒜算虽随岁碎遂孙损缩所索锁',
+            'T': '他它她塌塔踏太态泰贪摊滩坛谈弹坦叹探汤唐堂塘糖躺趟涛掏逃桃陶讨套特疼腾藤剔梯踢提题体替天添田甜挑条跳贴铁厅听庭停挺通同桐铜童统筒痛偷头投透突图徒涂屠土吐兔团推腿退吞拖脱驼妥拓',
+            'W': '挖蛙娃瓦歪外弯丸完玩顽晚碗万汪王亡网往忘旺望危威微为围违唯维伟伪尾纬未味位畏胃喂温文纹闻蚊稳问翁窝我沃卧握乌污屋无吴五午伍武舞务物误悟雾',
+            'X': '西吸希析息牺悉惜晰稀溪锡熙习席袭洗喜戏系细虾瞎峡狭霞下吓夏仙先纤掀鲜闲弦咸显险县现线限宪陷献乡相香箱详享响想向巷象像橡削消萧销小晓孝效校笑些歇协邪胁斜携鞋写泄谢蟹心辛欣新信兴星刑行形醒杏性姓凶兄匈胸雄熊休修羞朽秀绣袖需虚须徐许序叙畜绪续宣旋选穴学雪血寻巡询循训迅',
+            'Y': '压呀鸦鸭牙芽崖哑雅亚咽烟淹延严言岩炎沿研盐颜衍掩眼演厌宴艳验焰扬羊阳杨洋仰养氧痒样腰邀摇遥咬药要耀爷也野业叶页夜液一衣医依仪宜姨移遗疑乙已以蚁椅义忆议异役译易益谊意毅因阴音吟银引饮隐印应英樱鹰迎盈营蝇赢影映硬拥永泳勇涌用优幽悠尤由犹邮油游友有又右幼诱于余鱼娱渔愉愚与宇羽雨语玉育狱浴预域欲遇御裕愈誉冤元园员原圆援缘源远怨院愿约月岳钥悦阅越云允孕运韵',
+            'Z': '杂灾栽载再在咱暂赞脏葬遭糟早枣澡造噪燥责择泽贼怎增赠扎渣炸摘宅窄债粘展占战站张章涨掌丈仗帐胀障招找召兆照罩遮折哲者这浙针侦珍真诊枕阵振镇震争征挣蒸整正证政之支只汁芝枝知织肢脂执直值职植止只纸指至志制治质致智置中忠终钟种众重州周洲轴宙骤朱珠诸猪竹逐主煮嘱住助注驻柱祝著筑抓专砖转赚庄桩装壮状追准捉桌着仔兹姿资滋子紫字自宗综总纵走奏租足族阻组祖钻嘴最罪醉尊遵昨左作坐座做'
+        };
+        for (var letter in data) {
+            var chars = data[letter];
+            for (var i = 0; i < chars.length; i++) {
+                _pinyinMap[chars.charAt(i)] = letter;
+            }
+        }
+    }
+    return _pinyinMap[char] || '#';    
+  }
 
 // ========== 初始化气泡菜单 ==========
 function initBubbleMenu() {
@@ -717,7 +762,7 @@ function menuTranslate() {
 
     const menu = document.getElementById('bubbleMenu');
     if (menu) menu.style.display = 'none';
- }           
+  }
 
 // ========== 右上角 + 弹出菜单 ==========
 function togglePlusMenu(e) {
@@ -1010,7 +1055,7 @@ window.addEventListener('DOMContentLoaded', function() {
     loadContactsFromStorage();
 });
 
-// ========== 联系人列表渲染（微信风格） ==========
+// ========== 联系人列表渲染（微信风格，拼音首字母分组） ==========
 function renderContactsList() {
     const listView = document.getElementById('chatListView');
     if (!listView) return;
@@ -1020,8 +1065,8 @@ function renderContactsList() {
     const groups = {};
     contacts.forEach(c => {
         const displayName = c.name || '';
-        const firstChar = displayName.charAt(0).toUpperCase();
-        const letter = /[A-Z]/.test(firstChar) ? firstChar : '#';
+        const firstChar = displayName.charAt(0);
+        const letter = getPinyinFirstLetter(firstChar);
         if (!groups[letter]) groups[letter] = [];
         groups[letter].push(c);
     });
@@ -1034,6 +1079,7 @@ function renderContactsList() {
 
     let html = '';
 
+    // 新的朋友入口
     html += `
         <div class="chat-list-item" onclick="showNewFriendsPageInList()">
             <div class="contacts-new-friend-avatar">
@@ -1064,6 +1110,7 @@ function renderContactsList() {
         });
     });
 
+    // 右侧字母索引
     let indexHTML = '<div class="contacts-index-bar">';
     sortedLetters.forEach(letter => {
         indexHTML += '<span class="contacts-index-letter" onclick="scrollToGroup(\'' + letter + '\')">' + letter + '</span>';
@@ -1099,6 +1146,20 @@ function showNewFriendsPageInList() {
     const listView = document.getElementById('chatListView');
     if (!listView) return;
 
+    // 切换导航栏
+    const titleEl = document.querySelector('.nav-title');
+    const backBtn = document.querySelector('.nav-back');
+    if (titleEl) titleEl.textContent = '新的朋友';
+    if (backBtn) {
+        backBtn.onclick = function() {
+            renderContactsList();
+            const tEl = document.querySelector('.nav-title');
+            const pBtn = document.querySelector('.nav-plus-btn');
+            if (tEl) tEl.textContent = '联系人';
+            if (pBtn) pBtn.style.display = '';
+        };
+    }
+
     const requests = getFriendRequests();
     const now = Date.now();
     const threeDaysAgo = now - 3 * 24 * 60 * 60 * 1000;
@@ -1111,7 +1172,7 @@ function showNewFriendsPageInList() {
     let html = '';
 
     if (recentRequests.length > 0) {
-        html += '<div class="contacts-section-title">三天前</div>';
+        html += '<div class="contacts-section-title">最近三天</div>';
         html += recentRequests.map(r => renderFriendRequestCardHTML(r)).join('');
     }
     if (monthRequests.length > 0) {
@@ -1129,6 +1190,10 @@ function showNewFriendsPageInList() {
 
     listView.innerHTML = html;
     listView.style.position = '';
+
+    listView.querySelectorAll('.contacts-section-title').forEach(title => {
+        title.style.cssText = 'background:#f2f2f7;padding:6px 16px;font-size:13px;color:#8e8e93;font-weight:500;';
+    });
 }
 
 function renderFriendRequestCardHTML(request) {
@@ -1154,7 +1219,105 @@ function renderFriendRequestCardHTML(request) {
             <span style="font-size:12px;color:#8e8e93;flex-shrink:0;">${statusIcon}${statusLabel}</span>
         </div>
     `;
- }        
+}
+
+// ========== 编辑角色人设页面 ==========
+function editContactPersona(contactId) {
+    const contact = window.ChatConfig.contacts.find(c => c.id === contactId);
+    if (!contact) return;
+
+    const appWindow = document.getElementById('chatAppWindow');
+    if (!appWindow) return;
+
+    appWindow.innerHTML = `
+        <div class="chat-shell">
+            <div class="chat-nav">
+                <div class="nav-status-bar"></div>
+                <div class="nav-body">
+                    <span class="nav-back" onclick="switchChatTab('contacts', document.querySelector('.tab-item:nth-child(2)'))">‹</span>
+                    <span class="nav-title">编辑角色</span>
+                </div>
+            </div>
+            <div style="flex:1;overflow-y:auto;padding:16px;background:#f2f2f7;">
+
+                <div class="settings-section-title">角色头像</div>
+                <div class="glass-card" style="text-align:center;">
+                    <div id="editAvatarPreview" style="width:80px;height:80px;border-radius:40px;background:#e5e5ea;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:32px;color:#8e8e93;cursor:pointer;background-size:cover;background-position:center;${contact.avatarData ? 'background-image:url(' + contact.avatarData + ');' : ''}" onclick="document.getElementById('editAvatarInput').click()">${contact.avatarData ? '' : contact.avatar}</div>
+                    <input type="file" id="editAvatarInput" accept="image/*" style="display:none;" onchange="updateEditAvatar(event)">
+                    <div style="font-size:11px;color:#8e8e93;">点击更换头像</div>
+                </div>
+
+                <div class="settings-section-title">角色名称</div>
+                <div class="glass-card">
+                    <input type="text" id="editCharName" class="search-input" value="${contact.name}" placeholder="角色名称">
+                </div>
+
+                <div class="settings-section-title">角色人设</div>
+                <div class="glass-card">
+                    <textarea id="editCharPersona" style="width:100%;height:250px;background:rgba(255,255,255,0.6);border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:12px;font-size:14px;font-family:inherit;resize:none;outline:none;color:#000;line-height:1.6;">${contact.persona || ''}</textarea>
+                </div>
+
+                <button class="black-btn" onclick="saveContactEdit('${contactId}')" style="margin-top:16px;">保存修改</button>
+                <button class="white-btn" onclick="deleteContactFromEdit('${contactId}')" style="border-color:#ff3b30;color:#ff3b30;">删除角色</button>
+            </div>
+        </div>
+    `;
+}
+
+function updateEditAvatar(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        editAvatarData = ev.target.result;
+        const preview = document.getElementById('editAvatarPreview');
+        if (preview) {
+            preview.style.backgroundImage = `url(${ev.target.result})`;
+            preview.innerText = '';
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+function saveContactEdit(contactId) {
+    const name = document.getElementById('editCharName').value.trim();
+    const persona = document.getElementById('editCharPersona').value.trim();
+
+    if (!name) { showToast('请填写角色名称'); return; }
+
+    const contact = window.ChatConfig.contacts.find(c => c.id === contactId);
+    if (contact) {
+        contact.name = name;
+        contact.avatar = name.charAt(0);
+        if (editAvatarData) contact.avatarData = editAvatarData;
+        if (persona) contact.persona = persona;
+        saveContactsToStorage();
+        showToast('角色信息已更新');
+        switchChatTab('contacts', document.querySelector('.tab-item:nth-child(2)'));
+    }
+}
+
+function deleteContactFromEdit(contactId) {
+    if (confirm('确定删除该角色？删除后可从聊天记录中恢复。')) {
+        const contact = window.ChatConfig.contacts.find(c => c.id === contactId);
+        if (contact) {
+            const requests = getFriendRequests();
+            requests.push({
+                contactId: contactId,
+                name: contact.name,
+                message: '我重新申请添加你为好友',
+                status: 'pending',
+                timestamp: Date.now()
+            });
+            saveFriendRequests(requests);
+        }
+
+        window.ChatConfig.contacts = window.ChatConfig.contacts.filter(c => c.id !== contactId);
+        saveContactsToStorage();
+        showToast('角色已删除');
+        switchChatTab('contacts', document.querySelector('.tab-item:nth-child(2)'));
+    }
+}
 
 // ========== 聊天详情半屏面板 ==========
 function openChatSettings() {
