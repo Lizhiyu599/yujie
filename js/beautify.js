@@ -627,7 +627,7 @@ function handleClearBeautify() {
         registeredAppIcons.forEach((_, idx) => resetAppIcon(idx));
         clearBeautifyClicks = 0; btn.innerText = "清空所有美化"; btn.style.backgroundColor = "#fff"; btn.style.color = "#ff3b30";
         alert("所有美化已清空。");
-    }
+    }  
 }
 
 // ===== 顶部状态栏时钟 =====
@@ -640,38 +640,15 @@ function updateTopBarClock() {
 }
 function startTopBarClock() { if (topBarClockInterval) clearInterval(topBarClockInterval); updateTopBarClock(); topBarClockInterval = setInterval(updateTopBarClock, 1000); }
 function applyTopBarVisibility() {
-    const el = document.getElementById('topStatusBar');
-    if (el) el.style.display = (localStorage.getItem('beautify_top_info') === 'false') ? 'none' : 'block';
+    var el = document.getElementById('topStatusBar');
+    var right = document.getElementById('topStatusRight');
+    var hidden = localStorage.getItem('beautify_top_info') === 'false';
+    if (el) el.style.display = hidden ? 'none' : 'block';
+    if (right) right.style.display = hidden ? 'none' : 'flex';
 }
 function updateClockDisplay() { localStorage.setItem('beautify_12hr', document.getElementById('sw-12hr').checked); updateTopBarClock(); }
 
-// ===== 初始化美化面板 =====
-function initBeautify() { renderBeautifyIcons(); loadSavedIcons(); loadSavedWallpaper(); }
-
-// ===== 注册美化图标到 Dock =====
-window.addEventListener('DOMContentLoaded', () => {
-    if (typeof registerModal === 'function') registerModal('beautifyModal', '美化', beautifyHTML);
-    if (typeof renderAllModals === 'function') renderAllModals();
-    startTopBarClock();
-    applyTopBarVisibility();
-    loadSavedWallpaper();
-    applyCustomCSS();
-
-    const dockBar = document.getElementById('dockBar');
-    if (!dockBar) return;
-
-    const beautifyItem = document.createElement('div');
-    beautifyItem.className = 'dock-item';
-    beautifyItem.innerHTML = '<div class="dock-icon"><div class="dock-icon-img">美</div></div><div class="dock-label">美化</div>';
-    beautifyItem.onclick = () => {
-        initBeautify();
-        openModal('beautifyModal');
-        setTimeout(() => { loadCustomWidgetPreviews(); }, 500);
-    };
-    dockBar.appendChild(beautifyItem);
-});
-
- // ========== 电量实时更新 ==========
+// ===== 电量实时更新 =====
 function updateBatteryFill() {
     var fill = document.querySelector('.battery-fill');
     var percent = document.getElementById('batteryPercent');
@@ -712,3 +689,30 @@ startTopBarClock = function() {
     updateBatteryFill();
     setInterval(updateBatteryFill, 30000);
 };
+
+// ===== 初始化美化面板 =====
+function initBeautify() { renderBeautifyIcons(); loadSavedIcons(); loadSavedWallpaper(); }
+
+// ===== 注册美化图标到 Dock =====
+window.addEventListener('DOMContentLoaded', () => {
+    if (typeof registerModal === 'function') registerModal('beautifyModal', '美化', beautifyHTML);
+    if (typeof renderAllModals === 'function') renderAllModals();
+    startTopBarClock();
+    applyTopBarVisibility();
+    loadSavedWallpaper();
+    applyCustomCSS();
+
+    const dockBar = document.getElementById('dockBar');
+    if (!dockBar) return;
+
+    const beautifyItem = document.createElement('div');
+    beautifyItem.className = 'dock-item';
+    beautifyItem.innerHTML = '<div class="dock-icon"><div class="dock-icon-img">美</div></div><div class="dock-label">美化</div>';
+    beautifyItem.onclick = () => {
+        initBeautify();
+        openModal('beautifyModal');
+        setTimeout(() => { loadCustomWidgetPreviews(); }, 500);
+    };
+    dockBar.appendChild(beautifyItem);
+});
+
