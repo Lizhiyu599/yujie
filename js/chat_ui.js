@@ -2,7 +2,7 @@
  * 玉界 - 聊天软件 UI（精简版）
  * 包含：会话列表、聊天窗口、标签栏导航、心理状态窗、语音模式、语音消息、
  *       发送逻辑、长按气泡菜单、右上角+弹出菜单、添加好友页面、
- *       联系人列表（字母索引+拼音首字母）、编辑角色、聊天详情半屏面板
+ *       联系人列表（字母索引+拼音首字母）、编辑角色、动态页面、聊天详情半屏面板
  * 附加功能已移至 chat_addons.js
  */
 
@@ -68,28 +68,28 @@ function getPinyinFirstLetter(char) {
     if (!_pinyinMap) {
         _pinyinMap = {};
         var data = {
-            'A': '阿啊哀艾爱氨按案暗凹傲奥',
-            'B': '八巴扒吧疤拔把坝罢霸白百柏摆败拜班般颁斑搬板版扮拌伴半办帮傍棒包胞雹宝饱保堡报抱豹暴爆杯悲碑北贝备背倍被辈本奔鼻比彼笔鄙币必毕闭辟碧蔽壁避鞭边编扁便变遍辨辩标表别宾滨冰兵丙柄饼并病拨波玻剥播脖伯驳泊博薄卜补捕不布步部',
-            'C': '擦猜才材财采彩踩菜参餐残蚕惨灿仓苍舱藏操曹槽草册侧测策层叉插查茶察差拆柴产阐颤昌长肠尝偿常厂场畅倡唱抄超朝潮吵炒车彻撤尘臣沉陈衬称趁成呈承诚城乘惩程吃池驰迟持尺齿耻斥赤翅充冲崇抽仇绸愁筹酬丑初出除础储楚处触传船喘串窗床创吹垂春纯唇词慈辞磁此次从丛粗促醋窜催摧脆存寸措错崇',
-            'D': '达迪答打大呆代带待怠袋逮戴丹单担耽胆旦但诞弹淡蛋当挡党档刀导岛倒蹈到盗道稻得德地的灯登等低敌笛抵底地弟帝递第颠典点电店垫雕吊钓调掉跌叠碟蝶丁叮盯顶订定丢东冬懂动栋洞都斗抖陡豆督毒读独堵赌杜肚度渡端短段断锻堆队对吨蹲盾顿多夺躲惰',
-            'E': '鹅额恶饿俄愕恩儿而尔耳二',
+            'A': '阿啊哀挨哎癌矮艾碍爱氨俺按案暗昂凹敖熬袄傲奥澳',
+            'B': '八巴扒吧疤拔把坝爸罢霸白百柏摆败拜班般颁斑搬板版扮拌伴半办帮傍棒包胞雹宝饱保堡报抱豹暴爆杯悲碑北贝备背倍被辈本奔鼻比彼笔鄙币必毕闭辟碧蔽壁避鞭边编扁便变遍辨辩标表别宾滨冰兵丙柄饼并病拨波玻剥播脖伯驳泊博薄卜补捕不布步部',
+            'C': '擦猜才材财采彩踩菜参餐残蚕惨灿仓苍舱藏操曹槽草册侧测策层叉插查茶察差拆柴产阐颤昌长肠尝偿常厂场畅倡唱抄超朝潮吵炒车彻撤尘臣沉陈衬称趁成呈承诚城乘惩程吃池驰迟持尺齿耻斥赤翅充冲崇抽仇绸愁筹酬丑初出除础储楚处触传船喘串窗床创吹垂春纯唇词慈辞磁此次从丛粗促醋窜催摧脆存寸措错',
+            'D': '达答打大呆代带待怠袋逮戴丹单担耽胆旦但诞弹淡蛋当挡党档刀导岛倒蹈到盗道稻得德地的灯登等低敌笛抵底地弟帝递第颠典点电店垫雕吊钓调掉跌叠碟蝶丁叮盯顶订定丢东冬懂动栋洞都斗抖陡豆督毒读独堵赌杜肚度渡端短段断锻堆队对吨蹲盾顿多夺躲惰',
+            'E': '鹅额恶饿恩儿而尔耳二',
             'F': '发乏伐罚阀法帆番翻凡烦繁反返犯泛饭范方坊芳防妨房仿访纺放飞非菲肥匪废沸肺费分纷芬坟粉份奋愤丰风枫封疯峰锋蜂冯逢缝讽凤佛否夫肤扶服浮符幅福抚府辅腐父付妇负附复赴副傅富腹覆',
-            'G': '顾骨沽炅甘苟该改概盖干甘杆肝赶敢感刚岗纲钢港高稿告戈哥鸽割歌革阁格葛隔个各给根跟更耕工弓公功攻供宫恭巩共贡勾沟狗构购够估孤姑古谷股骨鼓固故顾瓜刮挂拐怪关观官冠馆管贯惯灌罐光广归龟规硅鬼柜贵桂滚棍锅国果过',
-            'H': '禾惠荒浣哈还孩海害含寒喊汉汗旱航豪好号浩耗喝合何和河核荷盒贺黑痕很狠恨哼恒横衡轰哄红宏虹洪鸿侯喉猴后候厚乎呼忽胡壶湖糊虎互户护花华滑化划画话怀坏欢还环缓幻换唤荒慌皇黄煌晃灰挥恢辉回毁悔汇会绘惠慧昏婚浑魂混活火伙或货获祸惑霍',
-            'J': '姐洁姬茭皎谨莒鞠婧击机肌鸡积基激及吉级即急疾集籍几己挤计记纪技际剂季既继寄加夹佳家嘉甲假价驾架嫁尖坚间肩艰兼监减剪检简见件建剑健舰渐践鉴键箭江姜将浆讲奖降酱交郊娇浇骄胶焦角饺脚搅叫轿较教阶接揭街节劫杰洁结捷截竭姐解介戒届界借今斤金津筋仅紧尽劲近进晋浸禁京经惊晶睛精井景警净径竞竟敬境静镜纠久九酒旧救就舅拘居鞠局菊橘举矩句巨拒具俱剧据距惧锯聚捐卷倦决绝觉掘军均君菌俊峻',
-            'K': '柯卡葵开凯慨刊堪砍看康抗考烤靠科棵颗壳咳可渴克刻客课肯垦恳空孔恐控口扣枯哭苦库裤酷夸跨块快宽款狂况矿框亏葵愧溃昆困扩括阔',
-            'L': '骆罗霖凌绫黎陆路璐鹿厉励拉喇腊严谨蜡辣啦来赖兰栏蓝篮览懒烂滥郎狼廊朗浪劳牢老乐勒雷泪类累冷厘梨狸离李里理力历厉立丽利例隶粒连怜帘莲联廉脸练炼恋链良凉梁粮两亮辆量辽疗聊了料列劣烈猎裂邻林临淋灵铃陵零龄领另令刘流留硫柳六龙笼隆楼漏露卢芦炉鲁录鹿碌驴旅铝履律率绿卵乱掠略伦轮论罗萝螺洛落',
-            'M': '芈弭卯弥宓牧妈麻马玛码骂吗买麦卖脉蛮满曼慢忙芒盲茫猫毛矛茅茂冒贸帽貌么没玫眉梅媒煤每美妹门闷们萌盟猛梦弥迷谜洣米密蜜眠绵棉免勉面苗描秒妙灭民敏名明鸣命摸模膜摩磨魔抹末沫陌莫漠墨默谋某母亩牡木目牧墓幕暮慕',
-            'N': '佴倪尼拿哪内那纳娜乃奶耐男南难囊挠恼脑闹呢嫩能尼泥你年念娘酿鸟尿捏您宁凝牛扭纽农浓弄奴努怒女暖挪诺',
-            'O': '讴鸥欧偶藕',
-            'P': '爬浦泮朴普蒲帕怕拍排牌派攀盘判叛盼旁胖抛炮跑泡培赔佩配喷盆朋棚蓬鹏捧碰批皮疲脾匹屁譬片偏篇骗漂飘拼贫品平评凭苹瓶萍坡泼颇婆迫破剖扑铺朴普',
-            'Q': '秦祁戚瞿麒羌卿七妻栖期欺齐其奇骑棋旗企启起气弃汽器恰千迁牵铅谦签前钱潜浅遣枪腔强墙抢悄敲乔桥瞧巧切茄且窃亲侵秦琴勤青轻倾清情晴庆穷丘秋求球区曲驱屈取去趣圈全权泉拳犬劝缺却雀确群',
-            'R': '沈阮苒冉姌珃然燃染让扰绕热人仁忍认任扔仍日绒荣容融柔肉如儒乳辱入软瑞锐润若弱',
-            'S': '司沈撒洒塞赛三伞散桑扫色森杀沙纱傻晒山衫闪陕扇善伤商赏上尚梢烧稍少绍哨舌蛇舍设社射涉申伸身深神审婶肾甚渗慎升生声牲省圣盛剩尸失师诗施狮湿十什石时识实拾食史使始驶士氏世市示式事侍势视试饰室是适逝收手守首寿受兽售书叔殊梳舒疏输蔬熟暑属署鼠数术束述树竖恕庶数摔衰甩帅双爽谁水税睡顺瞬说丝司私思斯撕死四寺似饲松耸送搜艘苏俗诉肃素速宿塑酸蒜算虽随岁碎遂孙损缩所索锁',
-            'T': '他檀涂屠它她塌塔踏太态泰贪摊滩坛谈弹坦叹探汤唐堂塘糖躺趟涛掏逃桃陶讨套特疼腾藤剔梯踢提题体替天添田甜挑条跳贴铁厅听庭停挺通同桐铜童统筒痛偷头投透突图徒涂屠土吐兔团推腿退吞拖脱驼妥拓',
-            'W': '挖沃邬隗蛙娃瓦歪外弯丸完玩顽晚碗万汪王亡网往忘旺望危威围违唯维伟伪尾纬未味位畏胃喂温文纹闻蚊稳问翁窝我沃卧握乌污屋无吴五午伍武舞务物误悟雾',
-            'X': '瑄喧宣小夏肖萧魈西吸希析息牺悉惜晰稀溪锡熙习席袭洗喜戏系细虾瞎峡狭霞下吓仙先纤掀鲜闲弦咸显险县现线限宪陷献乡相香箱详享响想向巷象像橡削消销小晓孝效校笑些歇协邪胁斜携鞋写泄谢蟹心辛欣新信兴星刑行形醒杏性姓凶兄匈胸雄熊休修羞朽秀绣袖需虚须徐许序叙畜绪续宣旋选穴学雪血寻巡询循训迅',
-            'Y': '叶荧压呀鸦鸭牙芽崖哑雅亚咽烟淹延严言岩炎沿研盐颜衍掩眼演厌宴艳验焰扬羊阳杨洋仰养氧痒样腰邀摇遥咬药要耀爷也野业叶页夜液一衣医依仪宜姨移遗疑乙已以蚁椅义忆议异役译易益谊意毅因阴音吟银引饮隐印应英樱鹰迎盈营蝇赢影映硬拥永泳勇涌用优幽悠尤由犹邮油游友有又右幼诱于余鱼娱渔愉愚与宇羽雨语玉育狱浴预域欲遇御裕愈誉冤元园员原圆援缘源远怨院愿约月岳钥悦阅越云允孕运韵',
+            'G': '该改概盖干甘杆肝赶敢感刚岗纲钢港高稿告戈哥鸽割歌革阁格葛隔个各给根跟更耕工弓公功攻供宫恭巩共贡勾沟狗构购够估孤姑古谷股骨鼓固故顾瓜刮挂拐怪关观官冠馆管贯惯灌罐光广归龟规硅鬼柜贵桂滚棍锅国果过',
+            'H': '哈还孩海害含寒喊汉汗旱航豪好号浩耗喝合何和河核荷盒贺黑痕很狠恨哼恒横衡轰哄红宏虹洪鸿侯喉猴后候厚乎呼忽胡壶湖糊虎互户护花华滑化划画话怀坏欢还环缓幻换唤荒慌皇黄煌晃灰挥恢辉回毁悔汇会绘惠慧昏婚浑魂混活火伙或货获祸惑霍',
+            'J': '击机肌鸡积基激及吉级即急疾集籍几己挤计记纪技际剂季既继寄加夹佳家嘉甲假价驾架嫁尖坚间肩艰兼监减剪检简见件建剑健舰渐践鉴键箭江姜将浆讲奖降酱交郊娇浇骄胶焦角饺脚搅叫轿较教阶接揭街节劫杰洁结捷截竭姐解介戒届界借今斤金津筋仅紧尽劲近进晋浸禁京经惊晶睛精井景警净径竞竟敬境静镜纠久九酒旧救就舅拘居鞠局菊橘举矩句巨拒具俱剧据距惧锯聚捐卷倦决绝觉掘军均君菌俊峻',
+            'K': '卡开凯慨刊堪砍看康抗考烤靠科棵颗壳咳可渴克刻客课肯垦恳空孔恐控口扣枯哭苦库裤酷夸跨块快宽款狂况矿框亏葵愧溃昆困扩括阔',
+            'L': '拉喇腊蜡辣啦来赖兰栏蓝篮览懒烂滥郎狼廊朗浪劳牢老乐勒雷泪类累冷厘梨狸离李里理力历厉立丽利例隶粒连怜帘莲联廉脸练炼恋链良凉梁粮两亮辆量辽疗聊了料列劣烈猎裂邻林临淋灵铃陵零龄领另令刘流留硫柳六龙笼隆楼漏露卢芦炉鲁陆录鹿碌路驴旅铝履律率绿卵乱掠略伦轮论罗萝螺洛落',
+            'M': '妈麻马玛码骂吗买麦卖脉蛮满曼慢忙芒盲茫猫毛矛茅茂冒贸帽貌么没玫眉梅媒煤每美妹门闷们萌盟猛梦弥迷谜米密蜜眠绵棉免勉面苗描秒妙灭民敏名明鸣命摸模膜摩磨魔抹末沫陌莫漠墨默谋某母亩牡木目牧墓幕暮慕',
+            'N': '拿哪内那纳娜乃奶耐男南难囊挠恼脑闹呢嫩能尼泥你年念娘酿鸟尿捏您宁凝牛扭纽农浓弄奴努怒女暖挪诺',
+            'O': '欧偶',
+            'P': '爬帕怕拍排牌派攀盘判叛盼旁胖抛炮跑泡培赔佩配喷盆朋棚蓬鹏捧碰批皮疲脾匹屁譬片偏篇骗漂飘拼贫品平评凭苹瓶萍坡泼颇婆迫破剖扑铺朴普',
+            'Q': '七妻栖期欺齐其奇骑棋旗企启起气弃汽器恰千迁牵铅谦签前钱潜浅遣枪腔强墙抢悄敲乔桥瞧巧切茄且窃亲侵秦琴勤青轻倾清情晴庆穷丘秋求球区曲驱屈取去趣圈全权泉拳犬劝缺却雀确群',
+            'R': '然燃染让扰绕热人仁忍认任扔仍日绒荣容融柔肉如儒乳辱入软瑞锐润若弱',
+            'S': '撒洒塞赛三伞散桑扫色森杀沙纱傻晒山衫闪陕扇善伤商赏上尚梢烧稍少绍哨舌蛇舍设社射涉申伸身深神审婶肾甚渗慎升生声牲省圣盛剩尸失师诗施狮湿十什石时识实拾食史使始驶士氏世市示式事侍势视试饰室是适逝收手守首寿受兽售书叔殊梳舒疏输蔬熟暑属署鼠数术束述树竖恕庶数摔衰甩帅双爽谁水税睡顺瞬说丝司私思斯撕死四寺似饲松耸宋送搜艘苏俗诉肃素速宿塑酸蒜算虽随岁碎遂孙损缩所索锁',
+            'T': '他它她塌塔踏太态泰贪摊滩坛谈弹坦叹探汤唐堂塘糖躺趟涛掏逃桃陶讨套特疼腾藤剔梯踢提题体替天添田甜挑条跳贴铁厅听庭停挺通同桐铜童统筒痛偷头投透突图徒涂屠土吐兔团推腿退吞拖脱驼妥拓',
+            'W': '挖蛙娃瓦歪外弯丸完玩顽晚碗万汪王亡网往忘旺望危威微为围违唯维伟伪尾纬未味位畏胃喂温文纹闻蚊稳问翁窝我沃卧握乌污屋无吴五午伍武舞务物误悟雾',
+            'X': '西吸希析息牺悉惜晰稀溪锡熙习席袭洗喜戏系细虾瞎峡狭霞下吓夏仙先纤掀鲜闲弦咸显险县现线限宪陷献乡相香箱详享响想向巷象像橡削消萧销小晓孝效校笑些歇协邪胁斜携鞋写泄谢蟹心辛欣新信兴星刑行形醒杏性姓凶兄匈胸雄熊休修羞朽秀绣袖需虚须徐许序叙畜绪续宣旋选穴学雪血寻巡询循训迅',
+            'Y': '压呀鸦鸭牙芽崖哑雅亚咽烟淹延严言岩炎沿研盐颜衍掩眼演厌宴艳验焰扬羊阳杨洋仰养氧痒样腰邀摇遥咬药要耀爷也野业叶页夜液一衣医依仪宜姨移遗疑乙已以蚁椅义忆议异役译易益谊意毅因阴音吟银引饮隐印应英樱鹰迎盈营蝇赢影映硬拥永泳勇涌用优幽悠尤由犹邮油游友有又右幼诱于余鱼娱渔愉愚与宇羽雨语玉育狱浴预域欲遇御裕愈誉冤元园员原圆援缘源远怨院愿约月岳钥悦阅越云允孕运韵',
             'Z': '杂灾栽载再在咱暂赞脏葬遭糟早枣澡造噪燥责择泽贼怎增赠扎渣炸摘宅窄债粘展占战站张章涨掌丈仗帐胀障招找召兆照罩遮折哲者这浙针侦珍真诊枕阵振镇震争征挣蒸整正证政之支只汁芝枝知织肢脂执直值职植止只纸指至志制治质致智置中忠终钟种众重州周洲轴宙骤朱珠诸猪竹逐主煮嘱住助注驻柱祝著筑抓专砖转赚庄桩装壮状追准捉桌着仔兹姿资滋子紫字自宗综总纵走奏租足族阻组祖钻嘴最罪醉尊遵昨左作坐座做'
         };
         for (var letter in data) {
@@ -100,7 +100,7 @@ function getPinyinFirstLetter(char) {
         }
     }
     return _pinyinMap[char] || '#';
- }
+}
 
 // ========== 初始化气泡菜单 ==========
 function initBubbleMenu() {
@@ -236,7 +236,7 @@ function switchChatTab(tab, el) {
         case 'moments':
             if (plusBtn) plusBtn.style.display = 'none';
             if (titleEl) titleEl.textContent = '动态';
-           showMomentsPage();
+            showMomentsPage();
             break;
         case 'me':
             if (plusBtn) plusBtn.style.display = 'none';
@@ -762,7 +762,7 @@ function menuTranslate() {
 
     const menu = document.getElementById('bubbleMenu');
     if (menu) menu.style.display = 'none';
- }
+}     
 
 // ========== 右上角 + 弹出菜单 ==========
 function togglePlusMenu(e) {
@@ -1224,7 +1224,7 @@ function renderFriendRequestCardHTML(request) {
 function backToContactsFromEdit() {
     const appWindow = document.getElementById('chatAppWindow');
     if (!appWindow) return;
-    
+
     appWindow.innerHTML = `
         <div class="chat-shell">
             <div class="chat-nav">
@@ -1244,11 +1244,11 @@ function backToContactsFromEdit() {
             </div>
         </div>
     `;
-    
+
     renderContactsList();
 }
 
-// ========== 编辑角色人设页面（和添加好友同款样式） ==========
+// ========== 编辑角色人设页面 ==========
 function editContactPersona(contactId) {
     const contact = window.ChatConfig.contacts.find(c => c.id === contactId);
     if (!contact) return;
@@ -1258,7 +1258,6 @@ function editContactPersona(contactId) {
 
     editAvatarData = '';
 
-    // 解析现有人设
     var existingName = contact.name || '';
     var existingNote = '';
     var existingGender = '女';
@@ -1299,26 +1298,23 @@ function editContactPersona(contactId) {
             </div>
             <div style="flex:1;overflow-y:auto;padding:16px;background:#f2f2f7;">
 
-                <!-- 头像 -->
-                <div style="text-align:center;margin-bottom:20px;">
+                <div class="settings-section-title">角色头像</div>
+                <div class="glass-card" style="text-align:center;">
                     <div id="editAvatarPreview" style="width:80px;height:80px;border-radius:40px;background:#e5e5ea;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:32px;color:#8e8e93;cursor:pointer;background-size:cover;background-position:center;${contact.avatarData ? 'background-image:url(' + contact.avatarData + ');' : ''}" onclick="document.getElementById('editAvatarInput').click()">${contact.avatarData ? '' : contact.avatar}</div>
                     <input type="file" id="editAvatarInput" accept="image/*" style="display:none;" onchange="updateEditAvatar(event)">
                     <div style="font-size:11px;color:#8e8e93;">点击更换头像</div>
                 </div>
 
-                <!-- 姓名 -->
-                <div class="settings-section-title">姓名</div>
+                <div class="settings-section-title">角色名称</div>
                 <div class="glass-card">
-                    <input type="text" id="editCharName" class="search-input" value="${existingName}" placeholder="角色姓名">
+                    <input type="text" id="editCharName" class="search-input" value="${existingName}" placeholder="角色名称">
                 </div>
 
-                <!-- 备注 -->
                 <div class="settings-section-title">备注</div>
                 <div class="glass-card">
                     <input type="text" id="editCharNote" class="search-input" value="${existingNote}" placeholder="请输入你给角色的备注">
                 </div>
 
-                <!-- 性别 -->
                 <div class="settings-section-title">性别</div>
                 <div class="glass-card">
                     <div style="display:flex;gap:16px;align-items:center;">
@@ -1334,25 +1330,21 @@ function editContactPersona(contactId) {
                     </div>
                 </div>
 
-                <!-- 年龄 -->
                 <div class="settings-section-title">年龄</div>
                 <div class="glass-card">
                     <input type="text" id="editCharAge" class="search-input" value="${existingAge}" placeholder="请输入该角色的年龄">
                 </div>
 
-                <!-- 性格 -->
                 <div class="settings-section-title">性格</div>
                 <div class="glass-card">
                     <textarea id="editCharPersonality" style="width:100%;height:100px;background:rgba(255,255,255,0.6);border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:12px;font-size:14px;font-family:inherit;resize:none;outline:none;color:#000;line-height:1.6;" placeholder="请输入该角色的性格、人格类型、语言风格">${existingPersonality}</textarea>
                 </div>
 
-                <!-- 背景故事 -->
                 <div class="settings-section-title">背景故事</div>
                 <div class="glass-card">
                     <textarea id="editCharBackground" style="width:100%;height:100px;background:rgba(255,255,255,0.6);border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:12px;font-size:14px;font-family:inherit;resize:none;outline:none;color:#000;line-height:1.6;" placeholder="请输入该角色的人生经历、原生家庭、与你如何相识">${existingBackground}</textarea>
                 </div>
 
-                <!-- 外貌描述 -->
                 <div class="settings-section-title">外貌描述</div>
                 <div class="glass-card">
                     <textarea id="editCharAppearance" style="width:100%;height:100px;background:rgba(255,255,255,0.6);border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:12px;font-size:14px;font-family:inherit;resize:none;outline:none;color:#000;line-height:1.6;" placeholder="请输入该角色的外貌描述，用于引导生图API，未配置可填可不填">${existingAppearance}</textarea>
@@ -1365,7 +1357,6 @@ function editContactPersona(contactId) {
         </div>
     `;
 
-    // 初始化性别单选样式
     setTimeout(updateEditGenderRadio, 50);
 }
 
@@ -1452,6 +1443,455 @@ function deleteContactFromEdit(contactId) {
         saveContactsToStorage();
         showToast('角色已删除');
         backToContactsFromEdit();
+     }
+}
+
+// ========== 动态页面 ==========
+let momentsData = [];
+let momentsPage = 0;
+let momentsLoading = false;
+let momentsAllLoaded = false;
+let momentsCoverBg = localStorage.getItem('moments_cover_bg') || '';
+let publishImages = [];
+let publishLocation = '';
+
+function showMomentsPage() {
+    const appWindow = document.getElementById('chatAppWindow');
+    if (!appWindow) return;
+
+    appWindow.innerHTML = `
+        <div class="chat-shell" style="background:#f2f2f7;">
+            <div class="chat-nav" style="background:rgba(255,255,255,0.7);">
+                <div class="nav-status-bar"></div>
+                <div class="nav-body">
+                    <span class="nav-back" onclick="renderChatShell()">‹</span>
+                    <span class="nav-title">动态</span>
+                </div>
+            </div>
+            <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;" id="momentsScrollArea" onscroll="handleMomentsScroll()">
+                <div class="moments-cover" id="momentsCover" onclick="changeMomentsCover()" style="background-image:url(${momentsCoverBg});">
+                    <div class="moments-cover-gradient"></div>
+                    <div class="moments-cover-info">
+                        <span class="moments-cover-name" id="momentsCoverName">用户</span>
+                        <div class="moments-cover-avatar" id="momentsCoverAvatar"></div>
+                    </div>
+                    <div class="moments-publish-btn" onclick="event.stopPropagation(); openPublishModal()">
+                        <span class="publish-icon-body"></span>
+                        <span class="publish-icon-lens"></span>
+                    </div>
+                </div>
+                <div class="moments-feed" id="momentsFeed"></div>
+                <div class="moments-bottom-hint" id="momentsBottomHint"></div>
+            </div>
+            <div class="moments-back-top" id="momentsBackTop" onclick="scrollMomentsToTop()">↑</div>
+        </div>
+        <div class="moments-image-viewer" id="momentsImageViewer" onclick="closeMomentsImageViewer()">
+            <img id="momentsViewerImg" src="" style="max-width:95%;max-height:95%;object-fit:contain;border-radius:8px;">
+        </div>
+        <div class="moments-interact-panel" id="momentsInteractPanel" onclick="event.stopPropagation()">
+            <div class="interact-panel-header">
+                <span>互动</span>
+                <span class="interact-panel-close" onclick="closeInteractPanel()">x</span>
+            </div>
+            <div class="interact-panel-body" id="interactPanelBody"></div>
+        </div>
+        <div class="moments-publish-overlay" id="momentsPublishOverlay" onclick="closePublishModal()">
+            <div class="moments-publish-modal" onclick="event.stopPropagation()">
+                <div style="font-size:16px;font-weight:600;margin-bottom:12px;color:#000;">发布动态</div>
+                <textarea class="caption-textarea" id="publishText" placeholder="分享你的想法..." style="height:100px;"></textarea>
+                <div style="display:flex;gap:8px;margin-top:8px;">
+                    <button class="white-btn" onclick="document.getElementById('publishImageInput').click()">添加图片</button>
+                    <button class="white-btn" onclick="openLocationInput()">添加位置</button>
+                </div>
+                <input type="file" id="publishImageInput" accept="image/*" multiple style="display:none;" onchange="handlePublishImages(event)">
+                <div class="publish-image-preview" id="publishImagePreview"></div>
+                <button class="black-btn" onclick="publishMoment()" style="margin-top:12px;">发布</button>
+            </div>
+        </div>
+    `;
+
+    momentsPage = 0;
+    momentsAllLoaded = false;
+    momentsData = [];
+    loadMomentsCoverInfo();
+    loadInitialMoments();
+}
+
+function loadInitialMoments() {
+    momentsData.push({
+        id: 'm_welcome',
+        userName: '枝玉',
+        userAvatar: '枝',
+        text: '欢迎用户使用',
+        images: [],
+        time: getRelativeTime(Date.now() - 86400000),
+        location: '',
+        likes: 0,
+        comments: [],
+        liked: false
+    });
+    renderMomentsFeed();
+}
+
+function loadMomentsCoverInfo() {
+    var avatar = document.getElementById('momentsCoverAvatar');
+    var name = document.getElementById('momentsCoverName');
+    var maskData = localStorage.getItem('active_mask');
+    if (maskData) {
+        try {
+            var mask = JSON.parse(maskData);
+            if (mask.avatar && avatar) {
+                avatar.style.backgroundImage = 'url(' + mask.avatar + ')';
+                avatar.style.backgroundSize = 'cover';
+                avatar.style.backgroundPosition = 'center';
+                avatar.innerText = '';
+            }
+            if (mask.name && name) name.textContent = mask.name;
+        } catch(e) {}
+    }
+}
+
+function changeMomentsCover() {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+            momentsCoverBg = ev.target.result;
+            localStorage.setItem('moments_cover_bg', momentsCoverBg);
+            var cover = document.getElementById('momentsCover');
+            if (cover) cover.style.backgroundImage = 'url(' + momentsCoverBg + ')';
+        };
+        reader.readAsDataURL(file);
+    };
+    input.click();
+}
+
+function handleMomentsScroll() {
+    var area = document.getElementById('momentsScrollArea');
+    var btn = document.getElementById('momentsBackTop');
+    if (!area) return;
+    if (btn) {
+        btn.style.display = area.scrollTop > 500 ? 'flex' : 'none';
+    }
+    if (momentsLoading || momentsAllLoaded) return;
+    var scrollBottom = area.scrollHeight - area.scrollTop - area.clientHeight;
+    if (scrollBottom < 200) {
+        loadMoreMoments();
+    }
+}
+
+function scrollMomentsToTop() {
+    var area = document.getElementById('momentsScrollArea');
+    if (area) area.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function loadMoreMoments() {
+    if (momentsLoading || momentsAllLoaded) return;
+    momentsLoading = true;
+    momentsPage++;
+    var newMoments = generateMockMoments(momentsPage);
+    if (newMoments.length === 0) {
+        momentsAllLoaded = true;
+        var hint = document.getElementById('momentsBottomHint');
+        if (hint) hint.innerHTML = '<span style="color:#8e8e93;font-size:12px;">动态到底了</span>';
+    } else {
+        momentsData = momentsData.concat(newMoments);
+        renderMomentsFeed();
+    }
+    momentsLoading = false;
+}
+
+function generateMockMoments(page) {
+    if (page > 2) return [];
+    var mockTexts = [
+        '今天天气真好，适合出去走走。',
+        '分享一本最近在读的书，很有意思。',
+        '好久不见，大家都还好吗？',
+        '新学的菜谱，第一次尝试，味道还不错。',
+        '周末愉快！享受难得的闲暇时光。'
+    ];
+    var result = [];
+    var count = 2;
+    for (var i = 0; i < count; i++) {
+        var idx = Math.floor(Math.random() * mockTexts.length);
+        result.push({
+            id: 'm_' + Date.now() + '_' + i,
+            userName: '枝玉',
+            userAvatar: '枝',
+            text: mockTexts[idx],
+            images: [],
+            time: getRelativeTime(Date.now() - Math.floor(Math.random() * 86400000 * 7)),
+            location: '',
+            likes: Math.floor(Math.random() * 20),
+            comments: [],
+            liked: false
+        });
+    }
+    return result;
+}
+
+function getRelativeTime(timestamp) {
+    var now = Date.now();
+    var diff = now - timestamp;
+    if (diff < 60000) return '刚刚';
+    if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
+    var d = new Date(timestamp);
+    return (d.getMonth() + 1) + '.' + d.getDate() + ' ' + d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+}
+
+function renderMomentsFeed() {
+    var feed = document.getElementById('momentsFeed');
+    if (!feed) return;
+    var html = '';
+    momentsData.forEach(function(m) {
+        var imgHTML = '';
+        if (m.images && m.images.length > 0) {
+            imgHTML = renderMomentImages(m.images);
+        }
+        html += `
+            <div class="moment-card">
+                <div class="moment-header">
+                    <div class="moment-avatar">${m.userAvatar}</div>
+                    <div class="moment-user-info">
+                        <div class="moment-user-name">${m.userName}</div>
+                        <div class="moment-time">${m.time}${m.location ? ' · ' + m.location : ''}</div>
+                    </div>
+                </div>
+                <div class="moment-text" id="text-${m.id}" onclick="toggleMomentText('${m.id}')">${m.text}</div>
+                ${imgHTML}
+                <div class="moment-actions">
+                    <span onclick="toggleLike('${m.id}')">${m.liked ? '♥' : '♡'} ${m.likes || 0}</span>
+                    <span onclick="openInteractPanel('${m.id}')">...</span>
+                </div>
+            </div>
+        `;
+    });
+    feed.innerHTML = html;
+    momentsData.forEach(function(m) {
+        checkTextOverflow('text-' + m.id, m.text);
+    });
+}
+
+function checkTextOverflow(id, fullText) {
+    setTimeout(function() {
+        var el = document.getElementById(id);
+        if (!el) return;
+        if (el.scrollHeight > el.clientHeight + 2) {
+            el.classList.add('collapsed');
+            el.setAttribute('data-full', fullText);
+            el.setAttribute('data-collapsed', 'true');
+        }
+    }, 100);
+}
+
+function toggleMomentText(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (el.classList.contains('collapsed')) {
+        el.classList.remove('collapsed');
+        el.textContent = el.getAttribute('data-full');
+    }
+}
+
+function renderMomentImages(images) {
+    var count = images.length;
+    var gridClass = 'moment-images grid-' + Math.min(count, 9);
+    var html = '<div class="' + gridClass + '">';
+    var max = Math.min(count, 9);
+    for (var i = 0; i < max; i++) {
+        html += '<div class="moment-image-item" onclick="event.stopPropagation(); openMomentImageViewer(\'' + images[i] + '\')" style="background-image:url(' + images[i] + ');background-size:cover;background-position:center;"></div>';
+    }
+    html += '</div>';
+    return html;
+}
+
+function toggleLike(momentId) {
+    var m = momentsData.find(function(item) { return item.id === momentId; });
+    if (!m) return;
+    m.liked = !m.liked;
+    m.likes = m.liked ? (m.likes || 0) + 1 : Math.max(0, (m.likes || 0) - 1);
+    renderMomentsFeed();
+}
+
+let interactTargetId = null;
+
+function openInteractPanel(momentId) {
+    interactTargetId = momentId;
+    var panel = document.getElementById('momentsInteractPanel');
+    var body = document.getElementById('interactPanelBody');
+    if (!panel || !body) return;
+    var m = momentsData.find(function(item) { return item.id === momentId; });
+    if (!m) return;
+    var html = '';
+    html += '<div style="margin-bottom:12px;">';
+    html += '<span onclick="toggleLike(\'' + momentId + '\'); closeInteractPanel();" style="cursor:pointer;margin-right:16px;">' + (m.liked ? '♥ 已赞' : '♡ 点赞') + '</span>';
+    html += '<span style="color:#8e8e93;">' + (m.likes || 0) + '人赞过</span>';
+    html += '</div>';
+    html += '<div style="border-top:0.5px solid rgba(0,0,0,0.05);padding-top:8px;" id="commentList">';
+    if (m.comments && m.comments.length > 0) {
+        m.comments.forEach(function(c) {
+            html += '<div style="margin-bottom:6px;font-size:13px;"><b>' + c.user + '：</b>' + c.text + '</div>';
+        });
+    } else {
+        html += '<div style="color:#8e8e93;font-size:12px;" id="noCommentHint">暂无评论</div>';
+    }
+    html += '</div>';
+    html += '<div style="display:flex;gap:8px;margin-top:10px;">';
+    html += '<input type="text" id="interactCommentInput" class="chat-input" placeholder="写评论..." style="flex:1;height:32px;font-size:13px;">';
+    html += '<button class="black-btn" style="width:auto;padding:6px 14px;font-size:13px;margin:0;" onclick="submitComment(\'' + momentId + '\')">发送</button>';
+    html += '</div>';
+    body.innerHTML = html;
+    panel.classList.add('show');
+}
+
+function closeInteractPanel() {
+    var panel = document.getElementById('momentsInteractPanel');
+    if (panel) panel.classList.remove('show');
+    interactTargetId = null;
+}
+
+function submitComment(momentId) {
+    var input = document.getElementById('interactCommentInput');
+    if (!input || !input.value.trim()) return;
+    var m = momentsData.find(function(item) { return item.id === momentId; });
+    if (!m) return;
+    if (!m.comments) m.comments = [];
+    var commentText = input.value.trim();
+    m.comments.push({ user: '我', text: commentText });
+    input.value = '';
+
+    var commentList = document.getElementById('commentList');
+    if (commentList) {
+        var commentDiv = document.createElement('div');
+        commentDiv.style.cssText = 'margin-bottom:6px;font-size:13px;';
+        commentDiv.innerHTML = '<b>我：</b>' + commentText;
+        commentList.appendChild(commentDiv);
+        var emptyHint = document.getElementById('noCommentHint');
+        if (emptyHint) emptyHint.remove();
+    }
+    renderMomentsFeed();
+}
+
+function openMomentImageViewer(src) {
+    var viewer = document.getElementById('momentsImageViewer');
+    var img = document.getElementById('momentsViewerImg');
+    if (!viewer || !img) return;
+    img.src = src;
+    viewer.style.display = 'flex';
+}
+
+function closeMomentsImageViewer() {
+    var viewer = document.getElementById('momentsImageViewer');
+    if (viewer) viewer.style.display = 'none';
+}
+
+function openPublishModal() {
+    var overlay = document.getElementById('momentsPublishOverlay');
+    if (overlay) overlay.style.display = 'flex';
+}
+
+function closePublishModal() {
+    var overlay = document.getElementById('momentsPublishOverlay');
+    if (overlay) overlay.style.display = 'none';
+    document.getElementById('publishText').value = '';
+    publishImages = [];
+    publishLocation = '';
+    document.getElementById('publishImagePreview').innerHTML = '';
+    var btns = document.querySelectorAll('.moments-publish-modal .white-btn');
+    if (btns.length >= 2) btns[1].textContent = '添加位置';
+}
+
+function handlePublishImages(e) {
+    var files = e.target.files;
+    if (!files || files.length === 0) return;
+    for (var i = 0; i < Math.min(files.length, 9); i++) {
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+            publishImages.push(ev.target.result);
+            renderPublishImagePreview();
+        };
+        reader.readAsDataURL(files[i]);
+    }
+}
+
+function renderPublishImagePreview() {
+    var container = document.getElementById('publishImagePreview');
+    if (!container) return;
+    var html = '';
+    publishImages.forEach(function(src, idx) {
+        html += '<div style="width:60px;height:60px;background-image:url(' + src + ');background-size:cover;background-position:center;border-radius:8px;position:relative;display:inline-block;margin:4px;">';
+        html += '<span style="position:absolute;top:-6px;right:-6px;width:16px;height:16px;background:#ff3b30;color:#fff;border-radius:50%;font-size:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="removePublishImage(' + idx + ')">x</span>';
+        html += '</div>';
+    });
+    container.innerHTML = html;
+}
+
+function removePublishImage(idx) {
+    publishImages.splice(idx, 1);
+    renderPublishImagePreview();
+}
+
+function publishMoment() {
+    var text = document.getElementById('publishText').value.trim();
+    if (!text && publishImages.length === 0) {
+        showToast('请输入内容或添加图片');
+        return;
+    }
+    var newMoment = {
+        id: 'm_' + Date.now(),
+        userName: '我',
+        userAvatar: '我',
+        text: text || '',
+        images: publishImages.slice(),
+        time: '刚刚',
+        location: publishLocation,
+        likes: 0,
+        comments: [],
+        liked: false
+    };
+    momentsData.unshift(newMoment);
+    renderMomentsFeed();
+    closePublishModal();
+    showToast('发布成功');
+    var area = document.getElementById('momentsScrollArea');
+    if (area) area.scrollTo({ top: 0 });
+}
+
+function openLocationInput() {
+    var overlay = document.createElement('div');
+    overlay.className = 'caption-modal-overlay';
+    overlay.id = 'locationInputOverlay';
+    overlay.innerHTML = `
+        <div class="caption-modal">
+            <div style="font-size:16px;font-weight:600;margin-bottom:10px;color:#000;">添加位置</div>
+            <input type="text" class="payment-note" id="locationInputField" placeholder="输入地点名称" value="${publishLocation}">
+            <div class="caption-buttons" style="margin-top:12px;">
+                <div class="payment-btn-cancel" onclick="closeLocationInput()">取消</div>
+                <div class="payment-btn-confirm" onclick="confirmLocationInput()">确定</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeLocationInput(); };
+}
+
+function closeLocationInput() {
+    var overlay = document.getElementById('locationInputOverlay');
+    if (overlay) overlay.remove();
+}
+
+function confirmLocationInput() {
+    var input = document.getElementById('locationInputField');
+    if (input) publishLocation = input.value.trim();
+    closeLocationInput();
+    var btns = document.querySelectorAll('.moments-publish-modal .white-btn');
+    if (btns.length >= 2 && publishLocation) {
+        btns[1].textContent = publishLocation;
     }
 }
 
@@ -1770,425 +2210,4 @@ function blockContact() {
 
 function deleteContact() {
     showToast('删除功能即将上线');
-}
-
-// ========== 动态页面 ==========
-let momentsData = [];
-let momentsPage = 0;
-let momentsLoading = false;
-let momentsAllLoaded = false;
-let momentsCoverBg = localStorage.getItem('moments_cover_bg') || '';
-
-function showMomentsPage() {
-    const appWindow = document.getElementById('chatAppWindow');
-    if (!appWindow) return;
-
-    appWindow.innerHTML = `
-        <div class="chat-shell" style="background:#f2f2f7;">
-            <div class="chat-nav" style="background:rgba(255,255,255,0.7);">
-                <div class="nav-status-bar"></div>
-                <div class="nav-body">
-                    <span class="nav-back" onclick="renderChatShell()">‹</span>
-                    <span class="nav-title">动态</span>
-                </div>
-            </div>
-            <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;" id="momentsScrollArea" onscroll="handleMomentsScroll()">
-                <!-- 封面背景区 -->
-                <div class="moments-cover" id="momentsCover" onclick="changeMomentsCover()" style="background-image:url(${momentsCoverBg});">
-                    <div class="moments-cover-gradient"></div>
-                    <div class="moments-cover-info">
-                        <div class="moments-cover-avatar" id="momentsCoverAvatar"></div>
-                        <div class="moments-cover-name" id="momentsCoverName">用户</div>
-                    </div>
-                    <div class="moments-publish-btn" onclick="event.stopPropagation(); openPublishModal()">
-                        <span class="publish-icon-body"></span>
-                        <span class="publish-icon-lens"></span>
-                    </div>
-                </div>
-                <!-- 动态列表 -->
-                <div class="moments-feed" id="momentsFeed"></div>
-                <div class="moments-bottom-hint" id="momentsBottomHint"></div>
-            </div>
-            <!-- 回顶按钮 -->
-            <div class="moments-back-top" id="momentsBackTop" onclick="scrollMomentsToTop()">↑</div>
-        </div>
-        <!-- 全屏图片预览 -->
-        <div class="moments-image-viewer" id="momentsImageViewer" onclick="closeMomentsImageViewer()">
-            <img id="momentsViewerImg" src="" style="max-width:95%;max-height:95%;object-fit:contain;border-radius:8px;">
-        </div>
-        <!-- 互动面板 -->
-        <div class="moments-interact-panel" id="momentsInteractPanel" onclick="event.stopPropagation()">
-            <div class="interact-panel-header">
-                <span>互动</span>
-                <span class="interact-panel-close" onclick="closeInteractPanel()">x</span>
-            </div>
-            <div class="interact-panel-body" id="interactPanelBody"></div>
-        </div>
-        <!-- 发布动态弹窗 -->
-        <div class="moments-publish-overlay" id="momentsPublishOverlay" onclick="closePublishModal()">
-            <div class="moments-publish-modal" onclick="event.stopPropagation()">
-                <div style="font-size:16px;font-weight:600;margin-bottom:12px;color:#000;">发布动态</div>
-                <textarea class="caption-textarea" id="publishText" placeholder="分享你的想法..." style="height:100px;"></textarea>
-                <div style="display:flex;gap:8px;margin-top:8px;">
-                    <button class="white-btn" onclick="document.getElementById('publishImageInput').click()">添加图片</button>
-                    <button class="white-btn" onclick="showToast('位置功能即将上线')">添加位置</button>
-                </div>
-                <input type="file" id="publishImageInput" accept="image/*" multiple style="display:none;" onchange="handlePublishImages(event)">
-                <div class="publish-image-preview" id="publishImagePreview"></div>
-                <button class="black-btn" onclick="publishMoment()" style="margin-top:12px;">发布</button>
-            </div>
-        </div>
-    `;
-
-    momentsPage = 0;
-    momentsAllLoaded = false;
-    momentsData = [];
-    loadMomentsCoverInfo();
-    loadMoreMoments();
-}
-
-// ========== 封面信息加载 ==========
-function loadMomentsCoverInfo() {
-    var avatar = document.getElementById('momentsCoverAvatar');
-    var name = document.getElementById('momentsCoverName');
-    var maskData = localStorage.getItem('active_mask');
-    if (maskData) {
-        try {
-            var mask = JSON.parse(maskData);
-            if (mask.avatar && avatar) {
-                avatar.style.backgroundImage = 'url(' + mask.avatar + ')';
-                avatar.style.backgroundSize = 'cover';
-                avatar.style.backgroundPosition = 'center';
-                avatar.innerText = '';
-            }
-            if (mask.name && name) name.textContent = mask.name;
-        } catch(e) {}
-    }
-}
-
-function changeMomentsCover() {
-    var input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = function(e) {
-        var file = e.target.files[0];
-        if (!file) return;
-        var reader = new FileReader();
-        reader.onload = function(ev) {
-            momentsCoverBg = ev.target.result;
-            localStorage.setItem('moments_cover_bg', momentsCoverBg);
-            var cover = document.getElementById('momentsCover');
-            if (cover) cover.style.backgroundImage = 'url(' + momentsCoverBg + ')';
-        };
-        reader.readAsDataURL(file);
-    };
-    input.click();
-}
-
-// ========== 无限滚动加载 ==========
-function handleMomentsScroll() {
-    var area = document.getElementById('momentsScrollArea');
-    var hint = document.getElementById('momentsBottomHint');
-    var btn = document.getElementById('momentsBackTop');
-    if (!area) return;
-
-    // 回顶按钮显隐
-    if (btn) {
-        btn.style.display = area.scrollTop > 500 ? 'flex' : 'none';
-    }
-
-    if (momentsLoading || momentsAllLoaded) return;
-    var scrollBottom = area.scrollHeight - area.scrollTop - area.clientHeight;
-    if (scrollBottom < 200) {
-        loadMoreMoments();
-    }
-}
-
-function scrollMomentsToTop() {
-    var area = document.getElementById('momentsScrollArea');
-    if (area) area.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-async function loadMoreMoments() {
-    if (momentsLoading || momentsAllLoaded) return;
-    momentsLoading = true;
-    momentsPage++;
-    
-    // 模拟加载动态（实际应调API）
-    var newMoments = generateMockMoments(momentsPage);
-    if (newMoments.length === 0) {
-        momentsAllLoaded = true;
-        var hint = document.getElementById('momentsBottomHint');
-        if (hint) hint.innerHTML = '<span style="color:#8e8e93;font-size:12px;">动态到底了</span>';
-    } else {
-        momentsData = momentsData.concat(newMoments);
-        renderMomentsFeed();
-    }
-    momentsLoading = false;
-}
-
-function generateMockMoments(page) {
-    if (page > 2) return [];
-    var mockTexts = [
-        '今天天气真好，适合出去走走。',
-        '分享一本最近在读的书，很有意思。',
-        '好久不见，大家都还好吗？最近在忙什么呢？有空一起出来聚聚吧。',
-        '新学的菜谱，第一次尝试，味道还不错。生活中的小确幸就藏在厨房里。',
-        '深夜加班中，只有咖啡陪伴。',
-        '周末愉快！享受难得的闲暇时光。'
-    ];
-    var result = [];
-    var count = page === 1 ? 4 : 3;
-    for (var i = 0; i < count; i++) {
-        var idx = Math.floor(Math.random() * mockTexts.length);
-        result.push({
-            id: 'm_' + Date.now() + '_' + i,
-            userName: '枝玉',
-            userAvatar: '枝',
-            text: mockTexts[idx],
-            images: [],
-            time: getRelativeTime(Date.now() - Math.floor(Math.random() * 86400000 * 7)),
-            location: Math.random() > 0.5 ? '上海' : '',
-            likes: Math.floor(Math.random() * 20),
-            comments: [],
-            liked: false
-        });
-    }
-    return result;
-}
-
-function getRelativeTime(timestamp) {
-    var now = Date.now();
-    var diff = now - timestamp;
-    if (diff < 60000) return '刚刚';
-    if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
-    if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
-    var d = new Date(timestamp);
-    return (d.getMonth() + 1) + '.' + d.getDate() + ' ' + d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
-}
-
-// ========== 渲染动态列表 ==========
-function renderMomentsFeed() {
-    var feed = document.getElementById('momentsFeed');
-    if (!feed) return;
-
-    var html = '';
-    momentsData.forEach(function(m) {
-        var imgHTML = '';
-        if (m.images && m.images.length > 0) {
-            imgHTML = renderMomentImages(m.images);
-        }
-        var locationHTML = m.location ? '<div class="moment-location">' + m.location + '</div>' : '';
-        var textClass = 'moment-text';
-        html += `
-            <div class="moment-card">
-                <div class="moment-header">
-                    <div class="moment-avatar">${m.userAvatar}</div>
-                    <div class="moment-user-info">
-                        <div class="moment-user-name">${m.userName}</div>
-                        <div class="moment-time">${m.time}${locationHTML ? ' · ' + m.location : ''}</div>
-                    </div>
-                </div>
-                <div class="${textClass}" id="text-${m.id}" onclick="toggleMomentText('${m.id}')">${m.text}</div>
-                ${imgHTML}
-                <div class="moment-actions">
-                    <span onclick="toggleLike('${m.id}')">${m.liked ? '♥' : '♡'} ${m.likes || 0}</span>
-                    <span onclick="openInteractPanel('${m.id}')">...</span>
-                </div>
-            </div>
-        `;
-    });
-    feed.innerHTML = html;
-
-    // 检查文字是否需要折叠
-    momentsData.forEach(function(m) {
-        checkTextOverflow('text-' + m.id, m.text);
-    });
-}
-
-function checkTextOverflow(id, fullText) {
-    setTimeout(function() {
-        var el = document.getElementById(id);
-        if (!el) return;
-        if (el.scrollHeight > el.clientHeight + 2) {
-            el.classList.add('collapsed');
-            el.setAttribute('data-full', fullText);
-            el.setAttribute('data-collapsed', 'true');
-        }
-    }, 100);
-}
-
-function toggleMomentText(id) {
-    var el = document.getElementById(id);
-    if (!el) return;
-    if (el.classList.contains('collapsed')) {
-        el.classList.remove('collapsed');
-        el.textContent = el.getAttribute('data-full');
-    }
-}
-
-function renderMomentImages(images) {
-    var count = images.length;
-    var gridClass = 'moment-images grid-' + Math.min(count, 9);
-    var html = '<div class="' + gridClass + '">';
-    var max = Math.min(count, 9);
-    for (var i = 0; i < max; i++) {
-        html += '<div class="moment-image-item" onclick="event.stopPropagation(); openMomentImageViewer(\'' + images[i] + '\')" style="background-image:url(' + images[i] + ');background-size:cover;background-position:center;"></div>';
-    }
-    html += '</div>';
-    return html;
-}
-
-// ========== 点赞 ==========
-function toggleLike(momentId) {
-    var m = momentsData.find(function(item) { return item.id === momentId; });
-    if (!m) return;
-    m.liked = !m.liked;
-    m.likes = m.liked ? (m.likes || 0) + 1 : Math.max(0, (m.likes || 0) - 1);
-    renderMomentsFeed();
-}
-
-// ========== 互动面板 ==========
-let interactTargetId = null;
-
-function openInteractPanel(momentId) {
-    interactTargetId = momentId;
-    var panel = document.getElementById('momentsInteractPanel');
-    var body = document.getElementById('interactPanelBody');
-    if (!panel || !body) return;
-
-    var m = momentsData.find(function(item) { return item.id === momentId; });
-    if (!m) return;
-
-    var html = '';
-    html += '<div style="margin-bottom:12px;">';
-    html += '<span onclick="toggleLike(\'' + momentId + '\'); closeInteractPanel();" style="cursor:pointer;margin-right:16px;">' + (m.liked ? '♥ 已赞' : '♡ 点赞') + '</span>';
-    html += '<span style="color:#8e8e93;">' + (m.likes || 0) + '人赞过</span>';
-    html += '</div>';
-
-    // 评论区
-    html += '<div style="border-top:0.5px solid rgba(0,0,0,0.05);padding-top:8px;">';
-    if (m.comments && m.comments.length > 0) {
-        m.comments.forEach(function(c) {
-            html += '<div style="margin-bottom:6px;font-size:13px;"><b>' + c.user + '：</b>' + c.text + '</div>';
-        });
-    } else {
-        html += '<div style="color:#8e8e93;font-size:12px;">暂无评论</div>';
-    }
-    html += '</div>';
-
-    // 发表评论
-    html += '<div style="display:flex;gap:8px;margin-top:10px;">';
-    html += '<input type="text" id="interactCommentInput" class="chat-input" placeholder="写评论..." style="flex:1;height:32px;font-size:13px;">';
-    html += '<button class="black-btn" style="width:auto;padding:6px 14px;font-size:13px;margin:0;" onclick="submitComment(\'' + momentId + '\')">发送</button>';
-    html += '</div>';
-
-    body.innerHTML = html;
-    panel.classList.add('show');
-}
-
-function closeInteractPanel() {
-    var panel = document.getElementById('momentsInteractPanel');
-    if (panel) panel.classList.remove('show');
-    interactTargetId = null;
-}
-
-function submitComment(momentId) {
-    var input = document.getElementById('interactCommentInput');
-    if (!input || !input.value.trim()) return;
-    var m = momentsData.find(function(item) { return item.id === momentId; });
-    if (!m) return;
-    if (!m.comments) m.comments = [];
-    m.comments.push({ user: '我', text: input.value.trim() });
-    input.value = '';
-    openInteractPanel(momentId);
-    renderMomentsFeed();
-}
-
-// ========== 图片预览 ==========
-function openMomentImageViewer(src) {
-    var viewer = document.getElementById('momentsImageViewer');
-    var img = document.getElementById('momentsViewerImg');
-    if (!viewer || !img) return;
-    img.src = src;
-    viewer.style.display = 'flex';
-}
-
-function closeMomentsImageViewer() {
-    var viewer = document.getElementById('momentsImageViewer');
-    if (viewer) viewer.style.display = 'none';
-}
-
-// ========== 发布动态 ==========
-let publishImages = [];
-
-function openPublishModal() {
-    var overlay = document.getElementById('momentsPublishOverlay');
-    if (overlay) overlay.style.display = 'flex';
-}
-
-function closePublishModal() {
-    var overlay = document.getElementById('momentsPublishOverlay');
-    if (overlay) overlay.style.display = 'none';
-    document.getElementById('publishText').value = '';
-    publishImages = [];
-    document.getElementById('publishImagePreview').innerHTML = '';
-}
-
-function handlePublishImages(e) {
-    var files = e.target.files;
-    if (!files || files.length === 0) return;
-    for (var i = 0; i < Math.min(files.length, 9); i++) {
-        var reader = new FileReader();
-        reader.onload = function(ev) {
-            publishImages.push(ev.target.result);
-            renderPublishImagePreview();
-        };
-        reader.readAsDataURL(files[i]);
-    }
-}
-
-function renderPublishImagePreview() {
-    var container = document.getElementById('publishImagePreview');
-    if (!container) return;
-    var html = '';
-    publishImages.forEach(function(src, idx) {
-        html += '<div style="width:60px;height:60px;background-image:url(' + src + ');background-size:cover;background-position:center;border-radius:8px;position:relative;display:inline-block;margin:4px;">';
-        html += '<span style="position:absolute;top:-6px;right:-6px;width:16px;height:16px;background:#ff3b30;color:#fff;border-radius:50%;font-size:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="removePublishImage(' + idx + ')">x</span>';
-        html += '</div>';
-    });
-    container.innerHTML = html;
-}
-
-function removePublishImage(idx) {
-    publishImages.splice(idx, 1);
-    renderPublishImagePreview();
-}
-
-function publishMoment() {
-    var text = document.getElementById('publishText').value.trim();
-    if (!text && publishImages.length === 0) {
-        showToast('请输入内容或添加图片');
-        return;
-    }
-
-    var newMoment = {
-        id: 'm_' + Date.now(),
-        userName: '我',
-        userAvatar: '我',
-        text: text || '',
-        images: publishImages.slice(),
-        time: '刚刚',
-        location: '',
-        likes: 0,
-        comments: [],
-        liked: false
-    };
-
-    momentsData.unshift(newMoment);
-    renderMomentsFeed();
-    closePublishModal();
-    showToast('发布成功');
-    var area = document.getElementById('momentsScrollArea');
-    if (area) area.scrollTo({ top: 0 });
-}
+}                         
