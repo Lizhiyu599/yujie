@@ -1222,10 +1222,30 @@ function renderFriendRequestCardHTML(request) {
 
 // ========== 返回联系人列表辅助函数 ==========
 function backToContactsFromEdit() {
-    renderChatShell();
-    setTimeout(function() {
-        switchChatTab('contacts', document.querySelector('.tab-item:nth-child(2)'));
-    }, 50);
+    const appWindow = document.getElementById('chatAppWindow');
+    if (!appWindow) return;
+    
+    appWindow.innerHTML = `
+        <div class="chat-shell">
+            <div class="chat-nav">
+                <div class="nav-status-bar"></div>
+                <div class="nav-body">
+                    <span class="nav-back" onclick="closeChat()">‹</span>
+                    <span class="nav-title">联系人</span>
+                    <span class="nav-plus-btn" onclick="togglePlusMenu(event)">+</span>
+                </div>
+            </div>
+            <div class="chat-list" id="chatListView"></div>
+            <div class="tab-fixed-bottom">
+                <span class="tab-item" onclick="switchChatTab('chats', this)">消息</span>
+                <span class="tab-item active" onclick="switchChatTab('contacts', this)">联系人</span>
+                <span class="tab-item" onclick="switchChatTab('moments', this)">动态</span>
+                <span class="tab-item" onclick="switchChatTab('me', this)">我的</span>
+            </div>
+        </div>
+    `;
+    
+    renderContactsList();
 }
 
 // ========== 编辑角色人设页面（和添加好友同款样式） ==========
