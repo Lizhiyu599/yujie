@@ -1024,9 +1024,9 @@ window.addEventListener('DOMContentLoaded', () => {
         <div class="dock-label">设置</div>
     `;
     settingItem.onclick = () => {
-        renderDeviceList();
-        openModal('settingsModal');
-    };
+    openModal('settingsModal');
+    setTimeout(function() { renderDeviceList(); }, 100);
+};
 
     dockBar.prepend(settingItem);
 });
