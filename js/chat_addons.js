@@ -435,7 +435,7 @@ function sendLocation() {
     document.getElementById('chatMessages').appendChild(nRow);
 
     saveChatHistory(window.ChatState.currentContactId);
-}
+ }      
 
 // ========== 红包/转账状态存储 ==========
 function getPaymentState(msgId) {
@@ -492,16 +492,18 @@ function openPaymentModal(msgId) {
             }
             updatePaymentCardUI(msgId, 'accepted');
             overlay.remove();
-            var narration = document.createElement('div');
-            narration.className = 'bubble bubble-narration';
-            narration.textContent = '已收入' + amount + '元';
-            document.getElementById('chatMessages').appendChild(narration);
+            // 先渲染接收方卡片
             var row = card.closest('.bubble-row');
             if (row && row.classList.contains('assistant')) {
                 addReceivedCard('user', type, amount);
             } else {
                 addReceivedCard('assistant', type, amount);
             }
+            // 再渲染旁白（在卡片后面）
+            var narration = document.createElement('div');
+            narration.className = 'bubble bubble-narration';
+            narration.textContent = '已收入' + amount + '元';
+            document.getElementById('chatMessages').appendChild(narration);
             saveChatHistory(window.ChatState.currentContactId);
         };
     }
@@ -512,16 +514,16 @@ function openPaymentModal(msgId) {
             e.stopPropagation();
             updatePaymentCardUI(msgId, 'refunded');
             overlay.remove();
-            var narration = document.createElement('div');
-            narration.className = 'bubble bubble-narration';
-            narration.textContent = '已退还转账';
-            document.getElementById('chatMessages').appendChild(narration);
             var row = card.closest('.bubble-row');
             if (row && row.classList.contains('assistant')) {
                 addRefundedCard('user', amount);
             } else {
                 addRefundedCard('assistant', amount);
             }
+            var narration = document.createElement('div');
+            narration.className = 'bubble bubble-narration';
+            narration.textContent = '已退还转账';
+            document.getElementById('chatMessages').appendChild(narration);
             saveChatHistory(window.ChatState.currentContactId);
         };
     }
@@ -822,5 +824,4 @@ function confirmSendLink() {
     document.getElementById('chatMessages').appendChild(nRow);
 
     saveChatHistory(window.ChatState.currentContactId);
-}      
-
+}
