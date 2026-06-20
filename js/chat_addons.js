@@ -451,6 +451,11 @@ function setPaymentState(msgId, state) {
 function openPaymentModal(msgId) {
     var card = document.querySelector('.payment-card[data-msg-id="' + msgId + '"]');
     if (!card) return;
+    var row = card.closest('.bubble-row');
+    if (row && row.classList.contains('user')) {
+    showToast('不能领取自己发送的红包或转账');
+    return;
+}
     var state = getPaymentState(msgId);
     if (state !== 'pending') {
         showToast('该红包/转账已处理');
