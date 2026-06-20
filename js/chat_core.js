@@ -108,7 +108,6 @@ async function sendChatMessage() {
     const contact = getContactById(contactId);
     const contactName = contact ? contact.name : 'AI';
 
-    // 检测用户括号旁白：接收/退还
     const bracketMatch = text.match(/^[\(\（]([^\)\）]+)[\)\）]$/);
     if (bracketMatch) {
         const bracketContent = bracketMatch[1];
@@ -179,12 +178,10 @@ function acceptLatestPayment() {
         var state = getPaymentState(msgId);
         if (state === 'pending') {
             updatePaymentCardUI(msgId, 'accepted');
-            // 旁白：角色已接收
             var narration = document.createElement('div');
             narration.className = 'bubble bubble-narration';
             narration.textContent = contactName + '已接收';
             document.getElementById('chatMessages').appendChild(narration);
-            // 接收方卡片
             var row = card.closest('.bubble-row');
             if (row && row.classList.contains('assistant')) {
                 addReceivedCard('user', card.getAttribute('data-type'), card.getAttribute('data-amount'));
@@ -207,12 +204,10 @@ function refundLatestPayment() {
         var type = card.getAttribute('data-type');
         if (state === 'pending' && type === '转账') {
             updatePaymentCardUI(msgId, 'refunded');
-            // 旁白：角色已退还
             var narration = document.createElement('div');
             narration.className = 'bubble bubble-narration';
             narration.textContent = contactName + '已退还';
             document.getElementById('chatMessages').appendChild(narration);
-            // 退还方卡片
             var row = card.closest('.bubble-row');
             if (row && row.classList.contains('assistant')) {
                 addRefundedCard('user', card.getAttribute('data-amount'));
@@ -329,14 +324,14 @@ function processAIReply(rawContent, contactName, contactId) {
         cleanContent = cleanContent.replace(jsonMatch[0], '').trim();
     }
 
-    // 检测角色旁白接收红包/转账 → 不显示旁白
+    // 检测角色旁白接收红包/转账
     var acceptMatch = cleanContent.match(/[\(\（]([^\)\）]*)(接收了红包|收下了转账)[^\)\）]*[\)\）]/);
     if (acceptMatch) {
         acceptLatestPayment();
         cleanContent = cleanContent.replace(acceptMatch[0], '');
     }
 
-    // 检测角色旁白退还转账 → 不显示旁白
+    // 检测角色旁白退还转账
     var refundMatch = cleanContent.match(/[\(\（]([^\)\）]*)退还了转账[^\)\）]*[\)\）]/);
     if (refundMatch) {
         refundLatestPayment();
@@ -642,8 +637,8 @@ function restorePaymentCardStates() {
             if (label) { label.textContent = '已退还'; label.style.display = 'block'; label.style.color = '#ff3b30'; }
             if (noteText) noteText.style.display = 'none';
         }
-    });    
-}
+    });
+ }
 
 // ========== 语音 TTS 调用（MiniMax） ==========
 async function callTTS(text) {
