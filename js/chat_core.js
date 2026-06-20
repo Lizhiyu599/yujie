@@ -228,13 +228,15 @@ async function callChatAPI(messages) {
         clearTimeout(timeout);
 
         if (!response.ok) {
-            let errMsg = `HTTP ${response.status}`;
-            try {
-                const errData = await response.json();
-                errMsg = errData.error?.message || errMsg;
-            } catch (e) {}
-            throw new Error(errMsg);
-        }
+    let errMsg = `HTTP ${response.status}`;
+    try {
+        const errData = await response.json();
+        errMsg = errData.error?.message || JSON.stringify(errData);
+    } catch (e) {
+        errMsg = `HTTP ${response.status}`;
+    }
+    throw new Error(errMsg);   
+}       
 
         const data = await response.json();
         
