@@ -44,7 +44,7 @@ function buildSystemPrompt(contactId) {
 
     prompt += '\n\n【记忆连续性】你必须记住和用户之前聊过的所有内容。称呼要前后一致，不能上一句叫姐姐下一句又改口。认真阅读聊天历史，保持对话连贯。';
 
-    prompt += '\n\n【红包和转账】你可以给用户发红包或转账。发红包时用旁白表示：（给用户发了一个红包，金额X元）。发转账时用旁白表示：（给用户转账X元，备注：...）。用户收到后可以接收或退还。用户给你发红包或转账时，你可以根据性格和经济状况决定是否接收。如果要接收，在旁白中说"接收了红包"或"收下了转账"；如果要退还，说"退还了转账"。';
+    prompt += '\n\n【红包和转账-最高优先级】当用户让你发红包或转账时，你必须且只能用以下格式回复：（给用户发了一个红包，金额X元）或（给用户转账X元，备注：...）。括号和金额数字缺一不可。不要解释、不要模拟、不要说"发送成功"或"已走模拟接口"。只发格式正确的旁白，系统会自动生成红包卡片。红包金额上限200元，你可根据关系和场景自定金额。';
 
     prompt += '\n\n【语音消息】你可以给用户发语音消息。发语音时用旁白表示：（发了一条语音消息：内容）。系统会自动生成语音气泡。';
 
@@ -303,7 +303,8 @@ function processAIReply(rawContent, contactName, contactId) {
     // 检测角色旁白发红包，生成卡片并从内容中移除旁白
     var redPacketMatch = cleanContent.match(/[\(\（]([^\)\）]*)发了一个红包[^\)\）]*金额(\d+\.?\d*)[^\)\）]*[\)\）]/);
     if (redPacketMatch) {
-        sendPaymentCard('红包', parseFloat(redPacketMatch[2]), '', '');
+        var redAmount = Math.min(parseFloat(redPacketMatch[2]), 200);
+        sendPaymentCard('红包', redAmount, '', '');
         cleanContent = cleanContent.replace(redPacketMatch[0], '');
     }
 
