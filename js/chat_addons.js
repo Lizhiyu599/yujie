@@ -84,7 +84,7 @@ function sendSticker(idx) {
         var nRow = document.createElement('div');
         nRow.className = 'bubble-narration';
         nRow.textContent = noteText;
-        nRow.style.display = 'none';
+        nRow.style.display = ''; 
         document.getElementById('chatMessages').appendChild(nRow);
 
         saveChatHistory(window.ChatState.currentContactId);
