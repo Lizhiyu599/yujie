@@ -296,7 +296,7 @@ function processAIReply(rawContent, contactName, contactId) {
     }
 
     // ===== 检测角色旁白接收红包/转账（只处理卡片，不渲染旁白） =====
-    var acceptMatch = cleanContent.match(/[\(\（]([^\)\）]*)(接收了红包|收下了转账)[^\)\）]*[\)\）]/);
+    var acceptMatch = cleanContent.match(/[\(\（]([^\)\）]*)(接收了红包|收下了红包|收下了转账|接收了转账|收啦|收了红包|收了转账)[^\)\）]*[\)\）]/);
     var accepted = false;
     if (acceptMatch) {
         accepted = acceptLatestPayment();
@@ -304,7 +304,7 @@ function processAIReply(rawContent, contactName, contactId) {
     }
 
     // ===== 检测角色旁白退还转账（只处理卡片，不渲染旁白） =====
-    var refundMatch = cleanContent.match(/[\(\（]([^\)\）]*)退还了转账[^\)\）]*[\)\）]/);
+    var refundMatch = cleanContent.match(/[\(\（]([^\)\）]*)(退还了转账|退回了转账|退还转账|退回转账|退还了红包)[^\)\）]*[\)\）]/);
     var refunded = false;
     if (refundMatch) {
         refunded = refundLatestPayment();
@@ -322,9 +322,9 @@ function processAIReply(rawContent, contactName, contactId) {
     }
 
     // ===== 检测角色旁白发转账 → 角色侧卡片 =====
-    var transferMatch = cleanContent.match(/[\(\（]([^\)\）]*)转账[^\)\）]*(\d+\.?\d*)[^\)\）]*[\)\）]/);
+    var transferMatch = cleanContent.match(/[\(\（]([^\)\）]*)(转账|给你转账|向您转账)[^\)\）]*(\d+\.?\d*)[^\)\）]*[\)\）]/);
     if (transferMatch) {
-        var transferAmount = parseFloat(transferMatch[2]);
+       var transferAmount = parseFloat(transferMatch[3]);
         if (transferAmount >= 0.01) {
             var noteMatch = cleanContent.match(/转账[^\)\）]*备注[：:]\s*([^\)\）]+)/);
             var note = noteMatch ? noteMatch[1].trim() : '';
