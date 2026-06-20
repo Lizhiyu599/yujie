@@ -50,7 +50,8 @@ window.ChatConfig = window.ChatConfig || {
         autoMsgFreq: parseInt(localStorage.getItem('yujie_auto_msg_freq') || 0),
         pronoun: localStorage.getItem('yujie_pronoun') || 'you',
         autoMoment: localStorage.getItem('yujie_auto_moment') === 'true',
-        autoMomentFreq: parseInt(localStorage.getItem('yujie_auto_moment_freq') || 0)
+        autoMomentFreq: parseInt(localStorage.getItem('yujie_auto_moment_freq') || 0),
+        memoryCount: 50
     }
 };
 
@@ -78,6 +79,7 @@ function loadContactSettings(contactId) {
     settings.summaryCount = parseInt(getContactSetting(contactId, 'summaryCount', '50'));
     settings.replyMin = parseInt(getContactSetting(contactId, 'replyMin', '1'));
     settings.replyMax = parseInt(getContactSetting(contactId, 'replyMax', '3'));
+    settings.memoryCount = parseInt(getContactSetting(contactId, 'memoryCount', '50'));
 }
 
 // ========== 语音模式状态 ==========
@@ -354,6 +356,34 @@ function backToChatList() {
     window.ChatState.currentContactId = null;
     window._isVoiceMode = false;
     renderChatShell();
+}
+
+// ========== 让AI先说话 ==========
+function triggerAIReply() {
+    const contactId = window.ChatState.currentContactId || 'c1';
+    const contact = getContactById(contactId);
+    const contactName = contact ? contact.name : 'AI';
+
+    window.ChatState.isAITyping = true;
+    const titleEl = document.getElementById('chatTitle');
+    if (titleEl) titleEl.innerHTML = '<span class="nav-typing">输入中...</span>';
+
+    const systemPrompt = buildSystemPrompt(contactId);
+    const memoryCount = parseInt(getContactSetting(contactId, 'memoryCount', '50'));
+    const historyMessages = getRecentHistory(contactId, memoryCount);
+    const userMessage = '（用户暂时没有说话，你可以先开口）';
+
+    callChatAPI([
+        { role: 'system', content: systemPrompt },
+        ...historyMessages,
+        { role: 'user', content: userMessage }
+    ]).then(reply => {
+        processAIReply(reply, contactName, contactId);
+    }).catch(error => {
+        appendMessage('assistant', '抱歉，消息发送失败：' + error.message);
+        if (titleEl) titleEl.textContent = contactName;
+        window.ChatState.isAITyping = false;
+    });
 }
 
 // ========== 心理状态窗切换 ==========
@@ -684,7 +714,8 @@ function confirmRegret() {
 
     const systemPrompt = buildSystemPrompt(contactId);
     const userMessage = hint || '请重新回复，换一种表达方式';
-    const historyMessages = getRecentHistory(contactId, 20);
+    const memoryCount = parseInt(getContactSetting(contactId, 'memoryCount', '50'));
+    const historyMessages = getRecentHistory(contactId, memoryCount);
     const allMessages = [
         { role: 'system', content: systemPrompt },
         ...historyMessages,
@@ -790,7 +821,7 @@ function menuTranslate() {
     });
 
     const menu = document.getElementById('bubbleMenu');
-    if (menu) menu.style.display = 'none';
+    if (menu) menu.style.display = 'none' ;
 }
 
 // ========== 右上角 + 弹出菜单 ==========
@@ -1473,7 +1504,7 @@ function deleteContactFromEdit(contactId) {
         showToast('角色已删除');
         backToContactsFromEdit();
     }
-        }
+}
 
 // ========== 动态页面 ==========
 let momentsData = [];
@@ -1550,7 +1581,6 @@ function showMomentsPage() {
     renderMomentsFeed();
 }
 
-// ========== 动态数据持久化 ==========
 function saveMomentsData() {
     try {
         localStorage.setItem('moments_data', JSON.stringify(momentsData));
@@ -1979,399 +2009,4 @@ function confirmLocationInput() {
     if (btns.length >= 2 && publishLocation) {
         btns[1].textContent = publishLocation;
     }
-}     
-
-// ========== 聊天详情半屏面板（独立联系人配置） ==========
-function openChatSettings() {
-    const oldMask = document.getElementById('chatSettingsMask');
-    if (oldMask) oldMask.remove();
-
-    const contactId = window.ChatState.currentContactId || 'c1';
-    loadContactSettings(contactId);
-    const config = window.ChatConfig || {};
-    const settings = config.settings || {};
-    const api = settings.api || {};
-
-    const mask = document.createElement('div');
-    mask.className = 'sheet-mask show';
-    mask.id = 'chatSettingsMask';
-    mask.innerHTML = `
-        <div class="half-sheet" id="chatSettingsSheet" onclick="event.stopPropagation()">
-            <div class="sheet-handle" id="sheetHandle">
-                <div class="handle-bar"></div>
-            </div>
-            <div class="sheet-scroll">
-
-                <div class="settings-section-title">API消耗详情</div>
-                <div class="glass-card">
-                    <div class="api-row"><span class="label">全部点数</span><span class="value" id="apiTotal">${api.total || 0} token</span></div>
-                    <div class="api-row"><span class="label">API</span><span class="value" id="apiOnline">${api.online || 0} token</span><span class="label">副API</span><span class="value" id="apiOffline">${api.offline || 0} token</span></div>
-                    <div class="api-row"><span class="label">生图</span><span class="value" id="apiImage">${api.image || 0} token</span><span class="label">语音</span><span class="value" id="apiVoice">${api.voice || 0} token</span></div>
-                </div>
-
-                <div class="settings-section-title">搜索聊天记录</div>
-                <div class="glass-card">
-                    <input type="text" class="search-input" id="chatSearchInput" placeholder="请输入内容…" oninput="searchChatHistory(this.value)">
-                    <div class="search-result" id="chatSearchResult"></div>
-                </div>
-
-                <div class="settings-section-title">聊天总结</div>
-                <div class="glass-card">
-                    <div class="slider-row"><span class="hint">提示：默认50轮自动总结，你可调自动总结轮数又或是手动总结。</span></div>
-                    <div class="slider-row" style="margin-top:8px;"><span class="hint">自动总结轮数</span><span class="val" id="summaryVal">${settings.summaryCount || 50}轮</span></div>
-                    <input type="range" min="10" max="200" value="${settings.summaryCount || 50}" class="ios-slider" oninput="updateSummaryCount(this.value)">
-                    <button class="black-btn" onclick="manualSummary()">手动总结</button>
-                </div>
-
-                <div class="settings-section-title">聊天背景图</div>
-                <div class="glass-card">
-                    <div class="bg-preview-2x4" id="chatBgPreview" style="background-image:url(${config.chatBg || ''});" onclick="pickChatBg()">${!config.chatBg ? '点击添加聊天背景图' : ''}</div>
-                    <button class="black-btn" onclick="clearChatBg()">清除当前背景</button>
-                </div>
-
-                <div class="settings-section-title">角色回复条数</div>
-                <div class="glass-card">
-                    <div class="slider-row"><span class="hint">回复最少</span><span class="val" id="replyMinVal">${settings.replyMin || 1}</span></div>
-                    <input type="range" min="1" max="10" value="${settings.replyMin || 1}" class="ios-slider" oninput="updateReplyMin(this.value)">
-                    <div class="slider-row" style="margin-top:10px;"><span class="hint">回复最多</span><span class="val" id="replyMaxVal">${settings.replyMax || 3}</span></div>
-                    <input type="range" min="1" max="10" value="${settings.replyMax || 3}" class="ios-slider" oninput="updateReplyMax(this.value)">
-                </div>
-
-                <div class="settings-section-title">线上聊天旁白</div>
-                <div class="glass-card">
-                    <div class="switch-row"><span>开启旁白</span><input type="checkbox" class="ios-switch-sm" id="swNarration" ${settings.onlineNarration !== false ? 'checked' : ''} onchange="toggleNarration(this.checked)"></div>
-                </div>
-
-                <div class="settings-section-title">人称选择</div>
-                <div class="glass-card">
-                    <div class="switch-row"><span>第一人称"我"</span><input type="checkbox" class="ios-switch-sm" id="swPronounMe" ${settings.pronoun === 'me' ? 'checked' : ''} onchange="setPronoun('me', this)"></div>
-                    <div class="switch-row"><span>第二人称"你"</span><input type="checkbox" class="ios-switch-sm" id="swPronounYou" ${settings.pronoun !== 'me' && settings.pronoun !== 'ta' ? 'checked' : ''} onchange="setPronoun('you', this)"></div>
-                    <div class="switch-row"><span>第三人称"ta"</span><input type="checkbox" class="ios-switch-sm" id="swPronounTa" ${settings.pronoun === 'ta' ? 'checked' : ''} onchange="setPronoun('ta', this)"></div>
-                </div>
-
-                <div class="settings-section-title">自动发消息</div>
-                <div class="glass-card">
-                    <div class="switch-row"><span>自动发消息</span><input type="checkbox" class="ios-switch-sm" id="swAutoMsg" ${settings.autoMsg === true ? 'checked' : ''} onchange="toggleAutoMsg(this.checked)"></div>
-                    <div class="slider-row" style="margin-top:8px;"><span class="hint">提示：角色会主动向你发消息。</span></div>
-                    <div class="slider-row" style="margin-top:6px;"><span class="hint">角色发消息的频率</span><span class="val" id="autoMsgFreqVal">${getAutoMsgLabel(settings.autoMsgFreq || 0)}</span></div>
-                    <div class="tick-slider-wrapper">
-                        <div class="tick-labels"><span>1h</span><span>5h</span><span>10h</span><span>24h</span></div>
-                        <div class="tick-dots" id="tickDots"></div>
-                        <input type="range" min="0" max="3" value="${settings.autoMsgFreq || 0}" class="ios-slider" step="1" oninput="updateAutoMsgFreq(this.value)">
-                    </div>
-                </div>
-
-                <div class="settings-section-title">自动翻译</div>
-                <div class="glass-card">
-                    <div class="switch-row"><span>自动翻译</span><input type="checkbox" class="ios-switch-sm" id="swAutoTranslate" ${settings.autoTranslate === true ? 'checked' : ''} onchange="toggleAutoTranslate(this.checked)"></div>
-                    <div style="font-size:12px;color:#8e8e93;margin-top:6px;">提示：非简体中文的内容都将自动翻译成简体中文。</div>
-                </div>
-
-                <div class="settings-section-title">自动发动态</div>
-                <div class="glass-card">
-                    <div class="switch-row"><span>自动发动态</span><input type="checkbox" class="ios-switch-sm" id="swAutoMoment" ${settings.autoMoment === true ? 'checked' : ''} onchange="toggleAutoMoment(this.checked)"></div>
-                    <div class="slider-row" style="margin-top:8px;"><span class="hint">提示：角色会自动发布动态。</span></div>
-                    <div class="slider-row" style="margin-top:6px;"><span class="hint">动态频率</span><span class="val" id="autoMomentFreqVal">${getAutoMomentLabel(settings.autoMomentFreq || 0)}</span></div>
-                    <div class="tick-slider-wrapper">
-                        <div class="tick-labels"><span>12h</span><span>24h</span><span>36h</span><span>48h</span></div>
-                        <div class="tick-dots" id="momentTickDots"></div>
-                        <input type="range" min="0" max="3" value="${settings.autoMomentFreq || 0}" class="ios-slider" step="1" oninput="updateAutoMomentFreq(this.value)">
-                    </div>
-                </div>
-
-                <div class="settings-section-title">危险区</div>
-                <div class="danger-fold" onclick="toggleDangerZone()">
-                    <span>危险区</span><span class="arrow" id="dangerArrow">></span>
-                </div>
-                <div class="danger-content" id="dangerContent">
-                    <div class="hint" style="color:#ff3b30; margin-bottom:8px;">提示：请谨慎操作</div>
-                    <button class="white-btn" onclick="clearChatHistory()">清空聊天记录</button>
-                    <button class="black-btn" onclick="blockContact()">拉黑联系人</button>
-                    <button class="white-btn" onclick="deleteContact()">删除联系人</button>
-                </div>
-
-            </div>
-        </div>
-    `;
-
-    document.body.appendChild(mask);
-
-    mask.onclick = function(e) {
-        if (e.target === mask) closeChatSettings();
-    };
-
-    const handle = document.getElementById('sheetHandle');
-    let startY = 0;
-    handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
-    handle.addEventListener('touchmove', function(e) {
-        if (e.touches[0].clientY - startY > 60) closeChatSettings();
-    });
-    handle.addEventListener('click', function() { closeChatSettings(); });
-
-    updateTickDots(settings.autoMsgFreq || 0);
-    updateMomentTickDots(settings.autoMomentFreq || 0);
-}
-
-function closeChatSettings() {
-    const mask = document.getElementById('chatSettingsMask');
-    if (mask) mask.remove();
-}
-
-function updateSummaryCount(val) {
-    document.getElementById('summaryVal').textContent = val + '轮';
-    window.ChatConfig.settings.summaryCount = parseInt(val);
-    var contactId = window.ChatState.currentContactId || 'c1';
-    setContactSetting(contactId, 'summaryCount', val);
-}
-
-function updateReplyMin(val) {
-    document.getElementById('replyMinVal').textContent = val;
-    window.ChatConfig.settings.replyMin = parseInt(val);
-    var contactId = window.ChatState.currentContactId || 'c1';
-    setContactSetting(contactId, 'replyMin', val);
-}
-
-function updateReplyMax(val) {
-    document.getElementById('replyMaxVal').textContent = val;
-    window.ChatConfig.settings.replyMax = parseInt(val);
-    var contactId = window.ChatState.currentContactId || 'c1';
-    setContactSetting(contactId, 'replyMax', val);
-}
-
-function toggleNarration(checked) {
-    window.ChatConfig.settings.onlineNarration = checked;
-    var contactId = window.ChatState.currentContactId || 'c1';
-    setContactSetting(contactId, 'narration', checked);
-}
-
-function setPronoun(type, el) {
-    window.ChatConfig.settings.pronoun = type;
-    var contactId = window.ChatState.currentContactId || 'c1';
-    setContactSetting(contactId, 'pronoun', type);
-    const sheet = document.getElementById('chatSettingsSheet');
-    if (sheet) {
-        const switches = sheet.querySelectorAll('.ios-switch-sm');
-        const types = ['me', 'you', 'ta'];
-        switches.forEach((sw, i) => {
-            if (types[i] !== type) sw.checked = false;
-        });
-    }
-    el.checked = true;
-}
-
-function toggleAutoMsg(checked) {
-    window.ChatConfig.settings.autoMsg = checked;
-    var contactId = window.ChatState.currentContactId || 'c1';
-    setContactSetting(contactId, 'autoMsg', checked);
-}
-
-function getAutoMsgLabel(val) {
-    const labels = ['1小时', '5小时', '10小时', '24小时'];
-    return labels[val] || '1小时';
-}
-
-function updateAutoMsgFreq(val) {
-    document.getElementById('autoMsgFreqVal').textContent = getAutoMsgLabel(parseInt(val));
-    window.ChatConfig.settings.autoMsgFreq = parseInt(val);
-    var contactId = window.ChatState.currentContactId || 'c1';
-    setContactSetting(contactId, 'autoMsgFreq', val);
-    updateTickDots(parseInt(val));
-}
-
-function updateTickDots(val) {
-    const dots = document.getElementById('tickDots');
-    if (!dots) return;
-    dots.innerHTML = '';
-    for (let i = 0; i < 4; i++) {
-        const dot = document.createElement('div');
-        dot.className = 'tick-dot' + (i === val ? ' active' : '');
-        dots.appendChild(dot);
-    }
-}
-
-function toggleAutoTranslate(checked) {
-    window.ChatConfig.settings.autoTranslate = checked;
-    var contactId = window.ChatState.currentContactId || 'c1';
-    setContactSetting(contactId, 'translate', checked);
-}
-
-function toggleAutoMoment(checked) {
-    window.ChatConfig.settings.autoMoment = checked;
-    var contactId = window.ChatState.currentContactId || 'c1';
-    setContactSetting(contactId, 'autoMoment', checked);
-}
-
-function getAutoMomentLabel(val) {
-    const labels = ['12小时', '24小时', '36小时', '48小时'];
-    return labels[val] || '12小时';
-}
-
-function updateAutoMomentFreq(val) {
-    document.getElementById('autoMomentFreqVal').textContent = getAutoMomentLabel(parseInt(val));
-    window.ChatConfig.settings.autoMomentFreq = parseInt(val);
-    var contactId = window.ChatState.currentContactId || 'c1';
-    setContactSetting(contactId, 'autoMomentFreq', val);
-    updateMomentTickDots(parseInt(val));
-}
-
-function updateMomentTickDots(val) {
-    const dots = document.getElementById('momentTickDots');
-    if (!dots) return;
-    dots.innerHTML = '';
-    for (let i = 0; i < 4; i++) {
-        const dot = document.createElement('div');
-        dot.className = 'tick-dot' + (i === val ? ' active' : '');
-        dots.appendChild(dot);
-    }
-}
-
-function toggleDangerZone() {
-    const content = document.getElementById('dangerContent');
-    const arrow = document.getElementById('dangerArrow');
-    if (content && arrow) {
-        const show = content.classList.toggle('show');
-        arrow.textContent = show ? '∨' : '>';
-    }
-}
-
-function pickChatBg() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(ev) {
-            const bg = ev.target.result;
-            window.ChatConfig.chatBg = bg;
-            localStorage.setItem('yujie_chat_bg', bg);
-            const preview = document.getElementById('chatBgPreview');
-            if (preview) {
-                preview.style.backgroundImage = `url(${bg})`;
-                preview.textContent = '';
-            }
-            const messages = document.getElementById('chatMessages');
-            if (messages) messages.style.backgroundImage = `url(${bg})`;
-        };
-        reader.readAsDataURL(file);
-    };
-    input.click();
-}
-
-function clearChatBg() {
-    window.ChatConfig.chatBg = '';
-    localStorage.removeItem('yujie_chat_bg');
-    const preview = document.getElementById('chatBgPreview');
-    if (preview) {
-        preview.style.backgroundImage = '';
-        preview.textContent = '点击添加聊天背景图';
-    }
-    const messages = document.getElementById('chatMessages');
-    if (messages) messages.style.backgroundImage = '';
-}
-
-function searchChatHistory(query) {
-    const result = document.getElementById('chatSearchResult');
-    if (!result) return;
-    if (!query.trim()) {
-        result.classList.remove('show');
-        return;
-    }
-    const messages = document.getElementById('chatMessages');
-    if (!messages) return;
-    const fullText = messages.innerText;
-    const q = query.toLowerCase();
-
-    const sentences = fullText.split(/[。\n？！!?]/);
-    const matches = sentences.filter(s => s.toLowerCase().includes(q));
-
-    if (matches.length > 0) {
-        result.innerHTML = matches.slice(0, 5).map(s =>
-            '<div onclick="jumpToSearchResult()" style="padding:4px 0;border-bottom:0.5px dashed rgba(0,0,0,0.05);">' +
-            s.trim().replace(new RegExp(q, 'gi'), '<b>$&</b>') +
-            '</div>'
-        ).join('');
-        result.classList.add('show');
-    } else {
-        result.innerHTML = '<div style="color:#8e8e93;">未找到相关内容</div>';
-        result.classList.add('show');
-    }
-}
-
-function jumpToSearchResult() {
-    const query = document.getElementById('chatSearchInput').value.trim();
-    closeChatSettings();
-    if (!query) return;
-    
-    const messages = document.getElementById('chatMessages');
-    if (!messages) return;
-    
-    const allBubbles = messages.querySelectorAll('.bubble-assistant, .bubble-user');
-    let found = null;
-    const q = query.toLowerCase();
-    
-    allBubbles.forEach(bubble => {
-        if (bubble.textContent.toLowerCase().includes(q) && !found) {
-            found = bubble;
-        }
-    });
-    
-    if (found) {
-        found.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        found.style.transition = '0.3s';
-        found.style.boxShadow = '0 0 0 3px rgba(0,122,255,0.5)';
-        setTimeout(() => {
-            found.style.boxShadow = '';
-        }, 2000);
-        showToast('已定位到聊天记录');
-    } else {
-        showToast('未找到相关消息');
-    }
-}
-
-function manualSummary() {
-    showToast('总结功能即将上线（拾忆林开发中）');
-}
-
-function clearChatHistory() {
-    const contactId = window.ChatState?.currentContactId || 'c1';
-    localStorage.removeItem('chat_history_' + contactId);
-    const messages = document.getElementById('chatMessages');
-    if (messages) messages.innerHTML = '<div style="text-align:center;color:#c7c7cc;font-size:13px;margin-top:20px;">聊天记录已清空</div>';
-    closeChatSettings();
-    showToast('聊天记录已清空');
-}
-
-function blockContact() {
-    showToast('拉黑功能即将上线');
-}
-
-function deleteContact() {
-    showToast('删除功能即将上线');
-}
-
-// ========== 让AI先说话 ==========
-function triggerAIReply() {
-    const contactId = window.ChatState.currentContactId || 'c1';
-    const contact = getContactById(contactId);
-    const contactName = contact ? contact.name : 'AI';
-
-    window.ChatState.isAITyping = true;
-    const titleEl = document.getElementById('chatTitle');
-    if (titleEl) titleEl.innerHTML = '<span class="nav-typing">输入中...</span>';
-
-    const systemPrompt = buildSystemPrompt(contactId);
-    const userMessage = '（用户点击了让角色先说话）';
-
-    callChatAPI([
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage }
-    ]).then(reply => {
-        processAIReply(reply, contactName, contactId);
-    }).catch(error => {
-        appendMessage('assistant', '抱歉，消息发送失败：' + error.message);
-        if (titleEl) titleEl.textContent = contactName;
-        window.ChatState.isAITyping = false;
-    });
 }
