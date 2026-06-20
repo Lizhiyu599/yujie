@@ -83,20 +83,6 @@ function getActiveAPIConfig() {
     return null;
 }
 
-// ========== 检查并插入时间戳 ==========
-function checkAndAddTimestamp() {
-    const messages = document.getElementById('chatMessages');
-    if (!messages) return;
-    const now = new Date();
-    if (!window.ChatState.lastMessageTime || (now - window.ChatState.lastMessageTime) > 6 * 60 * 1000) {
-        const timeStamp = document.createElement('div');
-        timeStamp.className = 'chat-time-stamp';
-        timeStamp.textContent = formatChatTime(now);
-        messages.appendChild(timeStamp);
-        window.ChatState.lastMessageTime = now;
-    }
-}
-
 // ========== 发送消息 ==========
 async function sendChatMessage() {
     const input = document.getElementById('chatInput');
@@ -168,10 +154,9 @@ async function sendChatMessage() {
     }
 }
 
-// ========== 接收/退还红包转账（带旁白和卡片） ==========
+// ========== 接收/退还红包转账（修改后：只处理卡片，不渲染旁白） ==========
 function acceptLatestPayment() {
     var cards = document.querySelectorAll('.payment-card[data-msg-id]');
-    var contactName = getContactById(window.ChatState.currentContactId)?.name || '角色';
     for (var i = cards.length - 1; i >= 0; i--) {
         var card = cards[i];
         var msgId = card.getAttribute('data-msg-id');
@@ -180,22 +165,16 @@ function acceptLatestPayment() {
             var type = card.getAttribute('data-type');
             var amount = card.getAttribute('data-amount');
             updatePaymentCardUI(msgId, 'accepted');
-            // 先渲染接收方卡片
             addReceivedCard('assistant', type, amount);
-            // 再渲染旁白（在卡片后面）
-            var narration = document.createElement('div');
-            narration.className = 'bubble bubble-narration';
-            narration.textContent = contactName + '已接收';
-            document.getElementById('chatMessages').appendChild(narration);
             saveChatHistory(window.ChatState.currentContactId);
-            return;
+            return true;
         }
     }
+    return false;
 }
 
 function refundLatestPayment() {
     var cards = document.querySelectorAll('.payment-card[data-msg-id]');
-    var contactName = getContactById(window.ChatState.currentContactId)?.name || '角色';
     for (var i = cards.length - 1; i >= 0; i--) {
         var card = cards[i];
         var msgId = card.getAttribute('data-msg-id');
@@ -205,14 +184,11 @@ function refundLatestPayment() {
             var amount = card.getAttribute('data-amount');
             updatePaymentCardUI(msgId, 'refunded');
             addRefundedCard('assistant', amount);
-            var narration = document.createElement('div');
-            narration.className = 'bubble bubble-narration';
-            narration.textContent = contactName + '已退还';
-            document.getElementById('chatMessages').appendChild(narration);
             saveChatHistory(window.ChatState.currentContactId);
-            return;
+            return true;
         }
     }
+    return false;
 }
 
 // ========== 调用聊天 API ==========
@@ -286,7 +262,7 @@ async function callChatAPI(messages) {
     }
 }
 
-// ========== 处理 AI 回复 ==========
+// ========== 处理 AI 回复（修改后：红包旁白统一由 narrationRegex 渲染） ==========
 function processAIReply(rawContent, contactName, contactId) {
     const titleEl = document.getElementById('chatTitle');
 
@@ -319,17 +295,19 @@ function processAIReply(rawContent, contactName, contactId) {
         cleanContent = cleanContent.replace(jsonMatch[0], '').trim();
     }
 
-    // 检测角色旁白接收红包/转账
+    // 检测角色旁白接收红包/转账（只处理卡片，不渲染旁白）
     var acceptMatch = cleanContent.match(/[\(\（]([^\)\）]*)(接收了红包|收下了转账)[^\)\）]*[\)\）]/);
+    var accepted = false;
     if (acceptMatch) {
-        acceptLatestPayment();
+        accepted = acceptLatestPayment();
         cleanContent = cleanContent.replace(acceptMatch[0], '');
     }
 
-    // 检测角色旁白退还转账
+    // 检测角色旁白退还转账（只处理卡片，不渲染旁白）
     var refundMatch = cleanContent.match(/[\(\（]([^\)\）]*)退还了转账[^\)\）]*[\)\）]/);
+    var refunded = false;
     if (refundMatch) {
-        refundLatestPayment();
+        refunded = refundLatestPayment();
         cleanContent = cleanContent.replace(refundMatch[0], '');
     }
 
@@ -398,6 +376,7 @@ function processAIReply(rawContent, contactName, contactId) {
         }
     }
 
+    // 通用旁白处理
     const narrationRegex = /[\(\（]([^\)\）]+)[\)\）]/g;
     const narrations = [];
     let mainText = cleanContent.replace(narrationRegex, (match, content) => {
@@ -408,6 +387,14 @@ function processAIReply(rawContent, contactName, contactId) {
     narrations.forEach(n => {
         appendMessage('narration', n);
     });
+
+    // 红包/转账的旁白在通用旁白之后统一追加
+    if (accepted) {
+        appendMessage('narration', contactName + '已接收');
+    }
+    if (refunded) {
+        appendMessage('narration', contactName + '已退还');
+    }
 
     if (mainText) {
         const parts = mainText.split(/\n{2,}/).filter(p => p.trim());
@@ -520,7 +507,7 @@ function updateMentalState(mentalData) {
     if (favEl) favEl.textContent = window.ChatConfig.mental.favorability;
     if (actEl) actEl.textContent = window.ChatConfig.mental.action;
     if (thtEl) thtEl.textContent = window.ChatConfig.mental.thought;
-}   
+}
 
 // ========== 检测是否需要翻译 ==========
 function needsTranslation(text) {
@@ -638,7 +625,7 @@ function restorePaymentCardStates() {
             if (noteText) noteText.style.display = 'none';
         }
     });
-  }
+}
 
 // ========== 语音 TTS 调用（MiniMax） ==========
 async function callTTS(text) {
@@ -779,77 +766,4 @@ function saveAutoMsgToHistory(contactId, contactName, rawContent) {
     if (window.ChatConfig?.contacts) {
         const contact = window.ChatConfig.contacts.find(c => c.id === contactId);
         if (contact) { contact.preview = cleanContent.substring(0, 30); saveContactsToStorage(); }
-    }
-}
-
-// ========== 未读消息计数 ==========
-function getUnreadCount(contactId) { const raw = localStorage.getItem('unread_' + contactId); return raw ? parseInt(raw) : 0; }
-function addUnreadCount(contactId) { const count = getUnreadCount(contactId) + 1; localStorage.setItem('unread_' + contactId, count); return count; }
-function clearUnreadCount(contactId) { localStorage.removeItem('unread_' + contactId); }
-
-// ========== 通知弹窗 ==========
-function showAutoMsgNotification(contactName, contactId, message) {
-    const existing = document.getElementById('autoMsgNotification');
-    if (existing) existing.remove();
-    let line1 = ''; let line2 = ''; const maxChars = 22;
-    if (message.length <= maxChars) { line1 = message; }
-    else { line1 = message.substring(0, maxChars); const remaining = message.substring(maxChars); if (remaining.length > maxChars) { line2 = remaining.substring(0, maxChars) + '...'; } else { line2 = remaining; } }
-    const noti = document.createElement('div');
-    noti.id = 'autoMsgNotification'; noti.className = 'auto-msg-notification';
-    noti.innerHTML = '<div class="auto-msg-noti-avatar">' + contactName.charAt(0) + '</div><div class="auto-msg-noti-body"><div class="auto-msg-noti-name">' + contactName + '</div><div class="auto-msg-noti-text">' + line1 + '</div>' + (line2 ? '<div class="auto-msg-noti-text">' + line2 + '</div>' : '') + '</div>';
-    noti.onclick = function() { noti.remove(); clearUnreadCount(contactId); if (typeof openChat === 'function') openChat(); setTimeout(function() { if (typeof enterChat === 'function') enterChat(contactId); }, 300); };
-    document.body.appendChild(noti);
-    setTimeout(function() { if (noti.parentNode) { noti.style.opacity = '0'; noti.style.transform = 'translateY(-20px)'; setTimeout(function() { if (noti.parentNode) noti.remove(); }, 300); } }, 4000);
-}
-
-// ========== 自动发动态系统 ==========
-window._autoMomentTimers = {};
-
-function startAutoMoment(contactId) {
-    stopAutoMoment(contactId);
-    var enabled = getContactSetting(contactId, 'autoMoment', false);
-    if (!enabled) return;
-    var freqVal = parseInt(getContactSetting(contactId, 'autoMomentFreq', '0'));
-    var intervals = [43200000, 86400000, 129600000, 172800000];
-    var interval = intervals[freqVal] || 43200000;
-    window._autoMomentTimers[contactId] = setInterval(function() { triggerAutoMoment(contactId); }, interval);
-    setTimeout(function() { triggerAutoMoment(contactId); }, 30000);
-}
-
-function stopAutoMoment(contactId) {
-    if (window._autoMomentTimers[contactId]) { clearInterval(window._autoMomentTimers[contactId]); delete window._autoMomentTimers[contactId]; }
-}
-
-async function triggerAutoMoment(contactId) {
-    var contact = getContactById(contactId);
-    if (!contact) return;
-    var systemPrompt = buildSystemPrompt(contactId);
-    var momentPrompt = getRandomMomentPrompt(contact);
-    try {
-        var reply = await callChatAPI([{ role: 'system', content: systemPrompt }, { role: 'user', content: momentPrompt }]);
-        var cleanContent = reply.replace(/\{[^}]*\}/g, '').trim();
-        if (!cleanContent) return;
-        var newMoment = { id: 'm_auto_' + Date.now(), userName: contact.name, userAvatar: contact.avatar, text: cleanContent, images: [], time: getRelativeTimeForMoment(Date.now()), location: '', likes: 0, comments: [], liked: false };
-        var raw = localStorage.getItem('moments_data');
-        var momentsData = raw ? JSON.parse(raw) : [];
-        momentsData.unshift(newMoment);
-        localStorage.setItem('moments_data', JSON.stringify(momentsData));
-    } catch(e) {}
-}
-
-function getRandomMomentPrompt(contact) {
-    var prompts = ['（分享一件今天发生的小事，发一条朋友圈）', '（突然有感而发，想发一条动态）', '（看到了有趣的东西，想分享到朋友圈）', '（心情不错，发一条动态表达一下）', '（夜深了，有些感慨想发出来）', '（最近发生了一些事，想在朋友圈说说）', '（随手发一条日常动态）', '（想分享一下此刻的心情）'];
-    if (contact.persona && contact.persona.indexOf('内向') >= 0) { prompts = ['（夜深人静时，有了一些感悟，想发一条仅自己可见的动态）', '（偶尔想分享一下心情，但不想太多人看到）', '（有些话想说，发一条私密动态吧）']; }
-    return prompts[Math.floor(Math.random() * prompts.length)];
-}
-
-function getRelativeTimeForMoment(timestamp) { var d = new Date(timestamp); return (d.getMonth() + 1) + '.' + d.getDate() + ' ' + d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0'); }
-
-var origToggleAutoMoment = toggleAutoMoment;
-toggleAutoMoment = function(checked) { origToggleAutoMoment(checked); var contactId = window.ChatState.currentContactId || 'c1'; if (checked) { startAutoMoment(contactId); showToast('自动发动态已开启'); } else { stopAutoMoment(contactId); showToast('自动发动态已关闭'); } };
-
-var origEnterChat = enterChat;
-enterChat = function(contactId) { origEnterChat(contactId); var enabled = getContactSetting(contactId, 'autoMoment', false); if (enabled) { startAutoMoment(contactId); } };
-
-var origBackToChatList = backToChatList;
-backToChatList = function() { for (var id in window._autoMomentTimers) { stopAutoMoment(id); } origBackToChatList(); };
+ 
