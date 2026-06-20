@@ -79,6 +79,14 @@ function sendSticker(idx) {
         row.appendChild(avatar);
         row.appendChild(bubble);
         document.getElementById('chatMessages').appendChild(row);
+        
+        // 旁白
+        var noteText = sticker.note ? '（发送了表情包：' + sticker.note + '）' : '（发送了一个表情包）';
+        var nRow = document.createElement('div');
+        nRow.className = 'bubble-narration';
+        nRow.textContent = noteText;
+        document.getElementById('chatMessages').appendChild(nRow);
+        
         saveChatHistory(window.ChatState.currentContactId);
         toggleAddPanel();
     }
@@ -160,11 +168,8 @@ function cancelEmojiLongPress() {
 function showEmojiDeleteBtn(idx) {
     const existing = document.getElementById('emojiDeleteBtn');
     if (existing) existing.remove();
-
     if (!emojiLongPressElement) return;
-
     const rect = emojiLongPressElement.getBoundingClientRect();
-
     const btn = document.createElement('div');
     btn.id = 'emojiDeleteBtn';
     btn.style.cssText = 'position:fixed;z-index:9999;width:22px;height:22px;background:#ff3b30;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2);';
@@ -173,12 +178,9 @@ function showEmojiDeleteBtn(idx) {
         e.stopPropagation();
         deleteEmoji(idx);
     };
-
     btn.style.top = (rect.top - 8) + 'px';
     btn.style.left = (rect.right - 14) + 'px';
-
     document.body.appendChild(btn);
-
     setTimeout(function() {
         document.addEventListener('click', function removeBtn() {
             const b = document.getElementById('emojiDeleteBtn');
@@ -191,9 +193,7 @@ function showEmojiDeleteBtn(idx) {
 function deleteEmoji(idx) {
     const btn = document.getElementById('emojiDeleteBtn');
     if (btn) btn.remove();
-
     emojiLongPressElement = null;
-
     const saved = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
     if (idx >= 0 && idx < saved.length) {
         saved.splice(idx, 1);
@@ -275,6 +275,13 @@ function sendImageWithCaption(imageSrc, caption) {
     row.appendChild(avatar);
     row.appendChild(bubble);
     document.getElementById('chatMessages').appendChild(row);
+    
+    // 旁白
+    var nRow = document.createElement('div');
+    nRow.className = 'bubble-narration';
+    nRow.textContent = caption ? '（发送了一张图片：' + caption + '）' : '（发送了一张图片）';
+    document.getElementById('chatMessages').appendChild(nRow);
+    
     saveChatHistory(window.ChatState.currentContactId);
 }
 
@@ -346,6 +353,13 @@ function sendLocation() {
     row.appendChild(avatar);
     row.appendChild(card);
     document.getElementById('chatMessages').appendChild(row);
+    
+    // 旁白
+    var nRow = document.createElement('div');
+    nRow.className = 'bubble-narration';
+    nRow.textContent = '（分享了一个位置：' + location + (distance ? '，距离约' + distance : '') + '）';
+    document.getElementById('chatMessages').appendChild(nRow);
+    
     saveChatHistory(window.ChatState.currentContactId);
 }
 
@@ -435,6 +449,13 @@ function sendPaymentCard(type, amount, note, method) {
     }
     row.appendChild(avatar); row.appendChild(card);
     document.getElementById('chatMessages').appendChild(row);
+    
+    // 旁白
+    var nRow = document.createElement('div');
+    nRow.className = 'bubble-narration';
+    nRow.textContent = '（发送了' + type + amount.toFixed(2) + '元' + (note ? '，备注：' + note : '') + '）';
+    document.getElementById('chatMessages').appendChild(nRow);
+    
     saveChatHistory(window.ChatState.currentContactId);
 }
 
@@ -471,28 +492,30 @@ function confirmSendLink() {
 
     const row = document.createElement('div');
     row.className = 'bubble-row user';
-
     const avatar = document.createElement('div');
     avatar.className = 'bubble-avatar user-avatar';
     avatar.textContent = '我';
-
     const card = document.createElement('div');
     card.style.cssText = 'background:#fff;border-radius:14px;padding:12px 14px;max-width:220px;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
-
     let displayLink = link;
     try {
         const url = new URL(link);
         displayLink = url.hostname + url.pathname.substring(0, 15) + (url.pathname.length > 15 ? '...' : '');
     } catch(e) {}
-
     card.innerHTML = `
         <div style="font-size:13px;font-weight:500;color:#000;margin-bottom:4px;">分享链接</div>
         <div style="font-size:11px;color:#007aff;word-break:break-all;">${displayLink}</div>
     `;
     card.onclick = function() { window.open(link, '_blank'); };
-
     row.appendChild(avatar);
     row.appendChild(card);
     document.getElementById('chatMessages').appendChild(row);
+    
+    // 旁白
+    var nRow = document.createElement('div');
+    nRow.className = 'bubble-narration';
+    nRow.textContent = '（分享了一个链接）';
+    document.getElementById('chatMessages').appendChild(nRow);
+    
     saveChatHistory(window.ChatState.currentContactId);
-}                               
+}
