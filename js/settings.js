@@ -410,6 +410,7 @@ function saveImageConfig() {
     const baseUrl = document.getElementById('img-base-url').value.trim();
     const apiKey = document.getElementById('img-api-key').value.trim();
     const model = document.getElementById('img-model').value.trim();
+    const style = document.getElementById('img-style').value;
 
     if (!baseUrl || !apiKey || !model) {
         showToast('保存失败：请填写完整的生图 API 配置');
@@ -419,6 +420,7 @@ function saveImageConfig() {
     localStorage.setItem('image_base_url', baseUrl);
     localStorage.setItem('image_api_key', apiKey);
     localStorage.setItem('image_model', model);
+    localStorage.setItem('image_style', style);
     showToast('配置保存成功');
 }
 
@@ -560,7 +562,7 @@ async function testWeather() {
         testBtn.style.opacity = '1';
         testBtn.disabled = false;
     }
-}       
+}
 
 // ===== 折叠区块（带箭头切换） =====
 function toggleSection(id, headerEl) {
@@ -848,6 +850,18 @@ const settingsHTML = `
                 <input type="text" id="img-model" class="ios-input" placeholder="手动输入或拉取" style="flex:1;">
                 <button class="ios-btn-white" style="width:auto; margin:0; padding:12px 16px;" onclick="fetchModelsGeneric('img-base-url', 'img-api-key', 'img-model')">拉取</button>
             </div>
+            <label class="ios-label" style="margin-top:12px;">生图风格</label>
+            <select id="img-style" class="ios-input" style="height:46px; background:#f2f2f7;">
+                <option value="">默认（不限制）</option>
+                <option value="写实">写实</option>
+                <option value="二次元">二次元</option>
+                <option value="古风">古风</option>
+                <option value="赛博朋克">赛博朋克</option>
+                <option value="水墨">水墨</option>
+                <option value="油画">油画</option>
+                <option value="黑白">黑白</option>
+                <option value="小清新">小清新</option>
+            </select>
             <button class="ios-btn-black" onclick="saveImageConfig()">保存配置</button>
             <button class="ios-btn-white test-btn" onclick="testImage()">连接测试</button>
         </div>
@@ -911,12 +925,15 @@ function initSettings() {
         const imgBaseUrl = localStorage.getItem('image_base_url');
         const imgApiKey = localStorage.getItem('image_api_key');
         const imgModel = localStorage.getItem('image_model');
+        const imgStyle = localStorage.getItem('image_style');
         const iBase = document.getElementById('img-base-url');
         const iKey = document.getElementById('img-api-key');
         const iModel = document.getElementById('img-model');
+        const iStyle = document.getElementById('img-style');
         if (iBase && imgBaseUrl) iBase.value = imgBaseUrl;
         if (iKey && imgApiKey) iKey.value = imgApiKey;
         if (iModel && imgModel) iModel.value = imgModel;
+        if (iStyle && imgStyle) iStyle.value = imgStyle;
         const weatherBaseUrl = localStorage.getItem('weather_base_url');
         const weatherApiKey = localStorage.getItem('weather_api_key');
         const weatherCity = localStorage.getItem('weather_city');
