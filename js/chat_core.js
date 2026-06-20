@@ -154,7 +154,7 @@ async function sendChatMessage() {
     }
 }
 
-// ========== 接收/退还红包转账（修改后：只处理卡片，不渲染旁白） ==========
+// ========== 接收/退还红包转账（只处理卡片，返回 true/false） ==========
 function acceptLatestPayment() {
     var cards = document.querySelectorAll('.payment-card[data-msg-id]');
     for (var i = cards.length - 1; i >= 0; i--) {
@@ -262,7 +262,7 @@ async function callChatAPI(messages) {
     }
 }
 
-// ========== 处理 AI 回复（修改后：红包旁白统一由 narrationRegex 渲染） ==========
+// ========== 处理 AI 回复（红包旁白统一渲染） ==========
 function processAIReply(rawContent, contactName, contactId) {
     const titleEl = document.getElementById('chatTitle');
 
@@ -295,7 +295,7 @@ function processAIReply(rawContent, contactName, contactId) {
         cleanContent = cleanContent.replace(jsonMatch[0], '').trim();
     }
 
-    // 检测角色旁白接收红包/转账（只处理卡片，不渲染旁白）
+    // ===== 检测角色旁白接收红包/转账（只处理卡片，不渲染旁白） =====
     var acceptMatch = cleanContent.match(/[\(\（]([^\)\）]*)(接收了红包|收下了转账)[^\)\）]*[\)\）]/);
     var accepted = false;
     if (acceptMatch) {
@@ -303,7 +303,7 @@ function processAIReply(rawContent, contactName, contactId) {
         cleanContent = cleanContent.replace(acceptMatch[0], '');
     }
 
-    // 检测角色旁白退还转账（只处理卡片，不渲染旁白）
+    // ===== 检测角色旁白退还转账（只处理卡片，不渲染旁白） =====
     var refundMatch = cleanContent.match(/[\(\（]([^\)\）]*)退还了转账[^\)\）]*[\)\）]/);
     var refunded = false;
     if (refundMatch) {
@@ -311,7 +311,7 @@ function processAIReply(rawContent, contactName, contactId) {
         cleanContent = cleanContent.replace(refundMatch[0], '');
     }
 
-    // 检测角色旁白发红包 → 角色侧卡片
+    // ===== 检测角色旁白发红包 → 角色侧卡片 =====
     var redPacketMatch = cleanContent.match(/[\(\（]([^\)\）]*)发了一个红包[^\)\）]*金额(\d+\.?\d*)[^\)\）]*[\)\）]/);
     if (redPacketMatch) {
         var redAmount = Math.max(0.01, Math.min(parseFloat(redPacketMatch[2]), 200));
@@ -321,7 +321,7 @@ function processAIReply(rawContent, contactName, contactId) {
         }
     }
 
-    // 检测角色旁白发转账 → 角色侧卡片
+    // ===== 检测角色旁白发转账 → 角色侧卡片 =====
     var transferMatch = cleanContent.match(/[\(\（]([^\)\）]*)转账[^\)\）]*(\d+\.?\d*)[^\)\）]*[\)\）]/);
     if (transferMatch) {
         var transferAmount = parseFloat(transferMatch[2]);
@@ -333,14 +333,14 @@ function processAIReply(rawContent, contactName, contactId) {
         }
     }
 
-    // 检测角色旁白发语音
+    // ===== 检测角色旁白发语音 =====
     var voiceMatch = cleanContent.match(/[\(\（]([^\)\）]*)发了一条语音消息[：:]\s*([^\)\）]+)[\)\）]/);
     if (voiceMatch && voiceMatch[2]) {
         sendVoiceBubble('assistant', voiceMatch[2].trim(), null, false);
         cleanContent = cleanContent.replace(voiceMatch[0], '');
     }
 
-    // 检测角色旁白发图片
+    // ===== 检测角色旁白发图片 =====
     var imageMatch = cleanContent.match(/[\(\（]([^\)\）]*)发了一张图片[：:]\s*([^\)\）]+)[\)\）]/);
     if (imageMatch && imageMatch[2]) {
         var imageDesc = imageMatch[2].trim();
@@ -376,7 +376,7 @@ function processAIReply(rawContent, contactName, contactId) {
         }
     }
 
-    // 通用旁白处理
+    // ===== 通用旁白处理 =====
     const narrationRegex = /[\(\（]([^\)\）]+)[\)\）]/g;
     const narrations = [];
     let mainText = cleanContent.replace(narrationRegex, (match, content) => {
@@ -388,7 +388,7 @@ function processAIReply(rawContent, contactName, contactId) {
         appendMessage('narration', n);
     });
 
-    // 红包/转账的旁白在通用旁白之后统一追加
+    // ===== 红包/转账旁白在通用旁白之后统一追加 =====
     if (accepted) {
         appendMessage('narration', contactName + '已接收');
     }
@@ -765,5 +765,4 @@ function saveAutoMsgToHistory(contactId, contactName, rawContent) {
     else { const newContainer = document.createElement('div'); newContainer.innerHTML = htmlToAdd; localStorage.setItem(storageKey, newContainer.innerHTML); }
     if (window.ChatConfig?.contacts) {
         const contact = window.ChatConfig.contacts.find(c => c.id === contactId);
-        if (contact) { contact.preview = cleanContent.substring(0, 30); saveContactsToStorage(); }
- 
+        if (contact) {
