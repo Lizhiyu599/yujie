@@ -40,7 +40,7 @@ function migrateOldConfig() {
         };
         devices.push(newDevice);
         saveDevices(devices);
-        setActiveDeviceId(newDevice.id);
+        setActiveDeviceId(String(newDevice.id));
     }
     localStorage.removeItem('main_api_base_url');
     localStorage.removeItem('main_api_key');
@@ -194,14 +194,14 @@ function saveDevice(deviceId) {
         devices.push(newDevice);
     }
     saveDevices(devices);
-    setActiveDeviceId(deviceId);
+    setActiveDeviceId(String(deviceId));
     showToast('配置保存成功');
     renderDeviceList();
 }
 
 // ===== 使用此设备 =====
 function useDevice(deviceId) {
-    setActiveDeviceId(deviceId);
+    setActiveDeviceId(String(deviceId));
     showToast('已切换为当前设备');
     renderDeviceList();
 }
@@ -262,8 +262,8 @@ function executeDeleteDevice() {
     let devices = getDevices();
     devices = devices.filter(d => d.id !== pendingDeleteDeviceId);
     saveDevices(devices);
-    if (getActiveDeviceId() === pendingDeleteDeviceId) {
-        setActiveDeviceId(devices.length > 0 ? devices[0].id : '');
+    if (String(getActiveDeviceId()) === String(pendingDeleteDeviceId)) {
+        setActiveDeviceId(devices.length > 0 ? String(devices[0].id) : '');
     }
     pendingDeleteDeviceId = null;
     var overlay = document.getElementById('confirmDeleteDeviceOverlay');
@@ -560,7 +560,7 @@ async function testWeather() {
         testBtn.style.opacity = '1';
         testBtn.disabled = false;
     }
-}
+}       
 
 // ===== 折叠区块（带箭头切换） =====
 function toggleSection(id, headerEl) {
@@ -608,7 +608,7 @@ function renderDeviceList() {
     const listContainer = document.getElementById('device-list');
     if (!listContainer) return;
     const devices = getDevices();
-    const activeId = getActiveDeviceId();
+    const activeId = String(getActiveDeviceId());
     listContainer.innerHTML = '';
 
     if (devices.length === 0) {
@@ -617,7 +617,7 @@ function renderDeviceList() {
     }
 
     devices.forEach(device => {
-        const isActive = device.id === activeId;
+        const isActive = String(device.id) === activeId;
         const item = document.createElement('div');
         item.className = 'ios-group';
         item.style.margin = '8px 16px';
@@ -637,7 +637,7 @@ function renderDeviceList() {
                 <input type="text" class="ios-input device-name" placeholder="例如：1号api" value="${device.name}">
 
                 <label class="ios-label">API地址 (Base URL)</label>
-                <input type="text" class="ios-input api-base-url" placeholder="例如：https://api.deepseek.com" value="${device.baseUrl}">
+                <input type="text" class="ios-input api-base-url" placeholder="请输入接口网址" value="${device.baseUrl}">
 
                 <label class="ios-label">API密钥 (Key)</label>
                 <input type="text" class="ios-input api-key" placeholder="例如：sk-..." value="${device.apiKey}">
@@ -770,7 +770,7 @@ const settingsHTML = `
             <input type="text" class="ios-input" placeholder="例如：1号api">
 
             <label class="ios-label">API地址 (Base URL)</label>
-            <input type="text" id="api-base-url-2" class="ios-input" placeholder="例如：https://api.deepseek.com">
+            <input type="text" id="api-base-url-2" class="ios-input" placeholder="请输入接口网址">
 
             <label class="ios-label">API密钥 (Key)</label>
             <input type="text" id="api-key-2" class="ios-input" placeholder="例如：sk-...">
@@ -794,7 +794,7 @@ const settingsHTML = `
             </div>
 
             <button class="ios-btn-black">保存配置</button>
-            <button class="ios-btn-white test-btn" onclick="testDeviceLegacy()">连接测试</button>
+            <button class="ios-btn-white test-btn" onclick="alert('连接失败：密钥为空')">连接测试</button>
         </div>
         
         <div style="margin: 24px 16px 8px; font-size:13px; color:#8e8e93;">副API用途 (没开默认用主API)</div>
@@ -840,7 +840,7 @@ const settingsHTML = `
     <div id="image-section" class="collapsible-section" style="display:none;">
         <div class="ios-group" style="padding:16px;">
             <label class="ios-label">API地址 (Base URL)</label>
-            <input type="text" id="img-base-url" class="ios-input" placeholder="例如：https://api.deepseek.com">
+            <input type="text" id="img-base-url" class="ios-input" placeholder="请输入接口网址">
             <label class="ios-label">API密钥 (Key)</label>
             <input type="text" id="img-api-key" class="ios-input" placeholder="例如：sk-...">
             <label class="ios-label">模型</label>
@@ -860,7 +860,7 @@ const settingsHTML = `
     <div id="weather-section" class="collapsible-section" style="display:none;">
         <div class="ios-group" style="padding:16px;">
             <label class="ios-label">API地址 (Base URL)</label>
-            <input type="text" id="weather-base-url" class="ios-input" placeholder="例如：https://api.deepseek.com">
+            <input type="text" id="weather-base-url" class="ios-input" placeholder="请输入接口网址">
             <label class="ios-label">API密钥 (Key)</label>
             <input type="text" id="weather-api-key" class="ios-input" placeholder="例如：sk-...">
             <label class="ios-label">城市名</label>
@@ -895,6 +895,8 @@ const settingsHTML = `
 // ===== 初始化设置面板 =====
 function initSettings() {
     migrateOldConfig();
+    var apiSection = document.getElementById('api-section');
+    if (apiSection) apiSection.style.display = 'block';
     renderDeviceList();
     setTimeout(() => {
         const voiceGroupId = localStorage.getItem('voice_group_id');
