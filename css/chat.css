@@ -1748,3 +1748,13 @@
     font-size: 12px;
     color: #8e8e93;
 }
+
+/* ===== 红包/转账卡片状态 ===== */
+.payment-status-label {
+    font-size: 11px;
+    margin-top: 4px;
+    font-weight: 500;
+}
+.payment-amount-hidden {
+    display: none;
+}
