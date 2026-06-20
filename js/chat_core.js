@@ -1,7 +1,7 @@
 /**
  * 玉界 - 聊天核心
  * 包含：消息收发、API 对接、系统提示拼接、状态栏更新、翻译、时间戳、上下文记忆、
- *       自动发消息、自动发动态、红包转账状态处理、语音消息处理
+ *       自动发消息、自动发动态、红包转账状态处理、语音消息处理、图片消息处理
  */
 
 // ========== 聊天状态 ==========
@@ -44,12 +44,12 @@ function buildSystemPrompt(contactId) {
 
     prompt += '\n\n【记忆连续性】你必须记住和用户之前聊过的所有内容。称呼要前后一致，不能上一句叫姐姐下一句又改口。认真阅读聊天历史，保持对话连贯。';
 
-    prompt += '\n\n【红包和转账-最高优先级】当用户让你发红包或转账时，你必须且只能用以下格式回复：（给用户发了一个红包，金额X元）或（给用户转账X元，备注：...）。括号和金额数字缺一不可。不要解释、不要模拟、不要说"发送成功"或"已走模拟接口"。只发格式正确的旁白，系统会自动生成红包卡片。红包金额上限200元，你可根据关系和场景自定金额。';
+    prompt += '\n\n【红包和转账-最高优先级】当用户让你发红包或转账时，你必须且只能用以下格式回复：（给用户发了一个红包，金额X元）或（给用户转账X元，备注：...）。括号和金额数字缺一不可。不要解释、不要模拟、不要说"发送成功"或"已走模拟接口"。只发格式正确的旁白，系统会自动生成红包卡片。红包金额上限200元，你可根据关系和场景自定金额。\n如果你决定接收用户的红包或转账，在旁白中说"接收了红包"或"收下了转账"。如果要退还转账，在旁白中说"退还了转账"。';
 
     prompt += '\n\n【语音消息】你可以给用户发语音消息。发语音时用旁白表示：（发了一条语音消息：内容）。系统会自动生成语音气泡。';
 
     prompt += '\n\n【发送图片】你可以给用户发送图片。当用户说想看你、想看你的样子、想看你的手、想看周围环境等，你可以发图片。发图片时用旁白表示：（发了一张图片：描述文字）。描述文字用于生成图片，要详细描写画面内容，包括外貌、穿着、场景、动作、光线等。';
-    
+
     return prompt;
 }
 
@@ -108,10 +108,11 @@ async function sendChatMessage() {
     const contact = getContactById(contactId);
     const contactName = contact ? contact.name : 'AI';
 
+    // 检测用户括号旁白：接收/退还
     const bracketMatch = text.match(/^[\(\（]([^\)\）]+)[\)\）]$/);
     if (bracketMatch) {
         const bracketContent = bracketMatch[1];
-        if (bracketContent.indexOf('接收') >= 0 || bracketContent.indexOf('收下') >= 0) {
+        if (bracketContent.indexOf('接收') >= 0 || bracketContent.indexOf('收下') >= 0 || bracketContent.indexOf('收啦') >= 0) {
             acceptLatestPayment();
         } else if (bracketContent.indexOf('退还') >= 0 || bracketContent.indexOf('退回') >= 0) {
             refundLatestPayment();
@@ -168,15 +169,29 @@ async function sendChatMessage() {
     }
 }
 
-// ========== 接收最新红包/转账 ==========
+// ========== 接收/退还红包转账（带旁白） ==========
 function acceptLatestPayment() {
     var cards = document.querySelectorAll('.payment-card[data-msg-id]');
+    var contactName = getContactById(window.ChatState.currentContactId)?.name || '角色';
     for (var i = cards.length - 1; i >= 0; i--) {
         var card = cards[i];
         var msgId = card.getAttribute('data-msg-id');
         var state = getPaymentState(msgId);
         if (state === 'pending') {
             updatePaymentCardUI(msgId, 'accepted');
+            // 旁白：角色已接收
+            var narration = document.createElement('div');
+            narration.className = 'bubble bubble-narration';
+            narration.textContent = contactName + '已接收';
+            document.getElementById('chatMessages').appendChild(narration);
+            // 接收方卡片
+            var row = card.closest('.bubble-row');
+            if (row && row.classList.contains('assistant')) {
+                addReceivedCard('user', card.getAttribute('data-type'), card.getAttribute('data-amount'));
+            } else {
+                addReceivedCard('assistant', card.getAttribute('data-type'), card.getAttribute('data-amount'));
+            }
+            saveChatHistory(window.ChatState.currentContactId);
             return;
         }
     }
@@ -184,6 +199,7 @@ function acceptLatestPayment() {
 
 function refundLatestPayment() {
     var cards = document.querySelectorAll('.payment-card[data-msg-id]');
+    var contactName = getContactById(window.ChatState.currentContactId)?.name || '角色';
     for (var i = cards.length - 1; i >= 0; i--) {
         var card = cards[i];
         var msgId = card.getAttribute('data-msg-id');
@@ -191,6 +207,19 @@ function refundLatestPayment() {
         var type = card.getAttribute('data-type');
         if (state === 'pending' && type === '转账') {
             updatePaymentCardUI(msgId, 'refunded');
+            // 旁白：角色已退还
+            var narration = document.createElement('div');
+            narration.className = 'bubble bubble-narration';
+            narration.textContent = contactName + '已退还';
+            document.getElementById('chatMessages').appendChild(narration);
+            // 退还方卡片
+            var row = card.closest('.bubble-row');
+            if (row && row.classList.contains('assistant')) {
+                addRefundedCard('user', card.getAttribute('data-amount'));
+            } else {
+                addRefundedCard('assistant', card.getAttribute('data-amount'));
+            }
+            saveChatHistory(window.ChatState.currentContactId);
             return;
         }
     }
@@ -300,12 +329,26 @@ function processAIReply(rawContent, contactName, contactId) {
         cleanContent = cleanContent.replace(jsonMatch[0], '').trim();
     }
 
+    // 检测角色旁白接收红包/转账 → 不显示旁白
+    var acceptMatch = cleanContent.match(/[\(\（]([^\)\）]*)(接收了红包|收下了转账)[^\)\）]*[\)\）]/);
+    if (acceptMatch) {
+        acceptLatestPayment();
+        cleanContent = cleanContent.replace(acceptMatch[0], '');
+    }
+
+    // 检测角色旁白退还转账 → 不显示旁白
+    var refundMatch = cleanContent.match(/[\(\（]([^\)\）]*)退还了转账[^\)\）]*[\)\）]/);
+    if (refundMatch) {
+        refundLatestPayment();
+        cleanContent = cleanContent.replace(refundMatch[0], '');
+    }
+
     // 检测角色旁白发红包 → 角色侧卡片
-var redPacketMatch = cleanContent.match(/[\(\（]([^\)\）]*)发了一个红包[^\)\）]*金额(\d+\.?\d*)[^\)\）]*[\)\）]/);
-if (redPacketMatch) {
-    var redAmount = Math.max(0.01, Math.min(parseFloat(redPacketMatch[2]), 200));
-    sendBotPaymentCard('红包', redAmount, '');
-    cleanContent = cleanContent.replace(redPacketMatch[0], '');
+    var redPacketMatch = cleanContent.match(/[\(\（]([^\)\）]*)发了一个红包[^\)\）]*金额(\d+\.?\d*)[^\)\）]*[\)\）]/);
+    if (redPacketMatch) {
+        var redAmount = Math.max(0.01, Math.min(parseFloat(redPacketMatch[2]), 200));
+        sendBotPaymentCard('红包', redAmount, '');
+        cleanContent = cleanContent.replace(redPacketMatch[0], '');
     }
 
     // 检测角色旁白发转账 → 角色侧卡片
@@ -324,11 +367,40 @@ if (redPacketMatch) {
         cleanContent = cleanContent.replace(voiceMatch[0], '');
     }
 
-    if (cleanContent.indexOf('收下') >= 0 || cleanContent.indexOf('已接收') >= 0 || cleanContent.indexOf('接收了') >= 0) {
-        acceptLatestPayment();
-    }
-    if ((cleanContent.indexOf('退还') >= 0 || cleanContent.indexOf('退回') >= 0) && cleanContent.indexOf('不能') < 0 && cleanContent.indexOf('无法') < 0) {
-        refundLatestPayment();
+    // 检测角色旁白发图片
+    var imageMatch = cleanContent.match(/[\(\（]([^\)\）]*)发了一张图片[：:]\s*([^\)\）]+)[\)\）]/);
+    if (imageMatch && imageMatch[2]) {
+        var imageDesc = imageMatch[2].trim();
+        cleanContent = cleanContent.replace(imageMatch[0], '');
+        var hasImageAPI = localStorage.getItem('image_base_url') && localStorage.getItem('image_api_key') && localStorage.getItem('image_model');
+        if (hasImageAPI) {
+            callImageAPI(imageDesc).then(function(generatedUrl) {
+                if (generatedUrl) {
+                    var botRow = document.createElement('div');
+                    botRow.className = 'bubble-row assistant';
+                    var botAvatar = document.createElement('div');
+                    botAvatar.className = 'bubble-avatar bot-avatar';
+                    botAvatar.textContent = getContactById(contactId)?.avatar || 'AI';
+                    var botBubble = document.createElement('div');
+                    botBubble.className = 'bubble bubble-assistant';
+                    botBubble.style.backgroundImage = 'url(' + generatedUrl + ')';
+                    botBubble.style.backgroundSize = 'cover';
+                    botBubble.style.backgroundPosition = 'center';
+                    botBubble.style.width = '140px';
+                    botBubble.style.height = '140px';
+                    botBubble.style.padding = '0';
+                    botBubble.style.borderRadius = '12px';
+                    botBubble.textContent = '';
+                    botBubble.onclick = function() { openImageViewer(generatedUrl); };
+                    botRow.appendChild(botAvatar);
+                    botRow.appendChild(botBubble);
+                    document.getElementById('chatMessages').appendChild(botRow);
+                    saveChatHistory(contactId);
+                }
+            });
+        } else {
+            appendMessage('narration', imageDesc);
+        }
     }
 
     const narrationRegex = /[\(\（]([^\)\）]+)[\)\）]/g;
@@ -378,42 +450,6 @@ if (redPacketMatch) {
     window.ChatState.isAITyping = false;
 
     saveChatHistory(contactId);
-}
-
-// 检测角色旁白发图片
-var imageMatch = cleanContent.match(/[\(\（]([^\)\）]*)发了一张图片[：:]\s*([^\)\）]+)[\)\）]/);
-if (imageMatch && imageMatch[2]) {
-    var imageDesc = imageMatch[2].trim();
-    cleanContent = cleanContent.replace(imageMatch[0], '');
-    var hasImageAPI = localStorage.getItem('image_base_url') && localStorage.getItem('image_api_key') && localStorage.getItem('image_model');
-    if (hasImageAPI) {
-        callImageAPI(imageDesc).then(function(generatedUrl) {
-            if (generatedUrl) {
-                var botRow = document.createElement('div');
-                botRow.className = 'bubble-row assistant';
-                var botAvatar = document.createElement('div');
-                botAvatar.className = 'bubble-avatar bot-avatar';
-                botAvatar.textContent = getContactById(contactId)?.avatar || 'AI';
-                var botBubble = document.createElement('div');
-                botBubble.className = 'bubble bubble-assistant';
-                botBubble.style.backgroundImage = 'url(' + generatedUrl + ')';
-                botBubble.style.backgroundSize = 'cover';
-                botBubble.style.backgroundPosition = 'center';
-                botBubble.style.width = '140px';
-                botBubble.style.height = '140px';
-                botBubble.style.padding = '0';
-                botBubble.style.borderRadius = '12px';
-                botBubble.textContent = '';
-                botBubble.onclick = function() { openImageViewer(generatedUrl); };
-                botRow.appendChild(botAvatar);
-                botRow.appendChild(botBubble);
-                document.getElementById('chatMessages').appendChild(botRow);
-                saveChatHistory(contactId);
-            }
-        });
-    } else {
-        appendMessage('narration', imageDesc);
-    }
 }
 
 // ========== 格式化时间 ==========
@@ -596,14 +632,18 @@ function restorePaymentCardStates() {
         if (state === 'accepted') {
             var label = card.querySelector('.payment-status-label');
             var amountHidden = card.querySelector('.payment-amount-hidden');
+            var noteText = card.querySelector('.payment-note-text');
             if (label) { label.textContent = '已接收'; label.style.display = 'block'; label.style.color = '#34c759'; }
             if (amountHidden) { amountHidden.style.display = 'block'; }
+            if (noteText) noteText.style.display = 'none';
         } else if (state === 'refunded') {
             var label = card.querySelector('.payment-status-label');
+            var noteText = card.querySelector('.payment-note-text');
             if (label) { label.textContent = '已退还'; label.style.display = 'block'; label.style.color = '#ff3b30'; }
+            if (noteText) noteText.style.display = 'none';
         }
-    });
-    }
+    });    
+}
 
 // ========== 语音 TTS 调用（MiniMax） ==========
 async function callTTS(text) {
