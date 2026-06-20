@@ -432,7 +432,7 @@ function processAIReply(rawContent, contactName, contactId) {
     window.ChatState.isAITyping = false;
 
     saveChatHistory(contactId);
-}
+}        
 
 // ========== 格式化时间 ==========
 function formatChatTime(date) {
@@ -765,4 +765,69 @@ function saveAutoMsgToHistory(contactId, contactName, rawContent) {
     else { const newContainer = document.createElement('div'); newContainer.innerHTML = htmlToAdd; localStorage.setItem(storageKey, newContainer.innerHTML); }
     if (window.ChatConfig?.contacts) {
         const contact = window.ChatConfig.contacts.find(c => c.id === contactId);
-        if (contact) {
+        if (contact) { contact.preview = cleanContent.substring(0, 30); saveContactsToStorage(); }
+    }
+}
+
+// ========== 未读消息计数 ==========
+function getUnreadCount(contactId) { const raw = localStorage.getItem('unread_' + contactId); return raw ? parseInt(raw) : 0; }
+function addUnreadCount(contactId) { const count = getUnreadCount(contactId) + 1; localStorage.setItem('unread_' + contactId, count); return count; }
+function clearUnreadCount(contactId) { localStorage.removeItem('unread_' + contactId); }
+
+// ========== 通知弹窗 ==========
+function showAutoMsgNotification(contactName, contactId, message) {
+    const existing = document.getElementById('autoMsgNotification');
+    if (existing) existing.remove();
+    let line1 = ''; let line2 = ''; const maxChars = 22;
+    if (message.length <= maxChars) { line1 = message; }
+    else { line1 = message.substring(0, maxChars); const remaining = message.substring(maxChars); if (remaining.length > maxChars) { line2 = remaining.substring(0, maxChars) + '...'; } else { line2 = remaining; } }
+    const noti = document.createElement('div');
+    noti.id = 'autoMsgNotification'; noti.className = 'auto-msg-notification';
+    noti.innerHTML = '<div class="auto-msg-noti-avatar">' + contactName.charAt(0) + '</div><div class="auto-msg-noti-body"><div class="auto-msg-noti-name">' + contactName + '</div><div class="auto-msg-noti-text">' + line1 + '</div>' + (line2 ? '<div class="auto-msg-noti-text">' + line2 + '</div>' : '') + '</div>';
+    noti.onclick = function() { noti.remove(); clearUnreadCount(contactId); if (typeof openChat === 'function') openChat(); setTimeout(function() { if (typeof enterChat === 'function') enterChat(contactId); }, 300); };
+    document.body.appendChild(noti);
+    setTimeout(function() { if (noti.parentNode) { noti.style.opacity = '0'; noti.style.transform = 'translateY(-20px)'; setTimeout(function() { if (noti.parentNode) noti.remove(); }, 300); } }, 4000);
+}
+
+// ========== 自动发动态系统 ==========
+window._autoMomentTimers = {};
+
+function startAutoMoment(contactId) {
+    stopAutoMoment(contactId);
+    var enabled = getContactSetting(contactId, 'autoMoment', false);
+    if (!enabled) return;
+    var freqVal = parseInt(getContactSetting(contactId, 'autoMomentFreq', '0'));
+    var intervals = [43200000, 86400000, 129600000, 172800000];
+    var interval = intervals[freqVal] || 43200000;
+    window._autoMomentTimers[contactId] = setInterval(function() { triggerAutoMoment(contactId); }, interval);
+    setTimeout(function() { triggerAutoMoment(contactId); }, 30000);
+}
+
+function stopAutoMoment(contactId) {
+    if (window._autoMomentTimers[contactId]) { clearInterval(window._autoMomentTimers[contactId]); delete window._autoMomentTimers[contactId]; }
+}
+
+async function triggerAutoMoment(contactId) {
+    var contact = getContactById(contactId);
+    if (!contact) return;
+    var systemPrompt = buildSystemPrompt(contactId);
+    var momentPrompt = getRandomMomentPrompt(contact);
+    try {
+        var reply = await callChatAPI([{ role: 'system', content: systemPrompt }, { role: 'user', content: momentPrompt }]);
+        var cleanContent = reply.replace(/\{[^}]*\}/g, '').trim();
+        if (!cleanContent) return;
+        var newMoment = { id: 'm_auto_' + Date.now(), userName: contact.name, userAvatar: contact.avatar, text: cleanContent, images: [], time: getRelativeTimeForMoment(Date.now()), location: '', likes: 0, comments: [], liked: false };
+        var raw = localStorage.getItem('moments_data');
+        var momentsData = raw ? JSON.parse(raw) : [];
+        momentsData.unshift(newMoment);
+        localStorage.setItem('moments_data', JSON.stringify(momentsData));
+    } catch(e) {}
+}
+
+function getRandomMomentPrompt(contact) {
+    var prompts = ['（分享一件今天发生的小事，发一条朋友圈）', '（突然有感而发，想发一条动态）', '（看到了有趣的东西，想分享到朋友圈）', '（心情不错，发一条动态表达一下）', '（夜深了，有些感慨想发出来）', '（最近发生了一些事，想在朋友圈说说）', '（随手发一条日常动态）', '（想分享一下此刻的心情）'];
+    if (contact.persona && contact.persona.indexOf('内向') >= 0) { prompts = ['（夜深人静时，有了一些感悟，想发一条仅自己可见的动态）', '（偶尔想分享一下心情，但不想太多人看到）', '（有些话想说，发一条私密动态吧）']; }
+    return prompts[Math.floor(Math.random() * prompts.length)];
+}
+
+function getRelativeTimeForMoment(timestamp) { var d = new Date(timestamp); return (d.getMonth() + 1) + '.' + d.getDate() + ' ' + d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0'); }
