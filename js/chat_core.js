@@ -44,7 +44,7 @@ function buildSystemPrompt(contactId) {
 
     prompt += '\n\n【记忆连续性】你必须记住和用户之前聊过的所有内容。称呼要前后一致，不能上一句叫姐姐下一句又改口。认真阅读聊天历史，保持对话连贯。';
 
-    prompt += '\n\n【红包和转账-最高优先级】当用户让你发红包或转账时，你必须且只能用以下格式回复：（给用户发了一个红包，金额X元）或（给用户转账X元，备注：...）。括号和金额数字缺一不可。不要解释、不要模拟、不要说"发送成功"或"已走模拟接口"。只发格式正确的旁白，系统会自动生成红包卡片。红包金额上限200元，你可根据关系和场景自定金额。\n如果你决定接收用户的红包或转账，在旁白中说"接收了红包"或"收下了转账"。如果要退还转账，在旁白中说"退还了转账"。';
+    prompt += '\n\n【红包和转账-最高优先级】当用户让你发红包或转账时，你必须且只能用以下格式回复：（给用户发了一个红包，金额X元）或（给用户转账X元，备注：...）。括号和金额数字缺一不可。金额必须大于0。不要解释、不要模拟、不要说"发送成功"或"已走模拟接口"。只发格式正确的旁白，系统会自动生成红包卡片。红包金额上限200元，你可根据关系和场景自定金额。\n如果你决定接收用户的红包或转账，在旁白中说"接收了红包"或"收下了转账"。如果要退还转账，在旁白中说"退还了转账"。';
 
     prompt += '\n\n【语音消息】你可以给用户发语音消息。发语音时用旁白表示：（发了一条语音消息：内容）。系统会自动生成语音气泡。';
 
@@ -168,7 +168,7 @@ async function sendChatMessage() {
     }
 }
 
-// ========== 接收/退还红包转账（带旁白） ==========
+// ========== 接收/退还红包转账（带旁白和卡片） ==========
 function acceptLatestPayment() {
     var cards = document.querySelectorAll('.payment-card[data-msg-id]');
     var contactName = getContactById(window.ChatState.currentContactId)?.name || '角色';
@@ -177,17 +177,16 @@ function acceptLatestPayment() {
         var msgId = card.getAttribute('data-msg-id');
         var state = getPaymentState(msgId);
         if (state === 'pending') {
+            var type = card.getAttribute('data-type');
+            var amount = card.getAttribute('data-amount');
             updatePaymentCardUI(msgId, 'accepted');
+            // 先渲染接收方卡片
+            addReceivedCard('assistant', type, amount);
+            // 再渲染旁白（在卡片后面）
             var narration = document.createElement('div');
             narration.className = 'bubble bubble-narration';
             narration.textContent = contactName + '已接收';
             document.getElementById('chatMessages').appendChild(narration);
-            var row = card.closest('.bubble-row');
-            if (row && row.classList.contains('assistant')) {
-                addReceivedCard('user', card.getAttribute('data-type'), card.getAttribute('data-amount'));
-            } else {
-                addReceivedCard('assistant', card.getAttribute('data-type'), card.getAttribute('data-amount'));
-            }
             saveChatHistory(window.ChatState.currentContactId);
             return;
         }
@@ -203,17 +202,13 @@ function refundLatestPayment() {
         var state = getPaymentState(msgId);
         var type = card.getAttribute('data-type');
         if (state === 'pending' && type === '转账') {
+            var amount = card.getAttribute('data-amount');
             updatePaymentCardUI(msgId, 'refunded');
+            addRefundedCard('assistant', amount);
             var narration = document.createElement('div');
             narration.className = 'bubble bubble-narration';
             narration.textContent = contactName + '已退还';
             document.getElementById('chatMessages').appendChild(narration);
-            var row = card.closest('.bubble-row');
-            if (row && row.classList.contains('assistant')) {
-                addRefundedCard('user', card.getAttribute('data-amount'));
-            } else {
-                addRefundedCard('assistant', card.getAttribute('data-amount'));
-            }
             saveChatHistory(window.ChatState.currentContactId);
             return;
         }
@@ -342,17 +337,22 @@ function processAIReply(rawContent, contactName, contactId) {
     var redPacketMatch = cleanContent.match(/[\(\（]([^\)\）]*)发了一个红包[^\)\）]*金额(\d+\.?\d*)[^\)\）]*[\)\）]/);
     if (redPacketMatch) {
         var redAmount = Math.max(0.01, Math.min(parseFloat(redPacketMatch[2]), 200));
-        sendBotPaymentCard('红包', redAmount, '');
-        cleanContent = cleanContent.replace(redPacketMatch[0], '');
+        if (redAmount >= 0.01) {
+            sendBotPaymentCard('红包', redAmount, '');
+            cleanContent = cleanContent.replace(redPacketMatch[0], '');
+        }
     }
 
     // 检测角色旁白发转账 → 角色侧卡片
     var transferMatch = cleanContent.match(/[\(\（]([^\)\）]*)转账[^\)\）]*(\d+\.?\d*)[^\)\）]*[\)\）]/);
     if (transferMatch) {
-        var noteMatch = cleanContent.match(/转账[^\)\）]*备注[：:]\s*([^\)\）]+)/);
-        var note = noteMatch ? noteMatch[1].trim() : '';
-        sendBotPaymentCard('转账', parseFloat(transferMatch[2]), note);
-        cleanContent = cleanContent.replace(transferMatch[0], '');
+        var transferAmount = parseFloat(transferMatch[2]);
+        if (transferAmount >= 0.01) {
+            var noteMatch = cleanContent.match(/转账[^\)\）]*备注[：:]\s*([^\)\）]+)/);
+            var note = noteMatch ? noteMatch[1].trim() : '';
+            sendBotPaymentCard('转账', transferAmount, note);
+            cleanContent = cleanContent.replace(transferMatch[0], '');
+        }
     }
 
     // 检测角色旁白发语音
@@ -638,7 +638,7 @@ function restorePaymentCardStates() {
             if (noteText) noteText.style.display = 'none';
         }
     });
- }
+  }
 
 // ========== 语音 TTS 调用（MiniMax） ==========
 async function callTTS(text) {
