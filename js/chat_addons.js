@@ -79,14 +79,14 @@ function sendSticker(idx) {
         row.appendChild(avatar);
         row.appendChild(bubble);
         document.getElementById('chatMessages').appendChild(row);
-        
-        // 旁白
+
         var noteText = sticker.note ? '（发送了表情包：' + sticker.note + '）' : '（发送了一个表情包）';
         var nRow = document.createElement('div');
         nRow.className = 'bubble-narration';
         nRow.textContent = noteText;
+        nRow.style.display = 'none';
         document.getElementById('chatMessages').appendChild(nRow);
-        
+
         saveChatHistory(window.ChatState.currentContactId);
         toggleAddPanel();
     }
@@ -275,13 +275,13 @@ function sendImageWithCaption(imageSrc, caption) {
     row.appendChild(avatar);
     row.appendChild(bubble);
     document.getElementById('chatMessages').appendChild(row);
-    
-    // 旁白
+
     var nRow = document.createElement('div');
     nRow.className = 'bubble-narration';
     nRow.textContent = caption ? '（发送了一张图片：' + caption + '）' : '（发送了一张图片）';
+    nRow.style.display = 'none';
     document.getElementById('chatMessages').appendChild(nRow);
-    
+
     saveChatHistory(window.ChatState.currentContactId);
 }
 
@@ -353,13 +353,13 @@ function sendLocation() {
     row.appendChild(avatar);
     row.appendChild(card);
     document.getElementById('chatMessages').appendChild(row);
-    
-    // 旁白
+
     var nRow = document.createElement('div');
     nRow.className = 'bubble-narration';
     nRow.textContent = '（分享了一个位置：' + location + (distance ? '，距离约' + distance : '') + '）';
+    nRow.style.display = 'none';
     document.getElementById('chatMessages').appendChild(nRow);
-    
+
     saveChatHistory(window.ChatState.currentContactId);
 }
 
@@ -449,13 +449,13 @@ function sendPaymentCard(type, amount, note, method) {
     }
     row.appendChild(avatar); row.appendChild(card);
     document.getElementById('chatMessages').appendChild(row);
-    
-    // 旁白
+
     var nRow = document.createElement('div');
     nRow.className = 'bubble-narration';
     nRow.textContent = '（发送了' + type + amount.toFixed(2) + '元' + (note ? '，备注：' + note : '') + '）';
+    nRow.style.display = 'none';
     document.getElementById('chatMessages').appendChild(nRow);
-    
+
     saveChatHistory(window.ChatState.currentContactId);
 }
 
@@ -510,12 +510,12 @@ function confirmSendLink() {
     row.appendChild(avatar);
     row.appendChild(card);
     document.getElementById('chatMessages').appendChild(row);
-    
-    // 旁白
+
     var nRow = document.createElement('div');
     nRow.className = 'bubble-narration';
     nRow.textContent = '（分享了一个链接）';
+    nRow.style.display = 'none';
     document.getElementById('chatMessages').appendChild(nRow);
-    
+
     saveChatHistory(window.ChatState.currentContactId);
 }
