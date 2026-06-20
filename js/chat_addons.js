@@ -435,7 +435,7 @@ function sendLocation() {
     document.getElementById('chatMessages').appendChild(nRow);
 
     saveChatHistory(window.ChatState.currentContactId);
-}       
+}
 
 // ========== 红包/转账状态存储 ==========
 function getPaymentState(msgId) {
@@ -492,11 +492,20 @@ function openPaymentModal(msgId) {
             }
             updatePaymentCardUI(msgId, 'accepted');
             overlay.remove();
-            // 旁白
+            // 旁白：已收入
             var narration = document.createElement('div');
             narration.className = 'bubble bubble-narration';
             narration.textContent = '已收入' + amount + '元';
             document.getElementById('chatMessages').appendChild(narration);
+            // 接收方卡片
+            var row = card.closest('.bubble-row');
+            if (row && row.classList.contains('assistant')) {
+                // 角色发的 → 用户接收 → 用户侧显示已接收卡片
+                addReceivedCard('user', type, amount);
+            } else {
+                // 用户发的 → 角色接收 → 角色侧显示已接收卡片
+                addReceivedCard('assistant', type, amount);
+            }
             saveChatHistory(window.ChatState.currentContactId);
         };
     }
@@ -511,6 +520,13 @@ function openPaymentModal(msgId) {
             narration.className = 'bubble bubble-narration';
             narration.textContent = '已退还转账';
             document.getElementById('chatMessages').appendChild(narration);
+            // 退还方卡片
+            var row = card.closest('.bubble-row');
+            if (row && row.classList.contains('assistant')) {
+                addRefundedCard('user', amount);
+            } else {
+                addRefundedCard('assistant', amount);
+            }
             saveChatHistory(window.ChatState.currentContactId);
         };
     }
@@ -518,6 +534,54 @@ function openPaymentModal(msgId) {
     overlay.onclick = function(e) {
         if (e.target === overlay) overlay.remove();
     };
+}
+
+// 添加已接收卡片
+function addReceivedCard(side, type, amount) {
+    var row = document.createElement('div');
+    row.className = 'bubble-row ' + side;
+    var avatar = document.createElement('div');
+    avatar.className = 'bubble-avatar ' + (side === 'user' ? 'user-avatar' : 'bot-avatar');
+    avatar.textContent = side === 'user' ? '我' : (getContactById(window.ChatState.currentContactId)?.avatar || 'AI');
+    var card = document.createElement('div');
+    card.style.cssText = 'background:#fff;border-radius:14px;padding:0;width:220px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
+    card.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;padding:14px;">
+            <div style="width:50px;height:50px;background:#1d1d1f;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><div style="color:#f5c543;font-size:18px;font-weight:700;">$</div></div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;color:#8e8e93;margin-bottom:2px;">${type}</div>
+                <div style="font-size:14px;color:#000;font-weight:500;">已接收</div>
+                <div style="font-size:18px;font-weight:700;color:#000;">$` + amount + `</div>
+            </div>
+        </div>
+    `;
+    row.appendChild(avatar);
+    row.appendChild(card);
+    document.getElementById('chatMessages').appendChild(row);
+}
+
+// 添加已退还卡片
+function addRefundedCard(side, amount) {
+    var row = document.createElement('div');
+    row.className = 'bubble-row ' + side;
+    var avatar = document.createElement('div');
+    avatar.className = 'bubble-avatar ' + (side === 'user' ? 'user-avatar' : 'bot-avatar');
+    avatar.textContent = side === 'user' ? '我' : (getContactById(window.ChatState.currentContactId)?.avatar || 'AI');
+    var card = document.createElement('div');
+    card.style.cssText = 'background:#fff;border-radius:14px;padding:0;width:220px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
+    card.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;padding:14px;">
+            <div style="width:50px;height:50px;background:#1d1d1f;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><div style="color:#fff;font-size:18px;font-weight:700;">$</div></div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;color:#8e8e93;margin-bottom:2px;">转账</div>
+                <div style="font-size:14px;color:#000;font-weight:500;">已退还</div>
+                <div style="font-size:18px;font-weight:700;color:#000;">$` + amount + `</div>
+            </div>
+        </div>
+    `;
+    row.appendChild(avatar);
+    row.appendChild(card);
+    document.getElementById('chatMessages').appendChild(row);
 }
 
 // ========== 红包 ==========
@@ -575,6 +639,7 @@ function confirmPayment(type, maxAmount) {
     const amountInput = document.getElementById('paymentAmountInput');
     const amount = parseFloat(amountInput.value);
     if (!amount || amount <= 0) { showToast('请输入有效金额'); return; }
+    if (amount < 0.01) { showToast('最低金额0.01元'); return; }
     if (amount > maxAmount) { showToast(type + '最高' + maxAmount + '元'); return; }
     const note = document.getElementById('paymentNoteInput').value.trim();
     const method = document.querySelector('.payment-method-option.selected');
@@ -644,13 +709,69 @@ function updatePaymentCardUI(msgId, state) {
     var isRedPacket = type === '红包';
     var label = card.querySelector('.payment-status-label');
     var amountHidden = card.querySelector('.payment-amount-hidden');
+    var noteText = card.querySelector('.payment-note-text');
 
     if (state === 'accepted') {
         if (label) { label.textContent = '已接收'; label.style.display = 'block'; label.style.color = '#34c759'; }
         if (isRedPacket && amountHidden) { amountHidden.style.display = 'block'; }
+        // 隐藏备注
+        if (noteText) noteText.style.display = 'none';
+        if (label) {
+            label.textContent = '已接收';
+            label.style.display = 'block';
+            label.style.color = '#34c759';
+        }
     } else if (state === 'refunded') {
         if (label) { label.textContent = '已退还'; label.style.display = 'block'; label.style.color = '#ff3b30'; }
+        if (noteText) noteText.style.display = 'none';
     }
+}
+
+// ========== 角色发送红包/转账卡片 ==========
+function sendBotPaymentCard(type, amount, note) {
+    var msgId = 'pay_bot_' + Date.now();
+    setPaymentState(msgId, 'pending');
+    var row = document.createElement('div'); row.className = 'bubble-row assistant';
+    var avatar = document.createElement('div'); avatar.className = 'bubble-avatar bot-avatar';
+    avatar.textContent = getContactById(window.ChatState.currentContactId)?.avatar || 'AI';
+    var isRedPacket = type === '红包';
+    var card = document.createElement('div');
+    card.className = 'payment-card';
+    card.setAttribute('data-msg-id', msgId);
+    card.setAttribute('data-type', type);
+    card.setAttribute('data-amount', amount);
+    card.setAttribute('data-note', note || '');
+    card.style.cssText = 'background:#fff;border-radius:14px;padding:0;width:220px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);cursor:pointer;';
+    card.onclick = function() { openPaymentModal(msgId); };
+    if (isRedPacket) {
+        card.innerHTML = `
+            <div style="display:flex;align-items:center;gap:12px;padding:14px;">
+                <div style="width:50px;height:58px;background:#1d1d1f;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;">
+                    <div style="position:absolute;top:-3px;left:50%;transform:translateX(-50%);width:18px;height:10px;background:#fff;border-radius:0 0 6px 6px;"></div>
+                    <div style="color:#f5c543;font-size:20px;font-weight:800;margin-top:4px;">$</div>
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:13px;color:#8e8e93;margin-bottom:2px;">红包</div>
+                    <div style="font-size:14px;color:#000;font-weight:500;" class="payment-note-text">${note || '恭喜发财'}</div>
+                    <div class="payment-amount-hidden" style="font-size:18px;font-weight:700;color:#000;display:none;">$` + amount.toFixed(2) + `</div>
+                    <div class="payment-status-label" style="font-size:11px;color:#8e8e93;margin-top:4px;display:none;"></div>
+                </div>
+            </div>`;
+    } else {
+        card.innerHTML = `
+            <div style="display:flex;align-items:center;gap:12px;padding:14px;">
+                <div style="width:50px;height:50px;background:#1d1d1f;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><div style="color:#fff;font-size:18px;font-weight:700;">$</div></div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:13px;color:#8e8e93;margin-bottom:2px;">转账</div>
+                    <div style="font-size:18px;font-weight:700;color:#000;">$` + amount.toFixed(2) + `</div>
+                    ${note ? '<div style="font-size:11px;color:#8e8e93;margin-top:2px;">' + note + '</div>' : ''}
+                    <div class="payment-status-label" style="font-size:11px;color:#8e8e93;margin-top:4px;display:none;"></div>
+                </div>
+            </div>`;
+    }
+    row.appendChild(avatar); row.appendChild(card);
+    document.getElementById('chatMessages').appendChild(row);
+    saveChatHistory(window.ChatState.currentContactId);
 }
 
 // ========== 链接 ==========
@@ -711,52 +832,5 @@ function confirmSendLink() {
     nRow.style.display = 'none';
     document.getElementById('chatMessages').appendChild(nRow);
 
-    saveChatHistory(window.ChatState.currentContactId);
-}       
-
-// ========== 角色发送红包/转账卡片 ==========
-function sendBotPaymentCard(type, amount, note) {
-    var msgId = 'pay_bot_' + Date.now();
-    setPaymentState(msgId, 'pending');
-    var row = document.createElement('div'); row.className = 'bubble-row assistant';
-    var avatar = document.createElement('div'); avatar.className = 'bubble-avatar bot-avatar';
-    avatar.textContent = getContactById(window.ChatState.currentContactId)?.avatar || 'AI';
-    var isRedPacket = type === '红包';
-    var card = document.createElement('div');
-    card.className = 'payment-card';
-    card.setAttribute('data-msg-id', msgId);
-    card.setAttribute('data-type', type);
-    card.setAttribute('data-amount', amount);
-    card.setAttribute('data-note', note || '');
-    card.style.cssText = 'background:#fff;border-radius:14px;padding:0;width:220px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);cursor:pointer;';
-    card.onclick = function() { openPaymentModal(msgId); };
-    if (isRedPacket) {
-        card.innerHTML = `
-            <div style="display:flex;align-items:center;gap:12px;padding:14px;">
-                <div style="width:50px;height:58px;background:#1d1d1f;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;">
-                    <div style="position:absolute;top:-3px;left:50%;transform:translateX(-50%);width:18px;height:10px;background:#fff;border-radius:0 0 6px 6px;"></div>
-                    <div style="color:#f5c543;font-size:20px;font-weight:800;margin-top:4px;">$</div>
-                </div>
-                <div style="flex:1;min-width:0;">
-                    <div style="font-size:13px;color:#8e8e93;margin-bottom:2px;">红包</div>
-                    <div style="font-size:14px;color:#000;font-weight:500;" class="payment-note-text">${note || '恭喜发财'}</div>
-                    <div class="payment-amount-hidden" style="font-size:18px;font-weight:700;color:#000;display:none;">$` + amount.toFixed(2) + `</div>
-                    <div class="payment-status-label" style="font-size:11px;color:#8e8e93;margin-top:4px;display:none;"></div>
-                </div>
-            </div>`;
-    } else {
-        card.innerHTML = `
-            <div style="display:flex;align-items:center;gap:12px;padding:14px;">
-                <div style="width:50px;height:50px;background:#1d1d1f;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><div style="color:#fff;font-size:18px;font-weight:700;">$</div></div>
-                <div style="flex:1;min-width:0;">
-                    <div style="font-size:13px;color:#8e8e93;margin-bottom:2px;">转账</div>
-                    <div style="font-size:18px;font-weight:700;color:#000;">$` + amount.toFixed(2) + `</div>
-                    ${note ? '<div style="font-size:11px;color:#8e8e93;margin-top:2px;">' + note + '</div>' : ''}
-                    <div class="payment-status-label" style="font-size:11px;color:#8e8e93;margin-top:4px;display:none;"></div>
-                </div>
-            </div>`;
-    }
-    row.appendChild(avatar); row.appendChild(card);
-    document.getElementById('chatMessages').appendChild(row);
     saveChatHistory(window.ChatState.currentContactId);
 }
