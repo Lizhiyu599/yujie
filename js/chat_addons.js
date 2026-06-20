@@ -331,7 +331,6 @@ function sendImageWithCaption(imageSrc, caption) {
 
     saveChatHistory(window.ChatState.currentContactId);
 
-    // 调用生图API生成图片（由角色发送）
     if (caption) {
         callImageAPI(caption).then(function(generatedUrl) {
             if (generatedUrl) {
@@ -436,7 +435,7 @@ function sendLocation() {
     document.getElementById('chatMessages').appendChild(nRow);
 
     saveChatHistory(window.ChatState.currentContactId);
-}
+}       
 
 // ========== 红包/转账状态存储 ==========
 function getPaymentState(msgId) {
@@ -446,6 +445,79 @@ function getPaymentState(msgId) {
 
 function setPaymentState(msgId, state) {
     localStorage.setItem('payment_state_' + msgId, state);
+}
+
+// ========== 收红包/转账弹窗 ==========
+function openPaymentModal(msgId) {
+    var card = document.querySelector('.payment-card[data-msg-id="' + msgId + '"]');
+    if (!card) return;
+    var state = getPaymentState(msgId);
+    if (state !== 'pending') {
+        showToast('该红包/转账已处理');
+        return;
+    }
+
+    var type = card.getAttribute('data-type');
+    var amount = card.getAttribute('data-amount');
+    var note = card.getAttribute('data-note');
+    var isRedPacket = type === '红包';
+
+    var overlay = document.createElement('div');
+    overlay.className = 'payment-open-overlay';
+    overlay.id = 'paymentOpenOverlay';
+    overlay.innerHTML = `
+        <div class="payment-open-modal">
+            <div class="payment-open-icon">
+                <span class="payment-open-dollar">$</span>
+            </div>
+            <div class="payment-open-type">${isRedPacket ? '红包' : '转账'}</div>
+            ${note ? '<div class="payment-open-note">' + note + '</div>' : ''}
+            <div class="payment-open-amount" id="paymentOpenAmount">${isRedPacket ? '?' : '$' + amount}</div>
+            <div class="payment-open-hint">${isRedPacket ? '点击拆开' : '点击接收'}</div>
+            <div class="payment-open-buttons">
+                <button class="payment-open-accept" id="paymentOpenAccept">${isRedPacket ? '拆' : '接收'}</button>
+                ${!isRedPacket ? '<button class="payment-open-refund" id="paymentOpenRefund">退还</button>' : ''}
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    var acceptBtn = document.getElementById('paymentOpenAccept');
+    if (acceptBtn) {
+        acceptBtn.onclick = function(e) {
+            e.stopPropagation();
+            if (isRedPacket) {
+                var amountEl = document.getElementById('paymentOpenAmount');
+                if (amountEl) amountEl.textContent = '$' + amount;
+            }
+            updatePaymentCardUI(msgId, 'accepted');
+            overlay.remove();
+            // 旁白
+            var narration = document.createElement('div');
+            narration.className = 'bubble bubble-narration';
+            narration.textContent = '已收入' + amount + '元';
+            document.getElementById('chatMessages').appendChild(narration);
+            saveChatHistory(window.ChatState.currentContactId);
+        };
+    }
+
+    var refundBtn = document.getElementById('paymentOpenRefund');
+    if (refundBtn) {
+        refundBtn.onclick = function(e) {
+            e.stopPropagation();
+            updatePaymentCardUI(msgId, 'refunded');
+            overlay.remove();
+            var narration = document.createElement('div');
+            narration.className = 'bubble bubble-narration';
+            narration.textContent = '已退还转账';
+            document.getElementById('chatMessages').appendChild(narration);
+            saveChatHistory(window.ChatState.currentContactId);
+        };
+    }
+
+    overlay.onclick = function(e) {
+        if (e.target === overlay) overlay.remove();
+    };
 }
 
 // ========== 红包 ==========
@@ -523,7 +595,8 @@ function sendPaymentCard(type, amount, note, method) {
     card.setAttribute('data-type', type);
     card.setAttribute('data-amount', amount);
     card.setAttribute('data-note', note || '');
-    card.style.cssText = 'background:#fff;border-radius:14px;padding:0;width:220px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
+    card.style.cssText = 'background:#fff;border-radius:14px;padding:0;width:220px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);cursor:pointer;';
+    card.onclick = function() { openPaymentModal(msgId); };
     
     if (isRedPacket) {
         card.innerHTML = `
