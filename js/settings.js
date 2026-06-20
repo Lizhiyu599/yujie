@@ -562,7 +562,7 @@ async function testWeather() {
         testBtn.style.opacity = '1';
         testBtn.disabled = false;
     }
-}
+}      
 
 // ===== 折叠区块（带箭头切换） =====
 function toggleSection(id, headerEl) {
@@ -578,7 +578,7 @@ function toggleSection(id, headerEl) {
     }
 }
 
-// ===== 添加新设备（在列表上方插入空编辑面板，不保存） =====
+// ===== 添加新设备（在列表底部插入空编辑面板） =====
 function addNewDevice() {
     var listContainer = document.getElementById('device-list');
     if (!listContainer) return;
@@ -621,8 +621,10 @@ function addNewDevice() {
             </div>
         </div>
     `;
+    // 插入到 device-list 的最末尾（添加按钮后面）
     listContainer.insertAdjacentHTML('beforeend', editHTML);
 }
+
 // 取消新建设备
 function cancelNewDevice(newId) {
     var group = document.getElementById('device-group-' + newId);
@@ -668,6 +670,14 @@ function renderDeviceList() {
     if (!listContainer) return;
     const devices = getDevices();
     const activeId = String(getActiveDeviceId());
+
+    // 保存已存在的空编辑面板（如果有的话）
+    var existingNewPanel = null;
+    var newPanelElement = listContainer.querySelector('[id^="device-group-"]');
+    if (newPanelElement) {
+        existingNewPanel = newPanelElement.outerHTML;
+    }
+
     listContainer.innerHTML = '';
 
     devices.forEach(device => {
@@ -721,6 +731,19 @@ function renderDeviceList() {
         `;
         listContainer.appendChild(item);
     });
+
+    // 追加添加新设备按钮
+    var addBtn = document.createElement('button');
+    addBtn.className = 'ios-btn-white';
+    addBtn.style.cssText = 'margin: 8px 16px; width: calc(100% - 32px); color:#000;';
+    addBtn.textContent = '+ 添加新设备';
+    addBtn.onclick = addNewDevice;
+    listContainer.appendChild(addBtn);
+
+    // 恢复空编辑面板
+    if (existingNewPanel) {
+        listContainer.insertAdjacentHTML('beforeend', existingNewPanel);
+    }
 }
 
 // ===== 导出数据 =====
@@ -807,7 +830,6 @@ const settingsHTML = `
     <div id="api-section" class="collapsible-section" style="display:none;">
         <div style="font-size:12px; color:#8e8e93; margin:0 16px 8px;">提示：只需填写域名，系统自动拼接路径。支持带或不带 /v1 结尾。</div>
         <div id="device-list"></div>
-        <button class="ios-btn-white" style="margin: 8px 16px; width: calc(100% - 32px); color:#000;" onclick="addNewDevice()">+ 添加新设备</button>
     </div>
 
     <div class="list-header" onclick="toggleSection('subapi-section', this)">
