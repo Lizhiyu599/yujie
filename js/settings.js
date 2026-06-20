@@ -752,7 +752,7 @@ const settingsHTML = `
         <span>API</span> 
         <span class="toggle-arrow" style="color:#8e8e93;">›</span>
     </div>
-    <div id="api-section" class="collapsible-section" style="display:block;">
+    <div id="api-section" class="collapsible-section" style="display:none;">
         <div style="font-size:12px; color:#8e8e93; margin:0 16px 8px;">提示：只需填写域名，系统自动拼接路径。支持带或不带 /v1 结尾。</div>
         <button class="ios-btn-white" style="margin: 0 16px; width: calc(100% - 32px); color:#000;" onclick="addNewDevice()">+ 添加新设备</button>
         <div id="device-list"></div>
@@ -909,9 +909,21 @@ const settingsHTML = `
 // ===== 初始化设置面板 =====
 function initSettings() {
     migrateOldConfig();
-    var apiSection = document.getElementById('api-section');
-    if (apiSection) apiSection.style.display = 'block';
     renderDeviceList();
+    // 自动展开 API 区域
+    setTimeout(function() {
+        var apiSection = document.getElementById('api-section');
+        if (apiSection && apiSection.style.display === 'none') {
+            apiSection.style.display = 'block';
+            var listHeaders = document.querySelectorAll('.list-header');
+            listHeaders.forEach(function(header) {
+                if (header.textContent.indexOf('API') >= 0 && header.textContent.indexOf('副API') < 0 && header.textContent.indexOf('语音API') < 0 && header.textContent.indexOf('生图API') < 0 && header.textContent.indexOf('天气API') < 0) {
+                    var arrow = header.querySelector('.toggle-arrow');
+                    if (arrow) arrow.textContent = '∨';
+                }
+            });
+        }
+    }, 200);
     setTimeout(() => {
         const voiceGroupId = localStorage.getItem('voice_group_id');
         const voiceApiKey = localStorage.getItem('voice_api_key');
