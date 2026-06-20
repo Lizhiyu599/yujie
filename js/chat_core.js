@@ -44,7 +44,7 @@ function buildSystemPrompt(contactId) {
 
     prompt += '\n\n【记忆连续性】你必须记住和用户之前聊过的所有内容。称呼要前后一致，不能上一句叫姐姐下一句又改口。认真阅读聊天历史，保持对话连贯。';
 
-    prompt += '\n\n【红包和转账】你可以给用户发红包或转账。在旁白中用（给用户发了一个红包，金额X元）或（给用户转账X元，备注：...）表示。用户给你发红包或转账时，你会收到通知。你可以根据自己的性格和经济状况决定是否接收或退还。';
+    prompt += '\n\n【红包和转账】你可以给用户发红包或转账。在回复中同时用括号旁白表示，例如：（给用户发了一个红包，金额5.20元）或（给用户转账50元，备注：午餐钱）。用户收到后可以接收或退还。用户给你发红包或转账时，你可以根据性格和经济状况决定是否接收。如果要接收，在旁白中说"接收了红包"或"收下了转账"；如果要退还，说"退还了转账"。';
 
     return prompt;
 }
@@ -190,7 +190,7 @@ function refundLatestPayment() {
             return;
         }
     }
-}          
+}
 
 // ========== 调用聊天 API ==========
 async function callChatAPI(messages) {
@@ -267,25 +267,20 @@ async function callChatAPI(messages) {
 function processAIReply(rawContent, contactName, contactId) {
     const titleEl = document.getElementById('chatTitle');
 
-    let cleanRaw = rawContent.replace(/^[\n]+/, '').replace(/\u201c|\u201d/g, '');
-
-    let jsonMatch = cleanRaw.match(/\{[^{}]*"mood"[^{}]*\}/);
+    // 先提取 JSON 状态（在清理之前，避免引号被过滤）
+    let jsonMatch = rawContent.match(/\{[^{}]*"mood"[^{}]*\}/);
     if (!jsonMatch) {
-        jsonMatch = cleanRaw.match(/\{[^}]*"mood"\s*:\s*"[^"]*"[^}]*\}/);
+        jsonMatch = rawContent.match(/\{[^}]*"mood"\s*:\s*"[^"]*"[^}]*\}/);
     }
-    let cleanContent = cleanRaw;
-    
     if (jsonMatch) {
         try {
             const mentalData = JSON.parse(jsonMatch[0]);
             updateMentalState(mentalData);
-            cleanContent = cleanRaw.replace(jsonMatch[0], '').trim();
         } catch (e) {
-            const moodMatch = cleanRaw.match(/"mood"\s*:\s*"([^"]+)"/);
-            const favMatch = cleanRaw.match(/"favorability"\s*:\s*(\d+)/);
-            const actMatch = cleanRaw.match(/"action"\s*:\s*"([^"]+)"/);
-            const thtMatch = cleanRaw.match(/"thought"\s*:\s*"([^"]+)"/);
-            
+            const moodMatch = rawContent.match(/"mood"\s*:\s*"([^"]+)"/);
+            const favMatch = rawContent.match(/"favorability"\s*:\s*(\d+)/);
+            const actMatch = rawContent.match(/"action"\s*:\s*"([^"]+)"/);
+            const thtMatch = rawContent.match(/"thought"\s*:\s*"([^"]+)"/);
             if (moodMatch || favMatch || actMatch || thtMatch) {
                 updateMentalState({
                     mood: moodMatch ? moodMatch[1] : (window.ChatConfig?.mental?.mood || '未知'),
@@ -294,23 +289,31 @@ function processAIReply(rawContent, contactName, contactId) {
                     thought: thtMatch ? thtMatch[1] : (window.ChatConfig?.mental?.thought || '无')
                 });
             }
-            cleanContent = cleanRaw.replace(/\{[^{}]*"mood"[^{}]*\}/g, '').replace(/\{[^{}]*"favorability"[^{}]*\}/g, '').trim();
         }
-    } else {
-        const moodMatch = cleanRaw.match(/"mood"\s*:\s*"([^"]+)"/);
-        const favMatch = cleanRaw.match(/"favorability"\s*:\s*(\d+)/);
-        const actMatch = cleanRaw.match(/"action"\s*:\s*"([^"]+)"/);
-        const thtMatch = cleanRaw.match(/"thought"\s*:\s*"([^"]+)"/);
-        
-        if (moodMatch || favMatch || actMatch || thtMatch) {
-            updateMentalState({
-                mood: moodMatch ? moodMatch[1] : (window.ChatConfig?.mental?.mood || '未知'),
-                favorability: favMatch ? parseInt(favMatch[1]) : (window.ChatConfig?.mental?.favorability || 0),
-                action: actMatch ? actMatch[1] : (window.ChatConfig?.mental?.action || '无'),
-                thought: thtMatch ? thtMatch[1] : (window.ChatConfig?.mental?.thought || '无')
-            });
-        }
-        cleanContent = cleanRaw;
+    }
+
+    // 清理内容（只过滤中文引号，保留英文引号给JSON）
+    let cleanContent = rawContent.replace(/^[\n]+/, '').replace(/\u201c|\u201d/g, '');
+    if (jsonMatch) {
+        cleanContent = cleanContent.replace(jsonMatch[0], '').trim();
+    }
+
+    // 检测角色旁白发红包/转账，自动生成卡片
+    var redPacketMatch = cleanContent.match(/[\(\（]([^\)\）]*)发了一个红包[^\)\）]*金额(\d+\.?\d*)[^\)\）]*[\)\）]/);
+    if (redPacketMatch && redPacketMatch[2]) {
+        sendPaymentCard('红包', parseFloat(redPacketMatch[2]), '', '');
+    }
+    var transferMatch = cleanContent.match(/[\(\（]([^\)\）]*)转账[^\)\）]*(\d+\.?\d*)[^\)\）]*[\)\）]/);
+    if (transferMatch && transferMatch[2]) {
+        var noteMatch = cleanContent.match(/转账[^\)\）]*备注[：:]\s*([^\)\）]+)/);
+        var note = noteMatch ? noteMatch[1].trim() : '';
+        sendPaymentCard('转账', parseFloat(transferMatch[2]), note, '');
+    }
+
+    // 检测角色旁白发语音
+    var voiceMatch = cleanContent.match(/[\(\（]([^\)\）]*)发了一条语音消息[：:]\s*([^\)\）]+)[\)\）]/);
+    if (voiceMatch && voiceMatch[2]) {
+        sendVoiceBubble('assistant', voiceMatch[2].trim(), null, false);
     }
 
     // 检测角色回复中是否表示收下红包/转账
@@ -557,7 +560,7 @@ function restorePaymentCardStates() {
             if (label) { label.textContent = '已退还'; label.style.display = 'block'; label.style.color = '#ff3b30'; }
         }
     });
-}
+ }
 
 // ========== 语音 TTS 调用（MiniMax） ==========
 async function callTTS(text) {
