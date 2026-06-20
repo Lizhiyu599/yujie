@@ -301,11 +301,11 @@ function processAIReply(rawContent, contactName, contactId) {
     }
 
     // 检测角色旁白发红包 → 角色侧卡片
+var redPacketMatch = cleanContent.match(/[\(\（]([^\)\）]*)发了一个红包[^\)\）]*金额(\d+\.?\d*)[^\)\）]*[\)\）]/);
+if (redPacketMatch) {
     var redAmount = Math.max(0.01, Math.min(parseFloat(redPacketMatch[2]), 200));
-    if (redPacketMatch) {
-        var redAmount = Math.min(parseFloat(redPacketMatch[2]), 200);
-        sendBotPaymentCard('红包', redAmount, '');
-        cleanContent = cleanContent.replace(redPacketMatch[0], '');
+    sendBotPaymentCard('红包', redAmount, '');
+    cleanContent = cleanContent.replace(redPacketMatch[0], '');
     }
 
     // 检测角色旁白发转账 → 角色侧卡片
