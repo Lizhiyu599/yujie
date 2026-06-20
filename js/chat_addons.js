@@ -492,18 +492,14 @@ function openPaymentModal(msgId) {
             }
             updatePaymentCardUI(msgId, 'accepted');
             overlay.remove();
-            // 旁白：已收入
             var narration = document.createElement('div');
             narration.className = 'bubble bubble-narration';
             narration.textContent = '已收入' + amount + '元';
             document.getElementById('chatMessages').appendChild(narration);
-            // 接收方卡片
             var row = card.closest('.bubble-row');
             if (row && row.classList.contains('assistant')) {
-                // 角色发的 → 用户接收 → 用户侧显示已接收卡片
                 addReceivedCard('user', type, amount);
             } else {
-                // 用户发的 → 角色接收 → 角色侧显示已接收卡片
                 addReceivedCard('assistant', type, amount);
             }
             saveChatHistory(window.ChatState.currentContactId);
@@ -520,7 +516,6 @@ function openPaymentModal(msgId) {
             narration.className = 'bubble bubble-narration';
             narration.textContent = '已退还转账';
             document.getElementById('chatMessages').appendChild(narration);
-            // 退还方卡片
             var row = card.closest('.bubble-row');
             if (row && row.classList.contains('assistant')) {
                 addRefundedCard('user', amount);
@@ -550,8 +545,8 @@ function addReceivedCard(side, type, amount) {
             <div style="width:50px;height:50px;background:#1d1d1f;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><div style="color:#f5c543;font-size:18px;font-weight:700;">$</div></div>
             <div style="flex:1;min-width:0;">
                 <div style="font-size:13px;color:#8e8e93;margin-bottom:2px;">${type}</div>
-                <div style="font-size:14px;color:#000;font-weight:500;">已接收</div>
                 <div style="font-size:18px;font-weight:700;color:#000;">$` + amount + `</div>
+                <div style="font-size:11px;color:#34c759;margin-top:4px;font-weight:500;">已接收</div>
             </div>
         </div>
     `;
@@ -574,8 +569,8 @@ function addRefundedCard(side, amount) {
             <div style="width:50px;height:50px;background:#1d1d1f;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><div style="color:#fff;font-size:18px;font-weight:700;">$</div></div>
             <div style="flex:1;min-width:0;">
                 <div style="font-size:13px;color:#8e8e93;margin-bottom:2px;">转账</div>
-                <div style="font-size:14px;color:#000;font-weight:500;">已退还</div>
                 <div style="font-size:18px;font-weight:700;color:#000;">$` + amount + `</div>
+                <div style="font-size:11px;color:#ff3b30;margin-top:4px;font-weight:500;">已退还</div>
             </div>
         </div>
     `;
@@ -714,13 +709,7 @@ function updatePaymentCardUI(msgId, state) {
     if (state === 'accepted') {
         if (label) { label.textContent = '已接收'; label.style.display = 'block'; label.style.color = '#34c759'; }
         if (isRedPacket && amountHidden) { amountHidden.style.display = 'block'; }
-        // 隐藏备注
         if (noteText) noteText.style.display = 'none';
-        if (label) {
-            label.textContent = '已接收';
-            label.style.display = 'block';
-            label.style.color = '#34c759';
-        }
     } else if (state === 'refunded') {
         if (label) { label.textContent = '已退还'; label.style.display = 'block'; label.style.color = '#ff3b30'; }
         if (noteText) noteText.style.display = 'none';
@@ -833,4 +822,5 @@ function confirmSendLink() {
     document.getElementById('chatMessages').appendChild(nRow);
 
     saveChatHistory(window.ChatState.currentContactId);
-}
+}      
+
