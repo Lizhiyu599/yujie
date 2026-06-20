@@ -48,6 +48,8 @@ function buildSystemPrompt(contactId) {
 
     prompt += '\n\n【语音消息】你可以给用户发语音消息。发语音时用旁白表示：（发了一条语音消息：内容）。系统会自动生成语音气泡。';
 
+    prompt += '\n\n【发送图片】你可以给用户发送图片。当用户说想看你、想看你的样子、想看你的手、想看周围环境等，你可以发图片。发图片时用旁白表示：（发了一张图片：描述文字）。描述文字用于生成图片，要详细描写画面内容，包括外貌、穿着、场景、动作、光线等。';
+    
     return prompt;
 }
 
@@ -376,6 +378,42 @@ function processAIReply(rawContent, contactName, contactId) {
     window.ChatState.isAITyping = false;
 
     saveChatHistory(contactId);
+}
+
+// 检测角色旁白发图片
+var imageMatch = cleanContent.match(/[\(\（]([^\)\）]*)发了一张图片[：:]\s*([^\)\）]+)[\)\）]/);
+if (imageMatch && imageMatch[2]) {
+    var imageDesc = imageMatch[2].trim();
+    cleanContent = cleanContent.replace(imageMatch[0], '');
+    var hasImageAPI = localStorage.getItem('image_base_url') && localStorage.getItem('image_api_key') && localStorage.getItem('image_model');
+    if (hasImageAPI) {
+        callImageAPI(imageDesc).then(function(generatedUrl) {
+            if (generatedUrl) {
+                var botRow = document.createElement('div');
+                botRow.className = 'bubble-row assistant';
+                var botAvatar = document.createElement('div');
+                botAvatar.className = 'bubble-avatar bot-avatar';
+                botAvatar.textContent = getContactById(contactId)?.avatar || 'AI';
+                var botBubble = document.createElement('div');
+                botBubble.className = 'bubble bubble-assistant';
+                botBubble.style.backgroundImage = 'url(' + generatedUrl + ')';
+                botBubble.style.backgroundSize = 'cover';
+                botBubble.style.backgroundPosition = 'center';
+                botBubble.style.width = '140px';
+                botBubble.style.height = '140px';
+                botBubble.style.padding = '0';
+                botBubble.style.borderRadius = '12px';
+                botBubble.textContent = '';
+                botBubble.onclick = function() { openImageViewer(generatedUrl); };
+                botRow.appendChild(botAvatar);
+                botRow.appendChild(botBubble);
+                document.getElementById('chatMessages').appendChild(botRow);
+                saveChatHistory(contactId);
+            }
+        });
+    } else {
+        appendMessage('narration', imageDesc);
+    }
 }
 
 // ========== 格式化时间 ==========
