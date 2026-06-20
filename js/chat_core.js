@@ -1,7 +1,7 @@
 /**
  * 玉界 - 聊天核心
  * 包含：消息收发、API 对接、系统提示拼接、状态栏更新、翻译、时间戳、上下文记忆、
- *       自动发消息、自动发动态、红包转账状态处理
+ *       自动发消息、自动发动态、红包转账状态处理、语音消息处理
  */
 
 // ========== 聊天状态 ==========
@@ -44,7 +44,9 @@ function buildSystemPrompt(contactId) {
 
     prompt += '\n\n【记忆连续性】你必须记住和用户之前聊过的所有内容。称呼要前后一致，不能上一句叫姐姐下一句又改口。认真阅读聊天历史，保持对话连贯。';
 
-    prompt += '\n\n【红包和转账】你可以给用户发红包或转账。在回复中同时用括号旁白表示，例如：（给用户发了一个红包，金额5.20元）或（给用户转账50元，备注：午餐钱）。用户收到后可以接收或退还。用户给你发红包或转账时，你可以根据性格和经济状况决定是否接收。如果要接收，在旁白中说"接收了红包"或"收下了转账"；如果要退还，说"退还了转账"。';
+    prompt += '\n\n【红包和转账】你可以给用户发红包或转账。发红包时用旁白表示：（给用户发了一个红包，金额X元）。发转账时用旁白表示：（给用户转账X元，备注：...）。用户收到后可以接收或退还。用户给你发红包或转账时，你可以根据性格和经济状况决定是否接收。如果要接收，在旁白中说"接收了红包"或"收下了转账"；如果要退还，说"退还了转账"。';
+
+    prompt += '\n\n【语音消息】你可以给用户发语音消息。发语音时用旁白表示：（发了一条语音消息：内容）。系统会自动生成语音气泡。';
 
     return prompt;
 }
@@ -298,22 +300,27 @@ function processAIReply(rawContent, contactName, contactId) {
         cleanContent = cleanContent.replace(jsonMatch[0], '').trim();
     }
 
-    // 检测角色旁白发红包/转账，自动生成卡片
+    // 检测角色旁白发红包，生成卡片并从内容中移除旁白
     var redPacketMatch = cleanContent.match(/[\(\（]([^\)\）]*)发了一个红包[^\)\）]*金额(\d+\.?\d*)[^\)\）]*[\)\）]/);
-    if (redPacketMatch && redPacketMatch[2]) {
+    if (redPacketMatch) {
         sendPaymentCard('红包', parseFloat(redPacketMatch[2]), '', '');
+        cleanContent = cleanContent.replace(redPacketMatch[0], '');
     }
+
+    // 检测角色旁白发转账，生成卡片并从内容中移除旁白
     var transferMatch = cleanContent.match(/[\(\（]([^\)\）]*)转账[^\)\）]*(\d+\.?\d*)[^\)\）]*[\)\）]/);
-    if (transferMatch && transferMatch[2]) {
+    if (transferMatch) {
         var noteMatch = cleanContent.match(/转账[^\)\）]*备注[：:]\s*([^\)\）]+)/);
         var note = noteMatch ? noteMatch[1].trim() : '';
         sendPaymentCard('转账', parseFloat(transferMatch[2]), note, '');
+        cleanContent = cleanContent.replace(transferMatch[0], '');
     }
 
-    // 检测角色旁白发语音
+    // 检测角色旁白发语音，生成语音气泡并从内容中移除旁白
     var voiceMatch = cleanContent.match(/[\(\（]([^\)\）]*)发了一条语音消息[：:]\s*([^\)\）]+)[\)\）]/);
     if (voiceMatch && voiceMatch[2]) {
         sendVoiceBubble('assistant', voiceMatch[2].trim(), null, false);
+        cleanContent = cleanContent.replace(voiceMatch[0], '');
     }
 
     // 检测角色回复中是否表示收下红包/转账
@@ -560,7 +567,7 @@ function restorePaymentCardStates() {
             if (label) { label.textContent = '已退还'; label.style.display = 'block'; label.style.color = '#ff3b30'; }
         }
     });
- }
+}
 
 // ========== 语音 TTS 调用（MiniMax） ==========
 async function callTTS(text) {
