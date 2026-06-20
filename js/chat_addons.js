@@ -203,6 +203,53 @@ function deleteEmoji(idx) {
     }
 }
 
+// ========== 生图 API 调用 ==========
+async function callImageAPI(prompt) {
+    const baseUrl = localStorage.getItem('image_base_url');
+    const apiKey = localStorage.getItem('image_api_key');
+    const model = localStorage.getItem('image_model');
+    const style = localStorage.getItem('image_style') || '';
+
+    if (!baseUrl || !apiKey || !model) return null;
+
+    var finalPrompt = prompt;
+    if (style) {
+        finalPrompt = style + '风格，' + prompt;
+    }
+
+    let endpoint = baseUrl;
+    if (!endpoint.endsWith('/images/generations')) {
+        endpoint = endpoint.replace(/\/+$/, '') + '/images/generations';
+    }
+
+    try {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + apiKey
+            },
+            body: JSON.stringify({
+                model: model,
+                prompt: finalPrompt,
+                n: 1,
+                size: '1024x1024'
+            })
+        });
+
+        const data = await response.json();
+        if (data.data && data.data[0] && data.data[0].url) {
+            return data.data[0].url;
+        }
+        if (data.data && data.data[0] && data.data[0].b64_json) {
+            return 'data:image/png;base64,' + data.data[0].b64_json;
+        }
+        return null;
+    } catch (e) {
+        return null;
+    }
+}
+
 // ========== 相册 ==========
 function openAlbum() {
     toggleAddPanel();
@@ -214,7 +261,7 @@ function openAlbum() {
         if (!file) return;
         const reader = new FileReader();
         reader.onload = function(ev) {
-            const hasImageAPI = window.ChatConfig.settings.api.image > 0;
+            const hasImageAPI = localStorage.getItem('image_base_url') && localStorage.getItem('image_api_key') && localStorage.getItem('image_model');
             if (hasImageAPI) {
                 sendImageWithCaption(ev.target.result, '');
             } else {
@@ -283,6 +330,34 @@ function sendImageWithCaption(imageSrc, caption) {
     document.getElementById('chatMessages').appendChild(nRow);
 
     saveChatHistory(window.ChatState.currentContactId);
+
+    // 调用生图API生成图片（由角色发送）
+    if (caption) {
+        callImageAPI(caption).then(function(generatedUrl) {
+            if (generatedUrl) {
+                var botRow = document.createElement('div');
+                botRow.className = 'bubble-row assistant';
+                var botAvatar = document.createElement('div');
+                botAvatar.className = 'bubble-avatar bot-avatar';
+                botAvatar.textContent = getContactById(window.ChatState.currentContactId)?.avatar || 'AI';
+                var botBubble = document.createElement('div');
+                botBubble.className = 'bubble bubble-assistant';
+                botBubble.style.backgroundImage = `url(${generatedUrl})`;
+                botBubble.style.backgroundSize = 'cover';
+                botBubble.style.backgroundPosition = 'center';
+                botBubble.style.width = '140px';
+                botBubble.style.height = '140px';
+                botBubble.style.padding = '0';
+                botBubble.style.borderRadius = '12px';
+                botBubble.textContent = '';
+                botBubble.onclick = function() { openImageViewer(generatedUrl); };
+                botRow.appendChild(botAvatar);
+                botRow.appendChild(botBubble);
+                document.getElementById('chatMessages').appendChild(botRow);
+                saveChatHistory(window.ChatState.currentContactId);
+            }
+        });
+    }
 }
 
 // ========== 图片查看器 ==========
@@ -488,7 +563,6 @@ function sendPaymentCard(type, amount, note, method) {
     saveChatHistory(window.ChatState.currentContactId);
 }
 
-// ========== 更新卡片状态 ==========
 function updatePaymentCardUI(msgId, state) {
     setPaymentState(msgId, state);
     var card = document.querySelector('.payment-card[data-msg-id="' + msgId + '"]');
@@ -497,7 +571,6 @@ function updatePaymentCardUI(msgId, state) {
     var isRedPacket = type === '红包';
     var label = card.querySelector('.payment-status-label');
     var amountHidden = card.querySelector('.payment-amount-hidden');
-    var noteText = card.querySelector('.payment-note-text');
 
     if (state === 'accepted') {
         if (label) { label.textContent = '已接收'; label.style.display = 'block'; label.style.color = '#34c759'; }
@@ -566,4 +639,4 @@ function confirmSendLink() {
     document.getElementById('chatMessages').appendChild(nRow);
 
     saveChatHistory(window.ChatState.currentContactId);
-}                   
+}       
