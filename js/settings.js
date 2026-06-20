@@ -562,7 +562,7 @@ async function testWeather() {
         testBtn.style.opacity = '1';
         testBtn.disabled = false;
     }
-}      
+}
 
 // ===== 折叠区块（带箭头切换） =====
 function toggleSection(id, headerEl) {
@@ -621,7 +621,6 @@ function addNewDevice() {
             </div>
         </div>
     `;
-    // 插入到 device-list 的最末尾（添加按钮后面）
     listContainer.insertAdjacentHTML('beforeend', editHTML);
 }
 
@@ -670,14 +669,6 @@ function renderDeviceList() {
     if (!listContainer) return;
     const devices = getDevices();
     const activeId = String(getActiveDeviceId());
-
-    // 保存已存在的空编辑面板（如果有的话）
-    var existingNewPanel = null;
-    var newPanelElement = listContainer.querySelector('[id^="device-group-"]');
-    if (newPanelElement) {
-        existingNewPanel = newPanelElement.outerHTML;
-    }
-
     listContainer.innerHTML = '';
 
     devices.forEach(device => {
@@ -731,19 +722,6 @@ function renderDeviceList() {
         `;
         listContainer.appendChild(item);
     });
-
-    // 追加添加新设备按钮
-    var addBtn = document.createElement('button');
-    addBtn.className = 'ios-btn-white';
-    addBtn.style.cssText = 'margin: 8px 16px; width: calc(100% - 32px); color:#000;';
-    addBtn.textContent = '+ 添加新设备';
-    addBtn.onclick = addNewDevice;
-    listContainer.appendChild(addBtn);
-
-    // 恢复空编辑面板
-    if (existingNewPanel) {
-        listContainer.insertAdjacentHTML('beforeend', existingNewPanel);
-    }
 }
 
 // ===== 导出数据 =====
@@ -817,7 +795,7 @@ function handleClearData() {
         clearClicks = 0;
         setTimeout(() => location.reload(), 500);
     }
-}
+}       
 
 // ===== 设置面板 HTML 模板 =====
 const settingsHTML = `
@@ -830,6 +808,7 @@ const settingsHTML = `
     <div id="api-section" class="collapsible-section" style="display:none;">
         <div style="font-size:12px; color:#8e8e93; margin:0 16px 8px;">提示：只需填写域名，系统自动拼接路径。支持带或不带 /v1 结尾。</div>
         <div id="device-list"></div>
+        <button class="ios-btn-white" style="margin: 8px 16px; width: calc(100% - 32px); color:#000;" onclick="addNewDevice()">+ 添加新设备</button>
     </div>
 
     <div class="list-header" onclick="toggleSection('subapi-section', this)">
