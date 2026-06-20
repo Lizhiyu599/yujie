@@ -228,15 +228,13 @@ async function callChatAPI(messages) {
         clearTimeout(timeout);
 
         if (!response.ok) {
-    let errMsg = `HTTP ${response.status}`;
-    try {
-        const errData = await response.json();
-        errMsg = errData.error?.message || JSON.stringify(errData);
-    } catch (e) {
-        errMsg = `HTTP ${response.status}`;
-    }
-    throw new Error(errMsg);   
-}       
+            let errMsg = `HTTP ${response.status}`;
+            try {
+                const errData = await response.json();
+                errMsg = errData.error?.message || errMsg;
+            } catch (e) {}
+            throw new Error(errMsg);
+        }
 
         const data = await response.json();
         
@@ -271,7 +269,6 @@ async function callChatAPI(messages) {
 function processAIReply(rawContent, contactName, contactId) {
     const titleEl = document.getElementById('chatTitle');
 
-    // 先提取 JSON 状态（在清理之前，避免引号被过滤）
     let jsonMatch = rawContent.match(/\{[^{}]*"mood"[^{}]*\}/);
     if (!jsonMatch) {
         jsonMatch = rawContent.match(/\{[^}]*"mood"\s*:\s*"[^"]*"[^}]*\}/);
@@ -296,37 +293,35 @@ function processAIReply(rawContent, contactName, contactId) {
         }
     }
 
-    // 清理内容（只过滤中文引号，保留英文引号给JSON）
     let cleanContent = rawContent.replace(/^[\n]+/, '').replace(/\u201c|\u201d/g, '');
     if (jsonMatch) {
         cleanContent = cleanContent.replace(jsonMatch[0], '').trim();
     }
 
-    // 检测角色旁白发红包，生成卡片并从内容中移除旁白
+    // 检测角色旁白发红包 → 角色侧卡片
     var redPacketMatch = cleanContent.match(/[\(\（]([^\)\）]*)发了一个红包[^\)\）]*金额(\d+\.?\d*)[^\)\）]*[\)\）]/);
     if (redPacketMatch) {
         var redAmount = Math.min(parseFloat(redPacketMatch[2]), 200);
-        sendPaymentCard('红包', redAmount, '', '');
+        sendBotPaymentCard('红包', redAmount, '');
         cleanContent = cleanContent.replace(redPacketMatch[0], '');
     }
 
-    // 检测角色旁白发转账，生成卡片并从内容中移除旁白
+    // 检测角色旁白发转账 → 角色侧卡片
     var transferMatch = cleanContent.match(/[\(\（]([^\)\）]*)转账[^\)\）]*(\d+\.?\d*)[^\)\）]*[\)\）]/);
     if (transferMatch) {
         var noteMatch = cleanContent.match(/转账[^\)\）]*备注[：:]\s*([^\)\）]+)/);
         var note = noteMatch ? noteMatch[1].trim() : '';
-        sendPaymentCard('转账', parseFloat(transferMatch[2]), note, '');
+        sendBotPaymentCard('转账', parseFloat(transferMatch[2]), note);
         cleanContent = cleanContent.replace(transferMatch[0], '');
     }
 
-    // 检测角色旁白发语音，生成语音气泡并从内容中移除旁白
+    // 检测角色旁白发语音
     var voiceMatch = cleanContent.match(/[\(\（]([^\)\）]*)发了一条语音消息[：:]\s*([^\)\）]+)[\)\）]/);
     if (voiceMatch && voiceMatch[2]) {
         sendVoiceBubble('assistant', voiceMatch[2].trim(), null, false);
         cleanContent = cleanContent.replace(voiceMatch[0], '');
     }
 
-    // 检测角色回复中是否表示收下红包/转账
     if (cleanContent.indexOf('收下') >= 0 || cleanContent.indexOf('已接收') >= 0 || cleanContent.indexOf('接收了') >= 0) {
         acceptLatestPayment();
     }
@@ -570,7 +565,7 @@ function restorePaymentCardStates() {
             if (label) { label.textContent = '已退还'; label.style.display = 'block'; label.style.color = '#ff3b30'; }
         }
     });
-}
+    }
 
 // ========== 语音 TTS 调用（MiniMax） ==========
 async function callTTS(text) {
