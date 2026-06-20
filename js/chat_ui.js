@@ -2350,3 +2350,28 @@ function blockContact() {
 function deleteContact() {
     showToast('删除功能即将上线');
 }
+
+// ========== 让AI先说话 ==========
+function triggerAIReply() {
+    const contactId = window.ChatState.currentContactId || 'c1';
+    const contact = getContactById(contactId);
+    const contactName = contact ? contact.name : 'AI';
+
+    window.ChatState.isAITyping = true;
+    const titleEl = document.getElementById('chatTitle');
+    if (titleEl) titleEl.innerHTML = '<span class="nav-typing">输入中...</span>';
+
+    const systemPrompt = buildSystemPrompt(contactId);
+    const userMessage = '（用户点击了让角色先说话）';
+
+    callChatAPI([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage }
+    ]).then(reply => {
+        processAIReply(reply, contactName, contactId);
+    }).catch(error => {
+        appendMessage('assistant', '抱歉，消息发送失败：' + error.message);
+        if (titleEl) titleEl.textContent = contactName;
+        window.ChatState.isAITyping = false;
+    });
+}
