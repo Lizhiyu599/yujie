@@ -621,9 +621,8 @@ function addNewDevice() {
             </div>
         </div>
     `;
-    listContainer.insertAdjacentHTML('afterbegin', editHTML);
+    listContainer.insertAdjacentHTML('beforeend', editHTML);
 }
-
 // 取消新建设备
 function cancelNewDevice(newId) {
     var group = document.getElementById('device-group-' + newId);
