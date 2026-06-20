@@ -13,6 +13,14 @@ function saveDevices(devices) {
     localStorage.setItem('api_devices', JSON.stringify(devices));
 }
 
+function getActiveDeviceId() {
+    return localStorage.getItem('active_device_id') || '';
+}
+
+function setActiveDeviceId(deviceId) {
+    localStorage.setItem('active_device_id', deviceId);
+}
+
 // 迁移旧版单设备数据
 function migrateOldConfig() {
     const oldBase = localStorage.getItem('main_api_base_url');
@@ -21,7 +29,7 @@ function migrateOldConfig() {
     const oldModel = localStorage.getItem('main_api_model') || '';
     const devices = getDevices();
     if (devices.length === 0) {
-        devices.push({
+        var newDevice = {
             id: Date.now(),
             name: '1号api',
             baseUrl: oldBase,
@@ -29,8 +37,10 @@ function migrateOldConfig() {
             model: oldModel,
             temperature: 1.0,
             stream: true
-        });
+        };
+        devices.push(newDevice);
         saveDevices(devices);
+        setActiveDeviceId(newDevice.id);
     }
     localStorage.removeItem('main_api_base_url');
     localStorage.removeItem('main_api_key');
@@ -46,64 +56,28 @@ function clearInputs(containerId) {
     }
 }
 
-// ===== 旧版 API 模型拉取（副API等仍用这个） =====
-async function fetchModels(baseUrlId, keyId, modelInputId) {
-    const baseUrl = document.getElementById(baseUrlId).value.trim();
-    const apiKey = document.getElementById(keyId).value.trim();
+// ===== 通用模型拉取与点选 =====
+async function fetchModelsGeneric(baseUrlEl, keyEl, modelEl) {
+    var baseUrl = document.getElementById(baseUrlEl).value.trim();
+    var apiKey = document.getElementById(keyEl).value.trim();
     if (!baseUrl || !apiKey) {
-        showToast('拉取失败：请先填写完整的 Base URL 和 API Key');
+        showToast('请先填写 Base URL 和 API Key');
         return;
     }
-    let endpoint = baseUrl;
+    var endpoint = baseUrl;
     if (endpoint.endsWith('/chat/completions')) {
         endpoint = endpoint.replace('/chat/completions', '');
     }
     endpoint = endpoint.replace(/\/+$/, '') + '/models';
 
     try {
-        const res = await fetch(endpoint, {
-            headers: { 'Authorization': `Bearer ${apiKey}` }
+        var res = await fetch(endpoint, {
+            headers: { 'Authorization': 'Bearer ' + apiKey }
         });
-        const data = await res.json();
+        var data = await res.json();
         if (data && data.data && Array.isArray(data.data)) {
-            const models = data.data.map(m => m.id).join('\n');
-            const chosen = prompt('获取到以下模型，请手动输入你要使用的模型名称:\n\n' + models);
-            if (chosen) {
-                document.getElementById(modelInputId).value = chosen;
-                showToast('拉取成功');
-            }
-        } else {
-            showToast('拉取失败：接口返回格式不支持');
-        }
-    } catch (e) {
-        showToast('拉取失败：网络错误或跨域拦截');
-    }
-}
-
-// ===== 主设备模型拉取（可点选） =====
-async function fetchModelsForDevice(deviceId) {
-    const container = document.getElementById('device-' + deviceId);
-    if (!container) return;
-    const baseUrl = container.querySelector('.api-base-url').value.trim();
-    const apiKey = container.querySelector('.api-key').value.trim();
-    if (!baseUrl || !apiKey) {
-        showToast('拉取失败：请先填写完整的 Base URL 和 API Key');
-        return;
-    }
-    let endpoint = baseUrl;
-    if (endpoint.endsWith('/chat/completions')) {
-        endpoint = endpoint.replace('/chat/completions', '');
-    }
-    endpoint = endpoint.replace(/\/+$/, '') + '/models';
-
-    try {
-        const res = await fetch(endpoint, {
-            headers: { 'Authorization': `Bearer ${apiKey}` }
-        });
-        const data = await res.json();
-        if (data && data.data && Array.isArray(data.data)) {
-            const models = data.data.map(m => m.id);
-            showModelPicker(container, models);
+            var models = data.data.map(function(m) { return m.id; });
+            showModelPickerByElement(document.getElementById(modelEl), models);
             showToast('拉取成功');
         } else {
             showToast('拉取失败：接口返回格式不支持');
@@ -113,7 +87,63 @@ async function fetchModelsForDevice(deviceId) {
     }
 }
 
-function showModelPicker(container, models) {
+function showModelPickerByElement(inputEl, models) {
+    var oldList = inputEl.parentNode.querySelector('.model-picker');
+    if (oldList) oldList.remove();
+
+    var ul = document.createElement('ul');
+    ul.className = 'model-picker';
+    ul.style.cssText = 'list-style:none;padding:0;margin:4px 0 0;max-height:160px;overflow-y:auto;background:#fff;border:1px solid #e5e5ea;border-radius:8px;position:absolute;z-index:100;width:100%;';
+
+    models.forEach(function(m) {
+        var li = document.createElement('li');
+        li.textContent = m;
+        li.style.cssText = 'padding:8px 12px;font-size:14px;cursor:pointer;border-bottom:1px solid #f0f0f0;';
+        li.onclick = function() {
+            inputEl.value = m;
+            ul.remove();
+        };
+        ul.appendChild(li);
+    });
+
+    inputEl.parentNode.style.position = 'relative';
+    inputEl.parentNode.appendChild(ul);
+}
+
+// ===== 主设备模型拉取（可点选） =====
+async function fetchModelsForDevice(deviceId) {
+    const container = document.getElementById('device-' + deviceId);
+    if (!container) return;
+    const baseUrl = container.querySelector('.api-base-url').value.trim();
+    const apiKey = container.querySelector('.api-key').value.trim();
+    if (!baseUrl || !apiKey) {
+        showToast('请先填写完整的 Base URL 和 API Key');
+        return;
+    }
+    let endpoint = baseUrl;
+    if (endpoint.endsWith('/chat/completions')) {
+        endpoint = endpoint.replace('/chat/completions', '');
+    }
+    endpoint = endpoint.replace(/\/+$/, '') + '/models';
+
+    try {
+        const res = await fetch(endpoint, {
+            headers: { 'Authorization': 'Bearer ' + apiKey }
+        });
+        const data = await res.json();
+        if (data && data.data && Array.isArray(data.data)) {
+            const models = data.data.map(m => m.id);
+            showModelPickerForDevice(container, models);
+            showToast('拉取成功');
+        } else {
+            showToast('拉取失败：接口返回格式不支持');
+        }
+    } catch (e) {
+        showToast('拉取失败：网络错误或跨域拦截');
+    }
+}
+
+function showModelPickerForDevice(container, models) {
     const oldList = container.querySelector('.model-picker');
     if (oldList) oldList.remove();
 
@@ -164,7 +194,15 @@ function saveDevice(deviceId) {
         devices.push(newDevice);
     }
     saveDevices(devices);
+    setActiveDeviceId(deviceId);
     showToast('配置保存成功');
+    renderDeviceList();
+}
+
+// ===== 使用此设备 =====
+function useDevice(deviceId) {
+    setActiveDeviceId(deviceId);
+    showToast('已切换为当前设备');
     renderDeviceList();
 }
 
@@ -224,6 +262,9 @@ function executeDeleteDevice() {
     let devices = getDevices();
     devices = devices.filter(d => d.id !== pendingDeleteDeviceId);
     saveDevices(devices);
+    if (getActiveDeviceId() === pendingDeleteDeviceId) {
+        setActiveDeviceId(devices.length > 0 ? devices[0].id : '');
+    }
     pendingDeleteDeviceId = null;
     var overlay = document.getElementById('confirmDeleteDeviceOverlay');
     if (overlay) overlay.remove();
@@ -231,19 +272,24 @@ function executeDeleteDevice() {
     showToast('已删除当前配置');
 }
 
-// ===== 连接测试（主设备） =====
+// ===== 连接测试（带按钮状态） =====
 async function testDevice(deviceId) {
     const container = document.getElementById('device-' + deviceId);
     if (!container) return;
     const baseUrl = container.querySelector('.api-base-url').value.trim();
     const apiKey = container.querySelector('.api-key').value.trim();
     const model = container.querySelector('.api-model').value.trim();
-    const tempSlider = container.querySelector('.temp-slider');
-    const temperature = tempSlider ? parseFloat(tempSlider.value) : 1.0;
+    const testBtn = container.querySelector('.test-btn');
 
     if (!baseUrl || !apiKey || !model) {
         showToast('连接失败：请填写完整的 Base URL、API Key 和模型');
         return;
+    }
+
+    if (testBtn) {
+        testBtn.textContent = '测试中...';
+        testBtn.style.opacity = '0.6';
+        testBtn.disabled = true;
     }
 
     let endpoint = baseUrl;
@@ -261,8 +307,7 @@ async function testDevice(deviceId) {
             body: JSON.stringify({
                 model: model,
                 messages: [{ role: 'user', content: 'hello' }],
-                max_tokens: 10,
-                temperature: temperature
+                max_tokens: 10
             })
         });
 
@@ -280,6 +325,12 @@ async function testDevice(deviceId) {
         }
     } catch (e) {
         showToast('当前配置连接失败：网络错误或跨域拦截');
+    }
+
+    if (testBtn) {
+        testBtn.textContent = '连接测试';
+        testBtn.style.opacity = '1';
+        testBtn.disabled = false;
     }
 }
 
@@ -304,10 +355,17 @@ function saveVoiceConfig() {
 async function testVoice() {
     const groupId = document.getElementById('voice-group-id').value.trim();
     const apiKey = document.getElementById('voice-api-key').value.trim();
+    const testBtn = document.querySelector('#voice-section .test-btn');
 
     if (!groupId || !apiKey) {
         showToast('连接失败：请填写 Group ID 和 API Key');
         return;
+    }
+
+    if (testBtn) {
+        testBtn.textContent = '测试中...';
+        testBtn.style.opacity = '0.6';
+        testBtn.disabled = true;
     }
 
     try {
@@ -339,6 +397,12 @@ async function testVoice() {
     } catch (e) {
         showToast('当前配置连接失败：网络错误或跨域拦截');
     }
+
+    if (testBtn) {
+        testBtn.textContent = '连接测试';
+        testBtn.style.opacity = '1';
+        testBtn.disabled = false;
+    }
 }
 
 // ===== 生图 API 保存 =====
@@ -363,10 +427,17 @@ async function testImage() {
     const baseUrl = document.getElementById('img-base-url').value.trim();
     const apiKey = document.getElementById('img-api-key').value.trim();
     const model = document.getElementById('img-model').value.trim();
+    const testBtn = document.querySelector('#image-section .test-btn');
 
     if (!baseUrl || !apiKey || !model) {
         showToast('连接失败：请填写完整的生图 API 配置');
         return;
+    }
+
+    if (testBtn) {
+        testBtn.textContent = '测试中...';
+        testBtn.style.opacity = '0.6';
+        testBtn.disabled = true;
     }
 
     let endpoint = baseUrl;
@@ -404,6 +475,12 @@ async function testImage() {
     } catch (e) {
         showToast('当前配置连接失败：网络错误或跨域拦截');
     }
+
+    if (testBtn) {
+        testBtn.textContent = '连接测试';
+        testBtn.style.opacity = '1';
+        testBtn.disabled = false;
+    }
 }
 
 // ===== 天气 API 保存 =====
@@ -430,10 +507,17 @@ async function testWeather() {
     const baseUrl = document.getElementById('weather-base-url').value.trim();
     const apiKey = document.getElementById('weather-api-key').value.trim();
     const city = document.getElementById('weather-city').value.trim();
+    const testBtn = document.querySelector('#weather-section .test-btn');
 
     if (!baseUrl || !apiKey || !city) {
         showToast('连接失败：请填写 API 地址、密钥和城市名');
         return;
+    }
+
+    if (testBtn) {
+        testBtn.textContent = '测试中...';
+        testBtn.style.opacity = '0.6';
+        testBtn.disabled = true;
     }
 
     let endpoint = baseUrl;
@@ -469,6 +553,12 @@ async function testWeather() {
         }
     } catch (e) {
         showToast('当前配置连接失败：网络错误或跨域拦截');
+    }
+
+    if (testBtn) {
+        testBtn.textContent = '连接测试';
+        testBtn.style.opacity = '1';
+        testBtn.disabled = false;
     }
 }
 
@@ -518,16 +608,23 @@ function renderDeviceList() {
     const listContainer = document.getElementById('device-list');
     if (!listContainer) return;
     const devices = getDevices();
+    const activeId = getActiveDeviceId();
     listContainer.innerHTML = '';
 
+    if (devices.length === 0) {
+        listContainer.innerHTML = '<div style="text-align:center;color:#8e8e93;padding:20px;">暂无设备，点击上方按钮添加</div>';
+        return;
+    }
+
     devices.forEach(device => {
+        const isActive = device.id === activeId;
         const item = document.createElement('div');
         item.className = 'ios-group';
         item.style.margin = '8px 16px';
         item.innerHTML = `
             <div class="ios-row" onclick="toggleDeviceEdit(${device.id})" style="cursor:pointer;">
                 <div>
-                    <div style="font-size:16px; font-weight:500;">${device.name || '未命名设备'}</div>
+                    <div style="font-size:16px; font-weight:500;">${device.name || '未命名设备'} ${isActive ? '<span style="font-size:10px;color:#fff;background:#1d1d1f;padding:2px 6px;border-radius:4px;margin-left:4px;">使用中</span>' : ''}</div>
                     <div style="font-size:13px; color:#8e8e93;">${device.model || '未配置模型'}</div>
                 </div>
                 <span style="color:#c6c6c8; font-size:24px;">›</span>
@@ -540,7 +637,7 @@ function renderDeviceList() {
                 <input type="text" class="ios-input device-name" placeholder="例如：1号api" value="${device.name}">
 
                 <label class="ios-label">API地址 (Base URL)</label>
-                <input type="text" class="ios-input api-base-url" placeholder="例如：https://.../v1" value="${device.baseUrl}">
+                <input type="text" class="ios-input api-base-url" placeholder="例如：https://api.deepseek.com" value="${device.baseUrl}">
 
                 <label class="ios-label">API密钥 (Key)</label>
                 <input type="text" class="ios-input api-key" placeholder="例如：sk-..." value="${device.apiKey}">
@@ -564,7 +661,8 @@ function renderDeviceList() {
                 </div>
 
                 <button class="ios-btn-black" onclick="saveDevice(${device.id})">保存设备</button>
-                <button class="ios-btn-white" onclick="testDevice(${device.id})">连接测试</button>
+                <button class="ios-btn-white" onclick="useDevice(${device.id})">使用此设备</button>
+                <button class="ios-btn-white test-btn" onclick="testDevice(${device.id})">连接测试</button>
             </div>
         `;
         listContainer.appendChild(item);
@@ -653,7 +751,7 @@ const settingsHTML = `
         <span class="toggle-arrow" style="color:#8e8e93;">›</span>
     </div>
     <div id="api-section" class="collapsible-section" style="display:none;">
-        <div style="font-size:12px; color:#8e8e93; margin:0 16px 8px;">API配置</div>
+        <div style="font-size:12px; color:#8e8e93; margin:0 16px 8px;">提示：只需填写域名，系统自动拼接路径。支持带或不带 /v1 结尾。</div>
         <button class="ios-btn-white" style="margin: 0 16px; width: calc(100% - 32px); color:#000;" onclick="addNewDevice()">+ 添加新设备</button>
         <div id="device-list"></div>
     </div>
@@ -672,7 +770,7 @@ const settingsHTML = `
             <input type="text" class="ios-input" placeholder="例如：1号api">
 
             <label class="ios-label">API地址 (Base URL)</label>
-            <input type="text" id="api-base-url-2" class="ios-input" placeholder="例如：https://.../v1">
+            <input type="text" id="api-base-url-2" class="ios-input" placeholder="例如：https://api.deepseek.com">
 
             <label class="ios-label">API密钥 (Key)</label>
             <input type="text" id="api-key-2" class="ios-input" placeholder="例如：sk-...">
@@ -680,7 +778,7 @@ const settingsHTML = `
             <label class="ios-label">模型</label>
             <div style="display:flex; gap:8px; align-items:center;">
                 <input type="text" id="api-model-2" class="ios-input" placeholder="手动输入或拉取" style="flex:1;">
-                <button class="ios-btn-white" style="width:auto; margin:0; padding:12px 16px;" onclick="fetchModels('api-base-url-2', 'api-key-2', 'api-model-2')">拉取</button>
+                <button class="ios-btn-white" style="width:auto; margin:0; padding:12px 16px;" onclick="fetchModelsGeneric('api-base-url-2', 'api-key-2', 'api-model-2')">拉取</button>
             </div>
 
             <label class="ios-label" style="display:flex; justify-content:space-between; margin-top:20px;">
@@ -696,7 +794,7 @@ const settingsHTML = `
             </div>
 
             <button class="ios-btn-black">保存配置</button>
-            <button class="ios-btn-white" onclick="showToast('连接失败：密钥为空')">连接测试</button>
+            <button class="ios-btn-white test-btn" onclick="testDeviceLegacy()">连接测试</button>
         </div>
         
         <div style="margin: 24px 16px 8px; font-size:13px; color:#8e8e93;">副API用途 (没开默认用主API)</div>
@@ -731,7 +829,7 @@ const settingsHTML = `
                 <option value="female-yujie">御姐</option>
             </select>
             <button class="ios-btn-black" onclick="saveVoiceConfig()">保存配置</button>
-            <button class="ios-btn-white" onclick="testVoice()">连接测试</button>
+            <button class="ios-btn-white test-btn" onclick="testVoice()">连接测试</button>
         </div>
     </div>
 
@@ -742,16 +840,16 @@ const settingsHTML = `
     <div id="image-section" class="collapsible-section" style="display:none;">
         <div class="ios-group" style="padding:16px;">
             <label class="ios-label">API地址 (Base URL)</label>
-            <input type="text" id="img-base-url" class="ios-input" placeholder="例如：https://.../v1">
+            <input type="text" id="img-base-url" class="ios-input" placeholder="例如：https://api.deepseek.com">
             <label class="ios-label">API密钥 (Key)</label>
             <input type="text" id="img-api-key" class="ios-input" placeholder="例如：sk-...">
             <label class="ios-label">模型</label>
             <div style="display:flex; gap:8px; align-items:center;">
                 <input type="text" id="img-model" class="ios-input" placeholder="手动输入或拉取" style="flex:1;">
-                <button class="ios-btn-white" style="width:auto; margin:0; padding:12px 16px;" onclick="fetchModels('img-base-url', 'img-api-key', 'img-model')">拉取</button>
+                <button class="ios-btn-white" style="width:auto; margin:0; padding:12px 16px;" onclick="fetchModelsGeneric('img-base-url', 'img-api-key', 'img-model')">拉取</button>
             </div>
             <button class="ios-btn-black" onclick="saveImageConfig()">保存配置</button>
-            <button class="ios-btn-white" onclick="testImage()">连接测试</button>
+            <button class="ios-btn-white test-btn" onclick="testImage()">连接测试</button>
         </div>
     </div>
 
@@ -762,7 +860,7 @@ const settingsHTML = `
     <div id="weather-section" class="collapsible-section" style="display:none;">
         <div class="ios-group" style="padding:16px;">
             <label class="ios-label">API地址 (Base URL)</label>
-            <input type="text" id="weather-base-url" class="ios-input" placeholder="例如：https://.../v1">
+            <input type="text" id="weather-base-url" class="ios-input" placeholder="例如：https://api.deepseek.com">
             <label class="ios-label">API密钥 (Key)</label>
             <input type="text" id="weather-api-key" class="ios-input" placeholder="例如：sk-...">
             <label class="ios-label">城市名</label>
@@ -773,10 +871,10 @@ const settingsHTML = `
             <label class="ios-label">模型</label>
             <div style="display:flex; gap:8px; align-items:center;">
                 <input type="text" id="weather-model" class="ios-input" placeholder="手动输入或拉取" style="flex:1;">
-                <button class="ios-btn-white" style="width:auto; margin:0; padding:12px 16px;" onclick="fetchModels('weather-base-url', 'weather-api-key', 'weather-model')">拉取</button>
+                <button class="ios-btn-white" style="width:auto; margin:0; padding:12px 16px;" onclick="fetchModelsGeneric('weather-base-url', 'weather-api-key', 'weather-model')">拉取</button>
             </div>
             <button class="ios-btn-black" onclick="saveWeatherConfig()">保存配置</button>
-            <button class="ios-btn-white" onclick="testWeather()">连接测试</button>
+            <button class="ios-btn-white test-btn" onclick="testWeather()">连接测试</button>
         </div>
     </div>
 
@@ -832,7 +930,7 @@ function initSettings() {
     }, 200);
 }
 
-// ===== 注册设置图标到 Dock（插入到最左侧第一位） =====
+// ===== 注册设置图标到 Dock =====
 window.addEventListener('DOMContentLoaded', () => {
     if (typeof registerModal === 'function') {
         registerModal('settingsModal', '设置', settingsHTML);
