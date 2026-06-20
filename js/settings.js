@@ -752,7 +752,7 @@ const settingsHTML = `
         <span>API</span> 
         <span class="toggle-arrow" style="color:#8e8e93;">›</span>
     </div>
-    <div id="api-section" class="collapsible-section" style="display:none;">
+    <div id="api-section" class="collapsible-section" style="display:block;">
         <div style="font-size:12px; color:#8e8e93; margin:0 16px 8px;">提示：只需填写域名，系统自动拼接路径。支持带或不带 /v1 结尾。</div>
         <button class="ios-btn-white" style="margin: 0 16px; width: calc(100% - 32px); color:#000;" onclick="addNewDevice()">+ 添加新设备</button>
         <div id="device-list"></div>
