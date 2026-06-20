@@ -1,6 +1,7 @@
 /**
  * 玉界 - 聊天核心
- * 包含：消息收发、API 对接、系统提示拼接、状态栏更新、翻译、时间戳、上下文记忆
+ * 包含：消息收发、API 对接、系统提示拼接、状态栏更新、翻译、时间戳、上下文记忆、
+ *       自动发消息、自动发动态、红包转账状态处理
  */
 
 // ========== 聊天状态 ==========
@@ -41,7 +42,6 @@ function buildSystemPrompt(contactId) {
         prompt += '\n\n【旁白模式】关闭。不需要写旁白。';
     }
 
-    // 记忆连续性
     prompt += '\n\n【记忆连续性】你必须记住和用户之前聊过的所有内容。称呼要前后一致，不能上一句叫姐姐下一句又改口。认真阅读聊天历史，保持对话连贯。';
 
     return prompt;
@@ -88,7 +88,6 @@ async function sendChatMessage() {
     const contact = getContactById(contactId);
     const contactName = contact ? contact.name : 'AI';
 
-    // 检测括号旁白：处理红包/转账
     const bracketMatch = text.match(/^[\(\（]([^\)\）]+)[\)\）]$/);
     if (bracketMatch) {
         const bracketContent = bracketMatch[1];
@@ -131,7 +130,7 @@ async function sendChatMessage() {
         if (qv) qv.style.display = 'none';
     }
 
-    const memoryCount = parseInt(getContactSetting ? getContactSetting(contactId, 'memoryCount', '50') : '50');
+    const memoryCount = parseInt(getContactSetting(contactId, 'memoryCount', '50'));
     const historyMessages = getRecentHistory(contactId, memoryCount);
     const allMessages = [
         { role: 'system', content: systemPrompt },
@@ -158,11 +157,9 @@ function acceptLatestPayment() {
         var state = getPaymentState(msgId);
         if (state === 'pending') {
             updatePaymentCardUI(msgId, 'accepted');
-            showToast('已接收');
             return;
         }
     }
-    showToast('没有待接收的红包或转账');
 }
 
 function refundLatestPayment() {
@@ -174,11 +171,9 @@ function refundLatestPayment() {
         var type = card.getAttribute('data-type');
         if (state === 'pending' && type === '转账') {
             updatePaymentCardUI(msgId, 'refunded');
-            showToast('已退还');
             return;
         }
     }
-    showToast('没有可退还的转账');
 }
 
 // ========== 调用聊天 API ==========
@@ -256,7 +251,6 @@ async function callChatAPI(messages) {
 function processAIReply(rawContent, contactName, contactId) {
     const titleEl = document.getElementById('chatTitle');
 
-    // 过滤 \n\n 前缀和双引号
     let cleanRaw = rawContent.replace(/^[\n]+/, '').replace(/"/g, '');
 
     let jsonMatch = cleanRaw.match(/\{[^{}]*"mood"[^{}]*\}/);
@@ -527,7 +521,6 @@ function loadChatHistory(contactId) {
     if (saved) {
         messages.innerHTML = saved;
         messages.scrollTop = messages.scrollHeight;
-        // 恢复红包卡片状态
         restorePaymentCardStates();
     }
 }
@@ -549,3 +542,396 @@ function restorePaymentCardStates() {
         }
     });
 }          
+
+// ========== 语音 TTS 调用（MiniMax） ==========
+async function callTTS(text) {
+    const groupId = localStorage.getItem('voice_group_id');
+    const apiKey = localStorage.getItem('voice_api_key');
+    const voiceId = localStorage.getItem('voice_voice_id') || 'male-qn-qingse';
+
+    if (!groupId || !apiKey) return null;
+
+    try {
+        const response = await fetch('https://api.minimax.chat/v1/t2a_v2', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + apiKey
+            },
+            body: JSON.stringify({
+                model: 'speech-01',
+                text: text,
+                voice_setting: {
+                    voice_id: voiceId,
+                    speed: 1.0,
+                    vol: 1.0,
+                    pitch: 0
+                },
+                audio_setting: {
+                    sample_rate: 16000,
+                    format: 'mp3'
+                }
+            })
+        });
+
+        const data = await response.json();
+        if (data.audio && data.audio.audio_data) {
+            return 'data:audio/mp3;base64,' + data.audio.audio_data;
+        }
+        return null;
+    } catch (e) {
+        return null;
+    }
+}
+
+// ========== 检查是否配置了语音API ==========
+function hasVoiceAPI() {
+    const groupId = localStorage.getItem('voice_group_id');
+    const apiKey = localStorage.getItem('voice_api_key');
+    return !!(groupId && apiKey);
+}
+
+// ========== 角色发语音 ==========
+async function sendBotVoice(text) {
+    if (hasVoiceAPI()) {
+        const voiceUrl = await callTTS(text);
+        if (voiceUrl) {
+            sendVoiceBubble('assistant', text, voiceUrl, true);
+            return;
+        }
+    }
+    sendVoiceBubble('assistant', text, null, false);
+}
+
+// ========== 自动发消息系统 ==========
+window._autoMsgTimer = null;
+window._autoMsgLastContact = null;
+
+function startAutoMsg() {
+    stopAutoMsg();
+
+    const settings = window.ChatConfig?.settings;
+    if (!settings || !settings.autoMsg) return;
+
+    const freqVal = settings.autoMsgFreq || 0;
+    const intervals = [3600000, 18000000, 36000000, 86400000];
+    const interval = intervals[freqVal] || 3600000;
+
+    window._autoMsgTimer = setInterval(() => {
+        triggerAutoMsg();
+    }, interval);
+
+    setTimeout(() => {
+        triggerAutoMsg();
+    }, 10000);
+}
+
+function stopAutoMsg() {
+    if (window._autoMsgTimer) {
+        clearInterval(window._autoMsgTimer);
+        window._autoMsgTimer = null;
+    }
+}
+
+async function triggerAutoMsg() {
+    if (window.ChatState?.isAITyping) return;
+
+    const contactId = window._autoMsgLastContact || getRandomContactId();
+    if (!contactId) return;
+
+    window._autoMsgLastContact = contactId;
+
+    const contact = getContactById(contactId);
+    if (!contact) return;
+
+    const systemPrompt = buildSystemPrompt(contactId);
+    const autoPrompts = [
+        '（突然想起一件事，想跟对方说）',
+        '（刚刚发生了点事，想分享给对方）',
+        '（闲着没事，想找对方聊聊天）',
+        '（有点无聊，主动发个消息）',
+        '（看到有趣的东西，想告诉对方）',
+        '（想关心一下对方在做什么）'
+    ];
+    const prompt = autoPrompts[Math.floor(Math.random() * autoPrompts.length)];
+
+    try {
+        const reply = await callChatAPI([
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: prompt }
+        ]);
+
+        const cleanReply = reply.replace(/\{[^}]*\}/g, '').trim();
+        saveAutoMsgToHistory(contactId, contact.name, reply);
+
+        const unreadCount = addUnreadCount(contactId);
+
+        if (window.ChatConfig?.contacts) {
+            const c = window.ChatConfig.contacts.find(c => c.id === contactId);
+            if (c) {
+                c.preview = cleanReply.substring(0, 30);
+                saveContactsToStorage();
+            }
+        }
+
+        showAutoMsgNotification(contact.name, contactId, cleanReply);
+
+        if (typeof renderChatList === 'function') {
+            const listView = document.getElementById('chatListView');
+            if (listView && listView.offsetParent !== null) {
+                renderChatList();
+            }
+        }
+    } catch (e) {}
+}
+
+function getRandomContactId() {
+    const contacts = window.ChatConfig?.contacts;
+    if (!contacts || contacts.length === 0) return null;
+    const idx = Math.floor(Math.random() * contacts.length);
+    return contacts[idx].id;
+}
+
+function saveAutoMsgToHistory(contactId, contactName, rawContent) {
+    const storageKey = 'chat_history_' + contactId;
+    const saved = localStorage.getItem(storageKey);
+    let container;
+
+    if (saved) {
+        container = document.createElement('div');
+        container.innerHTML = saved;
+    }
+
+    const now = new Date();
+    const h = now.getHours();
+    const m = now.getMinutes().toString().padStart(2, '0');
+    const period = h < 12 ? '上午' : '下午';
+    const displayH = h % 12 || 12;
+    const timeStr = period + ' ' + displayH + ':' + m;
+
+    let cleanContent = rawContent.replace(/\{[^}]*\}/g, '').trim();
+
+    let htmlToAdd = '';
+    htmlToAdd += '<div class="chat-time-stamp">' + timeStr + '</div>';
+
+    const parts = cleanContent.split(/\n{2,}/).filter(p => p.trim());
+    parts.forEach(part => {
+        htmlToAdd += '<div class="bubble-row assistant" data-role="assistant">';
+        htmlToAdd += '<div class="bubble-avatar bot-avatar">' + (contactName.charAt(0) || 'AI') + '</div>';
+        htmlToAdd += '<div class="bubble bubble-assistant">' + part.trim() + '</div>';
+        htmlToAdd += '</div>';
+    });
+
+    if (saved && container) {
+        container.innerHTML += htmlToAdd;
+        localStorage.setItem(storageKey, container.innerHTML);
+    } else {
+        const newContainer = document.createElement('div');
+        newContainer.innerHTML = htmlToAdd;
+        localStorage.setItem(storageKey, newContainer.innerHTML);
+    }
+
+    if (window.ChatConfig?.contacts) {
+        const contact = window.ChatConfig.contacts.find(c => c.id === contactId);
+        if (contact) {
+            contact.preview = cleanContent.substring(0, 30);
+            saveContactsToStorage();
+        }
+    }
+}
+
+// ========== 未读消息计数 ==========
+function getUnreadCount(contactId) {
+    const raw = localStorage.getItem('unread_' + contactId);
+    return raw ? parseInt(raw) : 0;
+}
+
+function addUnreadCount(contactId) {
+    const count = getUnreadCount(contactId) + 1;
+    localStorage.setItem('unread_' + contactId, count);
+    return count;
+}
+
+function clearUnreadCount(contactId) {
+    localStorage.removeItem('unread_' + contactId);
+}
+
+// ========== 通知弹窗 ==========
+function showAutoMsgNotification(contactName, contactId, message) {
+    const existing = document.getElementById('autoMsgNotification');
+    if (existing) existing.remove();
+
+    let line1 = '';
+    let line2 = '';
+    const maxChars = 22;
+    if (message.length <= maxChars) {
+        line1 = message;
+    } else {
+        line1 = message.substring(0, maxChars);
+        const remaining = message.substring(maxChars);
+        if (remaining.length > maxChars) {
+            line2 = remaining.substring(0, maxChars) + '...';
+        } else {
+            line2 = remaining;
+        }
+    }
+
+    const noti = document.createElement('div');
+    noti.id = 'autoMsgNotification';
+    noti.className = 'auto-msg-notification';
+    noti.innerHTML = `
+        <div class="auto-msg-noti-avatar">${contactName.charAt(0)}</div>
+        <div class="auto-msg-noti-body">
+            <div class="auto-msg-noti-name">${contactName}</div>
+            <div class="auto-msg-noti-text">${line1}</div>
+            ${line2 ? '<div class="auto-msg-noti-text">' + line2 + '</div>' : ''}
+        </div>
+    `;
+    noti.onclick = function() {
+        noti.remove();
+        clearUnreadCount(contactId);
+        if (typeof openChat === 'function') openChat();
+        setTimeout(function() {
+            if (typeof enterChat === 'function') enterChat(contactId);
+        }, 300);
+    };
+
+    document.body.appendChild(noti);
+
+    setTimeout(function() {
+        if (noti.parentNode) {
+            noti.style.opacity = '0';
+            noti.style.transform = 'translateY(-20px)';
+            setTimeout(function() {
+                if (noti.parentNode) noti.remove();
+            }, 300);
+        }
+    }, 4000);
+}
+
+// ========== 自动发动态系统 ==========
+window._autoMomentTimers = {};
+
+function startAutoMoment(contactId) {
+    stopAutoMoment(contactId);
+    
+    var enabled = getContactSetting(contactId, 'autoMoment', false);
+    if (!enabled) return;
+    
+    var freqVal = parseInt(getContactSetting(contactId, 'autoMomentFreq', '0'));
+    var intervals = [43200000, 86400000, 129600000, 172800000];
+    var interval = intervals[freqVal] || 43200000;
+    
+    window._autoMomentTimers[contactId] = setInterval(function() {
+        triggerAutoMoment(contactId);
+    }, interval);
+    
+    setTimeout(function() {
+        triggerAutoMoment(contactId);
+    }, 30000);
+}
+
+function stopAutoMoment(contactId) {
+    if (window._autoMomentTimers[contactId]) {
+        clearInterval(window._autoMomentTimers[contactId]);
+        delete window._autoMomentTimers[contactId];
+    }
+}
+
+async function triggerAutoMoment(contactId) {
+    var contact = getContactById(contactId);
+    if (!contact) return;
+    
+    var systemPrompt = buildSystemPrompt(contactId);
+    var momentPrompt = getRandomMomentPrompt(contact);
+    
+    try {
+        var reply = await callChatAPI([
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: momentPrompt }
+        ]);
+        
+        var cleanContent = reply.replace(/\{[^}]*\}/g, '').trim();
+        if (!cleanContent) return;
+        
+        var newMoment = {
+            id: 'm_auto_' + Date.now(),
+            userName: contact.name,
+            userAvatar: contact.avatar,
+            text: cleanContent,
+            images: [],
+            time: getRelativeTimeForMoment(Date.now()),
+            location: '',
+            likes: 0,
+            comments: [],
+            liked: false
+        };
+        
+        var raw = localStorage.getItem('moments_data');
+        var momentsData = raw ? JSON.parse(raw) : [];
+        momentsData.unshift(newMoment);
+        localStorage.setItem('moments_data', JSON.stringify(momentsData));
+        
+    } catch(e) {}
+}
+
+function getRandomMomentPrompt(contact) {
+    var prompts = [
+        '（分享一件今天发生的小事，发一条朋友圈）',
+        '（突然有感而发，想发一条动态）',
+        '（看到了有趣的东西，想分享到朋友圈）',
+        '（心情不错，发一条动态表达一下）',
+        '（夜深了，有些感慨想发出来）',
+        '（最近发生了一些事，想在朋友圈说说）',
+        '（随手发一条日常动态）',
+        '（想分享一下此刻的心情）'
+    ];
+    
+    if (contact.persona && contact.persona.indexOf('内向') >= 0) {
+        prompts = [
+            '（夜深人静时，有了一些感悟，想发一条仅自己可见的动态）',
+            '（偶尔想分享一下心情，但不想太多人看到）',
+            '（有些话想说，发一条私密动态吧）'
+        ];
+    }
+    
+    return prompts[Math.floor(Math.random() * prompts.length)];
+}
+
+function getRelativeTimeForMoment(timestamp) {
+    var d = new Date(timestamp);
+    return (d.getMonth() + 1) + '.' + d.getDate() + ' ' + d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+}
+
+// 监听自动发动态开关
+var origToggleAutoMoment = toggleAutoMoment;
+toggleAutoMoment = function(checked) {
+    origToggleAutoMoment(checked);
+    var contactId = window.ChatState.currentContactId || 'c1';
+    if (checked) {
+        startAutoMoment(contactId);
+        showToast('自动发动态已开启');
+    } else {
+        stopAutoMoment(contactId);
+        showToast('自动发动态已关闭');
+    }
+};
+
+// 进入聊天窗口时启动
+var origEnterChat = enterChat;
+enterChat = function(contactId) {
+    origEnterChat(contactId);
+    var enabled = getContactSetting(contactId, 'autoMoment', false);
+    if (enabled) {
+        startAutoMoment(contactId);
+    }
+};
+
+// 返回时停止
+var origBackToChatList = backToChatList;
+backToChatList = function() {
+    for (var id in window._autoMomentTimers) {
+        stopAutoMoment(id);
+    }
+    origBackToChatList();
+};
