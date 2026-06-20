@@ -578,24 +578,82 @@ function toggleSection(id, headerEl) {
     }
 }
 
-// ===== 添加新设备 =====
+// ===== 添加新设备（在列表上方插入空编辑面板，不保存） =====
 function addNewDevice() {
-    const devices = getDevices();
-    const newId = Date.now();
-    devices.push({
-        id: newId,
-        name: '',
-        baseUrl: '',
-        apiKey: '',
-        model: '',
-        temperature: 1.0,
-        stream: true
-    });
+    var listContainer = document.getElementById('device-list');
+    if (!listContainer) return;
+    var newId = Date.now();
+    var editHTML = `
+        <div class="ios-group" style="margin:8px 16px;" id="device-group-${newId}">
+            <div id="device-${newId}" style="padding:16px; border:1px solid #e5e5ea; background:#fafafa; border-radius:14px;" class="device-edit">
+                <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+                    <label class="ios-label">配置名称</label>
+                    <span style="font-size:13px; color:#ff3b30; cursor:pointer;" onclick="cancelNewDevice(${newId})">取消</span>
+                </div>
+                <input type="text" class="ios-input device-name" placeholder="例如：1号api">
+
+                <label class="ios-label">API地址 (Base URL)</label>
+                <input type="text" class="ios-input api-base-url" placeholder="请输入接口网址">
+
+                <label class="ios-label">API密钥 (Key)</label>
+                <input type="text" class="ios-input api-key" placeholder="例如：sk-...">
+
+                <label class="ios-label">模型</label>
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <input type="text" class="ios-input api-model" placeholder="手动输入或拉取" style="flex:1;">
+                    <button class="ios-btn-white" style="width:auto; margin:0; padding:12px 16px;" onclick="fetchModelsForDevice(${newId})">拉取</button>
+                </div>
+
+                <label class="ios-label" style="display:flex; justify-content:space-between; margin-top:20px;">
+                    <span>API温度</span> <span class="temp-display">1.0</span>
+                </label>
+                <input type="range" min="0" max="2" step="0.1" value="1.0" class="ios-slider temp-slider" oninput="this.parentNode.querySelector('.temp-display').innerText=this.value">
+
+                <div style="font-size:11px; color:#8e8e93; margin-top:4px;">提示：越低越收敛越高越大胆</div>
+
+                <div class="ios-row" style="padding:16px 0 0 0; border:none; background:transparent;">
+                    <span style="font-weight:500; font-size:15px;">流式输出</span>
+                    <input type="checkbox" class="ios-switch stream-check" checked>
+                </div>
+
+                <button class="ios-btn-black" onclick="saveNewDevice(${newId})">保存设备</button>
+                <button class="ios-btn-white test-btn" onclick="testDevice(${newId})">连接测试</button>
+            </div>
+        </div>
+    `;
+    listContainer.insertAdjacentHTML('afterbegin', editHTML);
+}
+
+// 取消新建设备
+function cancelNewDevice(newId) {
+    var group = document.getElementById('device-group-' + newId);
+    if (group) group.remove();
+}
+
+// 保存新建设备
+function saveNewDevice(newId) {
+    var container = document.getElementById('device-' + newId);
+    if (!container) return;
+    var name = container.querySelector('.device-name').value.trim() || '未命名';
+    var baseUrl = container.querySelector('.api-base-url').value.trim();
+    var apiKey = container.querySelector('.api-key').value.trim();
+    var model = container.querySelector('.api-model').value.trim();
+    var tempSlider = container.querySelector('.temp-slider');
+    var temperature = tempSlider ? parseFloat(tempSlider.value) : 1.0;
+    var streamCheck = container.querySelector('.stream-check');
+    var stream = streamCheck ? streamCheck.checked : true;
+
+    if (!baseUrl || !apiKey || !model) {
+        showToast('保存失败：请填写完整的 Base URL、API Key 和模型');
+        return;
+    }
+
+    var devices = getDevices();
+    devices.push({ id: newId, name: name, baseUrl: baseUrl, apiKey: apiKey, model: model, temperature: temperature, stream: stream });
     saveDevices(devices);
+    setActiveDeviceId(String(newId));
+    showToast('配置保存成功');
     renderDeviceList();
-    setTimeout(() => {
-        toggleDeviceEdit(newId);
-    }, 100);
 }
 
 function toggleDeviceEdit(deviceId) {
@@ -612,11 +670,6 @@ function renderDeviceList() {
     const devices = getDevices();
     const activeId = String(getActiveDeviceId());
     listContainer.innerHTML = '';
-
-    if (devices.length === 0) {
-        listContainer.innerHTML = '<div style="text-align:center;color:#8e8e93;padding:20px;">暂无设备，点击上方按钮添加</div>';
-        return;
-    }
 
     devices.forEach(device => {
         const isActive = String(device.id) === activeId;
@@ -754,8 +807,8 @@ const settingsHTML = `
     </div>
     <div id="api-section" class="collapsible-section" style="display:none;">
         <div style="font-size:12px; color:#8e8e93; margin:0 16px 8px;">提示：只需填写域名，系统自动拼接路径。支持带或不带 /v1 结尾。</div>
-        <button class="ios-btn-white" style="margin: 0 16px; width: calc(100% - 32px); color:#000;" onclick="addNewDevice()">+ 添加新设备</button>
         <div id="device-list"></div>
+        <button class="ios-btn-white" style="margin: 8px 16px; width: calc(100% - 32px); color:#000;" onclick="addNewDevice()">+ 添加新设备</button>
     </div>
 
     <div class="list-header" onclick="toggleSection('subapi-section', this)">
@@ -910,20 +963,6 @@ const settingsHTML = `
 function initSettings() {
     migrateOldConfig();
     renderDeviceList();
-    // 自动展开 API 区域
-    setTimeout(function() {
-        var apiSection = document.getElementById('api-section');
-        if (apiSection && apiSection.style.display === 'none') {
-            apiSection.style.display = 'block';
-            var listHeaders = document.querySelectorAll('.list-header');
-            listHeaders.forEach(function(header) {
-                if (header.textContent.indexOf('API') >= 0 && header.textContent.indexOf('副API') < 0 && header.textContent.indexOf('语音API') < 0 && header.textContent.indexOf('生图API') < 0 && header.textContent.indexOf('天气API') < 0) {
-                    var arrow = header.querySelector('.toggle-arrow');
-                    if (arrow) arrow.textContent = '∨';
-                }
-            });
-        }
-    }, 200);
     setTimeout(() => {
         const voiceGroupId = localStorage.getItem('voice_group_id');
         const voiceApiKey = localStorage.getItem('voice_api_key');
