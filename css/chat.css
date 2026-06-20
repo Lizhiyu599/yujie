@@ -1758,3 +1758,116 @@
 .payment-amount-hidden {
     display: none;
 }
+
+/* ===== 收红包/转账弹窗 ===== */
+.payment-open-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.payment-open-modal {
+    width: 240px;
+    background: #1d1d1f;
+    border-radius: 18px;
+    padding: 28px 20px 20px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    animation: popUp 0.3s cubic-bezier(0.2, 1, 0.3, 1);
+}
+
+@keyframes popUp {
+    from { transform: scale(0.85); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.payment-open-icon {
+    margin: 0 auto 14px;
+    width: 64px;
+    height: 64px;
+    background: #f5c543;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.payment-open-dollar {
+    font-size: 36px;
+    font-weight: 800;
+    color: #1d1d1f;
+}
+
+.payment-open-type {
+    font-size: 16px;
+    color: #fff;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.payment-open-note {
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 8px;
+}
+
+.payment-open-amount {
+    font-size: 32px;
+    color: #f5c543;
+    font-weight: 800;
+    margin: 12px 0;
+    letter-spacing: 2px;
+}
+
+.payment-open-hint {
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 16px;
+}
+
+.payment-open-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.payment-open-accept {
+    background: #f5c543;
+    color: #1d1d1f;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 28px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.payment-open-accept:active {
+    background: #d4a830;
+    transform: scale(0.96);
+}
+
+.payment-open-refund {
+    background: transparent;
+    color: rgba(255,255,255,0.5);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.payment-open-refund:active {
+    border-color: rgba(255,255,255,0.5);
+    color: rgba(255,255,255,0.8);
+}
