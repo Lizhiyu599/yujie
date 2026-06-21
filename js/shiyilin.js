@@ -79,27 +79,21 @@ function renderShiyilin() {
                 rowsHTML += `
                     <div class="sl-book" onclick="openShiyilinBook('${books[j].contactId}')">
                         <div class="sl-book-cover">
-                            <div class="sl-cover-inner-border"></div>
-                            <div class="sl-cover-inner-border2"></div>
-                            <div class="sl-cover-corner-fan tl">❦</div>
-                            <div class="sl-cover-corner-fan tr">❦</div>
-                            <div class="sl-cover-corner-fan bl">❦</div>
-                            <div class="sl-cover-corner-fan br">❦</div>
-                            <div class="sl-cover-corners">
-                                <span class="sl-corner-tl">✦</span>
-                                <span class="sl-corner-tr">✦</span>
-                                <span class="sl-corner-bl">✦</span>
-                                <span class="sl-corner-br">✦</span>
-                            </div>
+                            <div class="sl-cover-border2"></div>
+                            <div class="sl-cover-border3"></div>
+                            <div class="sl-corner-ornament tl"></div>
+                            <div class="sl-corner-ornament tr"></div>
+                            <div class="sl-corner-ornament bl"></div>
+                            <div class="sl-corner-ornament br"></div>
+                            <div class="sl-corner-diamond tl"></div>
+                            <div class="sl-corner-diamond tr"></div>
+                            <div class="sl-corner-diamond bl"></div>
+                            <div class="sl-corner-diamond br"></div>
                             <div class="sl-cover-top-band"></div>
-                            <div class="sl-cover-top-ornament"></div>
                             <div class="sl-cover-bottom-band"></div>
-                            <div class="sl-cover-bottom-ornament"></div>
-                            <div class="sl-cover-vine-left">🌿</div>
-                            <div class="sl-cover-vine-right">🌿</div>
+                            <div class="sl-cover-mid-dots"></div>
                             <div class="sl-cover-english">Good luck, in countless tomorrow</div>
                             <div class="sl-cover-english-line2">keep your spirit free</div>
-                            <div class="sl-cover-bottom-vine">❦   ❦   ❦</div>
                         </div>
                         <div class="sl-book-spine">
                             <div class="sl-spine-name">${books[j].contactName}</div>
@@ -143,18 +137,14 @@ function openShiyilinBook(contactId) {
     overlay.innerHTML = `
         <div class="sl-book-viewer" onclick="event.stopPropagation()">
             <div class="sl-viewer-cover" id="slViewerCover">
-                <div class="sl-viewer-corner-fan tl">❦</div>
-                <div class="sl-viewer-corner-fan tr">❦</div>
-                <div class="sl-viewer-corner-fan bl">❦</div>
-                <div class="sl-viewer-corner-fan br">❦</div>
+                <div class="sl-viewer-corner tl"></div>
+                <div class="sl-viewer-corner tr"></div>
+                <div class="sl-viewer-corner bl"></div>
+                <div class="sl-viewer-corner br"></div>
                 <div class="sl-viewer-top-band"></div>
-                <div class="sl-viewer-gold-line"></div>
-                <div class="sl-viewer-bottom-line"></div>
-                <div class="sl-viewer-vine-left">🌿</div>
-                <div class="sl-viewer-vine-right">🌿</div>
+                <div class="sl-viewer-bottom-band"></div>
                 <div class="sl-viewer-english">Good luck, in countless tomorrow</div>
                 <div class="sl-viewer-english-line2">keep your spirit free</div>
-                <div class="sl-viewer-bottom-vine">❦   ❦   ❦</div>
                 <div class="sl-viewer-hint">轻触翻开</div>
             </div>
         </div>
@@ -207,8 +197,7 @@ function openShiyilinPages(contactId) {
             <div class="sl-page-hole"></div>
         </div>
         <div class="sl-pages-body">
-            <div class="sl-page-decoration top-left">🌿</div>
-            <div class="sl-page-decoration bottom-right">🌱</div>
+            <div class="sl-page-decoration"></div>
             <div class="sl-summary-text" id="slSummaryText">${book.summary || '翻开空白的书页，等待记忆落笔。'}</div>
         </div>
     `;
