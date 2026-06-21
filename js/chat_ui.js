@@ -1532,11 +1532,11 @@ function showMomentsPage() {
             </div>
             <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;" id="momentsScrollArea" onscroll="handleMomentsScroll()">
                 <div style="position:relative;">
-                    <div class="moments-publish-btn" onclick="event.stopPropagation(); openPublishModal()" style="position:absolute; top:60px; right:16px; z-index:10;">
+                    <div class="moments-publish-btn" onclick="event.stopPropagation(); openPublishModal()" style="position:absolute; top:50px; right:16px; z-index:10;">
                         <span class="publish-icon-body"></span>
                         <span class="publish-icon-lens"></span>
                     </div>
-                    <div style="display:flex; align-items:center; gap:12px; padding:70px 16px 16px;">
+                    <div style="display:flex; align-items:center; gap:12px; padding:60px 16px 12px;">
                         <div class="moments-cover-avatar" id="momentsCoverAvatar" style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,0.3);border:2px solid rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;background-size:cover;background-position:center;flex-shrink:0;"></div>
                         <span id="momentsCoverName" style="font-size:16px;color:#000;font-weight:600;">用户</span>
                     </div>
