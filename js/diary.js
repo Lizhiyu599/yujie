@@ -478,13 +478,6 @@ function saveDiaryFont() {
     showToast('日记字体已保存');
 }
 
-// ========== 自动日记开关 ==========
-function toggleDiaryAuto() {
-    const isChecked = document.getElementById('diaryAutoSwitch').checked;
-    localStorage.setItem('diary_auto_enabled', isChecked);
-    showToast(isChecked ? '自动日记已开启' : '自动日记已关闭');
-}
-
 // ========== 角色选择 ==========
 function getDiarySelectedChar() {
     return localStorage.getItem('diary_selected_char') || '';
@@ -507,21 +500,34 @@ function renderDiaryCharList() {
     var selected = getDiarySelectedChar();
     var html = '';
     contacts.forEach(function(c) {
-        var checked = c.id === selected ? 'checked' : '';
-        html += '<label style="display:block;padding:8px 0;font-size:14px;color:#aaa;cursor:pointer;"><input type="radio" name="diaryChar" value="' + c.id + '" ' + checked + ' style="margin-right:8px;">' + c.name + '</label>';
+        var isActive = c.id === selected;
+        var badge = isActive ? '<span style="font-size:10px;color:#fff;background:#1d1d1f;padding:2px 6px;border-radius:4px;margin-left:6px;">当前角色</span>' : '';
+        html += '<div class="diary-char-item' + (isActive ? ' active' : '') + '" onclick="selectDiaryChar(\'' + c.id + '\')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;margin-bottom:4px;background:rgba(255,255,255,0.06);border:1px solid ' + (isActive ? '#fff' : '#333') + ';border-radius:10px;cursor:pointer;font-size:14px;color:' + (isActive ? '#fff' : '#aaa') + ';">' + c.name + badge + '</div>';
     });
     list.innerHTML = html || '<div style="color:#555;font-size:13px;">暂无角色，请先在聊天软件中创建</div>';
 }
 
+function selectDiaryChar(id) {
+    localStorage.setItem('diary_selected_char', id);
+    renderDiaryCharList();
+}
+
 function saveDiaryChar() {
-    var radio = document.querySelector('input[name="diaryChar"]:checked');
-    if (radio) {
-        localStorage.setItem('diary_selected_char', radio.value);
+    var selected = getDiarySelectedChar();
+    if (selected) {
         showToast('角色已保存');
     } else {
         showToast('请选择一个角色');
     }
 }
+
+// ========== 自动日记开关 ==========
+function toggleDiaryAuto() {
+    const isChecked = document.getElementById('diaryAutoSwitch').checked;
+    localStorage.setItem('diary_auto_enabled', isChecked);
+    showToast(isChecked ? '自动日记已开启' : '自动日记已关闭');
+}
+
 
 // ========== 手动生成日记（接入AI） ==========
 function generateDiary() {
