@@ -1,0 +1,181 @@
+/**
+ * 拾忆林 - 角色聊天总结
+ * 复古牛皮纸风格书架
+ * 每创建一个角色自动生成一本书
+ */
+
+// ========== 数据存储 ==========
+function getShiyilinBooks() {
+    var raw = localStorage.getItem('shiyilin_books');
+    return raw ? JSON.parse(raw) : [];
+}
+
+function saveShiyilinBooks(books) {
+    localStorage.setItem('shiyilin_books', JSON.stringify(books));
+}
+
+// ========== 同步角色，自动创建/删除书籍 ==========
+function syncShiyilinBooks() {
+    var books = getShiyilinBooks();
+    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
+    var bookMap = {};
+    books.forEach(function(b) { bookMap[b.contactId] = b; });
+
+    var newBooks = [];
+    contacts.forEach(function(c) {
+        if (bookMap[c.id]) {
+            newBooks.push(bookMap[c.id]);
+        } else {
+            newBooks.push({
+                id: 'sl_book_' + c.id,
+                contactId: c.id,
+                contactName: c.name,
+                summary: '',
+                createdAt: Date.now()
+            });
+        }
+    });
+
+    var contactIds = {};
+    contacts.forEach(function(c) { contactIds[c.id] = true; });
+    newBooks = newBooks.filter(function(b) { return contactIds[b.contactId]; });
+
+    saveShiyilinBooks(newBooks);
+    return newBooks;
+}
+
+// ========== 打开拾忆林 ==========
+function openShiyilin() {
+    var appWindow = document.getElementById('shiyilinAppWindow');
+    if (!appWindow) {
+        appWindow = document.createElement('div');
+        appWindow.id = 'shiyilinAppWindow';
+        appWindow.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:#f5f0e8;z-index:200;display:none;flex-direction:column;';
+        document.getElementById('desktop').appendChild(appWindow);
+    }
+    renderShiyilin();
+    appWindow.style.display = 'flex';
+}
+
+function closeShiyilin() {
+    var appWindow = document.getElementById('shiyilinAppWindow');
+    if (appWindow) appWindow.style.display = 'none';
+}
+
+// ========== 渲染书架 ==========
+function renderShiyilin() {
+    var appWindow = document.getElementById('shiyilinAppWindow');
+    if (!appWindow) return;
+
+    var books = syncShiyilinBooks();
+
+    var rowsHTML = '';
+    if (books.length === 0) {
+        rowsHTML = '<div class="sl-empty">书架上还没有书<br>创建角色后会自动生成</div>';
+    } else {
+        for (var i = 0; i < books.length; i += 2) {
+            rowsHTML += '<div class="sl-row">';
+            for (var j = i; j < Math.min(i + 2, books.length); j++) {
+                rowsHTML += `
+                    <div class="sl-book" onclick="openShiyilinBook('${books[j].contactId}')">
+                        <div class="sl-book-cover">
+                            <div class="sl-cover-title">${books[j].contactName}</div>
+                            <div class="sl-cover-subtitle">拾忆林</div>
+                        </div>
+                        <div class="sl-book-spine">
+                            <div class="sl-spine-name">${books[j].contactName}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            if (books.length % 2 !== 0 && i === books.length - 1) {
+                rowsHTML += '<div class="sl-book" style="visibility:hidden;"></div>';
+            }
+            rowsHTML += '</div>';
+        }
+    }
+
+    appWindow.innerHTML = `
+        <div class="shiyilin-app">
+            <div class="sl-top-bar">
+                <div class="sl-back-btn" onclick="closeShiyilin()">‹</div>
+                <div class="sl-title">拾 忆 林</div>
+                <div style="width:36px;"></div>
+            </div>
+            <div class="sl-shelf">
+                ${rowsHTML}
+            </div>
+        </div>
+    `;
+}
+
+// ========== 打开一本书 ==========
+function openShiyilinBook(contactId) {
+    var books = getShiyilinBooks();
+    var book = null;
+    for (var i = 0; i < books.length; i++) {
+        if (books[i].contactId === contactId) { book = books[i]; break; }
+    }
+    if (!book) return;
+
+    var overlay = document.createElement('div');
+    overlay.className = 'sl-book-open';
+    overlay.id = 'slBookOpen';
+    overlay.innerHTML = `
+        <div class="sl-pages-panel" onclick="event.stopPropagation()">
+            <div class="sl-page-holes">
+                <div class="sl-page-hole"></div>
+                <div class="sl-page-hole"></div>
+                <div class="sl-page-hole"></div>
+                <div class="sl-page-hole"></div>
+                <div class="sl-page-hole"></div>
+                <div class="sl-page-hole"></div>
+            </div>
+            <div class="sl-pages-top">
+                <div class="sl-pages-close" onclick="closeShiyilinBook()">‹ 合上</div>
+                <div class="sl-pages-title">${book.contactName}</div>
+                <div style="width:40px;"></div>
+            </div>
+            <div class="sl-pages-body">
+                <div class="sl-page-decoration top-left">🌿</div>
+                <div class="sl-page-decoration bottom-right">🌱</div>
+                <div class="sl-summary-text" id="slSummaryText">${book.summary || '翻开空白的书页，等待记忆落笔。'}</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    overlay.onclick = function(e) {
+        if (e.target === overlay) closeShiyilinBook();
+    };
+}
+
+function closeShiyilinBook() {
+    var overlay = document.getElementById('slBookOpen');
+    if (overlay) overlay.remove();
+}      
+
+// ========== 保存总结内容 ==========
+function saveShiyilinSummary(contactId, summary) {
+    var books = getShiyilinBooks();
+    for (var i = 0; i < books.length; i++) {
+        if (books[i].contactId === contactId) {
+            books[i].summary = summary;
+            break;
+        }
+    }
+    saveShiyilinBooks(books);
+}
+
+// ========== 注册到桌面 Dock ==========
+window.addEventListener('DOMContentLoaded', function() {
+    var dockBar = document.getElementById('dockBar');
+    if (!dockBar) return;
+
+    var slItem = document.createElement('div');
+    slItem.className = 'dock-item';
+    slItem.innerHTML = '<div class="dock-icon"><div class="dock-icon-img">忆</div></div><div class="dock-label">拾忆林</div>';
+    slItem.onclick = function() { openShiyilin(); };
+    dockBar.appendChild(slItem);
+});
+
