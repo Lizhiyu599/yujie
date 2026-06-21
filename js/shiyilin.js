@@ -80,9 +80,17 @@ function renderShiyilin() {
                     <div class="sl-book" onclick="openShiyilinBook('${books[j].contactId}')">
                         <div class="sl-book-cover">
                             <div class="sl-cover-inner-border"></div>
+                            <div class="sl-cover-inner-border2"></div>
                             <div class="sl-cover-diamond"></div>
                             <div class="sl-cover-cross"></div>
-                            <div class="sl-cover-corners"></div>
+                            <div class="sl-cover-corners">
+                                <span class="sl-corner-tl">✦</span>
+                                <span class="sl-corner-tr">✦</span>
+                                <span class="sl-corner-bl">✦</span>
+                                <span class="sl-corner-br">✦</span>
+                            </div>
+                            <div class="sl-cover-top-ornament"></div>
+                            <div class="sl-cover-bottom-ornament"></div>
                             <div class="sl-cover-english">MEMORY FOREST</div>
                         </div>
                         <div class="sl-book-spine">
