@@ -1,3 +1,6 @@
+/* 引入 Google 手写体 */
+@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Dancing+Script:wght@500&display=swap');
+
 /* ===== 拾忆林容器 ===== */
 .shiyilin-app {
     width: 100%;
@@ -66,7 +69,7 @@
     transform: scale(0.96);
 }
 
-/* ===== 书封（黑色硬皮+奢华纹路） ===== */
+/* ===== 书封（黑色硬皮+重工花纹） ===== */
 .sl-book-cover {
     width: 100%;
     aspect-ratio: 4 / 5;
@@ -89,7 +92,7 @@
     left: 8px;
     right: 8px;
     bottom: 8px;
-    border: 2px solid rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(255, 215, 160, 0.12);
     border-radius: 2px 10px 10px 2px;
     pointer-events: none;
 }
@@ -101,7 +104,7 @@
     left: 14px;
     right: 14px;
     bottom: 14px;
-    border: 1px solid rgba(255, 215, 160, 0.1);
+    border: 1px solid rgba(255, 215, 160, 0.08);
     border-radius: 2px 8px 8px 2px;
     pointer-events: none;
 }
@@ -113,7 +116,7 @@
     left: 19px;
     right: 19px;
     bottom: 19px;
-    border: 0.5px solid rgba(255, 255, 255, 0.05);
+    border: 0.5px solid rgba(255, 215, 160, 0.06);
     border-radius: 2px 6px 6px 2px;
     pointer-events: none;
 }
@@ -125,7 +128,7 @@
     height: 55%;
     top: 22.5%;
     left: 22.5%;
-    border: 1px solid rgba(255, 215, 160, 0.12);
+    border: 1px solid rgba(255, 215, 160, 0.1);
     transform: rotate(45deg);
     pointer-events: none;
 }
@@ -171,12 +174,58 @@
 .sl-corner-tl, .sl-corner-tr, .sl-corner-bl, .sl-corner-br {
     position: absolute;
     font-size: 7px;
-    color: rgba(255, 215, 160, 0.2);
+    color: rgba(255, 215, 160, 0.15);
 }
 .sl-corner-tl { top: 0; left: 3px; }
 .sl-corner-tr { top: 0; right: 3px; }
 .sl-corner-bl { bottom: 0; left: 3px; }
 .sl-corner-br { bottom: 0; right: 3px; }
+
+/* 藤蔓角纹 */
+.sl-cover-corner-vine {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0.1;
+    font-size: 10px;
+    color: rgba(255, 215, 160, 0.5);
+}
+.sl-cover-corner-vine.tl { top: 16px; left: 18px; }
+.sl-cover-corner-vine.tr { top: 16px; right: 18px; }
+.sl-cover-corner-vine.bl { bottom: 16px; left: 18px; }
+.sl-cover-corner-vine.br { bottom: 16px; right: 18px; }
+
+/* 封面中心徽章 */
+.sl-cover-badge {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    border: 1px solid rgba(255, 215, 160, 0.15);
+    border-radius: 50%;
+    top: calc(50% - 16px);
+    left: calc(50% - 16px);
+    pointer-events: none;
+}
+.sl-cover-badge::after {
+    content: '✦';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 8px;
+    color: rgba(255, 215, 160, 0.2);
+}
+
+/* 封面底部藤蔓 */
+.sl-cover-bottom-vine {
+    position: absolute;
+    bottom: 52px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 9px;
+    letter-spacing: 5px;
+    color: rgba(255, 215, 160, 0.08);
+    pointer-events: none;
+}
 
 /* 顶部金色装饰线 */
 .sl-cover-top-ornament {
@@ -193,7 +242,7 @@
 /* 底部金色装饰线 */
 .sl-cover-bottom-ornament {
     position: absolute;
-    bottom: 62px;
+    bottom: 64px;
     left: 50%;
     transform: translateX(-50%);
     width: 45%;
@@ -202,45 +251,43 @@
     pointer-events: none;
 }
 
-/* 金色手写英文第一行 */
-.sl-cover-english {
-    font-size: 7px;
-    background: linear-gradient(180deg, #d4b87a 0%, #c9a550 50%, #b8943a 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    letter-spacing: 3px;
-    position: absolute;
-    bottom: 38px;
-    text-align: center;
-    font-style: italic;
-    line-height: 1.6;
-}
-
-/* 金色手写英文第二行 */
-.sl-cover-english-line2 {
-    font-size: 6px;
-    background: linear-gradient(180deg, #d4b87a 0%, #c9a550 50%, #b8943a 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    letter-spacing: 2px;
-    position: absolute;
-    bottom: 27px;
-    text-align: center;
-    font-style: italic;
-}
-
 /* 封面顶部小星星 */
 .sl-cover-top-star {
     position: absolute;
     top: 30px;
     font-size: 6px;
-    color: rgba(255, 215, 160, 0.15);
+    color: rgba(255, 215, 160, 0.12);
     letter-spacing: 8px;
 }
 
-/* 书脊标签（书名在书下面） */
+/* 封面英文手写体 */
+.sl-cover-english {
+    font-family: 'Great Vibes', 'Dancing Script', cursive;
+    font-size: 8px;
+    background: linear-gradient(180deg, #e8d5a3 0%, #d4b87a 30%, #c9a550 60%, #b8943a 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 2px;
+    position: absolute;
+    bottom: 40px;
+    text-align: center;
+    line-height: 1.8;
+}
+.sl-cover-english-line2 {
+    font-family: 'Great Vibes', 'Dancing Script', cursive;
+    font-size: 7px;
+    background: linear-gradient(180deg, #e8d5a3 0%, #d4b87a 30%, #c9a550 60%, #b8943a 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 1px;
+    position: absolute;
+    bottom: 28px;
+    text-align: center;
+}
+
+/* 书脊标签 */
 .sl-book-spine {
     margin-top: 8px;
     text-align: center;
@@ -267,7 +314,7 @@
     justify-content: center;
 }
 
-/* ===== 书本容器（缩短版） ===== */
+/* ===== 书本容器 ===== */
 .sl-book-viewer {
     width: 85%;
     max-width: 340px;
@@ -307,7 +354,7 @@
     left: 12px;
     right: 12px;
     bottom: 12px;
-    border: 2px solid rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(255, 215, 160, 0.15);
     border-radius: 2px 10px 10px 2px;
     pointer-events: none;
 }
@@ -325,7 +372,7 @@
     pointer-events: none;
 }
 
-/* 封面顶部金色星星 */
+/* 封面星星 */
 .sl-viewer-star {
     position: absolute;
     top: 24px;
@@ -345,39 +392,70 @@
     background: linear-gradient(90deg, transparent, rgba(255, 215, 160, 0.3), transparent);
 }
 
-/* 封面英文第一行 */
-.sl-viewer-english {
-    font-size: 11px;
-    background: linear-gradient(180deg, #d4b87a 0%, #c9a550 50%, #b8943a 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    letter-spacing: 5px;
+/* 封面藤蔓角 */
+.sl-viewer-vine {
     position: absolute;
-    bottom: 52px;
-    text-align: center;
-    font-style: italic;
-    line-height: 1.8;
+    pointer-events: none;
+    font-size: 14px;
+    color: rgba(255, 215, 160, 0.12);
+}
+.sl-viewer-vine.tl { top: 22px; left: 24px; }
+.sl-viewer-vine.tr { top: 22px; right: 24px; }
+.sl-viewer-vine.bl { bottom: 22px; left: 24px; }
+.sl-viewer-vine.br { bottom: 22px; right: 24px; }
+
+/* 封面徽章 */
+.sl-viewer-badge {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    border: 1.5px solid rgba(255, 215, 160, 0.2);
+    border-radius: 50%;
+    top: calc(50% - 22px);
+    left: calc(50% - 22px);
+    pointer-events: none;
+}
+.sl-viewer-badge::after {
+    content: '✦';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 10px;
+    color: rgba(255, 215, 160, 0.25);
 }
 
-/* 封面英文第二行 */
-.sl-viewer-english-line2 {
-    font-size: 9px;
-    background: linear-gradient(180deg, #d4b87a 0%, #c9a550 50%, #b8943a 100%);
+/* 封面英文手写体 */
+.sl-viewer-english {
+    font-family: 'Great Vibes', 'Dancing Script', cursive;
+    font-size: 14px;
+    background: linear-gradient(180deg, #e8d5a3 0%, #d4b87a 30%, #c9a550 60%, #b8943a 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     letter-spacing: 3px;
     position: absolute;
-    bottom: 36px;
+    bottom: 56px;
     text-align: center;
-    font-style: italic;
+    line-height: 2;
+}
+.sl-viewer-english-line2 {
+    font-family: 'Great Vibes', 'Dancing Script', cursive;
+    font-size: 11px;
+    background: linear-gradient(180deg, #e8d5a3 0%, #d4b87a 30%, #c9a550 60%, #b8943a 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 2px;
+    position: absolute;
+    bottom: 40px;
+    text-align: center;
 }
 
 /* 封面底部装饰线 */
 .sl-viewer-bottom-line {
     position: absolute;
-    bottom: 26px;
+    bottom: 28px;
     left: 50%;
     transform: translateX(-50%);
     width: 40%;
@@ -408,7 +486,7 @@
     z-index: 5;
 }
 
-/* 内页活页孔（左侧） */
+/* 内页活页孔 */
 .sl-page-holes {
     position: absolute;
     left: 12px;
