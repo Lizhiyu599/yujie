@@ -2188,10 +2188,32 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
-    color: #8e8e93;
     cursor: pointer;
     background: rgba(255,255,255,0.3);
+    position: relative;
+}
+/* 笑脸圆圈图标 */
+.emoji-manage-add::before {
+    content: '';
+    width: 24px;
+    height: 24px;
+    border: 2px solid #8e8e93;
+    border-radius: 50%;
+    display: block;
+}
+.emoji-manage-add::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 5px;
+    border-left: 2px solid #8e8e93;
+    border-bottom: 2px solid #8e8e93;
+    border-radius: 0 0 0 3px;
+    transform: rotate(-45deg);
+    top: 50%;
+    left: 50%;
+    margin-left: -5px;
+    margin-top: -4px;
 }
 .emoji-manage-note {
     font-size: 11px;
