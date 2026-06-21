@@ -198,14 +198,3 @@ function saveShiyilinSummary(contactId, summary) {
     saveShiyilinBooks(books);
 }
 
-// ========== 注册到桌面 Dock ==========
-window.addEventListener('DOMContentLoaded', function() {
-    var dockBar = document.getElementById('dockBar');
-    if (!dockBar) return;
-
-    var slItem = document.createElement('div');
-    slItem.className = 'dock-item';
-    slItem.innerHTML = '<div class="dock-icon"><div class="dock-icon-img">忆</div></div><div class="dock-label">拾忆林</div>';
-    slItem.onclick = function() { openShiyilin(); };
-    dockBar.appendChild(slItem);
-});
