@@ -1559,7 +1559,8 @@
 .moment-card {
     background: transparent;
     padding: 16px;
-    border-bottom: 0.5px solid rgba(0,0,0,0.05);
+    margin-bottom: 8px;
+    border-bottom: 0.5px solid rgba(0,0,0,0.08);
 }
 .moment-header {
     display: flex;
