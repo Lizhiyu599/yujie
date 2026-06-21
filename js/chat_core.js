@@ -442,6 +442,31 @@ if (transferMatch) {
     if (titleEl) titleEl.textContent = contactName;
     window.ChatState.isAITyping = false;
 
+window.ChatState.isAITyping = false;
+
+// ===== 自动日记检测 =====
+var diaryAuto = localStorage.getItem('diary_auto_enabled') === 'true';
+var diaryChar = localStorage.getItem('diary_selected_char');
+if (diaryAuto && diaryChar === contactId && typeof generateDiaryContent === 'function') {
+    var mental = window.ChatConfig && window.ChatConfig.mental;
+    var prevFav = parseInt(localStorage.getItem('diary_last_fav_' + contactId) || mental.favorability);
+    var favChange = Math.abs(mental.favorability - prevFav);
+    if (favChange >= 10) {
+        localStorage.setItem('diary_last_fav_' + contactId, mental.favorability);
+        generateDiaryContent(contactId).then(function(content) {
+            if (content) {
+                var now = new Date();
+                var dateStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日';
+                var diaries = getDiaries ? getDiaries() : [];
+                diaries.push({ date: dateStr, content: content });
+                if (typeof saveDiaries === 'function') saveDiaries(diaries);
+            }
+        }).catch(function() {});
+    }
+}
+
+saveChatHistory(contactId);
+    
     saveChatHistory(contactId);
 }        
 
