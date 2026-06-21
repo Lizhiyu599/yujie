@@ -91,7 +91,9 @@ function renderShiyilin() {
                             </div>
                             <div class="sl-cover-top-ornament"></div>
                             <div class="sl-cover-bottom-ornament"></div>
-                            <div class="sl-cover-english">MEMORY FOREST</div>
+                            <div class="sl-cover-top-star">✧ ✧ ✧</div>
+                            <div class="sl-cover-english">Good luck, in countless tomorrow</div>
+                            <div class="sl-cover-english-line2">keep your spirit free</div>
                         </div>
                         <div class="sl-book-spine">
                             <div class="sl-spine-name">${books[j].contactName}</div>
@@ -134,18 +136,18 @@ function openShiyilinBook(contactId) {
     overlay.id = 'slBookOpen';
     overlay.innerHTML = `
         <div class="sl-book-viewer" onclick="event.stopPropagation()">
-            <div class="sl-silver-rings">
-                <div class="sl-silver-ring"></div>
-                <div class="sl-silver-ring"></div>
-                <div class="sl-silver-ring"></div>
-                <div class="sl-silver-ring"></div>
-                <div class="sl-silver-ring"></div>
-                <div class="sl-silver-ring"></div>
-            </div>
             <div class="sl-viewer-cover" id="slViewerCover" onclick="openShiyilinPages('${contactId}')">
-                <div class="sl-viewer-english">MEMORY FOREST</div>
+                <div class="sl-viewer-star">✧ ✧ ✧</div>
+                <div class="sl-viewer-gold-line"></div>
+                <div class="sl-viewer-english">Good luck, in countless tomorrow</div>
+                <div class="sl-viewer-english-line2">keep your spirit free</div>
+                <div class="sl-viewer-bottom-line"></div>
                 <div class="sl-viewer-hint">轻触翻开</div>
             </div>
+        </div>
+        <div class="sl-pages-bottom" id="slPagesBottom">
+            <button class="sl-nav-btn" disabled>‹ 上一页</button>
+            <button class="sl-nav-btn" disabled>下一页 ›</button>
         </div>
     `;
     document.body.appendChild(overlay);
@@ -155,7 +157,7 @@ function openShiyilinBook(contactId) {
     };
 }
 
-// ========== 翻开封面，显示内页 ==========
+// ========== 翻开封面，显示内页（即时显示） ==========
 function openShiyilinPages(contactId) {
     var cover = document.getElementById('slViewerCover');
     if (!cover) return;
@@ -168,26 +170,28 @@ function openShiyilinPages(contactId) {
     }
     if (!book) return;
 
-    setTimeout(function() {
-        var viewer = document.querySelector('.sl-book-viewer');
-        if (!viewer) return;
+    var viewer = document.querySelector('.sl-book-viewer');
+    if (!viewer) return;
 
-        var pagesPanel = document.createElement('div');
-        pagesPanel.className = 'sl-pages-panel';
-        pagesPanel.id = 'slPagesPanel';
-        pagesPanel.innerHTML = `
-            <div class="sl-pages-body">
-                <div class="sl-page-decoration top-left">🌿</div>
-                <div class="sl-page-decoration bottom-right">🌱</div>
-                <div class="sl-summary-text" id="slSummaryText">${book.summary || '翻开空白的书页，等待记忆落笔。'}</div>
-            </div>
-            <div class="sl-pages-bottom">
-                <button class="sl-nav-btn" disabled>‹ 上一页</button>
-                <button class="sl-nav-btn" disabled>下一页 ›</button>
-            </div>
-        `;
-        viewer.appendChild(pagesPanel);
-    }, 500);
+    var pagesPanel = document.createElement('div');
+    pagesPanel.className = 'sl-pages-panel';
+    pagesPanel.id = 'slPagesPanel';
+    pagesPanel.innerHTML = `
+        <div class="sl-page-holes">
+            <div class="sl-page-hole"></div>
+            <div class="sl-page-hole"></div>
+            <div class="sl-page-hole"></div>
+            <div class="sl-page-hole"></div>
+            <div class="sl-page-hole"></div>
+            <div class="sl-page-hole"></div>
+        </div>
+        <div class="sl-pages-body">
+            <div class="sl-page-decoration top-left">🌿</div>
+            <div class="sl-page-decoration bottom-right">🌱</div>
+            <div class="sl-summary-text" id="slSummaryText">${book.summary || '翻开空白的书页，等待记忆落笔。'}</div>
+        </div>
+    `;
+    viewer.appendChild(pagesPanel);
 }
 
 function closeShiyilinBook() {
