@@ -79,7 +79,10 @@ function renderShiyilin() {
                 rowsHTML += `
                     <div class="sl-book" onclick="openShiyilinBook('${books[j].contactId}')">
                         <div class="sl-book-cover">
-                            <div class="sl-cover-dots">✦ ✦ ✦</div>
+                            <div class="sl-cover-inner-border"></div>
+                            <div class="sl-cover-diamond"></div>
+                            <div class="sl-cover-cross"></div>
+                            <div class="sl-cover-corners"></div>
                             <div class="sl-cover-english">MEMORY FOREST</div>
                         </div>
                         <div class="sl-book-spine">
@@ -123,6 +126,14 @@ function openShiyilinBook(contactId) {
     overlay.id = 'slBookOpen';
     overlay.innerHTML = `
         <div class="sl-book-viewer" onclick="event.stopPropagation()">
+            <div class="sl-silver-rings">
+                <div class="sl-silver-ring"></div>
+                <div class="sl-silver-ring"></div>
+                <div class="sl-silver-ring"></div>
+                <div class="sl-silver-ring"></div>
+                <div class="sl-silver-ring"></div>
+                <div class="sl-silver-ring"></div>
+            </div>
             <div class="sl-viewer-cover" id="slViewerCover" onclick="openShiyilinPages('${contactId}')">
                 <div class="sl-viewer-english">MEMORY FOREST</div>
                 <div class="sl-viewer-hint">轻触翻开</div>
