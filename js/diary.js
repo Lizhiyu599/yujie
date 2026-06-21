@@ -1,6 +1,6 @@
 /**
  * 玉界 - 日记软件
- * 包含：日记本 UI 渲染、翻页动画、日历跳转、日记设置、数据持久化
+ * 包含：日记本 UI 渲染、翻页动画、日历跳转、日记设置、数据持久化、角色选择
  */
 
 // ========== 日记数据存储 ==========
@@ -322,11 +322,6 @@ function jumpToDiary(index) {
     }
 }
 
-// ========== 手动生成日记（占位） ==========
-function generateDiary() {
-    showToast('角色日记生成功能即将上线');
-}
-
 // ========== 日记设置面板 ==========
 function openDiarySettings() {
     const fontSettings = getDiaryFontSettings();
@@ -344,6 +339,15 @@ function openDiarySettings() {
                 <input type="checkbox" class="ios-switch" id="diaryAutoSwitch" onchange="toggleDiaryAuto()">
             </div>
             <div class="diary-auto-hint">提示：开启后角色会自己写日记，一天最多写两篇日记。</div>
+
+            <div class="diary-font-header" onclick="toggleDiaryCharSection()">
+                <span>选择当前角色</span>
+                <span class="arrow" id="diaryCharArrow">></span>
+            </div>
+            <div class="diary-font-body" id="diaryCharBody">
+                <div id="diaryCharList"></div>
+                <button class="diary-btn-save-font" onclick="saveDiaryChar()">保存该角色</button>
+            </div>
 
             <div class="diary-font-header" onclick="toggleDiaryFontSection()">
                 <span>日记字体</span>
@@ -474,9 +478,79 @@ function saveDiaryFont() {
     showToast('日记字体已保存');
 }
 
-// ========== 自动日记开关（占位） ==========
+// ========== 自动日记开关 ==========
 function toggleDiaryAuto() {
     const isChecked = document.getElementById('diaryAutoSwitch').checked;
     localStorage.setItem('diary_auto_enabled', isChecked);
     showToast(isChecked ? '自动日记已开启' : '自动日记已关闭');
 }
+
+// ========== 角色选择 ==========
+function getDiarySelectedChar() {
+    return localStorage.getItem('diary_selected_char') || '';
+}
+
+function toggleDiaryCharSection() {
+    var body = document.getElementById('diaryCharBody');
+    var arrow = document.getElementById('diaryCharArrow');
+    if (body && arrow) {
+        var isOpen = body.classList.toggle('open');
+        arrow.classList.toggle('open', isOpen);
+        if (isOpen) renderDiaryCharList();
+    }
+}
+
+function renderDiaryCharList() {
+    var list = document.getElementById('diaryCharList');
+    if (!list) return;
+    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
+    var selected = getDiarySelectedChar();
+    var html = '';
+    contacts.forEach(function(c) {
+        var checked = c.id === selected ? 'checked' : '';
+        html += '<label style="display:block;padding:8px 0;font-size:14px;color:#aaa;cursor:pointer;"><input type="radio" name="diaryChar" value="' + c.id + '" ' + checked + ' style="margin-right:8px;">' + c.name + '</label>';
+    });
+    list.innerHTML = html || '<div style="color:#555;font-size:13px;">暂无角色，请先在聊天软件中创建</div>';
+}
+
+function saveDiaryChar() {
+    var radio = document.querySelector('input[name="diaryChar"]:checked');
+    if (radio) {
+        localStorage.setItem('diary_selected_char', radio.value);
+        showToast('角色已保存');
+    } else {
+        showToast('请选择一个角色');
+    }
+}
+
+// ========== 手动生成日记（接入AI） ==========
+function generateDiary() {
+    var contactId = getDiarySelectedChar();
+    if (!contactId) {
+        showToast('请先在日记设置中选择角色');
+        return;
+    }
+    showToast('正在生成日记…');
+
+    if (typeof generateDiaryContent === 'function') {
+        generateDiaryContent(contactId).then(function(content) {
+            if (!content) {
+                showToast('日记生成失败，请重试');
+                return;
+            }
+            var now = new Date();
+            var dateStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日';
+            var diaries = getDiaries();
+            diaries.push({ date: dateStr, content: content });
+            saveDiaries(diaries);
+            showToast('日记已生成');
+            renderDiaryPages();
+            updateBottomBar();
+        }).catch(function() {
+            showToast('日记生成失败，请重试');
+        });
+    } else {
+        showToast('生成功能暂未接入，请等待后续更新');
+    }
+}
+
