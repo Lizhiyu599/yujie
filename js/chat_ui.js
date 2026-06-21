@@ -2708,17 +2708,3 @@ function deleteContact() {
     margin-left: -4px;
     margin-top: -2px;
 }
-
-function handleGlobalBg(e) {
-    var file = e.target.files[0];
-    if (!file) return;
-    var reader = new FileReader();
-    reader.onload = function(ev) {
-        var bg = ev.target.result;
-        localStorage.setItem('global_chat_bg', bg);
-        document.getElementById('globalBgPreview').style.backgroundImage = 'url(' + bg + ')';
-        document.getElementById('globalBgPreview').innerText = '';
-        showToast('全局背景图已保存');
-    };
-    reader.readAsDataURL(file);
-}
