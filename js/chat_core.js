@@ -871,3 +871,36 @@ async function generateSummary(contactId) {
         return null;
     }
 }
+
+// ========== 生成角色日记 ==========
+async function generateDiaryContent(contactId) {
+    var contact = getContactById(contactId);
+    if (!contact) return null;
+    var contactName = contact.name || 'AI';
+
+    var systemPrompt = buildSystemPrompt(contactId);
+
+    var historyMessages = getRecentHistory(contactId, 50);
+    var chatContent = '';
+    historyMessages.forEach(function(m) {
+        var roleName = m.role === 'user' ? '用户' : contactName;
+        chatContent += roleName + '：' + m.content + '\n';
+    });
+
+    if (!chatContent.trim()) {
+        chatContent = '今天还没有对话记录。';
+    }
+
+    var diaryPrompt = '请以' + contactName + '的口吻，根据今天的聊天记录写一篇日记。使用第一人称"我"。内容包含今天发生的事、心情变化、对用户的感受。语气自然，像真人写的日记。150字以内。\n\n' + chatContent;
+
+    try {
+        var reply = await callChatAPI([
+            { role: 'system', content: systemPrompt + '\n\n你现在要写一篇日记。用自然的口吻写，不要加JSON状态信息，不要加旁白括号。150字以内。' },
+            { role: 'user', content: diaryPrompt }
+        ]);
+        var cleanReply = reply.replace(/\{[^}]*\}/g, '').trim();
+        return cleanReply || null;
+    } catch (e) {
+        return null;
+    }
+}
