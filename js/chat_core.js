@@ -333,17 +333,17 @@ if (redPacketMatch) {
 }
 
     // ===== 检测角色旁白发转账 → 角色侧卡片 =====
-    var transferMatch = cleanContent.match(/[\(\（]([^\)\）]*)(转账|给你转账|向您转账)[^\)\）]*(\d+\.?\d*)[^\)\）]*[\)\）]/);
-    if (transferMatch) {
-       var transferAmount = parseFloat(transferMatch[3]);
-        if (transferAmount >= 0.01) {
-            var noteMatch = cleanContent.match(/转账[^\)\）]*备注[：:]\s*([^\)\）]+)/);
-            var note = noteMatch ? noteMatch[1].trim() : '';
-            sendBotPaymentCard('转账', transferAmount, note);
-            cleanContent = cleanContent.replace(transferMatch[0], '');
-        }
+var transferMatch = cleanContent.match(/[\(\（]([^\)\）]*?)(\d+\.?\d*)\s*元?[^\)\）]*[\)\）]/);
+if (transferMatch) {
+    var transferAmount = parseFloat(transferMatch[2]);
+    if (transferAmount >= 0.01 && cleanContent.indexOf('转账') >= 0) {
+        var noteMatch = cleanContent.match(/转账[^\)\）]*备注[：:]\s*([^\)\）]+)/);
+        var note = noteMatch ? noteMatch[1].trim() : '';
+        sendBotPaymentCard('转账', transferAmount, note);
+        cleanContent = cleanContent.replace(transferMatch[0], '');
     }
-
+}
+    
     // ===== 检测角色旁白发语音 =====
     var voiceMatch = cleanContent.match(/[\(\（]([^\)\）]*)发了一条语音消息[：:]\s*([^\)\）]+)[\)\）]/);
     if (voiceMatch && voiceMatch[2]) {
