@@ -1956,7 +1956,7 @@ function closeLocationInput() { var overlay = document.getElementById('locationI
 function confirmLocationInput() {
     var input = document.getElementById('locationInputField');
     if (input) publishLocation = input.value.trim();
-    closeLocationInput() ；
+    closeLocationInput();
 }
 
 // ========== 我的页面 ==========
