@@ -2404,3 +2404,64 @@
     border-radius: 14px;
     margin: 12px 0;
 }   
+
+/* ===== 表情包管理-添加按钮（CSS笑脸圆圈） ===== */
+.emoji-manage-add {
+    aspect-ratio: 1;
+    border-radius: 12px;
+    border: 2px dashed rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: rgba(255,255,255,0.3);
+    position: relative;
+}
+.emoji-manage-add::before {
+    content: '';
+    width: 26px;
+    height: 26px;
+    border: 2px solid #8e8e93;
+    border-radius: 50%;
+    display: block;
+}
+.emoji-manage-add::after {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 6px;
+    border-left: 2px solid #8e8e93;
+    border-bottom: 2px solid #8e8e93;
+    border-radius: 0 0 0 3px;
+    transform: rotate(-45deg);
+    top: 50%;
+    left: 50%;
+    margin-left: -6px;
+    margin-top: -5px;
+}
+
+/* ===== 导航栏统一透明 + 底部标签栏统一透明 ===== */
+.chat-nav {
+    background: rgba(255,255,255,0.4) !important;
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-bottom: 0.5px solid rgba(0,0,0,0.05);
+}
+.tab-fixed-bottom {
+    background: rgba(255,255,255,0.25) !important;
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-top: 0.5px solid rgba(0,0,0,0.05);
+}
+
+/* ===== 聊天外壳背景覆盖全部子元素 ===== */
+.chat-shell {
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+}
+.chat-shell .chat-list,
+.chat-shell .chat-nav,
+.chat-shell .tab-fixed-bottom {
+    background-color: transparent !important;
+}
