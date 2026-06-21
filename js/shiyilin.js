@@ -2,6 +2,7 @@
  * 拾忆林 - 角色聊天总结
  * 复古牛皮纸风格书架
  * 每创建一个角色自动生成一本书
+ * 点击书 → 放大 → 封面 → 点击翻开 → 内页
  */
 
 // ========== 数据存储 ==========
@@ -109,7 +110,7 @@ function renderShiyilin() {
     `;
 }
 
-// ========== 打开一本书 ==========
+// ========== 打开一本书（全屏放大，默认显示封面） ==========
 function openShiyilinBook(contactId) {
     var books = getShiyilinBooks();
     var book = null;
@@ -122,7 +123,41 @@ function openShiyilinBook(contactId) {
     overlay.className = 'sl-book-open';
     overlay.id = 'slBookOpen';
     overlay.innerHTML = `
-        <div class="sl-pages-panel" onclick="event.stopPropagation()">
+        <div class="sl-book-viewer" onclick="event.stopPropagation()">
+            <div class="sl-viewer-cover" id="slViewerCover" onclick="openShiyilinPages('${contactId}')">
+                <div class="sl-viewer-cover-title">${book.contactName}</div>
+                <div class="sl-viewer-cover-subtitle">拾 忆 林</div>
+                <div class="sl-viewer-cover-hint">点击翻开</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    overlay.onclick = function(e) {
+        if (e.target === overlay) closeShiyilinBook();
+    };
+}
+
+// ========== 翻开封面，显示内页 ==========
+function openShiyilinPages(contactId) {
+    var cover = document.getElementById('slViewerCover');
+    if (!cover) return;
+    cover.classList.add('open');
+
+    var books = getShiyilinBooks();
+    var book = null;
+    for (var i = 0; i < books.length; i++) {
+        if (books[i].contactId === contactId) { book = books[i]; break; }
+    }
+    if (!book) return;
+
+    setTimeout(function() {
+        var viewer = document.querySelector('.sl-book-viewer');
+        if (!viewer) return;
+
+        var pagesPanel = document.createElement('div');
+        pagesPanel.className = 'sl-pages-panel';
+        pagesPanel.innerHTML = `
             <div class="sl-page-holes">
                 <div class="sl-page-hole"></div>
                 <div class="sl-page-hole"></div>
@@ -141,19 +176,15 @@ function openShiyilinBook(contactId) {
                 <div class="sl-page-decoration bottom-right">🌱</div>
                 <div class="sl-summary-text" id="slSummaryText">${book.summary || '翻开空白的书页，等待记忆落笔。'}</div>
             </div>
-        </div>
-    `;
-    document.body.appendChild(overlay);
-
-    overlay.onclick = function(e) {
-        if (e.target === overlay) closeShiyilinBook();
-    };
+        `;
+        viewer.appendChild(pagesPanel);
+    }, 500);
 }
 
 function closeShiyilinBook() {
     var overlay = document.getElementById('slBookOpen');
     if (overlay) overlay.remove();
-}      
+}
 
 // ========== 保存总结内容 ==========
 function saveShiyilinSummary(contactId, summary) {
@@ -178,4 +209,3 @@ window.addEventListener('DOMContentLoaded', function() {
     slItem.onclick = function() { openShiyilin(); };
     dockBar.appendChild(slItem);
 });
-
