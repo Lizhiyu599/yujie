@@ -70,7 +70,7 @@
 }
 
 /* ===================================================================== */
-/*                          书封 - 重工纯CSS                              */
+/*                   书封 - 纯黑白配色                                     */
 /* ===================================================================== */
 .sl-book-cover {
     width: 100%;
@@ -88,46 +88,42 @@
     justify-content: center;
 }
 
-/* ---- 第一层金框 ---- */
+/* ---- 三层银灰色边框 ---- */
 .sl-book-cover::before {
     content: '';
     position: absolute;
     top: 4px; left: 4px; right: 4px; bottom: 4px;
-    border: 2px solid rgba(200, 170, 100, 0.28);
+    border: 2px solid rgba(255, 255, 255, 0.12);
     border-radius: 2px 10px 10px 2px;
     pointer-events: none;
 }
-
-/* ---- 第二层金框 ---- */
 .sl-cover-border2 {
     position: absolute;
     top: 10px; left: 10px; right: 10px; bottom: 10px;
-    border: 1px solid rgba(200, 170, 100, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 2px 8px 8px 2px;
     pointer-events: none;
 }
-
-/* ---- 第三层金框 ---- */
 .sl-cover-border3 {
     position: absolute;
     top: 15px; left: 15px; right: 15px; bottom: 15px;
-    border: 0.5px solid rgba(200, 170, 100, 0.14);
+    border: 0.5px solid rgba(255, 255, 255, 0.05);
     border-radius: 2px 6px 6px 2px;
     pointer-events: none;
 }
 
-/* ---- 四角扇形花纹（菱形+圆点） ---- */
+/* ---- 四角菱形花纹 ---- */
 .sl-corner-ornament {
     position: absolute;
     pointer-events: none;
     width: 16px; height: 16px;
-    opacity: 0.4;
+    opacity: 0.3;
 }
 .sl-corner-ornament::before {
     content: '';
     position: absolute;
     width: 100%; height: 100%;
-    border: 1.5px solid #c8aa64;
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
     border-radius: 2px;
     top: 0; left: 0;
     transform: rotate(45deg);
@@ -136,7 +132,7 @@
     content: '';
     position: absolute;
     width: 5px; height: 5px;
-    background: #c8aa64;
+    background: rgba(255, 255, 255, 0.4);
     border-radius: 50%;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
@@ -146,12 +142,12 @@
 .sl-corner-ornament.bl { bottom: 6px; left: 8px; }
 .sl-corner-ornament.br { bottom: 6px; right: 8px; }
 
-/* ---- 四角第二层菱形 ---- */
+/* ---- 四角小菱形 ---- */
 .sl-corner-diamond {
     position: absolute;
     pointer-events: none;
     width: 6px; height: 6px;
-    background: rgba(200, 170, 100, 0.5);
+    background: rgba(255, 255, 255, 0.25);
     transform: rotate(45deg);
 }
 .sl-corner-diamond.tl { top: 11px; left: 13px; }
@@ -159,7 +155,7 @@
 .sl-corner-diamond.bl { bottom: 11px; left: 13px; }
 .sl-corner-diamond.br { bottom: 11px; right: 13px; }
 
-/* ---- 顶部金色横带（粗+细双线） ---- */
+/* ---- 顶部双线 ---- */
 .sl-cover-top-band {
     position: absolute;
     top: 24px; left: 50%;
@@ -173,10 +169,10 @@
     width: 100%; height: 2px;
     background: linear-gradient(90deg,
         transparent 0%,
-        rgba(200,170,100,0.15) 10%,
-        rgba(200,170,100,0.55) 30%,
-        rgba(200,170,100,0.55) 70%,
-        rgba(200,170,100,0.15) 90%,
+        rgba(255,255,255,0.06) 10%,
+        rgba(255,255,255,0.2) 30%,
+        rgba(255,255,255,0.2) 70%,
+        rgba(255,255,255,0.06) 90%,
         transparent 100%);
 }
 .sl-cover-top-band::after {
@@ -186,12 +182,12 @@
     margin: 2px auto 0;
     background: linear-gradient(90deg,
         transparent 0%,
-        rgba(200,170,100,0.4) 20%,
-        rgba(200,170,100,0.4) 80%,
+        rgba(255,255,255,0.12) 20%,
+        rgba(255,255,255,0.12) 80%,
         transparent 100%);
 }
 
-/* ---- 底部金色横带（粗+细双线） ---- */
+/* ---- 底部双线 ---- */
 .sl-cover-bottom-band {
     position: absolute;
     bottom: 50px; left: 50%;
@@ -205,10 +201,10 @@
     width: 100%; height: 2px;
     background: linear-gradient(90deg,
         transparent 0%,
-        rgba(200,170,100,0.15) 10%,
-        rgba(200,170,100,0.55) 30%,
-        rgba(200,170,100,0.55) 70%,
-        rgba(200,170,100,0.15) 90%,
+        rgba(255,255,255,0.06) 10%,
+        rgba(255,255,255,0.2) 30%,
+        rgba(255,255,255,0.2) 70%,
+        rgba(255,255,255,0.06) 90%,
         transparent 100%);
 }
 .sl-cover-bottom-band::after {
@@ -218,12 +214,12 @@
     margin: 2px auto 0;
     background: linear-gradient(90deg,
         transparent 0%,
-        rgba(200,170,100,0.4) 20%,
-        rgba(200,170,100,0.4) 80%,
+        rgba(255,255,255,0.12) 20%,
+        rgba(255,255,255,0.12) 80%,
         transparent 100%);
 }
 
-/* ---- 中间三个金色圆点 ---- */
+/* ---- 中间圆点 ---- */
 .sl-cover-mid-dots {
     position: absolute;
     top: 50%; left: 50%;
@@ -236,34 +232,32 @@
     content: '';
     position: absolute;
     width: 5px; height: 5px;
-    background: rgba(200,170,100,0.55);
+    background: rgba(255,255,255,0.25);
     border-radius: 50%;
     top: 0; left: 50%;
     transform: translateX(-50%);
     box-shadow:
-        -14px 0 0 rgba(200,170,100,0.45),
-        14px 0 0 rgba(200,170,100,0.45);
+        -14px 0 0 rgba(255,255,255,0.2),
+        14px 0 0 rgba(255,255,255,0.2);
 }
-
-/* ---- 圆点两侧竖线 ---- */
 .sl-cover-mid-dots::after {
     content: '';
     position: absolute;
     width: 1px; height: 18px;
     background: linear-gradient(180deg,
         transparent 0%,
-        rgba(200,170,100,0.15) 20%,
-        rgba(200,170,100,0.15) 80%,
+        rgba(255,255,255,0.08) 20%,
+        rgba(255,255,255,0.08) 80%,
         transparent 100%);
     top: -18px; left: 50%;
     transform: translateX(-50%);
 }
 
-/* ---- 封面英文标题 ---- */
+/* ---- 英文标题 ---- */
 .sl-cover-english {
     font-family: 'Great Vibes', 'Dancing Script', cursive;
     font-size: 10px;
-    background: linear-gradient(180deg, #f2e6c8 0%, #d4b87a 35%, #b8943a 100%);
+    background: linear-gradient(180deg, #f0f0f0 0%, #c0c0c0 40%, #909090 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -278,7 +272,7 @@
 .sl-cover-english-line2 {
     font-family: 'Great Vibes', 'Dancing Script', cursive;
     font-size: 8px;
-    background: linear-gradient(180deg, #f2e6c8 0%, #d4b87a 35%, #b8943a 100%);
+    background: linear-gradient(180deg, #f0f0f0 0%, #c0c0c0 40%, #909090 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -302,7 +296,7 @@
 }
 
 /* ===================================================================== */
-/*                        打开的书 - 全屏覆盖                              */
+/*                        打开的书 - 全屏                                   */
 /* ===================================================================== */
 .sl-book-open {
     position: fixed;
@@ -316,7 +310,6 @@
     justify-content: center;
 }
 
-/* 书本容器 - 和日记本一样大小 */
 .sl-book-viewer {
     width: 85%;
     max-width: 340px;
@@ -326,7 +319,7 @@
 }
 
 /* ===================================================================== */
-/*                           封面 - 重工纯CSS                              */
+/*                        封面 - 纯黑白                                     */
 /* ===================================================================== */
 .sl-viewer-cover {
     position: absolute;
@@ -348,38 +341,34 @@
     transform: rotateY(-150deg);
 }
 
-/* ---- 第一层金框 ---- */
 .sl-viewer-cover::before {
     content: '';
     position: absolute;
     top: 6px; left: 6px; right: 6px; bottom: 6px;
-    border: 2px solid rgba(200, 170, 100, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.14);
     border-radius: 2px 10px 10px 2px;
     pointer-events: none;
 }
-
-/* ---- 第二层金框 ---- */
 .sl-viewer-cover::after {
     content: '';
     position: absolute;
     top: 14px; left: 14px; right: 14px; bottom: 14px;
-    border: 1px solid rgba(200, 170, 100, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 2px 8px 8px 2px;
     pointer-events: none;
 }
 
-/* ---- 四角菱形花纹 ---- */
 .sl-viewer-corner {
     position: absolute;
     pointer-events: none;
     width: 20px; height: 20px;
-    opacity: 0.45;
+    opacity: 0.35;
 }
 .sl-viewer-corner::before {
     content: '';
     position: absolute;
     width: 100%; height: 100%;
-    border: 1.5px solid #c8aa64;
+    border: 1.5px solid rgba(255, 255, 255, 0.4);
     border-radius: 3px;
     top: 0; left: 0;
     transform: rotate(45deg);
@@ -388,7 +377,7 @@
     content: '';
     position: absolute;
     width: 6px; height: 6px;
-    background: #c8aa64;
+    background: rgba(255, 255, 255, 0.45);
     border-radius: 50%;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
@@ -398,7 +387,6 @@
 .sl-viewer-corner.bl { bottom: 8px; left: 10px; }
 .sl-viewer-corner.br { bottom: 8px; right: 10px; }
 
-/* ---- 顶部金色双线 ---- */
 .sl-viewer-top-band {
     position: absolute;
     top: 28px; left: 50%;
@@ -412,10 +400,10 @@
     width: 100%; height: 2px;
     background: linear-gradient(90deg,
         transparent 0%,
-        rgba(200,170,100,0.2) 10%,
-        rgba(200,170,100,0.6) 30%,
-        rgba(200,170,100,0.6) 70%,
-        rgba(200,170,100,0.2) 90%,
+        rgba(255,255,255,0.08) 10%,
+        rgba(255,255,255,0.25) 30%,
+        rgba(255,255,255,0.25) 70%,
+        rgba(255,255,255,0.08) 90%,
         transparent 100%);
 }
 .sl-viewer-top-band::after {
@@ -425,12 +413,11 @@
     margin: 3px auto 0;
     background: linear-gradient(90deg,
         transparent 0%,
-        rgba(200,170,100,0.45) 20%,
-        rgba(200,170,100,0.45) 80%,
+        rgba(255,255,255,0.15) 20%,
+        rgba(255,255,255,0.15) 80%,
         transparent 100%);
 }
 
-/* ---- 底部金色双线 ---- */
 .sl-viewer-bottom-band {
     position: absolute;
     bottom: 34px; left: 50%;
@@ -444,10 +431,10 @@
     width: 100%; height: 2px;
     background: linear-gradient(90deg,
         transparent 0%,
-        rgba(200,170,100,0.2) 10%,
-        rgba(200,170,100,0.6) 30%,
-        rgba(200,170,100,0.6) 70%,
-        rgba(200,170,100,0.2) 90%,
+        rgba(255,255,255,0.08) 10%,
+        rgba(255,255,255,0.25) 30%,
+        rgba(255,255,255,0.25) 70%,
+        rgba(255,255,255,0.08) 90%,
         transparent 100%);
 }
 .sl-viewer-bottom-band::after {
@@ -457,16 +444,15 @@
     margin: 3px auto 0;
     background: linear-gradient(90deg,
         transparent 0%,
-        rgba(200,170,100,0.45) 20%,
-        rgba(200,170,100,0.45) 80%,
+        rgba(255,255,255,0.15) 20%,
+        rgba(255,255,255,0.15) 80%,
         transparent 100%);
 }
 
-/* ---- 英文标题 ---- */
 .sl-viewer-english {
     font-family: 'Great Vibes', 'Dancing Script', cursive;
     font-size: 16px;
-    background: linear-gradient(180deg, #f2e6c8 0%, #d4b87a 35%, #b8943a 100%);
+    background: linear-gradient(180deg, #f0f0f0 0%, #c0c0c0 40%, #909090 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -481,7 +467,7 @@
 .sl-viewer-english-line2 {
     font-family: 'Great Vibes', 'Dancing Script', cursive;
     font-size: 12px;
-    background: linear-gradient(180deg, #f2e6c8 0%, #d4b87a 35%, #b8943a 100%);
+    background: linear-gradient(180deg, #f0f0f0 0%, #c0c0c0 40%, #909090 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -492,18 +478,15 @@
     width: 80%;
 }
 
-/* ---- 翻页提示 ---- */
 .sl-viewer-hint {
     position: absolute;
     bottom: 8px;
     font-size: 8px;
-    color: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.12);
     letter-spacing: 2px;
 }
 
-/* ===================================================================== */
-/*                          内页面板 - 牛皮纸+活页                           */
-/* ===================================================================== */
+/* ===== 内页 ===== */
 .sl-pages-panel {
     position: absolute;
     width: 100%; height: 100%;
@@ -518,7 +501,6 @@
     z-index: 5;
 }
 
-/* 活页孔 */
 .sl-page-holes {
     position: absolute;
     left: 12px; top: 50%;
@@ -537,7 +519,6 @@
     background: #fffef9;
 }
 
-/* 内容区 */
 .sl-pages-body {
     flex: 1;
     overflow-y: auto;
@@ -546,8 +527,6 @@
     -webkit-overflow-scrolling: touch;
     position: relative;
 }
-
-/* 横线 */
 .sl-pages-body::before {
     content: '';
     position: absolute;
@@ -564,7 +543,6 @@
     padding-top: 20px;
 }
 
-/* 植物装饰 - 纯CSS */
 .sl-page-decoration {
     position: absolute;
     pointer-events: none;
@@ -592,7 +570,6 @@
     box-shadow: inset 0 0 15px rgba(74,55,40,0.04);
 }
 
-/* 总结文字 */
 .sl-summary-text {
     position: relative;
     z-index: 1;
@@ -604,9 +581,7 @@
     white-space: pre-wrap;
 }
 
-/* ===================================================================== */
-/*                        底部翻页按钮（书外面下方）                        */
-/* ===================================================================== */
+/* ===== 翻页按钮 ===== */
 .sl-pages-bottom {
     display: flex;
     justify-content: space-around;
@@ -635,7 +610,6 @@
     pointer-events: none;
 }
 
-/* 空状态 */
 .sl-empty {
     text-align: center;
     color: #b0a08a;
