@@ -66,7 +66,7 @@
     transform: scale(0.96);
 }
 
-/* ===== 书封（黑色硬皮+花纹） ===== */
+/* ===== 书封（黑色硬皮+丰富花纹） ===== */
 .sl-book-cover {
     width: 100%;
     aspect-ratio: 3 / 4;
@@ -81,7 +81,7 @@
     justify-content: center;
 }
 
-/* 封面花纹（装饰线框） */
+/* 外层装饰线框 */
 .sl-book-cover::before {
     content: '';
     position: absolute;
@@ -89,45 +89,100 @@
     left: 10px;
     right: 10px;
     bottom: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(255, 255, 255, 0.06);
     border-radius: 2px 8px 8px 2px;
     pointer-events: none;
 }
 
-/* 封面中心菱形花纹 */
-.sl-book-cover::after {
-    content: '';
+/* 内层装饰线框 */
+.sl-cover-inner-border {
     position: absolute;
-    width: 50%;
-    height: 50%;
-    top: 25%;
-    left: 25%;
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
     border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 2px 6px 6px 2px;
+    pointer-events: none;
+}
+
+/* 中心菱形纹 */
+.sl-cover-diamond {
+    position: absolute;
+    width: 45%;
+    height: 45%;
+    top: 27.5%;
+    left: 27.5%;
+    border: 1.5px solid rgba(255, 255, 255, 0.05);
     transform: rotate(45deg);
     pointer-events: none;
+}
+
+/* 菱形内十字花纹 */
+.sl-cover-cross {
+    position: absolute;
+    width: 60%;
+    height: 60%;
+    top: 20%;
+    left: 20%;
+    pointer-events: none;
+}
+.sl-cover-cross::before,
+.sl-cover-cross::after {
+    content: '';
+    position: absolute;
+    background: rgba(255, 255, 255, 0.03);
+}
+.sl-cover-cross::before {
+    width: 100%;
+    height: 1px;
+    top: 50%;
+    left: 0;
+}
+.sl-cover-cross::after {
+    width: 1px;
+    height: 100%;
+    top: 0;
+    left: 50%;
+}
+
+/* 四角装饰点 */
+.sl-cover-corners {
+    position: absolute;
+    top: 12px;
+    left: 14px;
+    right: 14px;
+    bottom: 12px;
+    pointer-events: none;
+}
+.sl-cover-corners::before {
+    content: '✦';
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-size: 6px;
+    color: rgba(255,255,255,0.08);
+}
+.sl-cover-corners::after {
+    content: '✦';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    font-size: 6px;
+    color: rgba(255,255,255,0.08);
 }
 
 /* 封面英文 */
 .sl-cover-english {
     font-size: 8px;
-    color: rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.12);
     letter-spacing: 3px;
     text-transform: uppercase;
     position: absolute;
-    bottom: 30px;
+    bottom: 28px;
 }
 
-/* 封面小装饰点 */
-.sl-cover-dots {
-    position: absolute;
-    top: 8px;
-    right: 12px;
-    font-size: 6px;
-    color: rgba(255,255,255,0.06);
-    letter-spacing: 2px;
-}
-
-/* ===== 书脊标签（书名在书下面） ===== */
+/* 书脊标签（书名在书下面） */
 .sl-book-spine {
     margin-top: 8px;
     text-align: center;
@@ -153,7 +208,7 @@
     justify-content: center;
 }
 
-/* ===== 放大后的书本容器（和日记本一样大小） ===== */
+/* ===== 放大后的书本容器 ===== */
 .sl-book-viewer {
     width: 88%;
     max-width: 380px;
@@ -162,7 +217,30 @@
     position: relative;
 }
 
-/* ===== 封面（正面朝上，可翻开） ===== */
+/* ===== 银环扣（活页金属环） ===== */
+.sl-silver-rings {
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 20;
+    pointer-events: none;
+}
+.sl-silver-ring {
+    width: 10px;
+    height: 24px;
+    border: 2px solid #a8a8a8;
+    border-radius: 6px;
+    background: linear-gradient(180deg, #d4d4d4 0%, #a8a8a8 30%, #c0c0c0 50%, #a8a8a8 70%, #d4d4d4 100%);
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* ===== 封面 ===== */
 .sl-viewer-cover {
     position: absolute;
     width: 100%;
@@ -185,37 +263,37 @@
     box-shadow: -12px 8px 30px rgba(0,0,0,0.6);
 }
 
-/* 封面装饰线框 */
+/* 封面外框 */
 .sl-viewer-cover::before {
     content: '';
     position: absolute;
-    top: 16px;
-    left: 16px;
-    right: 16px;
-    bottom: 16px;
-    border: 1px solid rgba(255,255,255,0.1);
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
+    border: 2px solid rgba(255,255,255,0.08);
     border-radius: 2px 10px 10px 2px;
     pointer-events: none;
 }
 
-/* 封面菱形花纹 */
+/* 封面内框 */
 .sl-viewer-cover::after {
     content: '';
     position: absolute;
-    width: 40%;
-    height: 40%;
-    top: 30%;
-    left: 30%;
-    border: 1px solid rgba(255,255,255,0.05);
-    transform: rotate(45deg);
+    top: 22px;
+    left: 22px;
+    right: 22px;
+    bottom: 22px;
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 2px 8px 8px 2px;
     pointer-events: none;
 }
 
 /* 封面英文 */
 .sl-viewer-english {
-    font-size: 10px;
-    color: rgba(255,255,255,0.2);
-    letter-spacing: 4px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.18);
+    letter-spacing: 5px;
     text-transform: uppercase;
     position: absolute;
     bottom: 40px;
@@ -226,11 +304,11 @@
     position: absolute;
     bottom: 20px;
     font-size: 10px;
-    color: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.1);
     letter-spacing: 2px;
 }
 
-/* ===== 内页面板（牛皮纸底纹+银环扣） ===== */
+/* ===== 内页面板 ===== */
 .sl-pages-panel {
     position: absolute;
     width: 100%;
