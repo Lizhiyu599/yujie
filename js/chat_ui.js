@@ -1077,7 +1077,8 @@ function createNewCharacter() {
     window.ChatConfig.contacts.push(newContact);
     saveContactsToStorage();
     showToast('角色 ' + (note || name) + ' 创建成功');
-    renderChatShell();
+    closeChat();
+    setTimeout(function() { openChat(); }, 100);
 }
 
 function saveContactsToStorage() {
