@@ -89,9 +89,15 @@ function renderShiyilin() {
                                 <span class="sl-corner-bl">✦</span>
                                 <span class="sl-corner-br">✦</span>
                             </div>
+                            <div class="sl-cover-corner-vine tl">🌿</div>
+                            <div class="sl-cover-corner-vine tr">🌿</div>
+                            <div class="sl-cover-corner-vine bl">🌿</div>
+                            <div class="sl-cover-corner-vine br">🌿</div>
+                            <div class="sl-cover-badge"></div>
                             <div class="sl-cover-top-ornament"></div>
                             <div class="sl-cover-bottom-ornament"></div>
                             <div class="sl-cover-top-star">✧ ✧ ✧</div>
+                            <div class="sl-cover-bottom-vine">❦   ❦   ❦</div>
                             <div class="sl-cover-english">Good luck, in countless tomorrow</div>
                             <div class="sl-cover-english-line2">keep your spirit free</div>
                         </div>
@@ -136,7 +142,12 @@ function openShiyilinBook(contactId) {
     overlay.id = 'slBookOpen';
     overlay.innerHTML = `
         <div class="sl-book-viewer" onclick="event.stopPropagation()">
-            <div class="sl-viewer-cover" id="slViewerCover" onclick="openShiyilinPages('${contactId}')">
+            <div class="sl-viewer-cover" id="slViewerCover">
+                <div class="sl-viewer-vine tl">🌿</div>
+                <div class="sl-viewer-vine tr">🌿</div>
+                <div class="sl-viewer-vine bl">🌿</div>
+                <div class="sl-viewer-vine br">🌿</div>
+                <div class="sl-viewer-badge"></div>
                 <div class="sl-viewer-star">✧ ✧ ✧</div>
                 <div class="sl-viewer-gold-line"></div>
                 <div class="sl-viewer-english">Good luck, in countless tomorrow</div>
@@ -146,11 +157,15 @@ function openShiyilinBook(contactId) {
             </div>
         </div>
         <div class="sl-pages-bottom" id="slPagesBottom">
-            <button class="sl-nav-btn" disabled>‹ 上一页</button>
-            <button class="sl-nav-btn" disabled>下一页 ›</button>
+            <button class="sl-nav-btn" id="slPrevBtn" onclick="event.stopPropagation(); openShiyilinPages('${contactId}')">‹ 上一页</button>
+            <button class="sl-nav-btn" id="slNextBtn" onclick="event.stopPropagation(); openShiyilinPages('${contactId}')">下一页 ›</button>
         </div>
     `;
     document.body.appendChild(overlay);
+
+    document.getElementById('slViewerCover').addEventListener('click', function() {
+        openShiyilinPages(contactId);
+    });
 
     overlay.onclick = function(e) {
         if (e.target === overlay) closeShiyilinBook();
@@ -160,8 +175,9 @@ function openShiyilinBook(contactId) {
 // ========== 翻开封面，显示内页（即时显示） ==========
 function openShiyilinPages(contactId) {
     var cover = document.getElementById('slViewerCover');
-    if (!cover) return;
-    cover.classList.add('open');
+    if (cover && !cover.classList.contains('open')) {
+        cover.classList.add('open');
+    }
 
     var books = getShiyilinBooks();
     var book = null;
@@ -172,6 +188,9 @@ function openShiyilinPages(contactId) {
 
     var viewer = document.querySelector('.sl-book-viewer');
     if (!viewer) return;
+
+    var existingPanel = document.getElementById('slPagesPanel');
+    if (existingPanel) existingPanel.remove();
 
     var pagesPanel = document.createElement('div');
     pagesPanel.className = 'sl-pages-panel';
