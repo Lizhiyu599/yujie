@@ -1538,10 +1538,10 @@ function showMomentsPage() {
                         <div class="moments-cover-avatar" id="momentsCoverAvatar"></div>
                     </div>
                     <div class="moments-publish-btn" onclick="event.stopPropagation(); openPublishModal()">
-                        <span class="publish-icon-body"></span>
-                        <span class="publish-icon-lens"></span>
-                    </div>
-                </div>
+                    <span class="publish-icon-body"></span>
+                    <span class="publish-icon-lens"></span>
+                 </div>
+             </div>
                 <div class="moments-feed" id="momentsFeed"></div>
                 <div class="moments-bottom-hint" id="momentsBottomHint"></div>
             </div>
