@@ -2,6 +2,7 @@
  * 拾忆林 - 角色聊天总结
  * 复古牛皮纸风格书架，仿真翻页
  * 每创建一个角色自动生成一本书
+ * 纯CSS渲染封面，零字符符号
  */
 
 // ========== 数据存储 ==========
@@ -122,7 +123,7 @@ function renderShiyilin() {
     `;
 }
 
-// ========== 打开一本书 ==========
+// ========== 打开一本书（全屏放大，默认显示封面） ==========
 function openShiyilinBook(contactId) {
     var books = getShiyilinBooks();
     var book = null;
@@ -164,7 +165,7 @@ function openShiyilinBook(contactId) {
     };
 }
 
-// ========== 翻开封面，显示内页 ==========
+// ========== 翻开封面，显示内页（即时显示） ==========
 function openShiyilinPages(contactId) {
     var cover = document.getElementById('slViewerCover');
     if (cover && !cover.classList.contains('open')) {
