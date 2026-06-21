@@ -1,8 +1,7 @@
 /**
  * 拾忆林 - 角色聊天总结
- * 复古牛皮纸风格书架
+ * 复古牛皮纸风格书架，仿真翻页
  * 每创建一个角色自动生成一本书
- * 点击书 → 放大 → 封面 → 点击翻开 → 内页
  */
 
 // ========== 数据存储 ==========
@@ -80,8 +79,8 @@ function renderShiyilin() {
                 rowsHTML += `
                     <div class="sl-book" onclick="openShiyilinBook('${books[j].contactId}')">
                         <div class="sl-book-cover">
-                            <div class="sl-cover-title">${books[j].contactName}</div>
-                            <div class="sl-cover-subtitle">拾忆林</div>
+                            <div class="sl-cover-dots">✦ ✦ ✦</div>
+                            <div class="sl-cover-english">MEMORY FOREST</div>
                         </div>
                         <div class="sl-book-spine">
                             <div class="sl-spine-name">${books[j].contactName}</div>
@@ -125,9 +124,8 @@ function openShiyilinBook(contactId) {
     overlay.innerHTML = `
         <div class="sl-book-viewer" onclick="event.stopPropagation()">
             <div class="sl-viewer-cover" id="slViewerCover" onclick="openShiyilinPages('${contactId}')">
-                <div class="sl-viewer-cover-title">${book.contactName}</div>
-                <div class="sl-viewer-cover-subtitle">拾 忆 林</div>
-                <div class="sl-viewer-cover-hint">点击翻开</div>
+                <div class="sl-viewer-english">MEMORY FOREST</div>
+                <div class="sl-viewer-hint">轻触翻开</div>
             </div>
         </div>
     `;
@@ -157,24 +155,16 @@ function openShiyilinPages(contactId) {
 
         var pagesPanel = document.createElement('div');
         pagesPanel.className = 'sl-pages-panel';
+        pagesPanel.id = 'slPagesPanel';
         pagesPanel.innerHTML = `
-            <div class="sl-page-holes">
-                <div class="sl-page-hole"></div>
-                <div class="sl-page-hole"></div>
-                <div class="sl-page-hole"></div>
-                <div class="sl-page-hole"></div>
-                <div class="sl-page-hole"></div>
-                <div class="sl-page-hole"></div>
-            </div>
-            <div class="sl-pages-top">
-                <div class="sl-pages-close" onclick="closeShiyilinBook()">‹ 合上</div>
-                <div class="sl-pages-title">${book.contactName}</div>
-                <div style="width:40px;"></div>
-            </div>
             <div class="sl-pages-body">
                 <div class="sl-page-decoration top-left">🌿</div>
                 <div class="sl-page-decoration bottom-right">🌱</div>
                 <div class="sl-summary-text" id="slSummaryText">${book.summary || '翻开空白的书页，等待记忆落笔。'}</div>
+            </div>
+            <div class="sl-pages-bottom">
+                <button class="sl-nav-btn" disabled>‹ 上一页</button>
+                <button class="sl-nav-btn" disabled>下一页 ›</button>
             </div>
         `;
         viewer.appendChild(pagesPanel);
@@ -197,4 +187,3 @@ function saveShiyilinSummary(contactId, summary) {
     }
     saveShiyilinBooks(books);
 }
-
