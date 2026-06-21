@@ -263,10 +263,10 @@ function switchChatTab(tab, el) {
             if (titleEl) titleEl.textContent = '动态';
             showMomentsPage();
             break;
-        case 'me':
+            case 'me':
             if (plusBtn) plusBtn.style.display = 'none';
             if (titleEl) titleEl.textContent = '我的';
-            listView.innerHTML = '<div style="padding:40px;text-align:center;color:#8e8e93;">个人中心即将上线</div>';
+            renderMePage(listView);
             break;
     }
 }
@@ -2387,3 +2387,563 @@ function blockContact() {
 function deleteContact() {
     showToast('删除功能即将上线');
 }       
+
+// ========== 我的页面 ==========
+function renderMePage(listView) {
+    if (!listView) return;
+    var masks = getMasks();
+    var activeMaskId = localStorage.getItem('active_mask_id') || '';
+    var activeMask = null;
+    for (var i = 0; i < masks.length; i++) {
+        if (masks[i].id === activeMaskId) { activeMask = masks[i]; break; }
+    }
+    if (!activeMask && masks.length > 0) { activeMask = masks[0]; }
+    var avatarContent = activeMask && activeMask.avatar ? '<div class="me-avatar" style="background-image:url(' + activeMask.avatar + ');"></div>' : '<div class="me-avatar" id="meAvatarPlaceholder">+</div>';
+    var displayName = activeMask ? activeMask.name : '用户';
+
+    listView.innerHTML = `
+        <div class="me-card" onclick="openMaskEditor()">
+            ${avatarContent}
+            <div class="me-info">
+                <span class="me-name">${displayName}</span>
+            </div>
+            <span class="me-arrow">></span>
+        </div>
+        <div class="me-list">
+            <div class="me-list-item" onclick="openWalletPage()">
+                <span class="me-list-icon">$</span> 服务
+                <span class="me-list-arrow">></span>
+            </div>
+            <div class="me-list-item" onclick="openFavoritesPage()">
+                <span class="me-list-icon">★</span> 收藏
+                <span class="me-list-arrow">></span>
+            </div>
+            <div class="me-list-item" onclick="openEmojiManagePage()">
+                <span class="me-list-icon">😊</span> 表情包
+                <span class="me-list-arrow">></span>
+            </div>
+            <div class="me-list-item" onclick="openSettingsPage()">
+                <span class="me-list-icon">⚙</span> 设置
+                <span class="me-list-arrow">></span>
+            </div>
+        </div>
+    `;
+}
+
+// ========== 面具数据 ==========
+function getMasks() {
+    var raw = localStorage.getItem('user_masks');
+    return raw ? JSON.parse(raw) : [];
+}
+function saveMasks(masks) {
+    localStorage.setItem('user_masks', JSON.stringify(masks));
+}
+
+// ========== 面具编辑半窗 ==========
+function openMaskEditor() {
+    var masks = getMasks();
+    var activeMaskId = localStorage.getItem('active_mask_id') || '';
+
+    var maskListHTML = '';
+    for (var i = 0; i < masks.length; i++) {
+        var m = masks[i];
+        var isActive = m.id === activeMaskId;
+        var avatarHTML = m.avatar ? '<div class="mask-item-avatar" style="background-image:url(' + m.avatar + ');"></div>' : '<div class="mask-item-avatar">' + (m.name ? m.name.charAt(0) : '?') + '</div>';
+        maskListHTML += `
+            <div class="mask-item ${isActive ? 'active' : ''}" onclick="selectMask('${m.id}')">
+                ${avatarHTML}
+                <div class="mask-item-name">${m.name || '未命名'}</div>
+            </div>
+        `;
+    }
+
+    var overlay = document.createElement('div');
+    overlay.className = 'mask-edit-overlay';
+    overlay.id = 'maskEditOverlay';
+    overlay.innerHTML = `
+        <div class="mask-edit-panel" onclick="event.stopPropagation()">
+            <div class="mask-edit-handle"></div>
+            <div class="mask-edit-title">个人资料</div>
+            <div class="mask-list" id="maskList">
+                ${maskListHTML}
+                <div class="mask-add-btn" onclick="addNewMask()">+</div>
+            </div>
+            <div id="maskDetailEditor"></div>
+            <button class="black-btn" onclick="closeMaskEditor()">完成</button>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    overlay.onclick = function(e) { if (e.target === overlay) closeMaskEditor(); };
+
+    if (activeMaskId) {
+        showMaskDetail(activeMaskId);
+    } else if (masks.length > 0) {
+        showMaskDetail(masks[0].id);
+    }
+}
+
+function closeMaskEditor() {
+    var overlay = document.getElementById('maskEditOverlay');
+    if (overlay) overlay.remove();
+    var listView = document.getElementById('chatListView');
+    if (listView) renderMePage(listView);
+}
+
+function selectMask(id) {
+    localStorage.setItem('active_mask_id', id);
+    var overlay = document.getElementById('maskEditOverlay');
+    if (overlay) {
+        overlay.querySelectorAll('.mask-item').forEach(function(el) { el.classList.remove('active'); });
+        var items = overlay.querySelectorAll('.mask-item');
+        var masks = getMasks();
+        for (var i = 0; i < items.length; i++) {
+            if (masks[i] && masks[i].id === id) { items[i].classList.add('active'); break; }
+        }
+    }
+    showMaskDetail(id);
+    showToast('已切换面具');
+}
+
+function addNewMask() {
+    var masks = getMasks();
+    var newMask = {
+        id: 'mask_' + Date.now(),
+        name: '面具' + (masks.length + 1),
+        avatar: '',
+        persona: ''
+    };
+    masks.push(newMask);
+    saveMasks(masks);
+    localStorage.setItem('active_mask_id', newMask.id);
+    closeMaskEditor();
+    openMaskEditor();
+}
+
+function showMaskDetail(maskId) {
+    var masks = getMasks();
+    var mask = null;
+    for (var i = 0; i < masks.length; i++) {
+        if (masks[i].id === maskId) { mask = masks[i]; break; }
+    }
+    if (!mask) return;
+
+    var editor = document.getElementById('maskDetailEditor');
+    if (!editor) return;
+
+    editor.innerHTML = `
+        <div style="text-align:center;margin-bottom:16px;">
+            <div id="maskDetailAvatar" style="width:70px;height:70px;border-radius:50%;background:#e5e5ea;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:28px;color:#8e8e93;cursor:pointer;background-size:cover;background-position:center;${mask.avatar ? 'background-image:url(' + mask.avatar + ');' : ''}" onclick="document.getElementById('maskAvatarInput').click()">${mask.avatar ? '' : (mask.name ? mask.name.charAt(0) : '?')}</div>
+            <input type="file" id="maskAvatarInput" accept="image/*" style="display:none;" onchange="updateMaskAvatar('${maskId}', event)">
+        </div>
+        <label class="ios-label">面具名称</label>
+        <input type="text" class="ios-input" id="maskNameInput" value="${mask.name}" placeholder="面具名称">
+        <label class="ios-label">人设描述</label>
+        <textarea class="ios-input" id="maskPersonaInput" style="height:100px;resize:none;" placeholder="描述你的身份、性格、与角色的关系等...">${mask.persona || ''}</textarea>
+        <button class="ios-btn-black" onclick="saveMaskDetail('${maskId}')">保存面具</button>
+        ${masks.length > 1 ? '<button class="ios-btn-white" style="border-color:#ff3b30;color:#ff3b30;" onclick="deleteMask(\'' + maskId + '\')">删除面具</button>' : ''}
+    `;
+}
+
+function updateMaskAvatar(maskId, e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+        var masks = getMasks();
+        for (var i = 0; i < masks.length; i++) {
+            if (masks[i].id === maskId) { masks[i].avatar = ev.target.result; break; }
+        }
+        saveMasks(masks);
+        var avatarEl = document.getElementById('maskDetailAvatar');
+        if (avatarEl) { avatarEl.style.backgroundImage = 'url(' + ev.target.result + ')'; avatarEl.innerText = ''; }
+    };
+    reader.readAsDataURL(file);
+}
+
+function saveMaskDetail(maskId) {
+    var name = document.getElementById('maskNameInput').value.trim();
+    var persona = document.getElementById('maskPersonaInput').value.trim();
+    if (!name) { showToast('请输入面具名称'); return; }
+    var masks = getMasks();
+    for (var i = 0; i < masks.length; i++) {
+        if (masks[i].id === maskId) { masks[i].name = name; masks[i].persona = persona; break; }
+    }
+    saveMasks(masks);
+    showToast('面具已保存');
+    closeMaskEditor();
+    openMaskEditor();
+}
+
+function deleteMask(maskId) {
+    var masks = getMasks();
+    masks = masks.filter(function(m) { return m.id !== maskId; });
+    saveMasks(masks);
+    if (localStorage.getItem('active_mask_id') === maskId) {
+        localStorage.setItem('active_mask_id', masks.length > 0 ? masks[0].id : '');
+    }
+    showToast('面具已删除');
+    closeMaskEditor();
+    openMaskEditor();
+}
+
+// ========== 钱包页面 ==========
+function getWalletBalance() {
+    var raw = localStorage.getItem('wallet_balance');
+    return raw ? parseFloat(raw) : 5200.00;
+}
+function setWalletBalance(amount) {
+    localStorage.setItem('wallet_balance', amount.toFixed(2));
+}
+function getWalletRecords() {
+    var raw = localStorage.getItem('wallet_records');
+    return raw ? JSON.parse(raw) : [];
+}
+function addWalletRecord(type, amount, note) {
+    var records = getWalletRecords();
+    records.unshift({ type: type, amount: amount, note: note, time: Date.now() });
+    if (records.length > 100) records = records.slice(0, 100);
+    localStorage.setItem('wallet_records', JSON.stringify(records));
+}
+
+function openWalletPage() {
+    var listView = document.getElementById('chatListView');
+    if (!listView) return;
+    var titleEl = document.querySelector('.nav-title');
+    var backBtn = document.querySelector('.nav-back');
+    var plusBtn = document.querySelector('.nav-plus-btn');
+    if (titleEl) titleEl.textContent = '服务';
+    if (plusBtn) plusBtn.style.display = 'none';
+    if (backBtn) backBtn.onclick = function() { switchChatTab('me', document.querySelector('.tab-item:nth-child(4)')); };
+
+    var balance = getWalletBalance();
+    var records = getWalletRecords();
+
+    var recordsHTML = '';
+    if (records.length === 0) {
+        recordsHTML = '<div class="wallet-empty">暂无记录</div>';
+    } else {
+        recordsHTML = records.map(function(r) {
+            var cls = r.type === 'recharge' || r.type === 'receive' ? 'in' : 'out';
+            var prefix = r.type === 'recharge' || r.type === 'receive' ? '+' : '-';
+            return '<div class="wallet-record-item"><span>' + r.note + '</span><span class="record-amount ' + cls + '">' + prefix + r.amount.toFixed(2) + '</span></div>';
+        }).join('');
+    }
+
+    listView.innerHTML = `
+        <div class="wallet-card">
+            <div class="wallet-title">钱包</div>
+            <div class="wallet-divider"></div>
+            <div class="wallet-balance" onclick="openRechargeModal()">${balance.toFixed(2)}</div>
+            <div class="wallet-balance-label">零钱 · 点击充值</div>
+        </div>
+        <div class="wallet-records">
+            <div class="wallet-record-title">充值/消耗记录</div>
+            ${recordsHTML}
+        </div>
+    `;
+}
+
+function openRechargeModal() {
+    var overlay = document.createElement('div');
+    overlay.className = 'recharge-overlay';
+    overlay.id = 'rechargeOverlay';
+    overlay.innerHTML = `
+        <div class="recharge-modal" onclick="event.stopPropagation()">
+            <div class="recharge-modal-title">充值</div>
+            <input type="number" class="recharge-input" id="rechargeAmountInput" placeholder="0.00" step="0.01" min="0.01">
+            <div class="recharge-buttons">
+                <div class="recharge-btn-cancel" onclick="closeRechargeModal()">取消</div>
+                <div class="recharge-btn-confirm" onclick="confirmRecharge()">确认充值</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeRechargeModal(); };
+}
+
+function closeRechargeModal() {
+    var overlay = document.getElementById('rechargeOverlay');
+    if (overlay) overlay.remove();
+}
+
+function confirmRecharge() {
+    var input = document.getElementById('rechargeAmountInput');
+    var amount = parseFloat(input.value);
+    if (!amount || amount <= 0) { showToast('请输入有效金额'); return; }
+    var balance = getWalletBalance();
+    setWalletBalance(balance + amount);
+    addWalletRecord('recharge', amount, '充值');
+    closeRechargeModal();
+    showToast('充值成功');
+    openWalletPage();
+}
+
+// ========== 收藏页面 ==========
+function getFavorites() {
+    var raw = localStorage.getItem('user_favorites');
+    return raw ? JSON.parse(raw) : [];
+}
+function saveFavorites(favorites) {
+    localStorage.setItem('user_favorites', JSON.stringify(favorites));
+}
+function addFavorite(text, contactId, contactName) {
+    var favs = getFavorites();
+    favs.unshift({ id: 'fav_' + Date.now(), text: text, contactId: contactId, contactName: contactName, time: Date.now() });
+    saveFavorites(favs);
+}
+
+var favCurrentContact = 'all';
+
+function openFavoritesPage() {
+    var listView = document.getElementById('chatListView');
+    if (!listView) return;
+    var titleEl = document.querySelector('.nav-title');
+    var backBtn = document.querySelector('.nav-back');
+    var plusBtn = document.querySelector('.nav-plus-btn');
+    if (titleEl) titleEl.textContent = '收藏';
+    if (plusBtn) plusBtn.style.display = 'none';
+    if (backBtn) backBtn.onclick = function() { switchChatTab('me', document.querySelector('.tab-item:nth-child(4)')); };
+
+    var favs = getFavorites();
+    var contactIds = {};
+    favs.forEach(function(f) { contactIds[f.contactId] = f.contactName; });
+
+    var catHTML = '<div class="fav-category active" onclick="filterFav(\'all\', this)">全部</div>';
+    for (var id in contactIds) {
+        catHTML += '<div class="fav-category" onclick="filterFav(\'' + id + '\', this)">' + contactIds[id] + '</div>';
+    }
+    favCurrentContact = 'all';
+
+    listView.innerHTML = `
+        <div class="fav-categories" id="favCategories">${catHTML}</div>
+        <div class="fav-list" id="favList"></div>
+    `;
+    renderFavList();
+}
+
+function filterFav(contactId, el) {
+    favCurrentContact = contactId;
+    var cats = document.getElementById('favCategories');
+    if (cats) cats.querySelectorAll('.fav-category').forEach(function(c) { c.classList.remove('active'); });
+    if (el) el.classList.add('active');
+    renderFavList();
+}
+
+function renderFavList() {
+    var list = document.getElementById('favList');
+    if (!list) return;
+    var favs = getFavorites();
+    if (favCurrentContact !== 'all') { favs = favs.filter(function(f) { return f.contactId === favCurrentContact; }); }
+    if (favs.length === 0) { list.innerHTML = '<div class="wallet-empty">暂无收藏</div>'; return; }
+    list.innerHTML = favs.map(function(f) {
+        return '<div class="fav-item"><div class="fav-item-text"><b>' + f.contactName + '：</b>' + f.text + '</div><div class="fav-item-del" onclick="event.stopPropagation(); deleteFav(\'' + f.id + '\')">×</div></div>';
+    }).join('');
+}
+
+function deleteFav(id) {
+    var favs = getFavorites();
+    favs = favs.filter(function(f) { return f.id !== id; });
+    saveFavorites(favs);
+    renderFavList();
+    showToast('已删除');
+}
+
+// ========== 表情包管理页面 ==========
+function getManagedEmojis() {
+    var raw = localStorage.getItem('managed_emojis');
+    return raw ? JSON.parse(raw) : [];
+}
+function saveManagedEmojis(emojis) {
+    localStorage.setItem('managed_emojis', JSON.stringify(emojis));
+}
+function getBannedEmojis() {
+    var raw = localStorage.getItem('banned_emojis');
+    return raw ? JSON.parse(raw) : [];
+}
+function saveBannedEmojis(banned) {
+    localStorage.setItem('banned_emojis', JSON.stringify(banned));
+}
+
+function openEmojiManagePage() {
+    var listView = document.getElementById('chatListView');
+    if (!listView) return;
+    var titleEl = document.querySelector('.nav-title');
+    var backBtn = document.querySelector('.nav-back');
+    var plusBtn = document.querySelector('.nav-plus-btn');
+    if (titleEl) titleEl.textContent = '表情包';
+    if (plusBtn) plusBtn.style.display = 'none';
+    if (backBtn) backBtn.onclick = function() { switchChatTab('me', document.querySelector('.tab-item:nth-child(4)')); };
+
+    renderEmojiManage(listView);
+}
+
+function renderEmojiManage(listView) {
+    var emojis = getManagedEmojis();
+    var banned = getBannedEmojis();
+    var gridHTML = '';
+    for (var i = 0; i < 10; i++) {
+        if (i < emojis.length) {
+            var isBanned = banned.indexOf(i) >= 0;
+            gridHTML += '<div class="emoji-manage-item ' + (isBanned ? 'banned' : '') + '" style="background-image:url(' + emojis[i].src + ');" onclick="toggleBanEmoji(' + i + ')">' + (isBanned ? '<div class="emoji-banned-badge">!</div>' : '') + '</div>';
+        } else {
+            gridHTML += '<div class="emoji-manage-add" onclick="importEmojiBatch()">+</div>';
+        }
+    }
+    var noteHTML = '';
+    for (var j = 0; j < emojis.length; j++) {
+        noteHTML += '<div class="emoji-manage-note">' + (j + 1) + '. ' + (emojis[j].note || '无备注') + ' <span style="color:#007aff;cursor:pointer;" onclick="editEmojiNote(' + j + ')">编辑</span></div>';
+    }
+
+    listView.innerHTML = `
+        <div class="emoji-manage-grid">${gridHTML}</div>
+        <div style="padding:4px 16px;font-size:12px;color:#8e8e93;">点击表情包可禁止/解禁角色使用。红色边框=已禁止。</div>
+        ${noteHTML}
+        <button class="ios-btn-black" style="margin:16px;width:calc(100% - 32px);" onclick="importEmojiBatch()">一键导入表情包（最多10张）</button>
+    `;
+}
+
+function importEmojiBatch() {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.multiple = true;
+    input.onchange = function(e) {
+        var files = e.target.files;
+        if (!files || files.length === 0) return;
+        var emojis = getManagedEmojis();
+        var loaded = 0;
+        for (var i = 0; i < Math.min(files.length, 10 - emojis.length); i++) {
+            (function(file) {
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    emojis.push({ src: ev.target.result, note: '' });
+                    saveManagedEmojis(emojis);
+                    loaded++;
+                    if (loaded === Math.min(files.length, 10 - (emojis.length - loaded))) {
+                        var listView = document.getElementById('chatListView');
+                        if (listView) renderEmojiManage(listView);
+                        showToast('已导入 ' + loaded + ' 张表情包');
+                    }
+                };
+                reader.readAsDataURL(file);
+            })(files[i]);
+        }
+    };
+    input.click();
+}
+
+function toggleBanEmoji(index) {
+    var banned = getBannedEmojis();
+    var pos = banned.indexOf(index);
+    if (pos >= 0) { banned.splice(pos, 1); } else { banned.push(index); }
+    saveBannedEmojis(banned);
+    var listView = document.getElementById('chatListView');
+    if (listView) renderEmojiManage(listView);
+}
+
+function editEmojiNote(index) {
+    var emojis = getManagedEmojis();
+    var note = prompt('输入表情包含义（角色可读取）：', emojis[index].note || '');
+    if (note !== null) {
+        emojis[index].note = note;
+        saveManagedEmojis(emojis);
+        var listView = document.getElementById('chatListView');
+        if (listView) renderEmojiManage(listView);
+    }
+}
+
+// ========== 设置页面 ==========
+function openSettingsPage() {
+    var listView = document.getElementById('chatListView');
+    if (!listView) return;
+    var titleEl = document.querySelector('.nav-title');
+    var backBtn = document.querySelector('.nav-back');
+    var plusBtn = document.querySelector('.nav-plus-btn');
+    if (titleEl) titleEl.textContent = '设置';
+    if (plusBtn) plusBtn.style.display = 'none';
+    if (backBtn) backBtn.onclick = function() { switchChatTab('me', document.querySelector('.tab-item:nth-child(4)')); };
+
+    var globalBg = localStorage.getItem('global_chat_bg') || '';
+
+    listView.innerHTML = `
+        <div class="settings-list">
+            <div class="settings-list-item" onclick="openMaskEditor()">
+                个人资料 <span class="settings-arrow">></span>
+            </div>
+        </div>
+        <div class="settings-section-title" style="margin-left:16px;">全局背景图</div>
+        <div class="settings-hint">提示：此处更换4个聊天页面的壁纸。</div>
+        <div class="glass-card" style="margin:0 16px 10px;">
+            <div class="global-bg-preview" id="globalBgPreview" style="background-image:url(${globalBg});" onclick="document.getElementById('globalBgInput').click()">${globalBg ? '' : '点击更换全局背景图'}</div>
+            <input type="file" id="globalBgInput" accept="image/*" style="display:none;" onchange="handleGlobalBg(event)">
+            <button class="black-btn" onclick="clearGlobalBg()">清除全局背景图</button>
+        </div>
+        <div class="settings-list">
+            <div class="settings-list-item">
+                <span>拍一拍</span>
+                <input type="checkbox" class="ios-switch-sm" id="swPat" ${localStorage.getItem('pat_enabled') === 'true' ? 'checked' : ''} onchange="togglePat(this.checked)">
+            </div>
+        </div>
+        <div class="settings-hint">提示：拍一拍开启后，角色与你互动时将出现。</div>
+        <div class="glass-card" style="margin:0 16px 10px;">
+            <div class="pat-input-row">
+                <span>角色</span>
+                <input type="text" class="pat-input" id="patAction" value="${localStorage.getItem('pat_action') || '拍了拍'}" maxlength="4">
+                <span>了</span>
+                <input type="text" class="pat-input" id="patTarget" value="${localStorage.getItem('pat_target') || '我'}" maxlength="4">
+                <span>的</span>
+                <input type="text" class="pat-input" id="patBody" value="${localStorage.getItem('pat_body') || '肩膀'}" maxlength="4">
+            </div>
+            <div class="pat-preview" id="patPreview"></div>
+            <button class="black-btn" onclick="savePat()">保存</button>
+        </div>
+    `;
+    updatePatPreview();
+    document.getElementById('patAction').addEventListener('input', updatePatPreview);
+    document.getElementById('patTarget').addEventListener('input', updatePatPreview);
+    document.getElementById('patBody').addEventListener('input', updatePatPreview);
+}
+
+function handleGlobalBg(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+        var bg = ev.target.result;
+        localStorage.setItem('global_chat_bg', bg);
+        document.getElementById('globalBgPreview').style.backgroundImage = 'url(' + bg + ')';
+        document.getElementById('globalBgPreview').innerText = '';
+        showToast('全局背景图已保存');
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearGlobalBg() {
+    localStorage.removeItem('global_chat_bg');
+    document.getElementById('globalBgPreview').style.backgroundImage = '';
+    document.getElementById('globalBgPreview').innerText = '点击更换全局背景图';
+    showToast('已清除');
+}
+
+function togglePat(checked) {
+    localStorage.setItem('pat_enabled', checked);
+}
+
+function updatePatPreview() {
+    var action = document.getElementById('patAction').value || '拍了拍';
+    var target = document.getElementById('patTarget').value || '我';
+    var body = document.getElementById('patBody').value || '肩膀';
+    var preview = document.getElementById('patPreview');
+    if (preview) preview.textContent = '角色' + action + '了' + target + '的' + body;
+}
+
+function savePat() {
+    var action = document.getElementById('patAction').value || '拍了拍';
+    var target = document.getElementById('patTarget').value || '我';
+    var body = document.getElementById('patBody').value || '肩膀';
+    localStorage.setItem('pat_action', action);
+    localStorage.setItem('pat_target', target);
+    localStorage.setItem('pat_body', body);
+    showToast('拍一拍已保存');
+}                   
