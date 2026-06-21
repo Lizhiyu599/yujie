@@ -81,25 +81,25 @@ function renderShiyilin() {
                         <div class="sl-book-cover">
                             <div class="sl-cover-inner-border"></div>
                             <div class="sl-cover-inner-border2"></div>
-                            <div class="sl-cover-diamond"></div>
-                            <div class="sl-cover-cross"></div>
+                            <div class="sl-cover-corner-fan tl">❦</div>
+                            <div class="sl-cover-corner-fan tr">❦</div>
+                            <div class="sl-cover-corner-fan bl">❦</div>
+                            <div class="sl-cover-corner-fan br">❦</div>
                             <div class="sl-cover-corners">
                                 <span class="sl-corner-tl">✦</span>
                                 <span class="sl-corner-tr">✦</span>
                                 <span class="sl-corner-bl">✦</span>
                                 <span class="sl-corner-br">✦</span>
                             </div>
-                            <div class="sl-cover-corner-vine tl">🌿</div>
-                            <div class="sl-cover-corner-vine tr">🌿</div>
-                            <div class="sl-cover-corner-vine bl">🌿</div>
-                            <div class="sl-cover-corner-vine br">🌿</div>
-                            <div class="sl-cover-badge"></div>
+                            <div class="sl-cover-top-band"></div>
                             <div class="sl-cover-top-ornament"></div>
+                            <div class="sl-cover-bottom-band"></div>
                             <div class="sl-cover-bottom-ornament"></div>
-                            <div class="sl-cover-top-star">✧ ✧ ✧</div>
-                            <div class="sl-cover-bottom-vine">❦   ❦   ❦</div>
+                            <div class="sl-cover-vine-left">🌿</div>
+                            <div class="sl-cover-vine-right">🌿</div>
                             <div class="sl-cover-english">Good luck, in countless tomorrow</div>
                             <div class="sl-cover-english-line2">keep your spirit free</div>
+                            <div class="sl-cover-bottom-vine">❦   ❦   ❦</div>
                         </div>
                         <div class="sl-book-spine">
                             <div class="sl-spine-name">${books[j].contactName}</div>
@@ -128,7 +128,7 @@ function renderShiyilin() {
     `;
 }
 
-// ========== 打开一本书（全屏放大，默认显示封面） ==========
+// ========== 打开一本书 ==========
 function openShiyilinBook(contactId) {
     var books = getShiyilinBooks();
     var book = null;
@@ -143,16 +143,18 @@ function openShiyilinBook(contactId) {
     overlay.innerHTML = `
         <div class="sl-book-viewer" onclick="event.stopPropagation()">
             <div class="sl-viewer-cover" id="slViewerCover">
-                <div class="sl-viewer-vine tl">🌿</div>
-                <div class="sl-viewer-vine tr">🌿</div>
-                <div class="sl-viewer-vine bl">🌿</div>
-                <div class="sl-viewer-vine br">🌿</div>
-                <div class="sl-viewer-badge"></div>
-                <div class="sl-viewer-star">✧ ✧ ✧</div>
+                <div class="sl-viewer-corner-fan tl">❦</div>
+                <div class="sl-viewer-corner-fan tr">❦</div>
+                <div class="sl-viewer-corner-fan bl">❦</div>
+                <div class="sl-viewer-corner-fan br">❦</div>
+                <div class="sl-viewer-top-band"></div>
                 <div class="sl-viewer-gold-line"></div>
+                <div class="sl-viewer-bottom-line"></div>
+                <div class="sl-viewer-vine-left">🌿</div>
+                <div class="sl-viewer-vine-right">🌿</div>
                 <div class="sl-viewer-english">Good luck, in countless tomorrow</div>
                 <div class="sl-viewer-english-line2">keep your spirit free</div>
-                <div class="sl-viewer-bottom-line"></div>
+                <div class="sl-viewer-bottom-vine">❦   ❦   ❦</div>
                 <div class="sl-viewer-hint">轻触翻开</div>
             </div>
         </div>
@@ -172,7 +174,7 @@ function openShiyilinBook(contactId) {
     };
 }
 
-// ========== 翻开封面，显示内页（即时显示） ==========
+// ========== 翻开封面，显示内页 ==========
 function openShiyilinPages(contactId) {
     var cover = document.getElementById('slViewerCover');
     if (cover && !cover.classList.contains('open')) {
