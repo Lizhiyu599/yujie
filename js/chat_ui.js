@@ -2667,7 +2667,25 @@ function jumpToSearchResult() {
 }
 
 function manualSummary() {
-    showToast('总结功能即将上线（拾忆林开发中）');
+    var contactId = window.ChatState.currentContactId || 'c1';
+    var contact = getContactById(contactId);
+    if (!contact) return;
+
+    closeChatSettings();
+    showToast('正在生成总结…');
+
+    generateSummary(contactId).then(function(summary) {
+        if (!summary) {
+            showToast('总结生成失败，请重试');
+            return;
+        }
+        var now = new Date();
+        var dateStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日';
+        saveShiyilinSummary(contactId, dateStr, summary);
+        showToast('已存入拾忆林');
+    }).catch(function() {
+        showToast('总结生成失败，请重试');
+    });
 }
 
 function clearChatHistory() {
