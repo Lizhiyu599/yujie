@@ -186,7 +186,7 @@ function renderChatShell() {
     if (!appWindow) return;
 
     appWindow.innerHTML = `
-        <div class="chat-shell">
+        <div class="chat-shell" style="background-image:url(${localStorage.getItem('global_chat_bg') || ''});background-size:cover;background-position:center;">
             <div class="chat-nav">
                 <div class="nav-status-bar"></div>
                 <div class="nav-body">
@@ -2792,7 +2792,7 @@ function renderEmojiManage(listView) {
             var isBanned = banned.indexOf(i) >= 0;
             gridHTML += '<div class="emoji-manage-item ' + (isBanned ? 'banned' : '') + '" style="background-image:url(' + emojis[i].src + ');" onclick="toggleBanEmoji(' + i + ')">' + (isBanned ? '<div class="emoji-banned-badge">!</div>' : '') + '</div>';
         } else {
-            gridHTML += '<div class="emoji-manage-add" onclick="importEmojiBatch()">+</div>';
+            gridHTML += '<div class="emoji-manage-add" onclick="importEmojiBatch()">添加</div>';
         }
     }
     var noteHTML = '';
