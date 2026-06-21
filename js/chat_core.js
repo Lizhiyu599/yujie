@@ -105,7 +105,7 @@ async function sendChatMessage() {
         appendMessage('narration', text);
         input.value = '';
         saveChatHistory(contactId);
-        triggerAIReply();
+
         return;
     }
 
