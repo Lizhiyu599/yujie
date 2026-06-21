@@ -1531,12 +1531,13 @@ function showMomentsPage() {
                 </div>
             </div>
             <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;" id="momentsScrollArea" onscroll="handleMomentsScroll()">
-                <div class="moments-cover" id="momentsCover" onclick="changeMomentsCover()" style="background-image:url(${momentsCoverBg});">
-                    <div class="moments-cover-gradient"></div>
-                    <div class="moments-cover-info">
-                        <span class="moments-cover-name" id="momentsCoverName">用户</span>
-                        <div class="moments-cover-avatar" id="momentsCoverAvatar"></div>
-                    </div>
+    <div class="moments-publish-btn" onclick="event.stopPropagation(); openPublishModal()" style="position:absolute; top:16px; right:16px; z-index:10;">
+        <span class="publish-icon-body"></span>
+        <span class="publish-icon-lens"></span>
+    </div>
+    <div class="moments-feed" id="momentsFeed"></div>
+    <div class="moments-bottom-hint" id="momentsBottomHint"></div>
+</div>
                     <div class="moments-publish-btn" onclick="event.stopPropagation(); openPublishModal()">
                     <span class="publish-icon-body"></span>
                     <span class="publish-icon-lens"></span>
