@@ -89,6 +89,7 @@ function sendSticker(idx) {
 
         saveChatHistory(window.ChatState.currentContactId);
         toggleAddPanel();
+        triggerAIReply();
     }
 }
 
