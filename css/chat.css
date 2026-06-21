@@ -15,7 +15,9 @@
     height: 90px;
     display: flex;
     flex-direction: column;
-    background: transparent;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
     border-bottom: 0.5px solid rgba(255, 255, 255, 0.15);
     z-index: 100;
 }
@@ -104,9 +106,9 @@
 .tab-fixed-bottom {
     flex-shrink: 0;
     height: 70px;
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(30px);
-    -webkit-backdrop-filter: blur(30px);
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
     border-top: 0.5px solid rgba(0,0,0,0.08);
     display: flex;
     justify-content: space-around;
