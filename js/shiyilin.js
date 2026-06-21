@@ -3,7 +3,12 @@
  * 复古牛皮纸风格书架，仿真翻页
  * 每创建一个角色自动生成一本书
  * 纯CSS渲染封面，零字符符号
+ * 内页按日期分页，底部翻页
  */
+
+// ========== 当前打开状态 ==========
+var slCurrentContactId = null;
+var slCurrentPageIndex = 0;
 
 // ========== 数据存储 ==========
 function getShiyilinBooks() {
@@ -31,7 +36,7 @@ function syncShiyilinBooks() {
                 id: 'sl_book_' + c.id,
                 contactId: c.id,
                 contactName: c.name,
-                summary: '',
+                pages: [],
                 createdAt: Date.now()
             });
         }
@@ -123,7 +128,7 @@ function renderShiyilin() {
     `;
 }
 
-// ========== 打开一本书（全屏放大，默认显示封面） ==========
+// ========== 打开一本书 ==========
 function openShiyilinBook(contactId) {
     var books = getShiyilinBooks();
     var book = null;
@@ -131,6 +136,9 @@ function openShiyilinBook(contactId) {
         if (books[i].contactId === contactId) { book = books[i]; break; }
     }
     if (!book) return;
+
+    slCurrentContactId = contactId;
+    slCurrentPageIndex = 0;
 
     var overlay = document.createElement('div');
     overlay.className = 'sl-book-open';
@@ -150,8 +158,8 @@ function openShiyilinBook(contactId) {
             </div>
         </div>
         <div class="sl-pages-bottom" id="slPagesBottom">
-            <button class="sl-nav-btn" id="slPrevBtn" onclick="event.stopPropagation(); openShiyilinPages('${contactId}')">‹ 上一页</button>
-            <button class="sl-nav-btn" id="slNextBtn" onclick="event.stopPropagation(); openShiyilinPages('${contactId}')">下一页 ›</button>
+            <button class="sl-nav-btn" id="slPrevBtn" onclick="event.stopPropagation(); slPrevPage()">‹ 上一页</button>
+            <button class="sl-nav-btn" id="slNextBtn" onclick="event.stopPropagation(); slNextPage()">下一页 ›</button>
         </div>
     `;
     document.body.appendChild(overlay);
@@ -165,7 +173,54 @@ function openShiyilinBook(contactId) {
     };
 }
 
-// ========== 翻开封面，显示内页（即时显示） ==========
+// ========== 翻页 ==========
+function slPrevPage() {
+    if (slCurrentPageIndex > 0) {
+        slCurrentPageIndex--;
+        updateShiyilinPageContent();
+    }
+}
+
+function slNextPage() {
+    var books = getShiyilinBooks();
+    var book = null;
+    for (var i = 0; i < books.length; i++) {
+        if (books[i].contactId === slCurrentContactId) { book = books[i]; break; }
+    }
+    if (!book) return;
+    var pages = book.pages || [];
+    if (slCurrentPageIndex < pages.length - 1) {
+        slCurrentPageIndex++;
+        updateShiyilinPageContent();
+    }
+}
+
+// ========== 更新内页内容 ==========
+function updateShiyilinPageContent() {
+    var books = getShiyilinBooks();
+    var book = null;
+    for (var i = 0; i < books.length; i++) {
+        if (books[i].contactId === slCurrentContactId) { book = books[i]; break; }
+    }
+    if (!book) return;
+
+    var pages = book.pages || [];
+    var page = pages[slCurrentPageIndex];
+    var dateStr = page ? page.date : '尚未记录';
+    var summary = page ? page.text : '翻开空白的书页，等待记忆落笔。';
+
+    var dateEl = document.getElementById('slPageDate');
+    var textEl = document.getElementById('slSummaryText');
+    if (dateEl) dateEl.textContent = dateStr;
+    if (textEl) textEl.textContent = summary;
+
+    var prevBtn = document.getElementById('slPrevBtn');
+    var nextBtn = document.getElementById('slNextBtn');
+    if (prevBtn) prevBtn.disabled = slCurrentPageIndex === 0;
+    if (nextBtn) nextBtn.disabled = slCurrentPageIndex >= pages.length - 1;
+}
+
+// ========== 翻开封面，显示内页 ==========
 function openShiyilinPages(contactId) {
     var cover = document.getElementById('slViewerCover');
     if (cover && !cover.classList.contains('open')) {
@@ -178,6 +233,13 @@ function openShiyilinPages(contactId) {
         if (books[i].contactId === contactId) { book = books[i]; break; }
     }
     if (!book) return;
+
+    slCurrentContactId = contactId;
+    slCurrentPageIndex = 0;
+    var pages = book.pages || [];
+    var page = pages[0];
+    var dateStr = page ? page.date : '尚未记录';
+    var summary = page ? page.text : '翻开空白的书页，等待记忆落笔。';
 
     var viewer = document.querySelector('.sl-book-viewer');
     if (!viewer) return;
@@ -199,23 +261,42 @@ function openShiyilinPages(contactId) {
         </div>
         <div class="sl-pages-body">
             <div class="sl-page-decoration"></div>
-            <div class="sl-summary-text" id="slSummaryText">${book.summary || '翻开空白的书页，等待记忆落笔。'}</div>
+            <div class="sl-entry-date" id="slPageDate">${dateStr}</div>
+            <div class="sl-summary-text" id="slSummaryText">${summary}</div>
         </div>
     `;
     viewer.appendChild(pagesPanel);
+
+    updateShiyilinPageButtons();
+}
+
+function updateShiyilinPageButtons() {
+    var books = getShiyilinBooks();
+    var book = null;
+    for (var i = 0; i < books.length; i++) {
+        if (books[i].contactId === slCurrentContactId) { book = books[i]; break; }
+    }
+    var pages = book ? (book.pages || []) : [];
+    var prevBtn = document.getElementById('slPrevBtn');
+    var nextBtn = document.getElementById('slNextBtn');
+    if (prevBtn) prevBtn.disabled = slCurrentPageIndex === 0;
+    if (nextBtn) nextBtn.disabled = slCurrentPageIndex >= pages.length - 1;
 }
 
 function closeShiyilinBook() {
+    slCurrentContactId = null;
+    slCurrentPageIndex = 0;
     var overlay = document.getElementById('slBookOpen');
     if (overlay) overlay.remove();
 }
 
-// ========== 保存总结内容 ==========
-function saveShiyilinSummary(contactId, summary) {
+// ========== 保存总结内容（按日期追加） ==========
+function saveShiyilinSummary(contactId, dateStr, text) {
     var books = getShiyilinBooks();
     for (var i = 0; i < books.length; i++) {
         if (books[i].contactId === contactId) {
-            books[i].summary = summary;
+            if (!books[i].pages) books[i].pages = [];
+            books[i].pages.push({ date: dateStr, text: text });
             break;
         }
     }
