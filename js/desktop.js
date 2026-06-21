@@ -758,6 +758,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // 注册聊天图标到桌面第一页
     addDesktopIcon({ id: 'chat', name: '聊天', icon: '聊', action: 'openChat' });
+    addDesktopIcon({ id: 'shiyilin', name: '拾忆林', icon: '忆', action: 'openShiyilin' });
 
     const dockBar = document.getElementById('dockBar');
     if (!dockBar) return;
