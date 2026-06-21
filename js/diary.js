@@ -83,8 +83,8 @@ function renderDiaryApp() {
             </div>
 
             <div class="diary-bottom-bar">
-                <button class="diary-nav-btn" onclick="prevPage()" ${!isCoverOpen || currentPageIndex === 0 ? 'disabled' : ''}>‹ 上一页</button>
-                <button class="diary-nav-btn" onclick="nextPage()">${isCoverOpen ? '下一页 ›' : '翻开'}</button>
+                <button class="diary-nav-btn" id="prevBtn" onclick="prevPage()" ${!isCoverOpen || currentPageIndex === 0 ? 'disabled' : ''}>‹ 上一页</button>
+                <button class="diary-nav-btn" id="nextBtn" onclick="nextPage()">${isCoverOpen ? '下一页 ›' : '翻开'}</button>
             </div>
         </div>
     `;
@@ -159,17 +159,21 @@ function updatePageVisibility() {
 // ========== 更新底部工具栏 ==========
 function updateBottomBar() {
     const diaries = getDiaries();
-    const prevBtn = document.querySelector('.diary-bottom-bar .diary-nav-btn:first-child');
-    const nextBtn = document.querySelector('.diary-bottom-bar .diary-nav-btn:last-child');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
 
     if (prevBtn) {
         prevBtn.disabled = !isCoverOpen || currentPageIndex === 0;
     }
     if (nextBtn) {
-        nextBtn.textContent = isCoverOpen ? '下一页 ›' : '翻开';
-        if (isCoverOpen && currentPageIndex >= diaries.length - 1) {
-            nextBtn.disabled = true;
-        } else if (!isCoverOpen) {
+        if (!isCoverOpen) {
+            nextBtn.textContent = '翻开';
+            nextBtn.disabled = false;
+        } else if (currentPageIndex >= diaries.length - 1) {
+            nextBtn.textContent = '合上';
+            nextBtn.disabled = false;
+        } else {
+            nextBtn.textContent = '下一页 ›';
             nextBtn.disabled = false;
         }
     }
@@ -199,6 +203,26 @@ function openCover() {
     updateBottomBar();
 }
 
+// ========== 合上日记（回到封面） ==========
+function closeCover() {
+    if (!isCoverOpen) return;
+    const cover = document.getElementById('diaryCover');
+    if (!cover) return;
+    cover.classList.remove('open');
+    isCoverOpen = false;
+    currentPageIndex = 0;
+
+    // 清除自动生成的占位日记
+    var diaries = getDiaries();
+    if (diaries.length === 1 && diaries[0].content.indexOf('今天翻开日记本') >= 0) {
+        diaries = [];
+        saveDiaries(diaries);
+    }
+
+    updateBottomBar();
+    renderDiaryPages();
+}
+
 // ========== 翻页 ==========
 function prevPage() {
     if (!isCoverOpen) return;
@@ -219,6 +243,9 @@ function nextPage() {
         currentPageIndex++;
         updatePageVisibility();
         updateBottomBar();
+    } else {
+        // 最后一页，合上
+        closeCover();
     }
 }
 
@@ -478,6 +505,13 @@ function saveDiaryFont() {
     showToast('日记字体已保存');
 }
 
+// ========== 自动日记开关 ==========
+function toggleDiaryAuto() {
+    const isChecked = document.getElementById('diaryAutoSwitch').checked;
+    localStorage.setItem('diary_auto_enabled', isChecked);
+    showToast(isChecked ? '自动日记已开启' : '自动日记已关闭');
+}
+
 // ========== 角色选择 ==========
 function getDiarySelectedChar() {
     return localStorage.getItem('diary_selected_char') || '';
@@ -521,14 +555,6 @@ function saveDiaryChar() {
     }
 }
 
-// ========== 自动日记开关 ==========
-function toggleDiaryAuto() {
-    const isChecked = document.getElementById('diaryAutoSwitch').checked;
-    localStorage.setItem('diary_auto_enabled', isChecked);
-    showToast(isChecked ? '自动日记已开启' : '自动日记已关闭');
-}
-
-
 // ========== 手动生成日记（接入AI） ==========
 function generateDiary() {
     var contactId = getDiarySelectedChar();
@@ -547,6 +573,8 @@ function generateDiary() {
             var now = new Date();
             var dateStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日';
             var diaries = getDiaries();
+            // 删除占位日记
+            diaries = diaries.filter(function(d) { return d.content.indexOf('今天翻开日记本') < 0; });
             diaries.push({ date: dateStr, content: content });
             saveDiaries(diaries);
             showToast('日记已生成');
@@ -559,4 +587,3 @@ function generateDiary() {
         showToast('生成功能暂未接入，请等待后续更新');
     }
 }
-
