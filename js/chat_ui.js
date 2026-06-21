@@ -593,9 +593,11 @@ function sendVoiceBubble(role, text, voiceUrl, isRealVoice) {
 function toggleAddPanel() {
     const panel = document.getElementById('addPanelFull');
     if (panel) {
-        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-        if (panel.style.display === 'block') {
+        if (panel.style.display === 'none' || panel.style.display === '') {
+            panel.style.display = 'block';
             switchAddPanelTab('emoji', document.getElementById('tabEmoji'));
+        } else {
+            panel.style.display = 'none';
         }
     }
 }
@@ -1614,18 +1616,21 @@ function loadInitialMoments() {
 function loadMomentsCoverInfo() {
     var avatar = document.getElementById('momentsCoverAvatar');
     var name = document.getElementById('momentsCoverName');
-    var maskData = localStorage.getItem('active_mask');
-    if (maskData) {
-        try {
-            var mask = JSON.parse(maskData);
-            if (mask.avatar && avatar) {
-                avatar.style.backgroundImage = 'url(' + mask.avatar + ')';
-                avatar.style.backgroundSize = 'cover';
-                avatar.style.backgroundPosition = 'center';
-                avatar.innerText = '';
-            }
-            if (mask.name && name) name.textContent = mask.name;
-        } catch(e) {}
+    var masks = typeof getMasks === 'function' ? getMasks() : [];
+    var activeMaskId = localStorage.getItem('active_mask_id') || '';
+    var activeMask = null;
+    for (var i = 0; i < masks.length; i++) {
+        if (masks[i].id === activeMaskId) { activeMask = masks[i]; break; }
+    }
+    if (!activeMask && masks.length > 0) activeMask = masks[0];
+    if (activeMask) {
+        if (activeMask.avatar && avatar) {
+            avatar.style.backgroundImage = 'url(' + activeMask.avatar + ')';
+            avatar.style.backgroundSize = 'cover';
+            avatar.style.backgroundPosition = 'center';
+            avatar.innerText = '';
+        }
+        if (activeMask.name && name) name.textContent = activeMask.name;
     }
 }
 
