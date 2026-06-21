@@ -127,6 +127,17 @@ async function sendChatMessage() {
     saveChatHistory(contactId);
 
     const systemPrompt = buildSystemPrompt(contactId);
+    var messagesEl = document.getElementById('chatMessages');
+if (messagesEl) {
+    var hiddenNarrations = messagesEl.querySelectorAll('.bubble-narration[style*="display: none"]');
+    hiddenNarrations.forEach(function(n) {
+        var nt = n.textContent.trim();
+        if (nt) {
+            text = text + '\n' + nt;
+        }
+    });
+}
+
     let userMessage = text;
 
     if (window.ChatState.quotedMsg) {
