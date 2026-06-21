@@ -2684,27 +2684,3 @@ function blockContact() {
 function deleteContact() {
     showToast('删除功能即将上线');
 }       
-
-/* 表情包入口笑脸图标 */
-.icon-smile {
-    display: block;
-    width: 18px;
-    height: 18px;
-    border: 2px solid #8e8e93;
-    border-radius: 50%;
-    position: relative;
-}
-.icon-smile::after {
-    content: '';
-    position: absolute;
-    width: 8px;
-    height: 4px;
-    border-left: 2px solid #8e8e93;
-    border-bottom: 2px solid #8e8e93;
-    border-radius: 0 0 0 2px;
-    transform: rotate(-45deg);
-    top: 40%;
-    left: 50%;
-    margin-left: -4px;
-    margin-top: -2px;
-}
