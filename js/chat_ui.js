@@ -1,9 +1,9 @@
 /**
- * 玉界 - 聊天软件 UI（精简版）
+ * 玉界 - 聊天软件 UI
  * 包含：会话列表、聊天窗口、标签栏导航、心理状态窗、语音模式、语音消息、
  *       发送逻辑、长按气泡菜单、右上角+弹出菜单、添加好友页面、
- *       联系人列表（字母索引+拼音首字母）、编辑角色、动态页面、聊天详情半屏面板
- * 附加功能已移至 chat_addons.js
+ *       联系人列表（字母索引+拼音首字母）、编辑角色、动态页面、聊天详情半屏面板、
+ *       我的页面、钱包、收藏、表情包管理、设置、面具系统、全局背景图
  */
 
 // ========== 聊天状态 ==========
@@ -86,7 +86,7 @@ let charAvatarData = '';
 // ========== 编辑角色头像数据 ==========
 let editAvatarData = '';
 
-// ========== 拼音首字母映射（常用汉字·扩展版） ==========
+// ========== 拼音首字母映射 ==========
 var _pinyinMap = null;
 function getPinyinFirstLetter(char) {
     if (!/[^\u0000-\u00ff]/.test(char)) return char.toUpperCase();
@@ -591,19 +591,20 @@ function sendVoiceBubble(role, text, voiceUrl, isRealVoice) {
 // ========== + 号功能面板 ==========
 function toggleAddPanel() {
     const panel = document.getElementById('addPanelFull');
-    if (panel) {
-        if (panel.style.display === 'none' || panel.style.display === '') {
-            panel.style.display = 'block';
-            switchAddPanelTab('emoji', document.getElementById('tabEmoji'));
-        } else {
-            panel.style.display = 'none';
-        }
+    if (!panel) return;
+    if (panel.style.display === 'none' || panel.style.display === '') {
+        panel.style.display = 'block';
+        switchAddPanelTab('emoji', document.getElementById('tabEmoji'));
+    } else {
+        panel.style.display = 'none';
     }
 }
 
 function switchAddPanelTab(tab, el) {
-    document.querySelectorAll('.add-panel-tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
+    if (el) {
+        el.parentElement.querySelectorAll('.add-panel-tab').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+    }
     if (typeof renderAddPanelContent === 'function') {
         renderAddPanelContent(tab);
     }
@@ -899,7 +900,7 @@ function togglePlusMenu(e) {
 
 function initiateGroupChat() {
     showToast('群聊功能即将上线');
-}
+}      
 
 // ========== 添加好友页面 ==========
 function showCreateCharacterPage() {
@@ -918,7 +919,7 @@ function showCreateCharacterPage() {
                     <span class="nav-title">添加好友</span>
                 </div>
             </div>
-            <div style="flex:1;overflow-y:auto;padding:16px;background:#f2f2f7;">
+            <div style="flex:1;overflow-y:auto;padding:16px;">
 
                 <div style="text-align:center;margin-bottom:20px;">
                     <div id="charAvatarPreview" style="width:80px;height:80px;border-radius:40px;background:#e5e5ea;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:32px;color:#8e8e93;cursor:pointer;background-size:cover;background-position:center;" onclick="document.getElementById('charAvatarInput').click()">+</div>
@@ -1279,3 +1280,1040 @@ function getFriendRequests() {
 function saveFriendRequests(requests) {
     localStorage.setItem('friend_requests', JSON.stringify(requests));
 }
+
+// ========== 返回联系人列表 ==========
+function backToContactsFromEdit() {
+    const appWindow = document.getElementById('chatAppWindow');
+    if (!appWindow) return;
+    var globalBg = localStorage.getItem('global_chat_bg') || '';
+
+    appWindow.innerHTML = `
+        <div class="chat-shell" style="background-image:url(${globalBg});background-size:cover;background-position:center;">
+            <div class="chat-nav">
+                <div class="nav-status-bar"></div>
+                <div class="nav-body">
+                    <span class="nav-back" onclick="closeChat()">‹</span>
+                    <span class="nav-title">联系人</span>
+                    <span class="nav-plus-btn" onclick="togglePlusMenu(event)">+</span>
+                </div>
+            </div>
+            <div class="chat-list" id="chatListView"></div>
+            <div class="tab-fixed-bottom">
+                <span class="tab-item" onclick="switchChatTab('chats', this)">消息</span>
+                <span class="tab-item active" onclick="switchChatTab('contacts', this)">联系人</span>
+                <span class="tab-item" onclick="switchChatTab('moments', this)">动态</span>
+                <span class="tab-item" onclick="switchChatTab('me', this)">我的</span>
+            </div>
+        </div>
+    `;
+
+    renderContactsList();
+}
+
+// ========== 编辑角色人设页面 ==========
+function editContactPersona(contactId) {
+    const contact = window.ChatConfig.contacts.find(c => c.id === contactId);
+    if (!contact) return;
+
+    const appWindow = document.getElementById('chatAppWindow');
+    if (!appWindow) return;
+
+    editAvatarData = '';
+
+    var existingName = contact.name || '';
+    var existingNote = '';
+    var existingGender = '女';
+    var existingAge = '';
+    var existingPersonality = '';
+    var existingBackground = '';
+    var existingAppearance = '';
+
+    if (contact.persona) {
+        var nameMatch = contact.persona.match(/【姓名】(.+)/);
+        var noteMatch = contact.persona.match(/【昵称\/备注】(.+)/);
+        var genderMatch = contact.persona.match(/【性别】(.+)/);
+        var ageMatch = contact.persona.match(/【年龄】(.+)/);
+        var personalityMatch = contact.persona.match(/【性格】(.+)/);
+        var backgroundMatch = contact.persona.match(/【背景故事】(.+)/);
+        var appearanceMatch = contact.persona.match(/【外貌描述】(.+)/);
+        if (nameMatch) existingName = nameMatch[1];
+        if (noteMatch) existingNote = noteMatch[1];
+        if (genderMatch) existingGender = genderMatch[1];
+        if (ageMatch) existingAge = ageMatch[1];
+        if (personalityMatch) existingPersonality = personalityMatch[1];
+        if (backgroundMatch) existingBackground = backgroundMatch[1];
+        if (appearanceMatch) existingAppearance = appearanceMatch[1];
+    }
+
+    var femaleChecked = existingGender === '女' ? 'checked' : '';
+    var maleChecked = existingGender === '男' ? 'checked' : '';
+    var nonHumanChecked = existingGender === '非人类' ? 'checked' : '';
+    var globalBg = localStorage.getItem('global_chat_bg') || '';
+
+    appWindow.innerHTML = `
+        <div class="chat-shell" style="background-image:url(${globalBg});background-size:cover;background-position:center;">
+            <div class="chat-nav">
+                <div class="nav-status-bar"></div>
+                <div class="nav-body">
+                    <span class="nav-back" onclick="backToContactsFromEdit()">‹</span>
+                    <span class="nav-title">编辑角色</span>
+                </div>
+            </div>
+            <div style="flex:1;overflow-y:auto;padding:16px;">
+
+                <div class="settings-section-title">角色头像</div>
+                <div class="glass-card" style="text-align:center;">
+                    <div id="editAvatarPreview" style="width:80px;height:80px;border-radius:40px;background:#e5e5ea;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:32px;color:#8e8e93;cursor:pointer;background-size:cover;background-position:center;${contact.avatarData ? 'background-image:url(' + contact.avatarData + ');' : ''}" onclick="document.getElementById('editAvatarInput').click()">${contact.avatarData ? '' : contact.avatar}</div>
+                    <input type="file" id="editAvatarInput" accept="image/*" style="display:none;" onchange="updateEditAvatar(event)">
+                    <div style="font-size:11px;color:#8e8e93;">点击更换头像</div>
+                </div>
+
+                <div class="settings-section-title">角色名称</div>
+                <div class="glass-card">
+                    <input type="text" id="editCharName" class="search-input" value="${existingName}" placeholder="角色名称">
+                </div>
+
+                <div class="settings-section-title">备注</div>
+                <div class="glass-card">
+                    <input type="text" id="editCharNote" class="search-input" value="${existingNote}" placeholder="请输入你给角色的备注">
+                </div>
+
+                <div class="settings-section-title">性别</div>
+                <div class="glass-card">
+                    <div style="display:flex;gap:16px;align-items:center;">
+                        <label style="display:flex;align-items:center;gap:6px;font-size:15px;color:#000;cursor:pointer;">
+                            <input type="radio" name="editCharGender" value="女" ${femaleChecked} style="appearance:none;width:20px;height:20px;border:2px solid #c7c7cc;border-radius:50%;outline:none;cursor:pointer;transition:0.2s;position:relative;" onchange="updateEditGenderRadio()"> 女
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;font-size:15px;color:#000;cursor:pointer;">
+                            <input type="radio" name="editCharGender" value="男" ${maleChecked} style="appearance:none;width:20px;height:20px;border:2px solid #c7c7cc;border-radius:50%;outline:none;cursor:pointer;transition:0.2s;position:relative;" onchange="updateEditGenderRadio()"> 男
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;font-size:15px;color:#000;cursor:pointer;">
+                            <input type="radio" name="editCharGender" value="非人类" ${nonHumanChecked} style="appearance:none;width:20px;height:20px;border:2px solid #c7c7cc;border-radius:50%;outline:none;cursor:pointer;transition:0.2s;position:relative;" onchange="updateEditGenderRadio()"> 非人类
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-section-title">年龄</div>
+                <div class="glass-card">
+                    <input type="text" id="editCharAge" class="search-input" value="${existingAge}" placeholder="请输入该角色的年龄">
+                </div>
+
+                <div class="settings-section-title">性格</div>
+                <div class="glass-card">
+                    <textarea id="editCharPersonality" style="width:100%;height:100px;background:rgba(255,255,255,0.6);border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:12px;font-size:14px;font-family:inherit;resize:none;outline:none;color:#000;line-height:1.6;" placeholder="请输入该角色的性格、人格类型、语言风格">${existingPersonality}</textarea>
+                </div>
+
+                <div class="settings-section-title">背景故事</div>
+                <div class="glass-card">
+                    <textarea id="editCharBackground" style="width:100%;height:100px;background:rgba(255,255,255,0.6);border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:12px;font-size:14px;font-family:inherit;resize:none;outline:none;color:#000;line-height:1.6;" placeholder="请输入该角色的人生经历、原生家庭、与你如何相识">${existingBackground}</textarea>
+                </div>
+
+                <div class="settings-section-title">外貌描述</div>
+                <div class="glass-card">
+                    <textarea id="editCharAppearance" style="width:100%;height:100px;background:rgba(255,255,255,0.6);border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:12px;font-size:14px;font-family:inherit;resize:none;outline:none;color:#000;line-height:1.6;" placeholder="请输入该角色的外貌描述，用于引导生图API，未配置可填可不填">${existingAppearance}</textarea>
+                    <div style="font-size:11px;color:#8e8e93;margin-top:6px;">选填，用于生图API生成角色形象</div>
+                </div>
+
+                <button class="black-btn" onclick="saveContactEdit('${contactId}')" style="margin-top:16px;">保存修改</button>
+                <button class="white-btn" onclick="deleteContactFromEdit('${contactId}')" style="border-color:#ff3b30;color:#ff3b30;">删除角色</button>
+            </div>
+        </div>
+    `;
+
+    setTimeout(updateEditGenderRadio, 50);
+}
+
+function updateEditAvatar(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        editAvatarData = ev.target.result;
+        const preview = document.getElementById('editAvatarPreview');
+        if (preview) {
+            preview.style.backgroundImage = `url(${ev.target.result})`;
+            preview.innerText = '';
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+function updateEditGenderRadio() {
+    const radios = document.querySelectorAll('input[name="editCharGender"]');
+    radios.forEach(r => {
+        if (r.checked) {
+            r.style.borderColor = '#1d1d1f';
+            r.style.background = '#1d1d1f';
+            r.style.boxShadow = 'inset 0 0 0 4px #fff';
+        } else {
+            r.style.borderColor = '#c7c7cc';
+            r.style.background = 'transparent';
+            r.style.boxShadow = 'none';
+        }
+    });
+}
+
+function saveContactEdit(contactId) {
+    const name = document.getElementById('editCharName').value.trim();
+    const note = document.getElementById('editCharNote').value.trim();
+    const genderEl = document.querySelector('input[name="editCharGender"]:checked');
+    const gender = genderEl ? genderEl.value : '女';
+    const age = document.getElementById('editCharAge').value.trim();
+    const personality = document.getElementById('editCharPersonality').value.trim();
+    const background = document.getElementById('editCharBackground').value.trim();
+    const appearance = document.getElementById('editCharAppearance').value.trim();
+
+    if (!name) { showToast('请填写角色名称'); return; }
+
+    const contact = window.ChatConfig.contacts.find(c => c.id === contactId);
+    if (contact) {
+        contact.name = note || name;
+        contact.avatar = name.charAt(0);
+        if (editAvatarData) contact.avatarData = editAvatarData;
+
+        var persona = '';
+        persona += '【姓名】' + name + '\n';
+        if (note && note !== name) persona += '【昵称/备注】' + note + '\n';
+        persona += '【性别】' + gender + '\n';
+        persona += '【年龄】' + age + '\n';
+        persona += '【性格】' + personality + '\n';
+        persona += '【背景故事】' + background + '\n';
+        if (appearance) persona += '【外貌描述】' + appearance + '\n';
+        contact.persona = persona;
+
+        saveContactsToStorage();
+        showToast('角色信息已更新');
+        backToContactsFromEdit();
+    }
+}
+
+function deleteContactFromEdit(contactId) {
+    if (confirm('确定删除该角色？删除后可从聊天记录中恢复。')) {
+        const contact = window.ChatConfig.contacts.find(c => c.id === contactId);
+        if (contact) {
+            const requests = getFriendRequests();
+            requests.push({
+                contactId: contactId,
+                name: contact.name,
+                message: '我重新申请添加你为好友',
+                status: 'pending',
+                timestamp: Date.now()
+            });
+            saveFriendRequests(requests);
+        }
+
+        window.ChatConfig.contacts = window.ChatConfig.contacts.filter(c => c.id !== contactId);
+        saveContactsToStorage();
+        showToast('角色已删除');
+        backToContactsFromEdit();
+    }
+}
+
+// ========== 动态页面 ==========
+let momentsData = [];
+let momentsPage = 0;
+let momentsLoading = false;
+let momentsAllLoaded = false;
+let momentsCoverBg = localStorage.getItem('moments_cover_bg') || '';
+let publishImages = [];
+let publishLocation = '';
+
+function showMomentsPage() {
+    momentsCoverBg = localStorage.getItem('moments_cover_bg') || '';
+    loadMomentsData();
+    const appWindow = document.getElementById('chatAppWindow');
+    if (!appWindow) return;
+    var globalBg = localStorage.getItem('global_chat_bg') || '';
+
+    appWindow.innerHTML = `
+        <div class="chat-shell" style="background-image:url(${globalBg});background-size:cover;background-position:center;">
+            <div class="chat-nav" style="background:rgba(255,255,255,0.7);">
+                <div class="nav-status-bar"></div>
+                <div class="nav-body">
+                    <span class="nav-back" onclick="renderChatShell()">‹</span>
+                    <span class="nav-title">动态</span>
+                </div>
+            </div>
+            <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;" id="momentsScrollArea" onscroll="handleMomentsScroll()">
+                <div class="moments-cover" id="momentsCover" onclick="changeMomentsCover()" style="background-image:url(${momentsCoverBg});">
+                    <div class="moments-cover-gradient"></div>
+                    <div class="moments-cover-info">
+                        <span class="moments-cover-name" id="momentsCoverName">用户</span>
+                        <div class="moments-cover-avatar" id="momentsCoverAvatar"></div>
+                    </div>
+                    <div class="moments-publish-btn" onclick="event.stopPropagation(); openPublishModal()">
+                        <span class="publish-icon-body"></span>
+                        <span class="publish-icon-lens"></span>
+                    </div>
+                </div>
+                <div class="moments-feed" id="momentsFeed"></div>
+                <div class="moments-bottom-hint" id="momentsBottomHint"></div>
+            </div>
+            <div class="moments-back-top" id="momentsBackTop" onclick="scrollMomentsToTop()">↑</div>
+        </div>
+        <div class="moments-image-viewer" id="momentsImageViewer" onclick="closeMomentsImageViewer()">
+            <img id="momentsViewerImg" src="" style="max-width:95%;max-height:95%;object-fit:contain;border-radius:8px;">
+        </div>
+        <div class="moments-interact-panel" id="momentsInteractPanel" onclick="event.stopPropagation()">
+            <div class="interact-panel-header">
+                <span>互动</span>
+                <span class="interact-panel-close" onclick="closeInteractPanel()">x</span>
+            </div>
+            <div class="interact-panel-body" id="interactPanelBody"></div>
+        </div>
+        <div class="moments-publish-overlay" id="momentsPublishOverlay" onclick="closePublishModal()">
+            <div class="moments-publish-modal" onclick="event.stopPropagation()">
+                <div style="font-size:16px;font-weight:600;margin-bottom:12px;color:#000;">发布动态</div>
+                <textarea class="caption-textarea" id="publishText" placeholder="分享你的想法..." style="height:100px;"></textarea>
+                <div style="display:flex;gap:8px;margin-top:8px;">
+                    <button class="white-btn" onclick="document.getElementById('publishImageInput').click()">添加图片</button>
+                    <button class="white-btn" onclick="openLocationInput()">添加位置</button>
+                </div>
+                <input type="file" id="publishImageInput" accept="image/*" multiple style="display:none;" onchange="handlePublishImages(event)">
+                <div class="publish-image-preview" id="publishImagePreview"></div>
+                <button class="black-btn" onclick="publishMoment()" style="margin-top:12px;">发布</button>
+            </div>
+        </div>
+    `;
+
+    momentsPage = 0;
+    momentsAllLoaded = false;
+    loadMomentsCoverInfo();
+    if (momentsData.length === 0) {
+        loadInitialMoments();
+    }
+    renderMomentsFeed();
+}
+
+function saveMomentsData() {
+    try { localStorage.setItem('moments_data', JSON.stringify(momentsData)); } catch(e) {}
+}
+
+function loadMomentsData() {
+    var raw = localStorage.getItem('moments_data');
+    if (raw) { try { momentsData = JSON.parse(raw); } catch(e) { momentsData = []; } }
+    else { momentsData = []; }
+}
+
+function loadInitialMoments() {
+    momentsData.push({
+        id: 'm_welcome',
+        userName: '小助手',
+        userAvatar: '助',
+        text: '欢迎使用玉界平台，我是测试小助手',
+        images: [],
+        time: getRelativeTime(Date.now() - 86400000),
+        location: '',
+        likes: 0,
+        comments: [],
+        liked: false
+    });
+    saveMomentsData();
+}
+
+function loadMomentsCoverInfo() {
+    var avatar = document.getElementById('momentsCoverAvatar');
+    var name = document.getElementById('momentsCoverName');
+    var masks = typeof getMasks === 'function' ? getMasks() : [];
+    var activeMaskId = localStorage.getItem('active_mask_id') || '';
+    var activeMask = null;
+    for (var i = 0; i < masks.length; i++) {
+        if (masks[i].id === activeMaskId) { activeMask = masks[i]; break; }
+    }
+    if (!activeMask && masks.length > 0) activeMask = masks[0];
+    if (activeMask) {
+        if (activeMask.avatar && avatar) {
+            avatar.style.backgroundImage = 'url(' + activeMask.avatar + ')';
+            avatar.style.backgroundSize = 'cover';
+            avatar.style.backgroundPosition = 'center';
+            avatar.innerText = '';
+        }
+        if (activeMask.name && name) name.textContent = activeMask.name;
+    }
+}
+
+function changeMomentsCover() {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+            momentsCoverBg = ev.target.result;
+            localStorage.setItem('moments_cover_bg', momentsCoverBg);
+            var cover = document.getElementById('momentsCover');
+            if (cover) cover.style.backgroundImage = 'url(' + momentsCoverBg + ')';
+        };
+        reader.readAsDataURL(file);
+    };
+    input.click();
+}
+
+function handleMomentsScroll() {
+    var area = document.getElementById('momentsScrollArea');
+    var btn = document.getElementById('momentsBackTop');
+    if (!area) return;
+    if (btn) btn.style.display = area.scrollTop > 500 ? 'flex' : 'none';
+    if (momentsLoading || momentsAllLoaded) return;
+    var scrollBottom = area.scrollHeight - area.scrollTop - area.clientHeight;
+    if (scrollBottom < 200) loadMoreMoments();
+}
+
+function scrollMomentsToTop() {
+    var area = document.getElementById('momentsScrollArea');
+    if (area) area.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function loadMoreMoments() {
+    if (momentsLoading || momentsAllLoaded) return;
+    momentsLoading = true;
+    momentsPage++;
+    var newMoments = generateMockMoments(momentsPage);
+    if (newMoments.length === 0) {
+        momentsAllLoaded = true;
+        var hint = document.getElementById('momentsBottomHint');
+        if (hint) hint.innerHTML = '<span style="color:#8e8e93;font-size:12px;">动态到底了</span>';
+    } else {
+        momentsData = momentsData.concat(newMoments);
+        saveMomentsData();
+        renderMomentsFeed();
+    }
+    momentsLoading = false;
+}
+
+function generateMockMoments(page) {
+    if (page > 2) return [];
+    var mockTexts = ['今天天气真好，适合出去走走。', '分享一本最近在读的书，很有意思。', '好久不见，大家都还好吗？', '新学的菜谱，第一次尝试，味道还不错。', '周末愉快！享受难得的闲暇时光。'];
+    var result = [];
+    var count = 2;
+    for (var i = 0; i < count; i++) {
+        var idx = Math.floor(Math.random() * mockTexts.length);
+        result.push({
+            id: 'm_' + Date.now() + '_' + i,
+            userName: '小助手',
+            userAvatar: '助',
+            text: mockTexts[idx],
+            images: [],
+            time: getRelativeTime(Date.now() - Math.floor(Math.random() * 86400000 * 7)),
+            location: '',
+            likes: Math.floor(Math.random() * 20),
+            comments: [],
+            liked: false
+        });
+    }
+    return result;
+}
+
+function getRelativeTime(timestamp) {
+    var now = Date.now();
+    var diff = now - timestamp;
+    if (diff < 60000) return '刚刚';
+    if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
+    var d = new Date(timestamp);
+    return (d.getMonth() + 1) + '.' + d.getDate() + ' ' + d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+}
+
+function renderMomentsFeed() {
+    var feed = document.getElementById('momentsFeed');
+    if (!feed) return;
+    var likedMap = {};
+    try { likedMap = JSON.parse(localStorage.getItem('moments_liked') || '{}'); } catch(e) {}
+    var likesCountMap = {};
+    try { likesCountMap = JSON.parse(localStorage.getItem('moments_likes_count') || '{}'); } catch(e) {}
+    momentsData.forEach(function(m) {
+        if (likedMap[m.id]) m.liked = true;
+        if (likesCountMap[m.id] !== undefined) m.likes = likesCountMap[m.id];
+    });
+    var html = '';
+    momentsData.forEach(function(m) {
+        var imgHTML = '';
+        if (m.images && m.images.length > 0) imgHTML = renderMomentImages(m.images);
+        html += `
+            <div class="moment-card">
+                <div class="moment-header">
+                    <div class="moment-avatar">${m.userAvatar}</div>
+                    <div class="moment-user-info">
+                        <div class="moment-user-name">${m.userName}</div>
+                        <div class="moment-time">${m.time}${m.location ? ' · ' + m.location : ''}</div>
+                    </div>
+                </div>
+                <div class="moment-text" id="text-${m.id}" onclick="toggleMomentText('${m.id}')">${m.text}</div>
+                ${imgHTML}
+                <div class="moment-actions">
+                    <span onclick="toggleLike('${m.id}')">${m.liked ? '♥' : '♡'} ${m.likes || 0}</span>
+                    <span onclick="openInteractPanel('${m.id}')">...</span>
+                </div>
+            </div>
+        `;
+    });
+    feed.innerHTML = html;
+    momentsData.forEach(function(m) { checkTextOverflow('text-' + m.id, m.text); });
+}
+
+function checkTextOverflow(id, fullText) {
+    setTimeout(function() {
+        var el = document.getElementById(id);
+        if (!el) return;
+        if (el.scrollHeight > el.clientHeight + 2) {
+            el.classList.add('collapsed');
+            el.setAttribute('data-full', fullText);
+            el.setAttribute('data-collapsed', 'true');
+        }
+    }, 100);
+}
+
+function toggleMomentText(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (el.classList.contains('collapsed')) {
+        el.classList.remove('collapsed');
+        el.textContent = el.getAttribute('data-full');
+    }
+}
+
+function renderMomentImages(images) {
+    var count = images.length;
+    var gridClass = 'moment-images grid-' + Math.min(count, 9);
+    var html = '<div class="' + gridClass + '">';
+    var max = Math.min(count, 9);
+    for (var i = 0; i < max; i++) {
+        html += '<div class="moment-image-item" onclick="event.stopPropagation(); openMomentImageViewer(\'' + images[i] + '\')" style="background-image:url(' + images[i] + ');background-size:cover;background-position:center;"></div>';
+    }
+    html += '</div>';
+    return html;
+}
+
+function toggleLike(momentId) {
+    var m = momentsData.find(function(item) { return item.id === momentId; });
+    if (!m) return;
+    m.liked = !m.liked;
+    m.likes = m.liked ? (m.likes || 0) + 1 : Math.max(0, (m.likes || 0) - 1);
+    var likedMap = {};
+    try { likedMap = JSON.parse(localStorage.getItem('moments_liked') || '{}'); } catch(e) {}
+    if (m.liked) likedMap[momentId] = true; else delete likedMap[momentId];
+    localStorage.setItem('moments_liked', JSON.stringify(likedMap));
+    var likesCountMap = {};
+    try { likesCountMap = JSON.parse(localStorage.getItem('moments_likes_count') || '{}'); } catch(e) {}
+    likesCountMap[momentId] = m.likes;
+    localStorage.setItem('moments_likes_count', JSON.stringify(likesCountMap));
+    saveMomentsData();
+    renderMomentsFeed();
+}
+
+let interactTargetId = null;
+
+function openInteractPanel(momentId) {
+    interactTargetId = momentId;
+    var panel = document.getElementById('momentsInteractPanel');
+    var body = document.getElementById('interactPanelBody');
+    if (!panel || !body) return;
+    var m = momentsData.find(function(item) { return item.id === momentId; });
+    if (!m) return;
+    var html = '';
+    html += '<div style="margin-bottom:12px;">';
+    html += '<span onclick="toggleLike(\'' + momentId + '\'); closeInteractPanel();" style="cursor:pointer;margin-right:16px;">' + (m.liked ? '♥ 已赞' : '♡ 点赞') + '</span>';
+    html += '<span style="color:#8e8e93;">' + (m.likes || 0) + '人赞过</span>';
+    html += '</div>';
+    html += '<div style="border-top:0.5px solid rgba(0,0,0,0.05);padding-top:8px;" id="commentList">';
+    if (m.comments && m.comments.length > 0) {
+        m.comments.forEach(function(c) { html += '<div style="margin-bottom:6px;font-size:13px;"><b>' + c.user + '：</b>' + c.text + '</div>'; });
+    } else {
+        html += '<div style="color:#8e8e93;font-size:12px;" id="noCommentHint">暂无评论</div>';
+    }
+    html += '</div>';
+    html += '<div style="display:flex;gap:8px;margin-top:10px;">';
+    html += '<input type="text" id="interactCommentInput" class="chat-input" placeholder="写评论..." style="flex:1;height:32px;font-size:13px;">';
+    html += '<button class="black-btn" style="width:auto;padding:6px 14px;font-size:13px;margin:0;" onclick="submitComment(\'' + momentId + '\')">发送</button>';
+    html += '</div>';
+    body.innerHTML = html;
+    panel.classList.add('show');
+}
+
+function closeInteractPanel() {
+    var panel = document.getElementById('momentsInteractPanel');
+    if (panel) panel.classList.remove('show');
+    interactTargetId = null;
+}
+
+function submitComment(momentId) {
+    var input = document.getElementById('interactCommentInput');
+    if (!input || !input.value.trim()) return;
+    var m = momentsData.find(function(item) { return item.id === momentId; });
+    if (!m) return;
+    if (!m.comments) m.comments = [];
+    m.comments.push({ user: '我', text: input.value.trim() });
+    input.value = '';
+    saveMomentsData();
+    var commentList = document.getElementById('commentList');
+    if (commentList) {
+        var commentDiv = document.createElement('div');
+        commentDiv.style.cssText = 'margin-bottom:6px;font-size:13px;';
+        commentDiv.innerHTML = '<b>我：</b>' + input.value.trim();
+        commentList.appendChild(commentDiv);
+        var emptyHint = document.getElementById('noCommentHint');
+        if (emptyHint) emptyHint.remove();
+    }
+    renderMomentsFeed();
+}
+
+function openMomentImageViewer(src) {
+    var viewer = document.getElementById('momentsImageViewer');
+    var img = document.getElementById('momentsViewerImg');
+    if (!viewer || !img) return;
+    img.src = src;
+    viewer.style.display = 'flex';
+}
+
+function closeMomentsImageViewer() {
+    var viewer = document.getElementById('momentsImageViewer');
+    if (viewer) viewer.style.display = 'none';
+}
+
+function openPublishModal() {
+    var overlay = document.getElementById('momentsPublishOverlay');
+    if (overlay) overlay.style.display = 'flex';
+}
+
+function closePublishModal() {
+    var overlay = document.getElementById('momentsPublishOverlay');
+    if (overlay) overlay.style.display = 'none';
+    document.getElementById('publishText').value = '';
+    publishImages = [];
+    publishLocation = '';
+    document.getElementById('publishImagePreview').innerHTML = '';
+}
+
+function handlePublishImages(e) {
+    var files = e.target.files;
+    if (!files || files.length === 0) return;
+    for (var i = 0; i < Math.min(files.length, 9); i++) {
+        (function(file) {
+            var reader = new FileReader();
+            reader.onload = function(ev) { publishImages.push(ev.target.result); renderPublishImagePreview(); };
+            reader.readAsDataURL(file);
+        })(files[i]);
+    }
+}
+
+function renderPublishImagePreview() {
+    var container = document.getElementById('publishImagePreview');
+    if (!container) return;
+    var html = '';
+    publishImages.forEach(function(src, idx) {
+        html += '<div style="width:60px;height:60px;background-image:url(' + src + ');background-size:cover;background-position:center;border-radius:8px;position:relative;display:inline-block;margin:4px;">';
+        html += '<span style="position:absolute;top:-6px;right:-6px;width:16px;height:16px;background:#ff3b30;color:#fff;border-radius:50%;font-size:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="removePublishImage(' + idx + ')">x</span>';
+        html += '</div>';
+    });
+    container.innerHTML = html;
+}
+
+function removePublishImage(idx) { publishImages.splice(idx, 1); renderPublishImagePreview(); }
+
+function publishMoment() {
+    var text = document.getElementById('publishText').value.trim();
+    if (!text && publishImages.length === 0) { showToast('请输入内容或添加图片'); return; }
+    var newMoment = {
+        id: 'm_' + Date.now(),
+        userName: '我',
+        userAvatar: '我',
+        text: text || '',
+        images: publishImages.slice(),
+        time: '刚刚',
+        location: publishLocation,
+        likes: 0,
+        comments: [],
+        liked: false
+    };
+    momentsData.unshift(newMoment);
+    saveMomentsData();
+    renderMomentsFeed();
+    closePublishModal();
+    showToast('发布成功');
+    var area = document.getElementById('momentsScrollArea');
+    if (area) area.scrollTo({ top: 0 });
+}
+
+function openLocationInput() {
+    var overlay = document.createElement('div');
+    overlay.className = 'caption-modal-overlay';
+    overlay.id = 'locationInputOverlay';
+    overlay.innerHTML = `
+        <div class="caption-modal">
+            <div style="font-size:16px;font-weight:600;margin-bottom:10px;color:#000;">添加位置</div>
+            <input type="text" class="payment-note" id="locationInputField" placeholder="输入地点名称" value="${publishLocation}">
+            <div class="caption-buttons" style="margin-top:12px;">
+                <div class="payment-btn-cancel" onclick="closeLocationInput()">取消</div>
+                <div class="payment-btn-confirm" onclick="confirmLocationInput()">确定</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeLocationInput(); };
+}
+
+function closeLocationInput() { var overlay = document.getElementById('locationInputOverlay'); if (overlay) overlay.remove(); }
+
+function confirmLocationInput() {
+    var input = document.getElementById('locationInputField');
+    if (input) publishLocation = input.value.trim();
+    closeLocationInput();
+}       
+
+// ========== 我的页面 ==========
+function renderMePage(listView) {
+    if (!listView) return;
+    var masks = getMasks();
+    var activeMaskId = localStorage.getItem('active_mask_id') || '';
+    var activeMask = null;
+    for (var i = 0; i < masks.length; i++) {
+        if (masks[i].id === activeMaskId) { activeMask = masks[i]; break; }
+    }
+    if (!activeMask && masks.length > 0) { activeMask = masks[0]; }
+    var avatarContent = activeMask && activeMask.avatar ? '<div class="me-avatar" style="background-image:url(' + activeMask.avatar + ');"></div>' : '<div class="me-avatar" id="meAvatarPlaceholder">+</div>';
+    var displayName = activeMask ? activeMask.name : '用户';
+
+    listView.innerHTML = `
+        <div class="me-card" onclick="openMaskEditor()">
+            ${avatarContent}
+            <div class="me-info">
+                <span class="me-name">${displayName}</span>
+            </div>
+            <span class="me-arrow">></span>
+        </div>
+        <div class="me-list">
+            <div class="me-list-item" onclick="openWalletPage()">
+                <span class="me-list-icon">$</span> 服务
+                <span class="me-list-arrow">></span>
+            </div>
+            <div class="me-list-item" onclick="openFavoritesPage()">
+                <span class="me-list-icon">★</span> 收藏
+                <span class="me-list-arrow">></span>
+            </div>
+            <div class="me-list-item" onclick="openEmojiManagePage()">
+                <span class="me-list-icon">😊</span> 表情包
+                <span class="me-list-arrow">></span>
+            </div>
+            <div class="me-list-item" onclick="openSettingsPage()">
+                <span class="me-list-icon">⚙</span> 设置
+                <span class="me-list-arrow">></span>
+            </div>
+        </div>
+    `;
+}
+
+// ========== 面具数据 ==========
+function getMasks() { var raw = localStorage.getItem('user_masks'); return raw ? JSON.parse(raw) : []; }
+function saveMasks(masks) { localStorage.setItem('user_masks', JSON.stringify(masks)); }
+
+function openMaskEditor() {
+    var masks = getMasks();
+    var activeMaskId = localStorage.getItem('active_mask_id') || '';
+    var maskListHTML = '';
+    for (var i = 0; i < masks.length; i++) {
+        var m = masks[i];
+        var isActive = m.id === activeMaskId;
+        var avatarHTML = m.avatar ? '<div class="mask-item-avatar" style="background-image:url(' + m.avatar + ');"></div>' : '<div class="mask-item-avatar">' + (m.name ? m.name.charAt(0) : '?') + '</div>';
+        maskListHTML += '<div class="mask-item ' + (isActive ? 'active' : '') + '" onclick="selectMask(\'' + m.id + '\')">' + avatarHTML + '<div class="mask-item-name">' + (m.name || '未命名') + '</div></div>';
+    }
+    var overlay = document.createElement('div');
+    overlay.className = 'mask-edit-overlay';
+    overlay.id = 'maskEditOverlay';
+    overlay.innerHTML = '<div class="mask-edit-panel" onclick="event.stopPropagation()"><div class="mask-edit-handle"></div><div class="mask-edit-title">个人资料</div><div class="mask-list" id="maskList">' + maskListHTML + '<div class="mask-add-btn" onclick="addNewMask()">+</div></div><div id="maskDetailEditor"></div><button class="black-btn" onclick="closeMaskEditor()">完成</button></div>';
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeMaskEditor(); };
+    if (activeMaskId) showMaskDetail(activeMaskId);
+    else if (masks.length > 0) showMaskDetail(masks[0].id);
+}
+
+function closeMaskEditor() { var overlay = document.getElementById('maskEditOverlay'); if (overlay) overlay.remove(); var listView = document.getElementById('chatListView'); if (listView) renderMePage(listView); }
+
+function selectMask(id) {
+    localStorage.setItem('active_mask_id', id);
+    var overlay = document.getElementById('maskEditOverlay');
+    if (overlay) {
+        overlay.querySelectorAll('.mask-item').forEach(function(el) { el.classList.remove('active'); });
+        var items = overlay.querySelectorAll('.mask-item');
+        var masks = getMasks();
+        for (var i = 0; i < items.length; i++) { if (masks[i] && masks[i].id === id) { items[i].classList.add('active'); break; } }
+    }
+    showMaskDetail(id);
+    showToast('已切换面具');
+}
+
+function addNewMask() {
+    var masks = getMasks();
+    var newMask = { id: 'mask_' + Date.now(), name: '面具' + (masks.length + 1), avatar: '', persona: '' };
+    masks.push(newMask);
+    saveMasks(masks);
+    localStorage.setItem('active_mask_id', newMask.id);
+    closeMaskEditor();
+    openMaskEditor();
+}
+
+function showMaskDetail(maskId) {
+    var masks = getMasks();
+    var mask = null;
+    for (var i = 0; i < masks.length; i++) { if (masks[i].id === maskId) { mask = masks[i]; break; } }
+    if (!mask) return;
+    var editor = document.getElementById('maskDetailEditor');
+    if (!editor) return;
+    editor.innerHTML = '<div style="text-align:center;margin-bottom:16px;"><div id="maskDetailAvatar" style="width:70px;height:70px;border-radius:50%;background:#e5e5ea;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:28px;color:#8e8e93;cursor:pointer;background-size:cover;background-position:center;' + (mask.avatar ? 'background-image:url(' + mask.avatar + ');' : '') + '" onclick="document.getElementById(\'maskAvatarInput\').click()">' + (mask.avatar ? '' : (mask.name ? mask.name.charAt(0) : '?')) + '</div><input type="file" id="maskAvatarInput" accept="image/*" style="display:none;" onchange="updateMaskAvatar(\'' + maskId + '\', event)"></div><label class="ios-label">面具名称</label><input type="text" class="ios-input" id="maskNameInput" value="' + mask.name + '" placeholder="面具名称"><label class="ios-label">人设描述</label><textarea class="ios-input" id="maskPersonaInput" style="height:100px;resize:none;" placeholder="描述你的身份、性格、与角色的关系等...">' + (mask.persona || '') + '</textarea><button class="ios-btn-black" onclick="saveMaskDetail(\'' + maskId + '\')">保存面具</button>' + (masks.length > 1 ? '<button class="ios-btn-white" style="border-color:#ff3b30;color:#ff3b30;" onclick="deleteMask(\'' + maskId + '\')">删除面具</button>' : '');
+}
+
+function updateMaskAvatar(maskId, e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+        var masks = getMasks();
+        for (var i = 0; i < masks.length; i++) { if (masks[i].id === maskId) { masks[i].avatar = ev.target.result; break; } }
+        saveMasks(masks);
+        var avatarEl = document.getElementById('maskDetailAvatar');
+        if (avatarEl) { avatarEl.style.backgroundImage = 'url(' + ev.target.result + ')'; avatarEl.innerText = ''; }
+    };
+    reader.readAsDataURL(file);
+}
+
+function saveMaskDetail(maskId) {
+    var name = document.getElementById('maskNameInput').value.trim();
+    var persona = document.getElementById('maskPersonaInput').value.trim();
+    if (!name) { showToast('请输入面具名称'); return; }
+    var masks = getMasks();
+    for (var i = 0; i < masks.length; i++) { if (masks[i].id === maskId) { masks[i].name = name; masks[i].persona = persona; break; } }
+    saveMasks(masks);
+    showToast('面具已保存');
+    closeMaskEditor();
+    openMaskEditor();
+}
+
+function deleteMask(maskId) {
+    var masks = getMasks();
+    masks = masks.filter(function(m) { return m.id !== maskId; });
+    saveMasks(masks);
+    if (localStorage.getItem('active_mask_id') === maskId) localStorage.setItem('active_mask_id', masks.length > 0 ? masks[0].id : '');
+    showToast('面具已删除');
+    closeMaskEditor();
+    openMaskEditor();
+}
+
+// ========== 钱包页面 ==========
+function getWalletBalance() { var raw = localStorage.getItem('wallet_balance'); return raw ? parseFloat(raw) : 5200.00; }
+function setWalletBalance(amount) { localStorage.setItem('wallet_balance', amount.toFixed(2)); }
+function getWalletRecords() { var raw = localStorage.getItem('wallet_records'); return raw ? JSON.parse(raw) : []; }
+function addWalletRecord(type, amount, note) { var records = getWalletRecords(); records.unshift({ type: type, amount: amount, note: note, time: Date.now() }); if (records.length > 100) records = records.slice(0, 100); localStorage.setItem('wallet_records', JSON.stringify(records)); }
+
+function openWalletPage() {
+    var listView = document.getElementById('chatListView');
+    if (!listView) return;
+    var titleEl = document.querySelector('.nav-title');
+    var backBtn = document.querySelector('.nav-back');
+    var plusBtn = document.querySelector('.nav-plus-btn');
+    if (titleEl) titleEl.textContent = '服务';
+    if (plusBtn) plusBtn.style.display = 'none';
+    if (backBtn) backBtn.onclick = function() { switchChatTab('me', document.querySelector('.tab-item:nth-child(4)')); };
+    var balance = getWalletBalance();
+    var records = getWalletRecords();
+    var recordsHTML = records.length === 0 ? '<div class="wallet-empty">暂无记录</div>' : records.map(function(r) { var cls = r.type === 'recharge' || r.type === 'receive' ? 'in' : 'out'; var prefix = r.type === 'recharge' || r.type === 'receive' ? '+' : '-'; return '<div class="wallet-record-item"><span>' + r.note + '</span><span class="record-amount ' + cls + '">' + prefix + r.amount.toFixed(2) + '</span></div>'; }).join('');
+    listView.innerHTML = '<div class="wallet-card"><div class="wallet-title">钱包</div><div class="wallet-divider"></div><div class="wallet-balance" onclick="openRechargeModal()">' + balance.toFixed(2) + '</div><div class="wallet-balance-label">零钱 · 点击充值</div></div><div class="wallet-records"><div class="wallet-record-title">充值/消耗记录</div>' + recordsHTML + '</div>';
+}
+
+function openRechargeModal() {
+    var overlay = document.createElement('div');
+    overlay.className = 'recharge-overlay';
+    overlay.id = 'rechargeOverlay';
+    overlay.innerHTML = '<div class="recharge-modal" onclick="event.stopPropagation()"><div class="recharge-modal-title">充值</div><input type="number" class="recharge-input" id="rechargeAmountInput" placeholder="0.00" step="0.01" min="0.01"><div class="recharge-buttons"><div class="recharge-btn-cancel" onclick="closeRechargeModal()">取消</div><div class="recharge-btn-confirm" onclick="confirmRecharge()">确认充值</div></div></div>';
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeRechargeModal(); };
+}
+
+function closeRechargeModal() { var overlay = document.getElementById('rechargeOverlay'); if (overlay) overlay.remove(); }
+
+function confirmRecharge() {
+    var input = document.getElementById('rechargeAmountInput');
+    var amount = parseFloat(input.value);
+    if (!amount || amount <= 0) { showToast('请输入有效金额'); return; }
+    var balance = getWalletBalance();
+    setWalletBalance(balance + amount);
+    addWalletRecord('recharge', amount, '充值');
+    closeRechargeModal();
+    showToast('充值成功');
+    openWalletPage();
+}
+
+// ========== 收藏页面 ==========
+function getFavorites() { var raw = localStorage.getItem('user_favorites'); return raw ? JSON.parse(raw) : []; }
+function saveFavorites(favorites) { localStorage.setItem('user_favorites', JSON.stringify(favorites)); }
+function addFavorite(text, contactId, contactName) { var favs = getFavorites(); favs.unshift({ id: 'fav_' + Date.now(), text: text, contactId: contactId, contactName: contactName, time: Date.now() }); saveFavorites(favs); }
+
+var favCurrentContact = 'all';
+
+function openFavoritesPage() {
+    var listView = document.getElementById('chatListView');
+    if (!listView) return;
+    var titleEl = document.querySelector('.nav-title');
+    var backBtn = document.querySelector('.nav-back');
+    var plusBtn = document.querySelector('.nav-plus-btn');
+    if (titleEl) titleEl.textContent = '收藏';
+    if (plusBtn) plusBtn.style.display = 'none';
+    if (backBtn) backBtn.onclick = function() { switchChatTab('me', document.querySelector('.tab-item:nth-child(4)')); };
+    var favs = getFavorites();
+    var contactIds = {};
+    favs.forEach(function(f) { contactIds[f.contactId] = f.contactName; });
+    var catHTML = '<div class="fav-category active" onclick="filterFav(\'all\', this)">全部</div>';
+    for (var id in contactIds) { catHTML += '<div class="fav-category" onclick="filterFav(\'' + id + '\', this)">' + contactIds[id] + '</div>'; }
+    favCurrentContact = 'all';
+    listView.innerHTML = '<div class="fav-categories" id="favCategories">' + catHTML + '</div><div class="fav-list" id="favList"></div>';
+    renderFavList();
+}
+
+function filterFav(contactId, el) {
+    favCurrentContact = contactId;
+    var cats = document.getElementById('favCategories');
+    if (cats) cats.querySelectorAll('.fav-category').forEach(function(c) { c.classList.remove('active'); });
+    if (el) el.classList.add('active');
+    renderFavList();
+}
+
+function renderFavList() {
+    var list = document.getElementById('favList');
+    if (!list) return;
+    var favs = getFavorites();
+    if (favCurrentContact !== 'all') favs = favs.filter(function(f) { return f.contactId === favCurrentContact; });
+    if (favs.length === 0) { list.innerHTML = '<div class="wallet-empty">暂无收藏</div>'; return; }
+    list.innerHTML = favs.map(function(f) { return '<div class="fav-item"><div class="fav-item-text"><b>' + f.contactName + '：</b>' + f.text + '</div><div class="fav-item-del" onclick="event.stopPropagation(); deleteFav(\'' + f.id + '\')">×</div></div>'; }).join('');
+}
+
+function deleteFav(id) { var favs = getFavorites(); favs = favs.filter(function(f) { return f.id !== id; }); saveFavorites(favs); renderFavList(); showToast('已删除'); }
+
+// ========== 表情包管理页面 ==========
+function getManagedEmojis() { var raw = localStorage.getItem('managed_emojis'); return raw ? JSON.parse(raw) : []; }
+function saveManagedEmojis(emojis) { localStorage.setItem('managed_emojis', JSON.stringify(emojis)); }
+function getBannedEmojis() { var raw = localStorage.getItem('banned_emojis'); return raw ? JSON.parse(raw) : []; }
+function saveBannedEmojis(banned) { localStorage.setItem('banned_emojis', JSON.stringify(banned)); }
+
+function openEmojiManagePage() {
+    var listView = document.getElementById('chatListView');
+    if (!listView) return;
+    var titleEl = document.querySelector('.nav-title');
+    var backBtn = document.querySelector('.nav-back');
+    var plusBtn = document.querySelector('.nav-plus-btn');
+    if (titleEl) titleEl.textContent = '表情包';
+    if (plusBtn) plusBtn.style.display = 'none';
+    if (backBtn) backBtn.onclick = function() { switchChatTab('me', document.querySelector('.tab-item:nth-child(4)')); };
+    renderEmojiManage(listView);
+}
+
+function renderEmojiManage(listView) {
+    var emojis = getManagedEmojis();
+    var banned = getBannedEmojis();
+    var gridHTML = '';
+    for (var i = 0; i < 10; i++) {
+        if (i < emojis.length) {
+            var isBanned = banned.indexOf(i) >= 0;
+            gridHTML += '<div class="emoji-manage-item ' + (isBanned ? 'banned' : '') + '" style="background-image:url(' + emojis[i].src + ');" onclick="toggleBanEmoji(' + i + ')">' + (isBanned ? '<div class="emoji-banned-badge">!</div>' : '') + '</div>';
+        } else {
+            gridHTML += '<div class="emoji-manage-add" onclick="importEmojiBatch()"></div>';
+        }
+    }
+    var noteHTML = '';
+    for (var j = 0; j < emojis.length; j++) {
+        noteHTML += '<div class="emoji-manage-note">' + (j + 1) + '. ' + (emojis[j].note || '无备注') + ' <span style="color:#007aff;cursor:pointer;" onclick="editEmojiNote(' + j + ')">编辑</span></div>';
+    }
+    listView.innerHTML = '<div class="emoji-manage-grid">' + gridHTML + '</div><div style="padding:4px 16px;font-size:12px;color:#8e8e93;">点击表情包可禁止/解禁角色使用。红色边框=已禁止。</div>' + noteHTML + '<button class="ios-btn-black" style="margin:16px;width:calc(100% - 32px);" onclick="importEmojiBatch()">一键导入表情包（最多10张）</button>';
+}
+
+function importEmojiBatch() {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.multiple = true;
+    input.onchange = function(e) {
+        var files = e.target.files;
+        if (!files || files.length === 0) return;
+        var emojis = getManagedEmojis();
+        var count = Math.min(files.length, 10 - emojis.length);
+        var loaded = 0;
+        for (var i = 0; i < count; i++) {
+            (function(file) {
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    emojis.push({ src: ev.target.result, note: '' });
+                    saveManagedEmojis(emojis);
+                    loaded++;
+                    if (loaded === count) { var lv = document.getElementById('chatListView'); if (lv) renderEmojiManage(lv); showToast('已导入 ' + loaded + ' 张表情包'); }
+                };
+                reader.readAsDataURL(file);
+            })(files[i]);
+        }
+    };
+    input.click();
+}
+
+function toggleBanEmoji(index) {
+    var banned = getBannedEmojis();
+    var pos = banned.indexOf(index);
+    if (pos >= 0) banned.splice(pos, 1); else banned.push(index);
+    saveBannedEmojis(banned);
+    var lv = document.getElementById('chatListView');
+    if (lv) renderEmojiManage(lv);
+}
+
+function editEmojiNote(index) {
+    var emojis = getManagedEmojis();
+    var note = prompt('输入表情包含义（角色可读取）：', emojis[index].note || '');
+    if (note !== null) { emojis[index].note = note; saveManagedEmojis(emojis); var lv = document.getElementById('chatListView'); if (lv) renderEmojiManage(lv); }
+}
+
+// ========== 设置页面 ==========
+function openSettingsPage() {
+    var listView = document.getElementById('chatListView');
+    if (!listView) return;
+    var titleEl = document.querySelector('.nav-title');
+    var backBtn = document.querySelector('.nav-back');
+    var plusBtn = document.querySelector('.nav-plus-btn');
+    if (titleEl) titleEl.textContent = '设置';
+    if (plusBtn) plusBtn.style.display = 'none';
+    if (backBtn) backBtn.onclick = function() { switchChatTab('me', document.querySelector('.tab-item:nth-child(4)')); };
+    var globalBg = localStorage.getItem('global_chat_bg') || '';
+    listView.innerHTML = '<div class="settings-list"><div class="settings-list-item" onclick="openMaskEditor()">个人资料 <span class="settings-arrow">></span></div></div><div class="settings-section-title" style="margin-left:16px;">全局背景图</div><div class="settings-hint">提示：此处更换4个聊天页面的壁纸。</div><div class="glass-card" style="margin:0 16px 10px;"><div class="global-bg-preview" id="globalBgPreview" style="background-image:url(' + globalBg + ');" onclick="document.getElementById(\'globalBgInput\').click()">' + (globalBg ? '' : '点击更换全局背景图') + '</div><input type="file" id="globalBgInput" accept="image/*" style="display:none;" onchange="handleGlobalBg(event)"><button class="black-btn" onclick="clearGlobalBg()">清除全局背景图</button></div><div class="settings-list"><div class="settings-list-item"><span>拍一拍</span><input type="checkbox" class="ios-switch-sm" id="swPat" ' + (localStorage.getItem('pat_enabled') === 'true' ? 'checked' : '') + ' onchange="togglePat(this.checked)"></div></div><div class="settings-hint">提示：拍一拍开启后，角色与你互动时将出现。</div><div class="glass-card" style="margin:0 16px 10px;"><div class="pat-input-row"><span>角色</span><input type="text" class="pat-input" id="patAction" value="' + (localStorage.getItem('pat_action') || '拍了拍') + '" maxlength="4"><span>了</span><input type="text" class="pat-input" id="patTarget" value="' + (localStorage.getItem('pat_target') || '我') + '" maxlength="4"><span>的</span><input type="text" class="pat-input" id="patBody" value="' + (localStorage.getItem('pat_body') || '肩膀') + '" maxlength="4"></div><div class="pat-preview" id="patPreview"></div><button class="black-btn" onclick="savePat()">保存</button></div>';
+    updatePatPreview();
+    document.getElementById('patAction').addEventListener('input', updatePatPreview);
+    document.getElementById('patTarget').addEventListener('input', updatePatPreview);
+    document.getElementById('patBody').addEventListener('input', updatePatPreview);
+}
+
+function handleGlobalBg(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) { var bg = ev.target.result; localStorage.setItem('global_chat_bg', bg); document.getElementById('globalBgPreview').style.backgroundImage = 'url(' + bg + ')'; document.getElementById('globalBgPreview').innerText = ''; showToast('全局背景图已保存'); };
+    reader.readAsDataURL(file);
+}
+
+function clearGlobalBg() { localStorage.removeItem('global_chat_bg'); document.getElementById('globalBgPreview').style.backgroundImage = ''; document.getElementById('globalBgPreview').innerText = '点击更换全局背景图'; showToast('已清除'); }
+
+function togglePat(checked) { localStorage.setItem('pat_enabled', checked); }
+
+function updatePatPreview() {
+    var action = document.getElementById('patAction').value || '拍了拍';
+    var target = document.getElementById('patTarget').value || '我';
+    var body = document.getElementById('patBody').value || '肩膀';
+    var preview = document.getElementById('patPreview');
+    if (preview) preview.textContent = '角色' + action + '了' + target + '的' + body;
+}
+
+function savePat() {
+    var action = document.getElementById('patAction').value || '拍了拍';
+    var target = document.getElementById('patTarget').value || '我';
+    var body = document.getElementById('patBody').value || '肩膀';
+    localStorage.setItem('pat_action', action);
+    localStorage.setItem('pat_target', target);
+    localStorage.setItem('pat_body', body);
+    showToast('拍一拍已保存');
+}        
+
+     
+
