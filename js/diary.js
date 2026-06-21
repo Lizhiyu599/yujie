@@ -170,8 +170,8 @@ function updateBottomBar() {
             nextBtn.textContent = '翻开';
             nextBtn.disabled = false;
         } else if (currentPageIndex >= diaries.length - 1) {
-            nextBtn.textContent = '合上';
-            nextBtn.disabled = false;
+            nextBtn.textContent = '下一页 ›';
+            nextBtn.disabled = true;
         } else {
             nextBtn.textContent = '下一页 ›';
             nextBtn.disabled = false;
@@ -203,26 +203,6 @@ function openCover() {
     updateBottomBar();
 }
 
-// ========== 合上日记（回到封面） ==========
-function closeCover() {
-    if (!isCoverOpen) return;
-    const cover = document.getElementById('diaryCover');
-    if (!cover) return;
-    cover.classList.remove('open');
-    isCoverOpen = false;
-    currentPageIndex = 0;
-
-    // 清除自动生成的占位日记
-    var diaries = getDiaries();
-    if (diaries.length === 1 && diaries[0].content.indexOf('今天翻开日记本') >= 0) {
-        diaries = [];
-        saveDiaries(diaries);
-    }
-
-    updateBottomBar();
-    renderDiaryPages();
-}
-
 // ========== 翻页 ==========
 function prevPage() {
     if (!isCoverOpen) return;
@@ -243,9 +223,6 @@ function nextPage() {
         currentPageIndex++;
         updatePageVisibility();
         updateBottomBar();
-    } else {
-        // 最后一页，合上
-        closeCover();
     }
 }
 
@@ -585,5 +562,5 @@ function generateDiary() {
         });
     } else {
         showToast('生成功能暂未接入，请等待后续更新');
-    }
+    } 
 }
