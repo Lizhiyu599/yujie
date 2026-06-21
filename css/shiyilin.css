@@ -610,6 +610,17 @@
     pointer-events: none;
 }
 
+/* 内页日期 */
+.sl-entry-date {
+    position: relative;
+    z-index: 1;
+    text-align: right;
+    font-size: 12px;
+    color: #8b775a;
+    margin-bottom: 18px;
+    letter-spacing: 1px;
+}
+
 .sl-empty {
     text-align: center;
     color: #b0a08a;
