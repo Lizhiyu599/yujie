@@ -2286,7 +2286,7 @@ function handleGlobalBg(e) {
     var file = e.target.files[0];
     if (!file) return;
     var reader = new FileReader();
-    reader.onload = function(ev) { var bg = ev.target.result; localStorage.setItem('global_chat_bg', bg); document.getElementById('globalBgPreview').style.backgroundImage = 'url(' + bg + ')'; document.getElementById('globalBgPreview').innerText = ''; showToast('全局背景图已保存'); };
+    reader.onload = function(ev) { var bg = ev.target.result; localStorage.setItem('global_chat_bg', bg); document.getElementById('globalBgPreview').style.backgroundImage = 'url(' + bg + ')'; document.getElementById('globalBgPreview').innerText = ''; var shell = document.querySelector('.chat-shell'); if (shell) { shell.style.backgroundImage = 'url(' + bg + ')'; shell.style.backgroundSize = 'cover'; shell.style.backgroundPosition = 'center'; } showToast('全局背景图已保存'); };
     reader.readAsDataURL(file);
 }
 
@@ -2296,9 +2296,10 @@ function togglePat(checked) { localStorage.setItem('pat_enabled', checked); }
 
 function updatePatPreview() {
     var action = document.getElementById('patAction').value || '拍了拍';
+    var target = document.getElementById('patTarget').value || '我';
     var body = document.getElementById('patBody').value || '肩膀';
     var preview = document.getElementById('patPreview');
-    if (preview) preview.textContent = '角色' + action + '了我的' + body;
+    if (preview) preview.textContent = '角色' + action + '了' + target + '我的' + body;
 }
 
 function savePat() {
