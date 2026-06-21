@@ -436,7 +436,7 @@ function sendLocation() {
     document.getElementById('chatMessages').appendChild(nRow);
 
     saveChatHistory(window.ChatState.currentContactId);
- }      
+}
 
 // ========== 红包/转账状态存储 ==========
 function getPaymentState(msgId) {
@@ -454,9 +454,9 @@ function openPaymentModal(msgId) {
     if (!card) return;
     var row = card.closest('.bubble-row');
     if (row && row.classList.contains('user')) {
-    showToast('不能领取自己发送的红包或转账');
-    return;
-}
+        showToast('不能领取自己发送的红包或转账');
+        return;
+    }
     var state = getPaymentState(msgId);
     if (state !== 'pending') {
         showToast('该红包/转账已处理');
@@ -498,14 +498,12 @@ function openPaymentModal(msgId) {
             }
             updatePaymentCardUI(msgId, 'accepted');
             overlay.remove();
-            // 先渲染接收方卡片
-            var row = card.closest('.bubble-row');
-            if (row && row.classList.contains('assistant')) {
+            var row2 = card.closest('.bubble-row');
+            if (row2 && row2.classList.contains('assistant')) {
                 addReceivedCard('user', type, amount);
             } else {
                 addReceivedCard('assistant', type, amount);
             }
-            // 再渲染旁白（在卡片后面）
             var narration = document.createElement('div');
             narration.className = 'bubble bubble-narration';
             narration.textContent = '已收入' + amount + '元';
@@ -520,8 +518,8 @@ function openPaymentModal(msgId) {
             e.stopPropagation();
             updatePaymentCardUI(msgId, 'refunded');
             overlay.remove();
-            var row = card.closest('.bubble-row');
-            if (row && row.classList.contains('assistant')) {
+            var row2 = card.closest('.bubble-row');
+            if (row2 && row2.classList.contains('assistant')) {
                 addRefundedCard('user', amount);
             } else {
                 addRefundedCard('assistant', amount);
@@ -647,6 +645,17 @@ function confirmPayment(type, maxAmount) {
     const note = document.getElementById('paymentNoteInput').value.trim();
     const method = document.querySelector('.payment-method-option.selected');
     const methodText = method ? method.textContent : '零钱';
+
+    // 检查钱包余额
+    if (methodText === '零钱') {
+        var balance = typeof getWalletBalance === 'function' ? getWalletBalance() : 999999;
+        if (amount > balance) { showToast('零钱余额不足，请充值'); return; }
+        if (typeof setWalletBalance === 'function') {
+            setWalletBalance(balance - amount);
+            if (typeof addWalletRecord === 'function') addWalletRecord('send', amount, '发送' + type);
+        }
+    }
+
     closePaymentModal();
     sendPaymentCard(type, amount, note, methodText);
 }
