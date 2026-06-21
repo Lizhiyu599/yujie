@@ -69,13 +69,13 @@
     transform: scale(0.96);
 }
 
-/* ===== 书封（黑色硬皮+重工花纹） ===== */
+/* ===== 书封（黑色硬皮+重工） ===== */
 .sl-book-cover {
     width: 100%;
     aspect-ratio: 4 / 5;
     background: linear-gradient(160deg, #1a1a1a 0%, #0d0d0d 40%, #111 70%, #1a1a1a 100%);
     border-radius: 4px 14px 14px 4px;
-    box-shadow: 6px 6px 20px rgba(0,0,0,0.6), inset 2px 0 8px rgba(255,255,255,0.03);
+    box-shadow: 6px 6px 20px rgba(0,0,0,0.6);
     position: relative;
     overflow: hidden;
     display: flex;
@@ -84,207 +84,169 @@
     justify-content: center;
 }
 
-/* 外层装饰线框 */
+/* 第一层外框 */
 .sl-book-cover::before {
     content: '';
     position: absolute;
-    top: 8px;
-    left: 8px;
-    right: 8px;
-    bottom: 8px;
-    border: 2px solid rgba(255, 215, 160, 0.12);
+    top: 6px; left: 6px; right: 6px; bottom: 6px;
+    border: 2px solid rgba(255, 215, 160, 0.18);
     border-radius: 2px 10px 10px 2px;
     pointer-events: none;
 }
 
-/* 内层装饰线框 */
+/* 第二层框 */
 .sl-cover-inner-border {
     position: absolute;
-    top: 14px;
-    left: 14px;
-    right: 14px;
-    bottom: 14px;
-    border: 1px solid rgba(255, 215, 160, 0.08);
+    top: 12px; left: 12px; right: 12px; bottom: 12px;
+    border: 1px solid rgba(255, 215, 160, 0.12);
     border-radius: 2px 8px 8px 2px;
     pointer-events: none;
 }
 
-/* 第二道内框 */
+/* 第三层框 */
 .sl-cover-inner-border2 {
     position: absolute;
-    top: 19px;
-    left: 19px;
-    right: 19px;
-    bottom: 19px;
-    border: 0.5px solid rgba(255, 215, 160, 0.06);
+    top: 17px; left: 17px; right: 17px; bottom: 17px;
+    border: 0.5px solid rgba(255, 215, 160, 0.08);
     border-radius: 2px 6px 6px 2px;
     pointer-events: none;
 }
 
-/* 中心大菱形 */
-.sl-cover-diamond {
+/* 四角金色扇形花纹 */
+.sl-cover-corner-fan {
     position: absolute;
-    width: 55%;
-    height: 55%;
-    top: 22.5%;
-    left: 22.5%;
-    border: 1px solid rgba(255, 215, 160, 0.1);
-    transform: rotate(45deg);
     pointer-events: none;
+    opacity: 0.18;
+    font-size: 16px;
+    color: #d4b87a;
 }
+.sl-cover-corner-fan.tl { top: 8px; left: 10px; }
+.sl-cover-corner-fan.tr { top: 8px; right: 10px; }
+.sl-cover-corner-fan.bl { bottom: 8px; left: 10px; }
+.sl-cover-corner-fan.br { bottom: 8px; right: 10px; }
 
-/* 菱形内十字花纹 */
-.sl-cover-cross {
-    position: absolute;
-    width: 55%;
-    height: 55%;
-    top: 22.5%;
-    left: 22.5%;
-    pointer-events: none;
-    transform: rotate(45deg);
-}
-.sl-cover-cross::before,
-.sl-cover-cross::after {
-    content: '';
-    position: absolute;
-    background: rgba(255, 215, 160, 0.06);
-}
-.sl-cover-cross::before {
-    width: 100%;
-    height: 1px;
-    top: 50%;
-    left: 0;
-}
-.sl-cover-cross::after {
-    width: 1px;
-    height: 100%;
-    top: 0;
-    left: 50%;
-}
-
-/* 四角花纹 */
+/* 四角小星 */
 .sl-cover-corners {
     position: absolute;
-    top: 12px;
-    left: 12px;
-    right: 12px;
-    bottom: 12px;
+    top: 4px; left: 4px; right: 4px; bottom: 4px;
     pointer-events: none;
 }
 .sl-corner-tl, .sl-corner-tr, .sl-corner-bl, .sl-corner-br {
     position: absolute;
-    font-size: 7px;
-    color: rgba(255, 215, 160, 0.15);
+    font-size: 5px;
+    color: rgba(255, 215, 160, 0.35);
 }
-.sl-corner-tl { top: 0; left: 3px; }
-.sl-corner-tr { top: 0; right: 3px; }
-.sl-corner-bl { bottom: 0; left: 3px; }
-.sl-corner-br { bottom: 0; right: 3px; }
+.sl-corner-tl { top: 14px; left: 14px; }
+.sl-corner-tr { top: 14px; right: 14px; }
+.sl-corner-bl { bottom: 14px; left: 14px; }
+.sl-corner-br { bottom: 14px; right: 14px; }
 
-/* 藤蔓角纹 */
-.sl-cover-corner-vine {
+/* 顶部金色横带 */
+.sl-cover-top-band {
     position: absolute;
-    pointer-events: none;
-    opacity: 0.1;
-    font-size: 10px;
-    color: rgba(255, 215, 160, 0.5);
-}
-.sl-cover-corner-vine.tl { top: 16px; left: 18px; }
-.sl-cover-corner-vine.tr { top: 16px; right: 18px; }
-.sl-cover-corner-vine.bl { bottom: 16px; left: 18px; }
-.sl-cover-corner-vine.br { bottom: 16px; right: 18px; }
-
-/* 封面中心徽章 */
-.sl-cover-badge {
-    position: absolute;
-    width: 32px;
-    height: 32px;
-    border: 1px solid rgba(255, 215, 160, 0.15);
-    border-radius: 50%;
-    top: calc(50% - 16px);
-    left: calc(50% - 16px);
-    pointer-events: none;
-}
-.sl-cover-badge::after {
-    content: '✦';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 8px;
-    color: rgba(255, 215, 160, 0.2);
-}
-
-/* 封面底部藤蔓 */
-.sl-cover-bottom-vine {
-    position: absolute;
-    bottom: 52px;
+    top: 24px;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 9px;
-    letter-spacing: 5px;
-    color: rgba(255, 215, 160, 0.08);
+    width: 70%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255,215,160,0.3), transparent);
     pointer-events: none;
 }
 
-/* 顶部金色装饰线 */
+/* 顶部金色细线 */
 .sl-cover-top-ornament {
     position: absolute;
-    top: 33px;
+    top: 28px;
     left: 50%;
     transform: translateX(-50%);
-    width: 55%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 215, 160, 0.25), transparent);
+    width: 50%;
+    height: 0.5px;
+    background: linear-gradient(90deg, transparent, rgba(255,215,160,0.2), transparent);
     pointer-events: none;
 }
 
-/* 底部金色装饰线 */
+/* 底部金色横带 */
+.sl-cover-bottom-band {
+    position: absolute;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 70%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255,215,160,0.3), transparent);
+    pointer-events: none;
+}
+
 .sl-cover-bottom-ornament {
     position: absolute;
-    bottom: 64px;
+    bottom: 46px;
     left: 50%;
     transform: translateX(-50%);
-    width: 45%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 215, 160, 0.25), transparent);
+    width: 50%;
+    height: 0.5px;
+    background: linear-gradient(90deg, transparent, rgba(255,215,160,0.2), transparent);
     pointer-events: none;
 }
 
-/* 封面顶部小星星 */
-.sl-cover-top-star {
-    position: absolute;
-    top: 30px;
-    font-size: 6px;
-    color: rgba(255, 215, 160, 0.12);
-    letter-spacing: 8px;
-}
-
-/* 封面英文手写体 */
+/* 封面英文标题（放大居中） */
 .sl-cover-english {
     font-family: 'Great Vibes', 'Dancing Script', cursive;
-    font-size: 8px;
-    background: linear-gradient(180deg, #e8d5a3 0%, #d4b87a 30%, #c9a550 60%, #b8943a 100%);
+    font-size: 10px;
+    background: linear-gradient(180deg, #f0e0b8 0%, #d4b87a 40%, #b8943a 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     letter-spacing: 2px;
     position: absolute;
-    bottom: 40px;
+    top: 38%;
     text-align: center;
-    line-height: 1.8;
+    line-height: 2;
+    width: 80%;
 }
 .sl-cover-english-line2 {
     font-family: 'Great Vibes', 'Dancing Script', cursive;
-    font-size: 7px;
-    background: linear-gradient(180deg, #e8d5a3 0%, #d4b87a 30%, #c9a550 60%, #b8943a 100%);
+    font-size: 8px;
+    background: linear-gradient(180deg, #f0e0b8 0%, #d4b87a 40%, #b8943a 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     letter-spacing: 1px;
     position: absolute;
-    bottom: 28px;
+    top: 52%;
     text-align: center;
+    width: 80%;
+}
+
+/* 英文两侧藤蔓 */
+.sl-cover-vine-left {
+    position: absolute;
+    top: 36%;
+    left: 14%;
+    font-size: 8px;
+    color: rgba(255,215,160,0.2);
+    pointer-events: none;
+    transform: rotate(-30deg);
+}
+.sl-cover-vine-right {
+    position: absolute;
+    top: 36%;
+    right: 14%;
+    font-size: 8px;
+    color: rgba(255,215,160,0.2);
+    pointer-events: none;
+    transform: rotate(30deg);
+}
+
+/* 底部金色小花纹 */
+.sl-cover-bottom-vine {
+    position: absolute;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px;
+    letter-spacing: 6px;
+    color: rgba(255, 215, 160, 0.18);
+    pointer-events: none;
 }
 
 /* 书脊标签 */
@@ -302,10 +264,8 @@
 /* ===== 打开的书（全屏） ===== */
 .sl-book-open {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     background: rgba(0,0,0,0.7);
     z-index: 300;
     display: flex;
@@ -326,8 +286,7 @@
 /* ===== 封面 ===== */
 .sl-viewer-cover {
     position: absolute;
-    width: 100%;
-    height: 100%;
+    width: 100%; height: 100%;
     background: linear-gradient(160deg, #1a1a1a 0%, #0d0d0d 40%, #111 70%, #1a1a1a 100%);
     border-radius: 4px 16px 16px 4px;
     box-shadow: 8px 8px 30px rgba(0,0,0,0.5);
@@ -350,133 +309,138 @@
 .sl-viewer-cover::before {
     content: '';
     position: absolute;
-    top: 12px;
-    left: 12px;
-    right: 12px;
-    bottom: 12px;
-    border: 2px solid rgba(255, 215, 160, 0.15);
+    top: 10px; left: 10px; right: 10px; bottom: 10px;
+    border: 2px solid rgba(255, 215, 160, 0.2);
     border-radius: 2px 10px 10px 2px;
     pointer-events: none;
 }
-
-/* 封面内框 */
 .sl-viewer-cover::after {
     content: '';
     position: absolute;
-    top: 20px;
-    left: 20px;
-    right: 20px;
-    bottom: 20px;
-    border: 1px solid rgba(255, 215, 160, 0.1);
+    top: 18px; left: 18px; right: 18px; bottom: 18px;
+    border: 1px solid rgba(255, 215, 160, 0.12);
     border-radius: 2px 8px 8px 2px;
     pointer-events: none;
 }
 
-/* 封面星星 */
-.sl-viewer-star {
+/* 四角扇形 */
+.sl-viewer-corner-fan {
     position: absolute;
-    top: 24px;
-    font-size: 8px;
-    color: rgba(255, 215, 160, 0.2);
-    letter-spacing: 10px;
+    pointer-events: none;
+    opacity: 0.2;
+    font-size: 22px;
+    color: #d4b87a;
 }
+.sl-viewer-corner-fan.tl { top: 12px; left: 14px; }
+.sl-viewer-corner-fan.tr { top: 12px; right: 14px; }
+.sl-viewer-corner-fan.bl { bottom: 12px; left: 14px; }
+.sl-viewer-corner-fan.br { bottom: 12px; right: 14px; }
 
-/* 封面金色装饰线 */
+/* 顶部金色横带 */
+.sl-viewer-top-band {
+    position: absolute;
+    top: 32px; left: 50%;
+    transform: translateX(-50%);
+    width: 65%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255,215,160,0.35), transparent);
+    pointer-events: none;
+}
 .sl-viewer-gold-line {
     position: absolute;
-    top: 42px;
-    left: 50%;
+    top: 37px; left: 50%;
     transform: translateX(-50%);
-    width: 50%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 215, 160, 0.3), transparent);
-}
-
-/* 封面藤蔓角 */
-.sl-viewer-vine {
-    position: absolute;
-    pointer-events: none;
-    font-size: 14px;
-    color: rgba(255, 215, 160, 0.12);
-}
-.sl-viewer-vine.tl { top: 22px; left: 24px; }
-.sl-viewer-vine.tr { top: 22px; right: 24px; }
-.sl-viewer-vine.bl { bottom: 22px; left: 24px; }
-.sl-viewer-vine.br { bottom: 22px; right: 24px; }
-
-/* 封面徽章 */
-.sl-viewer-badge {
-    position: absolute;
-    width: 44px;
-    height: 44px;
-    border: 1.5px solid rgba(255, 215, 160, 0.2);
-    border-radius: 50%;
-    top: calc(50% - 22px);
-    left: calc(50% - 22px);
+    width: 45%;
+    height: 0.5px;
+    background: linear-gradient(90deg, transparent, rgba(255,215,160,0.25), transparent);
     pointer-events: none;
 }
-.sl-viewer-badge::after {
-    content: '✦';
+
+/* 底部金色横带 */
+.sl-viewer-bottom-line {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 10px;
-    color: rgba(255, 215, 160, 0.25);
+    bottom: 34px; left: 50%;
+    transform: translateX(-50%);
+    width: 65%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255,215,160,0.35), transparent);
+    pointer-events: none;
 }
 
-/* 封面英文手写体 */
+/* 封面英文标题放大居中 */
 .sl-viewer-english {
     font-family: 'Great Vibes', 'Dancing Script', cursive;
-    font-size: 14px;
-    background: linear-gradient(180deg, #e8d5a3 0%, #d4b87a 30%, #c9a550 60%, #b8943a 100%);
+    font-size: 16px;
+    background: linear-gradient(180deg, #f0e0b8 0%, #d4b87a 40%, #b8943a 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     letter-spacing: 3px;
     position: absolute;
-    bottom: 56px;
+    top: 34%;
     text-align: center;
-    line-height: 2;
+    line-height: 2.2;
+    width: 80%;
 }
 .sl-viewer-english-line2 {
     font-family: 'Great Vibes', 'Dancing Script', cursive;
-    font-size: 11px;
-    background: linear-gradient(180deg, #e8d5a3 0%, #d4b87a 30%, #c9a550 60%, #b8943a 100%);
+    font-size: 12px;
+    background: linear-gradient(180deg, #f0e0b8 0%, #d4b87a 40%, #b8943a 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     letter-spacing: 2px;
     position: absolute;
-    bottom: 40px;
+    top: 52%;
     text-align: center;
+    width: 80%;
 }
 
-/* 封面底部装饰线 */
-.sl-viewer-bottom-line {
+/* 英文两侧藤蔓 */
+.sl-viewer-vine-left {
     position: absolute;
-    bottom: 28px;
+    top: 36%;
+    left: 12%;
+    font-size: 12px;
+    color: rgba(255,215,160,0.25);
+    pointer-events: none;
+    transform: rotate(-30deg);
+}
+.sl-viewer-vine-right {
+    position: absolute;
+    top: 36%;
+    right: 12%;
+    font-size: 12px;
+    color: rgba(255,215,160,0.25);
+    pointer-events: none;
+    transform: rotate(30deg);
+}
+
+/* 底部金色小花纹 */
+.sl-viewer-bottom-vine {
+    position: absolute;
+    bottom: 18px;
     left: 50%;
     transform: translateX(-50%);
-    width: 40%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 215, 160, 0.3), transparent);
+    font-size: 10px;
+    letter-spacing: 8px;
+    color: rgba(255, 215, 160, 0.22);
+    pointer-events: none;
 }
 
 /* 封面提示 */
 .sl-viewer-hint {
     position: absolute;
-    bottom: 12px;
-    font-size: 9px;
-    color: rgba(255,255,255,0.08);
+    bottom: 6px;
+    font-size: 8px;
+    color: rgba(255,255,255,0.06);
     letter-spacing: 2px;
 }
 
-/* ===== 内页面板（白色纸张） ===== */
+/* ===== 内页面板 ===== */
 .sl-pages-panel {
     position: absolute;
-    width: 100%;
-    height: 100%;
+    width: 100%; height: 100%;
     background: #fffef9;
     border-radius: 4px 16px 16px 4px;
     box-shadow: 8px 8px 30px rgba(0,0,0,0.5), inset 0 0 60px rgba(200, 190, 170, 0.05);
@@ -486,14 +450,11 @@
     z-index: 5;
 }
 
-/* 内页活页孔 */
 .sl-page-holes {
     position: absolute;
-    left: 12px;
-    top: 50%;
+    left: 12px; top: 50%;
     transform: translateY(-50%);
-    width: 8px;
-    height: 65%;
+    width: 8px; height: 65%;
     display: flex;
     flex-direction: column;
     justify-content: space-around;
@@ -501,14 +462,12 @@
     pointer-events: none;
 }
 .sl-page-hole {
-    width: 8px;
-    height: 20px;
+    width: 8px; height: 20px;
     border: 2px solid #c0b090;
     border-radius: 4px;
     background: #fffef9;
 }
 
-/* 内页内容区 */
 .sl-pages-body {
     flex: 1;
     overflow-y: auto;
@@ -517,19 +476,16 @@
     -webkit-overflow-scrolling: touch;
     position: relative;
 }
-
-/* 内页横线 */
 .sl-pages-body::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(180, 170, 150, 0.08) 27px, rgba(180, 170, 150, 0.08) 28px);
+    background: repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(180,170,150,0.08) 27px, rgba(180,170,150,0.08) 28px);
     pointer-events: none;
     z-index: 0;
     padding-top: 20px;
 }
 
-/* 装饰植物图案 */
 .sl-page-decoration {
     position: absolute;
     pointer-events: none;
@@ -538,17 +494,9 @@
     font-size: 90px;
     color: #4a3728;
 }
-.sl-page-decoration.top-left {
-    top: 8px;
-    left: 8px;
-}
-.sl-page-decoration.bottom-right {
-    bottom: 8px;
-    right: 8px;
-    transform: rotate(180deg);
-}
+.sl-page-decoration.top-left { top: 8px; left: 8px; }
+.sl-page-decoration.bottom-right { bottom: 8px; right: 8px; transform: rotate(180deg); }
 
-/* 总结文字 */
 .sl-summary-text {
     position: relative;
     z-index: 1;
@@ -560,7 +508,7 @@
     white-space: pre-wrap;
 }
 
-/* ===== 底部翻页按钮（在书外面下方） ===== */
+/* ===== 翻页按钮 ===== */
 .sl-pages-bottom {
     display: flex;
     justify-content: space-around;
@@ -569,8 +517,8 @@
     max-width: 340px;
 }
 .sl-nav-btn {
-    background: rgba(255, 254, 249, 0.9);
-    border: 1px solid rgba(139, 119, 90, 0.3);
+    background: rgba(255,254,249,0.9);
+    border: 1px solid rgba(139,119,90,0.3);
     color: #6b5a4b;
     padding: 10px 24px;
     border-radius: 20px;
@@ -581,7 +529,7 @@
     transition: 0.2s;
 }
 .sl-nav-btn:active {
-    background: rgba(139, 119, 90, 0.1);
+    background: rgba(139,119,90,0.1);
     border-color: #6b5a4b;
 }
 .sl-nav-btn:disabled {
@@ -589,11 +537,10 @@
     pointer-events: none;
 }
 
-/* 空状态 */
 .sl-empty {
     text-align: center;
     color: #b0a08a;
     padding: 80px 20px;
     font-size: 14px;
     letter-spacing: 2px;
-}    
+ }
