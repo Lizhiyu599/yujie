@@ -773,14 +773,14 @@ diaryItem.innerHTML = `
                 <path d="M50 26 L78 20 L78 80 L50 74Z"/>
                 <path d="M50 26 L22 20 L22 80 L50 74Z"/>
                 <line x1="22" y1="20" x2="78" y2="20"/>
-                <line x1="38" y1="32" x2="50" y2="32"/>
-                <line x1="38" y1="42" x2="50" y2="42"/>
-                <line x1="38" y1="62" x2="50" y2="62"/>
-                <line x1="38" y1="72" x2="50" y2="72"/>
-                <line x1="50" y1="32" x2="62" y2="32"/>
-                <line x1="50" y1="42" x2="62" y2="42"/>
-                <line x1="50" y1="62" x2="62" y2="62"/>
-                <line x1="50" y1="72" x2="62" y2="72"/>
+                <line x1="30" y1="34" x2="42" y2="34"/>
+                <line x1="30" y1="44" x2="42" y2="44"/>
+                <line x1="30" y1="64" x2="42" y2="64"/>
+                <line x1="30" y1="74" x2="42" y2="74"/>
+                <line x1="58" y1="34" x2="70" y2="34"/>
+                <line x1="58" y1="44" x2="70" y2="44"/>
+                <line x1="58" y1="64" x2="70" y2="64"/>
+                <line x1="58" y1="74" x2="70" y2="74"/>
             </svg>
         </div>
     </div>
@@ -796,10 +796,10 @@ worldbookItem.innerHTML = `
     <div class="dock-icon">
         <div class="dock-icon-img">
             <svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M50 22 L36 44 L64 44Z"/>
-                <path d="M50 36 L30 58 L70 58Z"/>
-                <path d="M50 50 L34 70 L66 70Z"/>
-                <line x1="50" y1="66" x2="50" y2="82"/>
+                <path d="M50 16 L38 36 L62 36Z"/>
+                <path d="M50 30 L32 52 L68 52Z"/>
+                <path d="M50 44 L34 64 L66 64Z"/>
+                <line x1="50" y1="62" x2="50" y2="78"/>
             </svg>
         </div>
     </div>
