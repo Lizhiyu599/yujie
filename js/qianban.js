@@ -307,27 +307,3 @@ function closeQianbanDetail() {
     var overlay = document.getElementById('qbDetailOverlay');
     if (overlay) overlay.remove();
 }
-
-// ========== 注册桌面和Dock ==========
-window.addEventListener('DOMContentLoaded', function() {
-    var dockBar = document.getElementById('dockBar');
-    if (!dockBar) return;
-
-    var qbItem = document.createElement('div');
-    qbItem.className = 'dock-item';
-    qbItem.innerHTML = `
-        <div class="dock-icon">
-            <div class="dock-icon-img">
-                <svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="50" cy="50" r="18"/>
-                    <circle cx="35" cy="38" r="5"/>
-                    <circle cx="65" cy="38" r="5"/>
-                    <path d="M35 60 Q50 70 65 60"/>
-                </svg>
-            </div>
-        </div>
-        <div class="dock-label">牵绊</div>
-    `;
-    qbItem.onclick = function() { openQianban(); };
-    dockBar.appendChild(qbItem);
-});
