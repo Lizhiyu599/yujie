@@ -1015,36 +1015,27 @@ window.addEventListener('DOMContentLoaded', () => {
     const dockBar = document.getElementById('dockBar');
     if (!dockBar) return;
 
-    // 动态生成六瓣齿轮路径
-    function makeGearPath(cx, cy, outerR, innerR, teeth) {
+    function makeHexPath(cx, cy, r) {
         const points = [];
-        const total = teeth * 2;
-        for (let i = 0; i < total; i++) {
-            const angle = (Math.PI * 2 * i) / total - Math.PI / 2;
-            const r = i % 2 === 0 ? outerR : innerR;
+        for (let i = 0; i < 6; i++) {
+            const angle = (Math.PI / 3) * i - Math.PI / 6;
             points.push([
                 cx + r * Math.cos(angle),
                 cy + r * Math.sin(angle)
             ]);
         }
-        // 用平滑曲线连接
-        let d = `M ${points[0][0].toFixed(2)} ${points[0][1].toFixed(2)}`;
-        for (let i = 1; i < points.length; i++) {
-            d += ` L ${points[i][0].toFixed(2)} ${points[i][1].toFixed(2)}`;
-        }
-        d += ' Z';
-        return d;
+        return points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p[0].toFixed(2)} ${p[1].toFixed(2)}`).join(' ') + ' Z';
     }
 
-    const gearPath = makeGearPath(50, 50, 34, 26, 6);
+    const hexPath = makeHexPath(50, 50, 34);
 
     const settingItem = document.createElement('div');
     settingItem.className = 'dock-item';
     settingItem.innerHTML = `
         <div class="dock-icon">
             <div class="dock-icon-img">
-                <svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="${gearPath}"/>
+                <svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="${hexPath}"/>
                     <circle cx="50" cy="50" r="12"/>
                 </svg>
             </div>
