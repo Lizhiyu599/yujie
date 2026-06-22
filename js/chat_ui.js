@@ -267,6 +267,8 @@ function switchChatTab(tab, el) {
         case 'me':
             if (plusBtn) plusBtn.style.display = 'none';
             if (titleEl) titleEl.textContent = '我的';
+            var backBtn2 = document.querySelector('.nav-back');
+            if (backBtn2) backBtn2.onclick = function() { closeChat(); };
             renderMePage(listView);
             break;
     }
