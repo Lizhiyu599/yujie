@@ -693,3 +693,7 @@ startTopBarClock = function() {
 // ===== 初始化美化面板 =====
 function initBeautify() { renderBeautifyIcons(); loadSavedIcons(); loadSavedWallpaper(); }
 
+// ===== 注册美化面板 =====
+if (typeof registerModal === 'function') {
+    registerModal('beautifyModal', '美化', beautifyHTML);
+}
