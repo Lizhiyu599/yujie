@@ -1,5 +1,5 @@
 /**
- * 图库 - 生图自动存档
+ * 映像馆 - 生图自动存档
  * 按年月日分区，长按删除
  */
 
@@ -27,7 +27,7 @@ function addGalleryImage(src, prompt) {
     saveGalleryImages(images);
 }
 
-// ========== 打开图库 ==========
+// ========== 打开映像馆 ==========
 function openGallery() {
     var appWindow = document.getElementById('galleryAppWindow');
     if (!appWindow) {
@@ -45,7 +45,7 @@ function closeGallery() {
     if (appWindow) appWindow.style.display = 'none';
 }
 
-// ========== 渲染图库 ==========
+// ========== 渲染映像馆 ==========
 function renderGallery() {
     var appWindow = document.getElementById('galleryAppWindow');
     if (!appWindow) return;
@@ -63,7 +63,7 @@ function renderGallery() {
 
     var bodyHTML = '';
     if (dates.length === 0) {
-        bodyHTML = '<div class="gl-empty">图库为空<br>生成图片后将自动存入</div>';
+        bodyHTML = '<div class="gl-empty">映像馆为空<br>生成图片后将自动存入</div>';
     } else {
         dates.forEach(function(date) {
             bodyHTML += '<div class="gl-date-title">' + date + '</div>';
