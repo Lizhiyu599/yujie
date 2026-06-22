@@ -22,9 +22,7 @@ function getQianbanData() {
     var raw = localStorage.getItem('qianban_data');
     var allData = raw ? JSON.parse(raw) : {};
     var maskId = getActiveMaskId();
-    if (!allData[maskId]) {
-        allData[maskId] = { relations: [], npcs: [] };
-    }
+    if (!allData[maskId]) allData[maskId] = { relations: [], npcs: [] };
     return allData[maskId];
 }
 
@@ -47,42 +45,28 @@ function getNodeName(nodeId) {
     }
     var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
     var c = contacts.find(function(x) { return x.id === nodeId; });
-    if (c) {
-        return c.name;
-    }
+    if (c) return c.name;
     var npcs = getQianbanData().npcs || [];
     var n = npcs.find(function(x) { return x.id === nodeId; });
-    if (n) {
-        return n.name;
-    }
+    if (n) return n.name;
     return '未知';
 }
 
 function getNodeAvatar(nodeId) {
-    if (nodeId === 'user') {
-        return getActiveUserInfo().avatar || '';
-    }
+    if (nodeId === 'user') return getActiveUserInfo().avatar || '';
     var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
     var c = contacts.find(function(x) { return x.id === nodeId; });
-    if (c) {
-        return c.avatarData || '';
-    }
+    if (c) return c.avatarData || '';
     var npcs = getQianbanData().npcs || [];
     var n = npcs.find(function(x) { return x.id === nodeId; });
-    if (n) {
-        return n.avatar || '';
-    }
+    if (n) return n.avatar || '';
     return '';
 }
 
 function getNodeType(nodeId) {
-    if (nodeId === 'user') {
-        return 'user';
-    }
+    if (nodeId === 'user') return 'user';
     var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
-    if (contacts.find(function(x) { return x.id === nodeId; })) {
-        return 'role';
-    }
+    if (contacts.find(function(x) { return x.id === nodeId; })) return 'role';
     return 'npc';
 }
 
@@ -91,26 +75,16 @@ function getActiveUserInfo() {
     var activeId = getActiveMaskId();
     var m = null;
     for (var i = 0; i < masks.length; i++) {
-        if (masks[i].id === activeId) {
-            m = masks[i];
-            break;
-        }
+        if (masks[i].id === activeId) { m = masks[i]; break; }
     }
-    if (!m && masks.length > 0) {
-        m = masks[0];
-    }
-    return {
-        name: m ? m.name : '用户',
-        avatar: m ? m.avatar || '' : ''
-    };
+    if (!m && masks.length > 0) m = masks[0];
+    return { name: m ? m.name : '用户', avatar: m ? m.avatar || '' : '' };
 }
 
 // ========== 布局 ==========
 function calcNodePositions(nodeCount, centerX, centerY, rx, ry) {
     var positions = [];
-    if (nodeCount === 0) {
-        return [];
-    }
+    if (nodeCount === 0) return [];
     for (var i = 0; i < nodeCount; i++) {
         var angle = (2 * Math.PI / nodeCount) * i - Math.PI / 2;
         positions.push({
@@ -122,30 +96,14 @@ function calcNodePositions(nodeCount, centerX, centerY, rx, ry) {
 }
 
 // ========== 标签竖排辅助 ==========
-function makeVerticalLabelLeft(text, x, y) {
-    if (!text) {
-        return '';
-    }
+function makeVerticalLabel(text, x, y) {
+    if (!text) return '';
     var chars = text.split('');
     var html = '';
     var lineHeight = 8;
     var startY = y - ((chars.length - 1) * lineHeight) / 2;
     for (var i = 0; i < chars.length; i++) {
-        html += '<text x="' + x + '%" y="' + (startY + i * lineHeight) + '%" text-anchor="end" font-size="7" fill="#8e8e93">' + chars[i] + '</text>';
-    }
-    return html;
-}
-
-function makeVerticalLabelRight(text, x, y) {
-    if (!text) {
-        return '';
-    }
-    var chars = text.split('');
-    var html = '';
-    var lineHeight = 8;
-    var startY = y - ((chars.length - 1) * lineHeight) / 2;
-    for (var i = 0; i < chars.length; i++) {
-        html += '<text x="' + x + '%" y="' + (startY + i * lineHeight) + '%" text-anchor="start" font-size="7" fill="#8e8e93">' + chars[i] + '</text>';
+        html += '<text x="' + x + '%" y="' + (startY + i * lineHeight) + '%" text-anchor="middle" font-size="7" fill="#8e8e93">' + chars[i] + '</text>';
     }
     return html;
 }
@@ -166,55 +124,36 @@ function openQianban() {
 
 function closeQianban() {
     var w = document.getElementById('qianbanAppWindow');
-    if (w) {
-        w.style.display = 'none';
-    }
+    if (w) w.style.display = 'none';
 }
 
 // ========== 渲染主界面 ==========
 function renderQianban() {
     var appWindow = document.getElementById('qianbanAppWindow');
-    if (!appWindow) {
-        return;
-    }
+    if (!appWindow) return;
 
     var data = getQianbanData();
     var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
     var npcs = data.npcs || [];
     var relations = data.relations || [];
 
+    // 收集与当前中心有关联的节点
     var relatedIds = {};
     relatedIds[qbCurrentCenter] = true;
     relations.forEach(function(r) {
-        if (r.from === qbCurrentCenter) {
-            relatedIds[r.to] = true;
-        }
-        if (r.to === qbCurrentCenter) {
-            relatedIds[r.from] = true;
-        }
+        if (r.from === qbCurrentCenter) relatedIds[r.to] = true;
+        if (r.to === qbCurrentCenter) relatedIds[r.from] = true;
     });
 
     var others = [];
     contacts.forEach(function(c) {
         if (c.id !== qbCurrentCenter && relatedIds[c.id]) {
-            others.push({
-                id: c.id,
-                name: c.name,
-                type: 'role',
-                avatar: c.avatarData || '',
-                avatarText: c.avatar
-            });
+            others.push({ id: c.id, name: c.name, type: 'role', avatar: c.avatarData || '', avatarText: c.avatar });
         }
     });
     npcs.forEach(function(n) {
         if (n.id !== qbCurrentCenter && relatedIds[n.id]) {
-            others.push({
-                id: n.id,
-                name: n.name,
-                type: 'npc',
-                avatar: n.avatar || '',
-                avatarText: n.name.charAt(0)
-            });
+            others.push({ id: n.id, name: n.name, type: 'npc', avatar: n.avatar || '', avatarText: n.name.charAt(0) });
         }
     });
 
@@ -222,87 +161,67 @@ function renderQianban() {
     var centerAvatar = getNodeAvatar(qbCurrentCenter);
     var centerType = getNodeType(qbCurrentCenter);
 
-    var allNodes = [
-        {
-            id: qbCurrentCenter,
-            name: centerName,
-            type: centerType,
-            avatar: centerAvatar
-        }
-    ].concat(others);
-
+    var allNodes = [{ id: qbCurrentCenter, name: centerName, type: centerType, avatar: centerAvatar }].concat(others);
     var nodeMap = {};
-    allNodes.forEach(function(n) {
-        nodeMap[n.id] = n;
-    });
+    allNodes.forEach(function(n) { nodeMap[n.id] = n; });
 
-    var cx = 50;
-    var cy = 40;
-    var rx = 34;
-    var ry = 26;
+    var cx = 50, cy = 40, rx = 34, ry = 26;
     var positions = calcNodePositions(others.length, cx, cy, rx, ry);
 
-    // SVG连线 + 竖排标签
+    // SVG连线（标签竖排在线的两侧，箭头指向对方）
     var svgElements = '';
-
     relations.forEach(function(r) {
         var fn = nodeMap[r.from];
         var tn = nodeMap[r.to];
-        if (!fn || !tn) {
-            return;
-        }
+        if (!fn || !tn) return;
 
         var fIdx = others.indexOf(fn);
         var tIdx = others.indexOf(tn);
         var fx, fy, tx, ty;
 
         if (r.from === qbCurrentCenter) {
-            fx = cx;
-            fy = cy;
-            var tp = positions[tIdx];
-            tx = tp.x;
-            ty = tp.y;
+            fx = cx; fy = cy;
+            var tp = positions[tIdx]; tx = tp.x; ty = tp.y;
         } else if (r.to === qbCurrentCenter) {
-            tx = cx;
-            ty = cy;
-            var fp = positions[fIdx];
-            fx = fp.x;
-            fy = fp.y;
+            tx = cx; ty = cy;
+            var fp = positions[fIdx]; fx = fp.x; fy = fp.y;
         } else {
             var fp = positions[fIdx];
             var tp = positions[tIdx];
-            fx = fp.x;
-            fy = fp.y;
-            tx = tp.x;
-            ty = tp.y;
+            fx = fp.x; fy = fp.y; tx = tp.x; ty = tp.y;
         }
 
         // 线段
         svgElements += '<line x1="' + fx + '%" y1="' + fy + '%" x2="' + tx + '%" y2="' + ty + '%" stroke="#c7c7cc" stroke-width="1" stroke-dasharray="4 3"/>';
 
+        // 方向向量和法向量
         var dx = tx - fx;
         var dy = ty - fy;
         var len = Math.sqrt(dx * dx + dy * dy) || 1;
         var nx = -dy / len;
         var ny = dx / len;
-        var offset = 4;
+        var offset = 5;
 
-        // 起点侧标签在线的左侧
+        // 起点侧标签竖排 + 箭头指向终点
         if (r.fromToType) {
-            var lx = fx + dx * 0.35 + nx * offset;
-            var ly = fy + dy * 0.35 + ny * offset;
-            svgElements += makeVerticalLabelLeft(r.fromToType, lx - 1, ly);
-            var arrowY = ly + (r.fromToType.length * 8) / 2 + 4;
-            svgElements += '<text x="' + (lx - 1) + '%" y="' + arrowY + '%" text-anchor="end" font-size="7" fill="#c7c7cc">↓</text>';
+            var lx1 = fx + dx * 0.28 + nx * offset;
+            var ly1 = fy + dy * 0.28 + ny * offset;
+            svgElements += makeVerticalLabel(r.fromToType, lx1, ly1);
+            // 箭头
+            var ax1 = fx + dx * 0.35 + nx * (offset + 2);
+            var ay1 = fy + dy * 0.35 + ny * (offset + 2);
+            svgElements += '<text x="' + ax1 + '%" y="' + ay1 + '%" text-anchor="middle" font-size="6" fill="#c7c7cc">→</text>';
         }
 
-        // 终点侧标签在线的右侧
+        // 终点侧标签竖排 + 箭头指向起点
         if (r.toFromType) {
-            var rx2 = tx - dx * 0.35 + nx * offset;
-            var ry2 = ty - dy * 0.35 + ny * offset;
-            svgElements += makeVerticalLabelRight(r.toFromType, rx2 + 1, ry2);
-            var arrowY2 = ry2 + (r.toFromType.length * 8) / 2 + 4;
-            svgElements += '<text x="' + (rx2 + 1) + '%" y="' + arrowY2 + '%" text-anchor="start" font-size="7" fill="#c7c7cc">↑</text>';
+            var lx2 = tx - dx * 0.28 + nx * offset;
+            var ly2 = ty - dy * 0.28 + ny * offset;
+            svgElements += makeVerticalLabel(r.toFromType, lx2, ly2);
+            // 箭头
+            var ax2 = tx - dx * 0.35 + nx * (offset + 2);
+            var ay2 = ty - dy * 0.35 + ny * (offset + 2);
+            svgElements += '<text x="' + ax2 + '%" y="' + ay2 + '%" text-anchor="middle" font-size="6" fill="#c7c7cc">←</text>';
         }
     });
 
@@ -318,10 +237,7 @@ function renderQianban() {
         ? '<div class="qb-node-avatar ' + centerType + '" style="background-image:url(' + centerAvatar + ');background-size:cover;background-position:center;' + (centerType === 'user' ? 'width:64px;height:64px;border:3px solid #fff;' : '') + '">&nbsp;</div>'
         : '<div class="qb-node-avatar ' + centerType + '" style="' + (centerType === 'user' ? 'width:64px;height:64px;' : '') + '">' + (centerName ? centerName.charAt(0) : '?') + '</div>';
 
-    nodesHTML += '<div class="qb-node" style="left:' + cx + '%;top:' + cy + '%;transform:translate(-50%,-50%);" onclick="' + centerClick + '">'
-        + centerAvatarHTML
-        + '<div class="qb-node-name">' + centerName + '</div>'
-        + '</div>';
+    nodesHTML += '<div class="qb-node" style="left:' + cx + '%;top:' + cy + '%;transform:translate(-50%,-50%);" onclick="' + centerClick + '">' + centerAvatarHTML + '<div class="qb-node-name">' + centerName + '</div></div>';
 
     // 其他节点
     others.forEach(function(node, i) {
@@ -329,24 +245,15 @@ function renderQianban() {
         var avt = node.avatar
             ? '<div class="qb-node-avatar" style="background-image:url(' + node.avatar + ');background-size:cover;background-position:center;">&nbsp;</div>'
             : '<div class="qb-node-avatar">' + (node.name ? node.name.charAt(0) : '?') + '</div>';
-
         var click = node.type === 'npc'
             ? 'openQianbanDetail(\'' + node.id + '\')'
             : 'switchQianbanCenter(\'' + node.id + '\')';
-
-        nodesHTML += '<div class="qb-node" style="left:' + pos.x + '%;top:' + pos.y + '%;transform:translate(-50%,-50%);" onclick="' + click + '">'
-            + avt
-            + '<div class="qb-node-name">' + node.name + '</div>'
-            + '</div>';
+        nodesHTML += '<div class="qb-node" style="left:' + pos.x + '%;top:' + pos.y + '%;transform:translate(-50%,-50%);" onclick="' + click + '">' + avt + '<div class="qb-node-name">' + node.name + '</div></div>';
     });
 
     appWindow.innerHTML = ''
         + '<div class="qianban-app">'
-        + '<div class="qb-top-bar">'
-        + '<div class="qb-back-btn" onclick="closeQianban()">‹</div>'
-        + '<div class="qb-title">牵 绊</div>'
-        + '<div class="qb-settings-btn" onclick="openQianbanSettings()">○</div>'
-        + '</div>'
+        + '<div class="qb-top-bar"><div class="qb-back-btn" onclick="closeQianban()">‹</div><div class="qb-title">牵 绊</div><div class="qb-settings-btn" onclick="openQianbanSettings()">○</div></div>'
         + '<div class="qb-graph-area" style="position:relative;">'
         + '<svg style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;">' + svgElements + '</svg>'
         + nodesHTML
@@ -359,8 +266,7 @@ function renderQianban() {
         + '<div class="qb-bottom-bar">'
         + '<button class="qb-btn qb-btn-white" onclick="openAddRelation()">+ 添加关系</button>'
         + '<button class="qb-btn qb-btn-black" onclick="openAddNPC()">+ 添加NPC</button>'
-        + '</div>'
-        + '</div>';
+        + '</div></div>';
 }
 
 function switchQianbanCenter(nodeId) {
@@ -382,10 +288,7 @@ function openQianbanSettings() {
         var avatarHTML = m.avatar
             ? '<div style="width:36px;height:36px;border-radius:50%;background-image:url(' + m.avatar + ');background-size:cover;background-position:center;flex-shrink:0;"></div>'
             : '<div style="width:36px;height:36px;border-radius:50%;background:#e5e5ea;display:flex;align-items:center;justify-content:center;font-size:16px;color:#8e8e93;flex-shrink:0;">' + (m.name ? m.name.charAt(0) : '?') + '</div>';
-        maskHTML += '<div class="qb-mask-item' + (isActive ? ' active' : '') + '" onclick="selectQianbanMask(\'' + m.id + '\')">'
-            + avatarHTML
-            + '<span style="font-size:13px;">' + m.name + '</span>'
-            + '</div>';
+        maskHTML += '<div class="qb-mask-item' + (isActive ? ' active' : '') + '" onclick="selectQianbanMask(\'' + m.id + '\')">' + avatarHTML + '<span style="font-size:13px;">' + m.name + '</span></div>';
     });
     maskHTML += '</div>';
 
@@ -394,10 +297,7 @@ function openQianbanSettings() {
         npcHTML = '<div style="text-align:center;color:#8e8e93;padding:16px;">暂无NPC</div>';
     } else {
         npcs.forEach(function(n) {
-            npcHTML += '<div class="qb-edit-row" style="justify-content:space-between;">'
-                + '<span>' + n.name + '</span>'
-                + '<span style="color:#ff3b30;font-size:13px;cursor:pointer;" onclick="deleteNPC(\'' + n.id + '\')">删除</span>'
-                + '</div>';
+            npcHTML += '<div class="qb-edit-row" style="justify-content:space-between;"><span>' + n.name + '</span><span style="color:#ff3b30;font-size:13px;cursor:pointer;" onclick="deleteNPC(\'' + n.id + '\')">删除</span></div>';
         });
     }
 
@@ -408,10 +308,7 @@ function openQianbanSettings() {
         relations.forEach(function(r) {
             var fromName = getNodeName(r.from);
             var toName = getNodeName(r.to);
-            relHTML += '<div class="qb-edit-row" style="justify-content:space-between;">'
-                + '<span style="font-size:13px;">' + fromName + ' ↔ ' + toName + '</span>'
-                + '<span style="color:#ff3b30;font-size:13px;cursor:pointer;" onclick="deleteRelation(\'' + r.id + '\')">删除</span>'
-                + '</div>';
+            relHTML += '<div class="qb-edit-row" style="justify-content:space-between;"><span style="font-size:13px;">' + fromName + ' ↔ ' + toName + '</span><span style="color:#ff3b30;font-size:13px;cursor:pointer;" onclick="deleteRelation(\'' + r.id + '\')">删除</span></div>';
         });
     }
 
@@ -422,27 +319,18 @@ function openQianbanSettings() {
         + '<div class="qb-edit-panel" onclick="event.stopPropagation()">'
         + '<div class="qb-edit-handle"></div>'
         + '<div class="qb-edit-title">牵绊设置</div>'
-        + '<div style="font-size:13px;color:#8e8e93;margin-bottom:8px;">切换面具关系网</div>'
-        + maskHTML
-        + '<div style="font-size:13px;color:#8e8e93;margin:16px 0 8px;">管理关系</div>'
-        + relHTML
-        + '<div style="font-size:13px;color:#8e8e93;margin:16px 0 8px;">管理NPC</div>'
-        + npcHTML
+        + '<div style="font-size:13px;color:#8e8e93;margin-bottom:8px;">切换面具关系网</div>' + maskHTML
+        + '<div style="font-size:13px;color:#8e8e93;margin:16px 0 8px;">管理关系</div>' + relHTML
+        + '<div style="font-size:13px;color:#8e8e93;margin:16px 0 8px;">管理NPC</div>' + npcHTML
         + '<div class="qb-edit-buttons"><div class="qb-edit-btn-cancel" onclick="closeQianbanSettings()">关闭</div></div>'
         + '</div>';
     document.body.appendChild(overlay);
-    overlay.onclick = function(e) {
-        if (e.target === overlay) {
-            closeQianbanSettings();
-        }
-    };
+    overlay.onclick = function(e) { if (e.target === overlay) closeQianbanSettings(); };
 }
 
 function deleteRelation(relId) {
     var d = getQianbanData();
-    d.relations = d.relations.filter(function(r) {
-        return r.id !== relId;
-    });
+    d.relations = d.relations.filter(function(r) { return r.id !== relId; });
     saveQianbanData(d);
     closeQianbanSettings();
     showToast('关系已删除');
@@ -458,19 +346,13 @@ function selectQianbanMask(id) {
 
 function closeQianbanSettings() {
     var o = document.getElementById('qbSettingsOverlay');
-    if (o) {
-        o.remove();
-    }
+    if (o) o.remove();
 }
 
 function deleteNPC(id) {
     var d = getQianbanData();
-    d.npcs = d.npcs.filter(function(n) {
-        return n.id !== id;
-    });
-    d.relations = d.relations.filter(function(r) {
-        return r.from !== id && r.to !== id;
-    });
+    d.npcs = d.npcs.filter(function(n) { return n.id !== id; });
+    d.relations = d.relations.filter(function(r) { return r.from !== id && r.to !== id; });
     saveQianbanData(d);
     closeQianbanSettings();
     showToast('NPC已删除');
@@ -484,7 +366,7 @@ function openAddRelation() {
     var npcs = data.npcs || [];
     var userInfo = getActiveUserInfo();
 
-    // 起点选项
+    // 起点：我的面具单独一行 + 角色分区 + NPC分区
     var fromHTML = '';
     fromHTML += '<div class="qb-add-section"><div class="qb-add-section-title">我的面具</div><div class="qb-add-options" id="qbFromUserOptions">';
     fromHTML += '<div class="qb-add-option selected" onclick="selectRelationFrom(\'user\', this)">' + userInfo.name + '</div>';
@@ -504,7 +386,7 @@ function openAddRelation() {
     });
     fromHTML += '</div></div>';
 
-    // 终点选项
+    // 终点：角色分区 + NPC分区
     var toHTML = '';
     toHTML += '<div class="qb-add-section"><div class="qb-add-section-title">角色</div><div class="qb-add-options" id="qbToRoleOptions">';
     contacts.forEach(function(c) {
@@ -526,22 +408,13 @@ function openAddRelation() {
         + '<div class="qb-edit-panel" onclick="event.stopPropagation()">'
         + '<div class="qb-edit-handle"></div>'
         + '<div class="qb-edit-title">添加关系</div>'
-        + '<div style="font-size:13px;color:#8e8e93;margin-bottom:8px;">关系起点（点击取消选中）</div>'
-        + fromHTML
-        + '<div style="font-size:13px;color:#8e8e93;margin:12px 0 8px;">关系终点</div>'
-        + toHTML
+        + '<div style="font-size:13px;color:#8e8e93;margin-bottom:8px;">关系起点（点击取消选中）</div>' + fromHTML
+        + '<div style="font-size:13px;color:#8e8e93;margin:12px 0 8px;">关系终点</div>' + toHTML
         + '<div id="qbTagSection"></div>'
-        + '<div class="qb-edit-buttons">'
-        + '<div class="qb-edit-btn-cancel" onclick="closeAddRelation()">取消</div>'
-        + '<div class="qb-edit-btn-confirm" onclick="confirmAddRelation()">确认</div>'
-        + '</div>'
+        + '<div class="qb-edit-buttons"><div class="qb-edit-btn-cancel" onclick="closeAddRelation()">取消</div><div class="qb-edit-btn-confirm" onclick="confirmAddRelation()">确认</div></div>'
         + '</div>';
     document.body.appendChild(overlay);
-    overlay.onclick = function(e) {
-        if (e.target === overlay) {
-            closeAddRelation();
-        }
-    };
+    overlay.onclick = function(e) { if (e.target === overlay) closeAddRelation(); };
 
     qbSelectedFrom = { id: 'user' };
     qbSelectedTo = null;
@@ -561,9 +434,7 @@ function selectRelationFrom(id, el) {
         el.classList.remove('selected');
     } else {
         qbSelectedFrom = { id: id };
-        document.querySelectorAll('#qbFromUserOptions .qb-add-option, #qbFromRoleOptions .qb-add-option, #qbFromNpcOptions .qb-add-option').forEach(function(o) {
-            o.classList.remove('selected');
-        });
+        document.querySelectorAll('#qbFromUserOptions .qb-add-option, #qbFromRoleOptions .qb-add-option, #qbFromNpcOptions .qb-add-option').forEach(function(o) { o.classList.remove('selected'); });
         el.classList.add('selected');
     }
     refreshToOptions(qbSelectedFrom ? qbSelectedFrom.id : null);
@@ -600,17 +471,13 @@ function refreshToOptions(excludeId) {
 
 function selectRelationTo(id, el) {
     qbSelectedTo = { id: id };
-    document.querySelectorAll('#qbToRoleOptions .qb-add-option, #qbToNpcOptions .qb-add-option').forEach(function(o) {
-        o.classList.remove('selected');
-    });
+    document.querySelectorAll('#qbToRoleOptions .qb-add-option, #qbToNpcOptions .qb-add-option').forEach(function(o) { o.classList.remove('selected'); });
     el.classList.add('selected');
 }
 
 function renderTagSection() {
     var section = document.getElementById('qbTagSection');
-    if (!section) {
-        return;
-    }
+    if (!section) return;
 
     var hasUser = qbSelectedFrom && qbSelectedFrom.id === 'user';
 
@@ -652,15 +519,11 @@ function renderTagSection() {
 function selectRelationTag(type, target, el) {
     if (target === 'fromTo') {
         qbSelectedFromToType = type;
-        document.querySelectorAll('#qbFromToTypeOptions .qb-add-option').forEach(function(o) {
-            o.classList.remove('selected');
-        });
+        document.querySelectorAll('#qbFromToTypeOptions .qb-add-option').forEach(function(o) { o.classList.remove('selected'); });
         document.getElementById('qbCustomFromToInput').style.display = 'none';
     } else {
         qbSelectedToFromType = type;
-        document.querySelectorAll('#qbToFromTypeOptions .qb-add-option').forEach(function(o) {
-            o.classList.remove('selected');
-        });
+        document.querySelectorAll('#qbToFromTypeOptions .qb-add-option').forEach(function(o) { o.classList.remove('selected'); });
         document.getElementById('qbCustomToFromInput').style.display = 'none';
     }
     el.classList.add('selected');
@@ -683,9 +546,7 @@ function closeAddRelation() {
     qbSelectedFromToType = null;
     qbSelectedToFromType = null;
     var o = document.getElementById('qbAddRelationOverlay');
-    if (o) {
-        o.remove();
-    }
+    if (o) o.remove();
 }
 
 function confirmAddRelation() {
@@ -697,7 +558,6 @@ function confirmAddRelation() {
         showToast('双方不能相同');
         return;
     }
-
     var hasUser = qbSelectedFrom.id === 'user';
     var fromTo = '';
     var toFrom = '';
@@ -717,9 +577,7 @@ function confirmAddRelation() {
     }
 
     var data = getQianbanData();
-    if (!data.relations) {
-        data.relations = [];
-    }
+    if (!data.relations) data.relations = [];
     data.relations.push({
         id: 'rel_' + Date.now(),
         from: qbSelectedFrom.id,
@@ -732,7 +590,7 @@ function confirmAddRelation() {
     closeAddRelation();
     showToast('关系已添加');
     renderQianban();
-  }
+}
 
 // ========== 添加NPC ==========
 function openAddNPC() {
@@ -765,11 +623,7 @@ function openAddNPC() {
         </div>
     `;
     document.body.appendChild(overlay);
-    overlay.onclick = function(e) {
-        if (e.target === overlay) {
-            closeAddNPC();
-        }
-    };
+    overlay.onclick = function(e) { if (e.target === overlay) closeAddNPC(); };
     updateQbNpcGenderRadio();
 }
 
@@ -777,9 +631,7 @@ var qbNpcAvatarData = '';
 
 function previewQbNpcAvatar(e) {
     var file = e.target.files[0];
-    if (!file) {
-        return;
-    }
+    if (!file) return;
     var reader = new FileReader();
     reader.onload = function(ev) {
         qbNpcAvatarData = ev.target.result;
@@ -809,9 +661,7 @@ function updateQbNpcGenderRadio() {
 function closeAddNPC() {
     qbNpcAvatarData = '';
     var overlay = document.getElementById('qbAddNPCOverlay');
-    if (overlay) {
-        overlay.remove();
-    }
+    if (overlay) overlay.remove();
 }
 
 function confirmAddNPC() {
@@ -823,9 +673,7 @@ function confirmAddNPC() {
     var genderEl = document.querySelector('input[name="qbNpcGender"]:checked');
     var gender = genderEl ? genderEl.value : '女';
     var data = getQianbanData();
-    if (!data.npcs) {
-        data.npcs = [];
-    }
+    if (!data.npcs) data.npcs = [];
     data.npcs.push({
         id: 'npc_' + Date.now(),
         name: name,
@@ -841,12 +689,8 @@ function confirmAddNPC() {
 // ========== 编辑NPC ==========
 function openEditNPC(npcId) {
     var data = getQianbanData();
-    var npc = data.npcs.find(function(n) {
-        return n.id === npcId;
-    });
-    if (!npc) {
-        return;
-    }
+    var npc = data.npcs.find(function(n) { return n.id === npcId; });
+    if (!npc) return;
     qbNpcAvatarData = npc.avatar || '';
 
     var overlay = document.createElement('div');
@@ -870,22 +714,15 @@ function openEditNPC(npcId) {
         + '<div class="qb-edit-buttons">'
         + '<div class="qb-edit-btn-cancel" onclick="closeEditNPC()">取消</div>'
         + '<div class="qb-edit-btn-confirm" onclick="confirmEditNPC(\'' + npcId + '\')">保存</div>'
-        + '</div>'
-        + '</div>';
+        + '</div></div>';
     document.body.appendChild(overlay);
-    overlay.onclick = function(e) {
-        if (e.target === overlay) {
-            closeEditNPC();
-        }
-    };
+    overlay.onclick = function(e) { if (e.target === overlay) closeEditNPC(); };
     updateQbEditNpcGenderRadio();
 }
 
 function previewQbEditNpcAvatar(e) {
     var file = e.target.files[0];
-    if (!file) {
-        return;
-    }
+    if (!file) return;
     var reader = new FileReader();
     reader.onload = function(ev) {
         qbNpcAvatarData = ev.target.result;
@@ -915,9 +752,7 @@ function updateQbEditNpcGenderRadio() {
 function closeEditNPC() {
     qbNpcAvatarData = '';
     var overlay = document.getElementById('qbEditNPCOverlay');
-    if (overlay) {
-        overlay.remove();
-    }
+    if (overlay) overlay.remove();
 }
 
 function confirmEditNPC(npcId) {
@@ -929,9 +764,7 @@ function confirmEditNPC(npcId) {
     var genderEl = document.querySelector('input[name="qbEditNpcGender"]:checked');
     var gender = genderEl ? genderEl.value : '女';
     var data = getQianbanData();
-    var npc = data.npcs.find(function(n) {
-        return n.id === npcId;
-    });
+    var npc = data.npcs.find(function(n) { return n.id === npcId; });
     if (npc) {
         npc.name = name;
         npc.gender = gender;
@@ -989,19 +822,12 @@ function openQianbanDetail(nodeId) {
         + '<div class="qb-detail-actions">'
         + (nodeType === 'npc' ? '<div class="qb-detail-btn qb-detail-btn-black" onclick="closeQianbanDetail();openEditNPC(\'' + nodeId + '\')">编辑NPC</div>' : '')
         + '<div class="qb-detail-btn qb-detail-btn-white" onclick="closeQianbanDetail()">关闭</div>'
-        + '</div>'
-        + '</div>';
+        + '</div></div>';
     document.body.appendChild(overlay);
-    overlay.onclick = function(e) {
-        if (e.target === overlay) {
-            closeQianbanDetail();
-        }
-    };
+    overlay.onclick = function(e) { if (e.target === overlay) closeQianbanDetail(); };
 }
 
 function closeQianbanDetail() {
     var overlay = document.getElementById('qbDetailOverlay');
-    if (overlay) {
-        overlay.remove();
-    }
+    if (overlay) overlay.remove();
 }
