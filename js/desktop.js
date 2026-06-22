@@ -762,7 +762,7 @@ window.addEventListener('DOMContentLoaded', () => {
     renderWidgets();
 
     // 注册聊天图标到桌面第一页
-addDesktopIcon({ id: 'chat', name: '聊天', icon: '<svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 25 L80 25 L80 70 L55 70 L40 82 L40 70 L20 70Z"/><circle cx="38" cy="48" r="3" fill="none"/><circle cx="50" cy="48" r="3" fill="none"/><circle cx="62" cy="48" r="3" fill="none"/></svg>', action: 'openChat' });
+addDesktopIcon({ id: 'chat', name: '聊天', icon: '<svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 25 L80 25 L80 70 L55 70 L40 82 L40 70 L20 70Z"/><circle cx="38" cy="48" r="3" fill="transparent"/><circle cx="50" cy="48" r="3" fill="transparent"/><circle cx="62" cy="48" r="3" fill="transparent"/></svg>', action: 'openChat' });  
 addDesktopIcon({ id: 'shiyilin', name: '拾忆林', icon: '<svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M50 14 L42 42 L58 42Z"/><path d="M50 26 L36 54 L64 54Z"/><line x1="50" y1="52" x2="50" y2="72"/><path d="M30 22 L24 44 L36 44Z" stroke-width="2.5" opacity="0.6"/><line x1="30" y1="42" x2="30" y2="56" stroke-width="2.5" opacity="0.6"/><path d="M70 20 L64 42 L76 42Z" stroke-width="2.5" opacity="0.6"/><line x1="70" y1="40" x2="70" y2="54" stroke-width="2.5" opacity="0.6"/></svg>', action: 'openShiyilin' });
     
     const dockBar = document.getElementById('dockBar');
