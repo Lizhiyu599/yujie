@@ -850,3 +850,45 @@ body, html {
     z-index: 3;
     text-shadow: 0 0 2px rgba(0,0,0,0.3);
 }
+
+/* ===== 设置图标 - 灰黑色CSS齿轮 ===== */
+.dock-icon-img.icon-settings-gear {
+    position: relative;
+    width: 28px;
+    height: 28px;
+    border: 2.5px solid #555;
+    border-radius: 50%;
+    background: transparent;
+    font-size: 0;
+}
+.dock-icon-img.icon-settings-gear::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px;
+    height: 10px;
+    border: 2.5px solid #555;
+    border-radius: 50%;
+    background: #555;
+}
+.dock-icon-img.icon-settings-gear::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 8px;
+    background: #555;
+    border-radius: 2px;
+    box-shadow: 
+        0 28px 0 #555,
+        -10px 6px 0 #555,
+        10px 6px 0 #555,
+        -14px 16px 0 #555,
+        14px 16px 0 #555,
+        -10px 22px 0 #555,
+        10px 22px 0 #555;
+}
