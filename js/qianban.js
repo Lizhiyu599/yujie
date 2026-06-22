@@ -108,9 +108,6 @@ function renderQianban() {
         var toNode = nodeMap[r.to];
         if (!fromNode || !toNode) return;
 
-        var fromIdx = allNodes.indexOf(fromNode);
-        var toIdx = allNodes.indexOf(toNode);
-
         var graphNodes = allNodes.filter(function(n) { return n.type !== 'user'; });
         var positions = calcNodePositions(graphNodes.length);
 
@@ -165,7 +162,7 @@ function renderQianban() {
             <div class="qb-top-bar">
                 <div class="qb-back-btn" onclick="closeQianban()">‹</div>
                 <div class="qb-title">牵 绊</div>
-                <div class="qb-settings-btn" onclick="openQianbanSettings()" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#000;cursor:pointer;">○</div>
+                <div class="qb-settings-btn" onclick="openQianbanSettings()">○</div>
             </div>
             <div class="qb-graph-area" id="qbGraphArea" style="position:relative;">
                 <svg style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;">
@@ -261,12 +258,22 @@ function openAddRelation() {
     var npcs = data.npcs || [];
 
     var targetOptions = '';
-    contacts.forEach(function(c) {
-        targetOptions += '<div class="qb-add-option" onclick="selectRelationTarget(\'' + c.id + '\', \'' + c.name + '\', this)">' + c.name + '</div>';
-    });
-    npcs.forEach(function(n) {
-        targetOptions += '<div class="qb-add-option" onclick="selectRelationTarget(\'' + n.id + '\', \'' + n.name + '\', this)">' + n.name + '</div>';
-    });
+    targetOptions += '<div style="font-size:12px;color:#8e8e93;margin:4px 0;">角色</div>';
+    if (contacts.length === 0) {
+        targetOptions += '<div style="color:#8e8e93;font-size:12px;padding:4px;">暂无角色</div>';
+    } else {
+        contacts.forEach(function(c) {
+            targetOptions += '<div class="qb-add-option" onclick="selectRelationTarget(\'' + c.id + '\', \'' + c.name + '\', this)">' + c.name + '</div>';
+        });
+    }
+    targetOptions += '<div style="font-size:12px;color:#8e8e93;margin:8px 0 4px;">NPC</div>';
+    if (npcs.length === 0) {
+        targetOptions += '<div style="color:#8e8e93;font-size:12px;padding:4px;">暂无NPC</div>';
+    } else {
+        npcs.forEach(function(n) {
+            targetOptions += '<div class="qb-add-option" onclick="selectRelationTarget(\'' + n.id + '\', \'' + n.name + '\', this)">' + n.name + '</div>';
+        });
+    }
 
     var typeOptions = '';
     RELATION_TYPES.forEach(function(t) {
@@ -375,10 +382,10 @@ function openAddNPC() {
             <div style="font-size:13px;color:#8e8e93;margin:12px 0 4px;">性别</div>
             <div style="display:flex;gap:16px;align-items:center;margin-bottom:12px;">
                 <label style="display:flex;align-items:center;gap:6px;font-size:15px;color:#000;cursor:pointer;">
-                    <input type="radio" name="qbNpcGender" value="男" checked style="appearance:none;width:20px;height:20px;border:2px solid #c7c7cc;border-radius:50%;outline:none;cursor:pointer;transition:0.2s;position:relative;" onchange="updateQbNpcGenderRadio()"> 男
+                    <input type="radio" name="qbNpcGender" value="女" checked style="appearance:none;width:20px;height:20px;border:2px solid #c7c7cc;border-radius:50%;outline:none;cursor:pointer;transition:0.2s;position:relative;" onchange="updateQbNpcGenderRadio()"> 女
                 </label>
                 <label style="display:flex;align-items:center;gap:6px;font-size:15px;color:#000;cursor:pointer;">
-                    <input type="radio" name="qbNpcGender" value="女" style="appearance:none;width:20px;height:20px;border:2px solid #c7c7cc;border-radius:50%;outline:none;cursor:pointer;transition:0.2s;position:relative;" onchange="updateQbNpcGenderRadio()"> 女
+                    <input type="radio" name="qbNpcGender" value="男" style="appearance:none;width:20px;height:20px;border:2px solid #c7c7cc;border-radius:50%;outline:none;cursor:pointer;transition:0.2s;position:relative;" onchange="updateQbNpcGenderRadio()"> 男
                 </label>
             </div>
             <div class="qb-edit-buttons">
@@ -431,7 +438,7 @@ function confirmAddNPC() {
     var name = document.getElementById('qbNpcName').value.trim();
     if (!name) { showToast('请输入NPC名称'); return; }
     var genderEl = document.querySelector('input[name="qbNpcGender"]:checked');
-    var gender = genderEl ? genderEl.value : '男';
+    var gender = genderEl ? genderEl.value : '女';
     var data = getQianbanData();
     if (!data.npcs) data.npcs = [];
     data.npcs.push({
@@ -469,10 +476,10 @@ function openEditNPC(npcId) {
             <div style="font-size:13px;color:#8e8e93;margin:12px 0 4px;">性别</div>
             <div style="display:flex;gap:16px;align-items:center;margin-bottom:12px;">
                 <label style="display:flex;align-items:center;gap:6px;font-size:15px;color:#000;cursor:pointer;">
-                    <input type="radio" name="qbEditNpcGender" value="男" ${npc.gender === '男' ? 'checked' : ''} style="appearance:none;width:20px;height:20px;border:2px solid #c7c7cc;border-radius:50%;outline:none;cursor:pointer;transition:0.2s;position:relative;" onchange="updateQbEditNpcGenderRadio()"> 男
+                    <input type="radio" name="qbEditNpcGender" value="女" ${npc.gender === '女' ? 'checked' : ''} style="appearance:none;width:20px;height:20px;border:2px solid #c7c7cc;border-radius:50%;outline:none;cursor:pointer;transition:0.2s;position:relative;" onchange="updateQbEditNpcGenderRadio()"> 女
                 </label>
                 <label style="display:flex;align-items:center;gap:6px;font-size:15px;color:#000;cursor:pointer;">
-                    <input type="radio" name="qbEditNpcGender" value="女" ${npc.gender === '女' ? 'checked' : ''} style="appearance:none;width:20px;height:20px;border:2px solid #c7c7cc;border-radius:50%;outline:none;cursor:pointer;transition:0.2s;position:relative;" onchange="updateQbEditNpcGenderRadio()"> 女
+                    <input type="radio" name="qbEditNpcGender" value="男" ${npc.gender === '男' ? 'checked' : ''} style="appearance:none;width:20px;height:20px;border:2px solid #c7c7cc;border-radius:50%;outline:none;cursor:pointer;transition:0.2s;position:relative;" onchange="updateQbEditNpcGenderRadio()"> 男
                 </label>
             </div>
             <div class="qb-edit-buttons">
@@ -523,7 +530,7 @@ function confirmEditNPC(npcId) {
     var name = document.getElementById('qbEditNpcName').value.trim();
     if (!name) { showToast('请输入NPC名称'); return; }
     var genderEl = document.querySelector('input[name="qbEditNpcGender"]:checked');
-    var gender = genderEl ? genderEl.value : '男';
+    var gender = genderEl ? genderEl.value : '女';
     var data = getQianbanData();
     var npc = data.npcs.find(function(n) { return n.id === npcId; });
     if (npc) {
