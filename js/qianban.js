@@ -3,6 +3,7 @@
  * 用户与角色/NPC的关系可视化
  * 支持面具切换、NPC管理、连线显示、自定义关系类型
  * 支持角色↔角色、角色↔NPC关系
+ * 仅显示有关系网的节点
  */
 
 // ========== 关系数据存储 ==========
@@ -19,7 +20,7 @@ function saveQianbanData(data) {
 var RELATION_TYPES = [
     '恋人', '挚友', '搭档', '家人', '青梅竹马',
     '同学', '同事', '邻居', '敌人', '陌生人',
-    '暗恋', '师徒', '上司', '下属', '网友'
+    '暗恋', '师徒', '上下属', '网友'
 ];
 
 // ========== 当前激活的面具ID ==========
@@ -85,16 +86,28 @@ function renderQianban() {
     var relations = data.relations || [];
     var userInfo = getActiveUserInfo();
 
-    // 所有节点
+    // 收集所有参与关系的节点ID
+    var relatedIds = {};
+    relatedIds['user'] = true;
+    relations.forEach(function(r) {
+        relatedIds[r.from] = true;
+        relatedIds[r.to] = true;
+    });
+
+    // 所有节点（仅显示有关系网的）
     var allNodes = [];
     allNodes.push({ id: 'user', name: userInfo.name, type: 'user', avatar: userInfo.avatar });
 
     contacts.forEach(function(c) {
-        allNodes.push({ id: c.id, name: c.name, type: 'role', avatar: c.avatarData || '', avatarText: c.avatar });
+        if (relatedIds[c.id]) {
+            allNodes.push({ id: c.id, name: c.name, type: 'role', avatar: c.avatarData || '', avatarText: c.avatar });
+        }
     });
 
     npcs.forEach(function(n) {
-        allNodes.push({ id: n.id, name: n.name, type: 'npc', avatar: n.avatar || '', avatarText: n.name ? n.name.charAt(0) : '?' });
+        if (relatedIds[n.id]) {
+            allNodes.push({ id: n.id, name: n.name, type: 'npc', avatar: n.avatar || '', avatarText: n.name ? n.name.charAt(0) : '?' });
+        }
     });
 
     // 创建节点map
@@ -192,14 +205,15 @@ function openQianbanSettings() {
     var data = getQianbanData();
     var npcs = data.npcs || [];
 
-    var maskHTML = '';
+    var maskHTML = '<div class="qb-mask-grid">';
     masks.forEach(function(m) {
         var isActive = m.id === activeId;
         var avatarHTML = m.avatar
-            ? '<div class="qb-detail-avatar" style="background-image:url(' + m.avatar + ');background-size:cover;background-position:center;"></div>'
-            : '<div class="qb-detail-avatar">' + (m.name ? m.name.charAt(0) : '?') + '</div>';
-        maskHTML += '<div class="qb-edit-row" onclick="selectQianbanMask(\'' + m.id + '\')" style="' + (isActive ? 'border:1px solid #000;' : '') + '">' + avatarHTML + '<span>' + m.name + '</span><span class="qb-arrow">' + (isActive ? '✓' : '') + '</span></div>';
+            ? '<div class="qb-detail-avatar" style="background-image:url(' + m.avatar + ');background-size:cover;background-position:center;width:36px;height:36px;border-radius:50%;flex-shrink:0;"></div>'
+            : '<div class="qb-detail-avatar" style="width:36px;height:36px;border-radius:50%;background:#e5e5ea;display:flex;align-items:center;justify-content:center;font-size:16px;color:#8e8e93;flex-shrink:0;">' + (m.name ? m.name.charAt(0) : '?') + '</div>';
+        maskHTML += '<div class="qb-mask-item' + (isActive ? ' active' : '') + '" onclick="selectQianbanMask(\'' + m.id + '\')">' + avatarHTML + '<span style="font-size:13px;">' + m.name + '</span></div>';
     });
+    maskHTML += '</div>';
 
     var npcHTML = '';
     if (npcs.length === 0) {
@@ -268,9 +282,9 @@ function openAddRelation() {
         fromOptions += '<div class="qb-add-option" onclick="selectRelationFrom(\'' + n.id + '\', \'' + n.name + '\', this)">' + n.name + '</div>';
     });
 
-    // 终点选项：分角色和NPC两个区块
+    // 终点选项：分角色和NPC两个独立区块
     var toOptions = '';
-    toOptions += '<div style="font-size:12px;color:#8e8e93;margin:4px 0;font-weight:500;">角色</div>';
+    toOptions += '<div class="qb-add-section"><div class="qb-add-section-title">角色</div><div class="qb-add-options" id="qbToRoleOptions">';
     if (contacts.length === 0) {
         toOptions += '<div style="color:#8e8e93;font-size:12px;padding:4px;">暂无角色</div>';
     } else {
@@ -278,7 +292,10 @@ function openAddRelation() {
             toOptions += '<div class="qb-add-option" onclick="selectRelationTo(\'' + c.id + '\', \'' + c.name + '\', this)">' + c.name + '</div>';
         });
     }
-    toOptions += '<div style="font-size:12px;color:#8e8e93;margin:10px 0 4px;font-weight:500;border-top:0.5px solid rgba(0,0,0,0.06);padding-top:8px;">NPC</div>';
+    toOptions += '</div></div>';
+
+    toOptions += '<div class="qb-add-section-divider"></div>';
+    toOptions += '<div class="qb-add-section"><div class="qb-add-section-title">NPC</div><div class="qb-add-options" id="qbToNpcOptions">';
     if (npcs.length === 0) {
         toOptions += '<div style="color:#8e8e93;font-size:12px;padding:4px;">暂无NPC</div>';
     } else {
@@ -286,6 +303,7 @@ function openAddRelation() {
             toOptions += '<div class="qb-add-option" onclick="selectRelationTo(\'' + n.id + '\', \'' + n.name + '\', this)">' + n.name + '</div>';
         });
     }
+    toOptions += '</div></div>';
 
     var typeOptions = '';
     RELATION_TYPES.forEach(function(t) {
@@ -300,10 +318,10 @@ function openAddRelation() {
         <div class="qb-edit-panel" onclick="event.stopPropagation()">
             <div class="qb-edit-handle"></div>
             <div class="qb-edit-title">添加关系</div>
-            <div style="font-size:13px;color:#8e8e93;margin-bottom:8px;">关系起点（谁的关系）</div>
+            <div style="font-size:13px;color:#8e8e93;margin-bottom:8px;">选择人物</div>
             <div class="qb-add-options" id="qbFromOptions">${fromOptions}</div>
-            <div style="font-size:13px;color:#8e8e93;margin:12px 0 8px;">关系终点（和谁的关系）</div>
-            <div class="qb-add-options" id="qbToOptions">${toOptions}</div>
+            <div style="font-size:13px;color:#8e8e93;margin:12px 0 8px;">选择关系对象</div>
+            ${toOptions}
             <div style="font-size:13px;color:#8e8e93;margin:12px 0 8px;">选择关系类型</div>
             <div class="qb-add-options" id="qbTypeOptions">${typeOptions}</div>
             <div id="qbCustomTypeInput" style="display:none;margin:8px 0;">
@@ -318,7 +336,6 @@ function openAddRelation() {
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) closeAddRelation(); };
 
-    // 重置选择状态
     qbSelectedFrom = { id: 'user', name: '我' };
     qbSelectedTo = null;
     qbSelectedType = null;
@@ -333,11 +350,40 @@ function selectRelationFrom(id, name, el) {
     var opts = document.querySelectorAll('#qbFromOptions .qb-add-option');
     opts.forEach(function(o) { o.classList.remove('selected'); });
     el.classList.add('selected');
+    // 刷新终点选项，排除已选起点
+    refreshToOptions(id);
+}
+
+function refreshToOptions(excludeId) {
+    var data = getQianbanData();
+    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
+    var npcs = data.npcs || [];
+
+    var roleContainer = document.getElementById('qbToRoleOptions');
+    var npcContainer = document.getElementById('qbToNpcOptions');
+
+    if (roleContainer) {
+        var roleHTML = '';
+        contacts.forEach(function(c) {
+            if (c.id === excludeId) return;
+            roleHTML += '<div class="qb-add-option" onclick="selectRelationTo(\'' + c.id + '\', \'' + c.name + '\', this)">' + c.name + '</div>';
+        });
+        roleContainer.innerHTML = roleHTML || '<div style="color:#8e8e93;font-size:12px;padding:4px;">暂无角色</div>';
+    }
+    if (npcContainer) {
+        var npcHTML = '';
+        npcs.forEach(function(n) {
+            if (n.id === excludeId) return;
+            npcHTML += '<div class="qb-add-option" onclick="selectRelationTo(\'' + n.id + '\', \'' + n.name + '\', this)">' + n.name + '</div>';
+        });
+        npcContainer.innerHTML = npcHTML || '<div style="color:#8e8e93;font-size:12px;padding:4px;">暂无NPC</div>';
+    }
+    qbSelectedTo = null;
 }
 
 function selectRelationTo(id, name, el) {
     qbSelectedTo = { id: id, name: name };
-    var opts = document.querySelectorAll('#qbToOptions .qb-add-option');
+    var opts = document.querySelectorAll('#qbToRoleOptions .qb-add-option, #qbToNpcOptions .qb-add-option');
     opts.forEach(function(o) { o.classList.remove('selected'); });
     el.classList.add('selected');
 }
@@ -646,5 +692,5 @@ function openQianbanDetail(nodeId) {
 
 function closeQianbanDetail() {
     var overlay = document.getElementById('qbDetailOverlay');
-    if (overlay) overlay.remove(); 
+    if (overlay) overlay.remove();
 }
