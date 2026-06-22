@@ -1,7 +1,7 @@
 /**
  * 牵绊 - 关系图谱
  * 支持面具切换、NPC管理、双向感情标签、角色↔角色/NPC关系
- * 点击角色切换中心、标签竖排在关系线两侧、NPC不切换中心
+ * 点击角色切换中心、标签竖排在终点侧、NPC不切换中心
  */
 
 // ========== 预设感情标签 ==========
@@ -168,7 +168,7 @@ function renderQianban() {
     var cx = 50, cy = 40, rx = 34, ry = 26;
     var positions = calcNodePositions(others.length, cx, cy, rx, ry);
 
-    // SVG连线（标签竖排在线的两侧，箭头指向对方）
+    // SVG连线（标签竖排在终点侧，箭头指向起点）
     var svgElements = '';
     relations.forEach(function(r) {
         var fn = nodeMap[r.from];
@@ -202,25 +202,14 @@ function renderQianban() {
         var ny = dx / len;
         var offset = 5;
 
-        // 起点侧标签竖排 + 箭头指向终点
-        if (r.fromToType) {
-            var lx1 = fx + dx * 0.28 + nx * offset;
-            var ly1 = fy + dy * 0.28 + ny * offset;
-            svgElements += makeVerticalLabel(r.fromToType, lx1, ly1);
-            // 箭头
-            var ax1 = fx + dx * 0.35 + nx * (offset + 2);
-            var ay1 = fy + dy * 0.35 + ny * (offset + 2);
-            svgElements += '<text x="' + ax1 + '%" y="' + ay1 + '%" text-anchor="middle" font-size="6" fill="#c7c7cc">→</text>';
-        }
-
         // 终点侧标签竖排 + 箭头指向起点
         if (r.toFromType) {
-            var lx2 = tx - dx * 0.28 + nx * offset;
-            var ly2 = ty - dy * 0.28 + ny * offset;
+            var lx2 = tx - dx * 0.25 + nx * offset;
+            var ly2 = ty - dy * 0.25 + ny * offset;
             svgElements += makeVerticalLabel(r.toFromType, lx2, ly2);
-            // 箭头
-            var ax2 = tx - dx * 0.35 + nx * (offset + 2);
-            var ay2 = ty - dy * 0.35 + ny * (offset + 2);
+            // 箭头指向起点
+            var ax2 = tx - dx * 0.32 + nx * (offset + 2);
+            var ay2 = ty - dy * 0.32 + ny * (offset + 2);
             svgElements += '<text x="' + ax2 + '%" y="' + ay2 + '%" text-anchor="middle" font-size="6" fill="#c7c7cc">←</text>';
         }
     });
