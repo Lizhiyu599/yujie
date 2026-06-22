@@ -757,9 +757,9 @@ window.addEventListener('DOMContentLoaded', () => {
     renderWidgets();
 
     // 注册聊天图标到桌面第一页
-    addDesktopIcon({ id: 'chat', name: '聊天', icon: '聊', action: 'openChat' });
-    addDesktopIcon({ id: 'shiyilin', name: '拾忆林', icon: '忆', action: 'openShiyilin' });
-
+    addDesktopIcon({ id: 'chat', name: '聊天', icon: '<svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 25 L80 25 L80 70 L55 70 L40 82 L40 70 L20 70Z"/><circle cx="38" cy="48" r="3"/><circle cx="50" cy="48" r="3"/><circle cx="62" cy="48" r="3"/></svg>', action: 'openChat' });
+    addDesktopIcon({ id: 'shiyilin', name: '拾忆林', icon: '<svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M50 16 L38 36 L62 36Z"/><path d="M50 30 L32 52 L68 52Z"/><path d="M50 44 L34 64 L66 64Z"/><line x1="50" y1="62" x2="50" y2="78"/></svg>', action: 'openShiyilin' });
+    
     const dockBar = document.getElementById('dockBar');
     if (!dockBar) return;
 
