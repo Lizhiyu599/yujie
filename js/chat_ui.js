@@ -2199,11 +2199,6 @@ function renderFavList() {
 function deleteFav(id) { var favs = getFavorites(); favs = favs.filter(function(f) { return f.id !== id; }); saveFavorites(favs); renderFavList(); showToast('已删除'); }
 
 // ========== 表情包管理页面 ==========
-function getManagedEmojis() { var raw = localStorage.getItem('managed_emojis'); return raw ? JSON.parse(raw) : []; }
-function saveManagedEmojis(emojis) { localStorage.setItem('managed_emojis', JSON.stringify(emojis)); }
-function getBannedEmojis() { var raw = localStorage.getItem('banned_emojis'); return raw ? JSON.parse(raw) : []; }
-function saveBannedEmojis(banned) { localStorage.setItem('banned_emojis', JSON.stringify(banned)); }
-
 function openEmojiManagePage() {
     var listView = document.getElementById('chatListView');
     if (!listView) return;
@@ -2213,19 +2208,17 @@ function openEmojiManagePage() {
     if (titleEl) titleEl.textContent = '表情包';
     if (plusBtn) plusBtn.style.display = 'none';
     backBtn.onclick = function() {
-    var tabItems = document.querySelectorAll('.tab-fixed-bottom .tab-item');
-    if (tabItems.length >= 4) {
-        switchChatTab('me', tabItems[3]);
-    }
-};
+        var tabItems = document.querySelectorAll('.tab-fixed-bottom .tab-item');
+        if (tabItems.length >= 4) { switchChatTab('me', tabItems[3]); }
+    };
     renderEmojiManage(listView);
 }
 
 function renderEmojiManage(listView) {
-    var emojis = getManagedEmojis();
-    var banned = getBannedEmojis();
+    var emojis = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
+    var banned = JSON.parse(localStorage.getItem('banned_emojis') || '[]');
     var gridHTML = '';
-    for (var i = 0; i < 10; i++) {
+    for (var i = 0; i < 5; i++) {
         if (i < emojis.length) {
             var isBanned = banned.indexOf(i) >= 0;
             gridHTML += '<div class="emoji-manage-item ' + (isBanned ? 'banned' : '') + '" style="background-image:url(' + emojis[i].src + ');" onclick="toggleBanEmoji(' + i + ')">' + (isBanned ? '<div class="emoji-banned-badge">!</div>' : '') + '</div>';
@@ -2237,7 +2230,7 @@ function renderEmojiManage(listView) {
     for (var j = 0; j < emojis.length; j++) {
         noteHTML += '<div class="emoji-manage-note">' + (j + 1) + '. ' + (emojis[j].note || '无备注') + ' <span style="color:#007aff;cursor:pointer;" onclick="editEmojiNote(' + j + ')">编辑</span></div>';
     }
-    listView.innerHTML = '<div class="emoji-manage-grid">' + gridHTML + '</div><div style="padding:4px 16px;font-size:12px;color:#8e8e93;">点击表情包可禁止/解禁角色使用。红色边框=已禁止。</div>' + noteHTML + '<button class="ios-btn-black" style="margin:16px;width:calc(100% - 32px);" onclick="importEmojiBatch()">一键导入表情包（最多10张）</button>';
+    listView.innerHTML = '<div class="emoji-manage-grid">' + gridHTML + '</div><div style="padding:4px 16px;font-size:12px;color:#8e8e93;">点击表情包可禁止/解禁角色使用。红色边框=已禁止。</div>' + noteHTML + '<button class="ios-btn-black" style="margin:16px;width:calc(100% - 32px);" onclick="importEmojiBatch()">一键导入表情包（最多5张）</button>';
 }
 
 function importEmojiBatch() {
@@ -2248,17 +2241,25 @@ function importEmojiBatch() {
     input.onchange = function(e) {
         var files = e.target.files;
         if (!files || files.length === 0) return;
-        var emojis = getManagedEmojis();
-        var count = Math.min(files.length, 10 - emojis.length);
+        var emojis = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
+        var count = Math.min(files.length, 5 - emojis.length);
         var loaded = 0;
         for (var i = 0; i < count; i++) {
             (function(file) {
                 var reader = new FileReader();
                 reader.onload = function(ev) {
-                    emojis.push({ src: ev.target.result, note: '' });
-                    saveManagedEmojis(emojis);
-                    loaded++;
-                    if (loaded === count) { var lv = document.getElementById('chatListView'); if (lv) renderEmojiManage(lv); showToast('已导入 ' + loaded + ' 张表情包'); }
+                    var src = ev.target.result;
+                    // 弹备注框
+                    showEmojiNoteModalForBatch(src, function(note) {
+                        emojis.push({ src: src, note: note || '' });
+                        localStorage.setItem('custom_emojis', JSON.stringify(emojis));
+                        loaded++;
+                        if (loaded === count) {
+                            var lv = document.getElementById('chatListView');
+                            if (lv) renderEmojiManage(lv);
+                            showToast('已导入 ' + loaded + ' 张表情包');
+                        }
+                    });
                 };
                 reader.readAsDataURL(file);
             })(files[i]);
@@ -2267,19 +2268,56 @@ function importEmojiBatch() {
     input.click();
 }
 
+function showEmojiNoteModalForBatch(src, callback) {
+    var overlay = document.createElement('div');
+    overlay.className = 'caption-modal-overlay';
+    overlay.id = 'emojiNoteBatchOverlay';
+    overlay.innerHTML = ''
+        + '<div class="caption-modal">'
+        + '<div style="font-size:14px;color:#8e8e93;margin-bottom:8px;">为这个表情包添加备注</div>'
+        + '<textarea class="caption-textarea" id="emojiNoteBatchTextarea" placeholder="输入备注，让AI知道它的含义"></textarea>'
+        + '<div class="caption-buttons">'
+        + '<div class="payment-btn-cancel" onclick="closeEmojiNoteBatch()">取消</div>'
+        + '<div class="payment-btn-confirm" onclick="confirmEmojiNoteBatch(\'' + src + '\')">确定</div>'
+        + '</div></div>';
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeEmojiNoteBatch(); };
+    window._emojiNoteBatchCallback = callback;
+    window._emojiNoteBatchSrc = src;
+}
+
+function closeEmojiNoteBatch() {
+    var overlay = document.getElementById('emojiNoteBatchOverlay');
+    if (overlay) overlay.remove();
+    if (window._emojiNoteBatchCallback) {
+        window._emojiNoteBatchCallback('');
+    }
+    window._emojiNoteBatchCallback = null;
+}
+
+function confirmEmojiNoteBatch(src) {
+    var note = document.getElementById('emojiNoteBatchTextarea').value.trim();
+    var overlay = document.getElementById('emojiNoteBatchOverlay');
+    if (overlay) overlay.remove();
+    if (window._emojiNoteBatchCallback) {
+        window._emojiNoteBatchCallback(note);
+    }
+    window._emojiNoteBatchCallback = null;
+}
+
 function toggleBanEmoji(index) {
-    var banned = getBannedEmojis();
+    var banned = JSON.parse(localStorage.getItem('banned_emojis') || '[]');
     var pos = banned.indexOf(index);
     if (pos >= 0) banned.splice(pos, 1); else banned.push(index);
-    saveBannedEmojis(banned);
+    localStorage.setItem('banned_emojis', JSON.stringify(banned));
     var lv = document.getElementById('chatListView');
     if (lv) renderEmojiManage(lv);
 }
 
 function editEmojiNote(index) {
-    var emojis = getManagedEmojis();
+    var emojis = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
     var note = prompt('输入表情包含义（角色可读取）：', emojis[index].note || '');
-    if (note !== null) { emojis[index].note = note; saveManagedEmojis(emojis); var lv = document.getElementById('chatListView'); if (lv) renderEmojiManage(lv); }
+    if (note !== null) { emojis[index].note = note; localStorage.setItem('custom_emojis', JSON.stringify(emojis)); var lv = document.getElementById('chatListView'); if (lv) renderEmojiManage(lv); }
 }
 
 // ========== 设置页面 ==========
