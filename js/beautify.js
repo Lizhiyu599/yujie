@@ -693,26 +693,3 @@ startTopBarClock = function() {
 // ===== 初始化美化面板 =====
 function initBeautify() { renderBeautifyIcons(); loadSavedIcons(); loadSavedWallpaper(); }
 
-// ===== 注册美化图标到 Dock =====
-window.addEventListener('DOMContentLoaded', () => {
-    if (typeof registerModal === 'function') registerModal('beautifyModal', '美化', beautifyHTML);
-    if (typeof renderAllModals === 'function') renderAllModals();
-    startTopBarClock();
-    applyTopBarVisibility();
-    loadSavedWallpaper();
-    applyCustomCSS();
-
-    const dockBar = document.getElementById('dockBar');
-    if (!dockBar) return;
-
-    const beautifyItem = document.createElement('div');
-    beautifyItem.className = 'dock-item';
-    beautifyItem.innerHTML = '<div class="dock-icon"><div class="dock-icon-img">美</div></div><div class="dock-label">美化</div>';
-    beautifyItem.onclick = () => {
-        initBeautify();
-        openModal('beautifyModal');
-        setTimeout(() => { loadCustomWidgetPreviews(); }, 500);
-    };
-    dockBar.appendChild(beautifyItem);
-});
-
