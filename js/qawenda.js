@@ -1,0 +1,451 @@
+/**
+ * 奇问妙答 - 角色每日问答
+ * 选择题为主，6道题6分
+ * 支持往期记录、自动提问、手动刷新
+ */
+
+// ========== 数据存储 ==========
+function getQawendaData() {
+    var raw = localStorage.getItem('qawenda_data');
+    if (raw) {
+        return JSON.parse(raw);
+    }
+    return {
+        selectedChar: '',
+        autoAsk: false,
+        todayDate: '',
+        todayAsked: false,
+        todayQuestions: [],
+        todayAnswers: [],
+        todayScored: false,
+        history: []
+    };
+}
+
+function saveQawendaData(data) {
+    localStorage.setItem('qawenda_data', JSON.stringify(data));
+}
+
+// ========== 检查日期是否更新 ==========
+function checkQawendaDate() {
+    var data = getQawendaData();
+    var now = new Date();
+    var todayStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日';
+    if (data.todayDate !== todayStr) {
+        // 新的一天，保存昨天的记录到历史
+        if (data.todayQuestions.length > 0 && data.todayScored) {
+            if (!data.history) data.history = [];
+            data.history.unshift({
+                date: data.todayDate,
+                questions: data.todayQuestions.slice(),
+                answers: data.todayAnswers.slice()
+            });
+            if (data.history.length > 50) data.history = data.history.slice(0, 50);
+        }
+        // 重置今日状态
+        data.todayDate = todayStr;
+        data.todayAsked = false;
+        data.todayQuestions = [];
+        data.todayAnswers = [];
+        data.todayScored = false;
+        saveQawendaData(data);
+    }
+    return data;
+}
+
+// ========== 打开软件 ==========
+function openQawenda() {
+    var appWindow = document.getElementById('qawendaAppWindow');
+    if (!appWindow) {
+        appWindow = document.createElement('div');
+        appWindow.id = 'qawendaAppWindow';
+        appWindow.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:#f2f2f7;z-index:200;display:none;flex-direction:column;';
+        document.getElementById('desktop').appendChild(appWindow);
+    }
+    var data = checkQawendaDate();
+    renderQawenda(data);
+    appWindow.style.display = 'flex';
+}
+
+function closeQawenda() {
+    var appWindow = document.getElementById('qawendaAppWindow');
+    if (appWindow) appWindow.style.display = 'none';
+}
+
+// ========== 渲染主界面 ==========
+function renderQawenda(data) {
+    var appWindow = document.getElementById('qawendaAppWindow');
+    if (!appWindow) return;
+    if (!data) data = getQawendaData();
+
+    var charName = '未选择角色';
+    var charAvatar = '?';
+    var charAvatarBg = '';
+    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
+    var selected = contacts.find(function(c) { return c.id === data.selectedChar; });
+    if (selected) {
+        charName = selected.name;
+        charAvatar = selected.avatarData ? '' : selected.avatar;
+        charAvatarBg = selected.avatarData ? 'background-image:url(' + selected.avatarData + ');background-size:cover;background-position:center;' : '';
+    }
+
+    var bodyHTML = '';
+    var bottomHTML = '';
+
+    if (!data.selectedChar) {
+        bodyHTML = '<div class="qw-waiting">请先在设置中选择角色</div>';
+        bottomHTML = '<button class="qw-btn qw-btn-black" onclick="openQawendaSettings()">设置</button>';
+    } else if (data.todayScored) {
+        // 已评分，显示结果
+        bodyHTML += '<div class="qw-char-card"><div class="qw-char-avatar" style="' + charAvatarBg + '">' + charAvatar + '</div><div class="qw-char-info"><div class="qw-char-name">' + charName + '</div><div class="qw-char-hint">今日问答已完成</div></div></div>';
+        bodyHTML += '<div class="qw-score-display">今日得分：' + calcTodayScore(data) + ' / ' + data.todayQuestions.length + '</div>';
+        data.todayQuestions.forEach(function(q, i) {
+            var answer = data.todayAnswers[i] || '';
+            bodyHTML += '<div class="qw-question-card"><div class="qw-question-num">第' + (i + 1) + '题</div><div class="qw-question-text">' + q.question + '</div><div style="font-size:13px;color:#8e8e93;">你的回答：' + answer + '</div><div class="qw-feedback-card">' + (q.feedback || '暂无评价') + '</div></div>';
+        });
+        bottomHTML = '<button class="qw-btn qw-btn-white" onclick="openQawendaHistory()">往期记录</button>';
+    } else if (data.todayAsked && data.todayQuestions.length > 0) {
+        // 已出题，等待答题
+        bodyHTML += '<div class="qw-char-card"><div class="qw-char-avatar" style="' + charAvatarBg + '">' + charAvatar + '</div><div class="qw-char-info"><div class="qw-char-name">' + charName + '</div><div class="qw-char-hint">今天问了你 ' + data.todayQuestions.length + ' 道题</div></div></div>';
+        data.todayQuestions.forEach(function(q, i) {
+            bodyHTML += '<div class="qw-question-card" id="qwQuestion' + i + '"><div class="qw-question-num">第' + (i + 1) + '题 · ' + (q.type === 'choice' ? '选择题' : '填空题') + '</div><div class="qw-question-text">' + q.question + '</div>';
+            if (q.type === 'choice') {
+                q.options.forEach(function(opt, oi) {
+                    var selClass = data.todayAnswers[i] === opt ? ' selected' : '';
+                    bodyHTML += '<div class="qw-option' + selClass + '" onclick="selectQawendaOption(' + i + ', \'' + opt.replace(/'/g, "\\'") + '\')"><div class="qw-option-radio"></div>' + opt + '</div>';
+                });
+            } else {
+                bodyHTML += '<input type="text" class="qw-fill-input" id="qwFillInput' + i + '" placeholder="输入你的答案..." value="' + (data.todayAnswers[i] || '') + '" onchange="selectQawendaFill(' + i + ', this.value)">';
+            }
+            bodyHTML += '</div>';
+        });
+        bottomHTML = '<button class="qw-btn qw-btn-black" onclick="submitQawendaAnswers()">提交答案</button>';
+    } else {
+        // 等待提问
+        bodyHTML += '<div class="qw-char-card"><div class="qw-char-avatar" style="' + charAvatarBg + '">' + charAvatar + '</div><div class="qw-char-info"><div class="qw-char-name">' + charName + '</div><div class="qw-char-hint">等待今天的提问...</div></div></div>';
+        bodyHTML += '<div class="qw-waiting">今天还没有问题<br>点击下方按钮让角色出题吧</div>';
+        bottomHTML = '<button class="qw-btn qw-btn-black" onclick="generateQawendaQuestions()">刷新提问</button>';
+    }
+
+    appWindow.innerHTML = ''
+        + '<div class="qawenda-app">'
+        + '<div class="qw-top-bar">'
+        + '<div class="qw-back-btn" onclick="closeQawenda()">‹</div>'
+        + '<div class="qw-title">奇 问 妙 答</div>'
+        + '<div class="qw-settings-btn" onclick="openQawendaSettings()">○</div>'
+        + '</div>'
+        + '<div class="qw-body">' + bodyHTML + '</div>'
+        + '<div class="qw-bottom-bar">' + bottomHTML + '</div>'
+        + '</div>';
+}
+
+// ========== 选择选项 ==========
+function selectQawendaOption(index, value) {
+    var data = getQawendaData();
+    if (!data.todayAnswers) data.todayAnswers = [];
+    data.todayAnswers[index] = value;
+    saveQawendaData(data);
+
+    // 刷新选项显示
+    var card = document.getElementById('qwQuestion' + index);
+    if (card) {
+        var options = card.querySelectorAll('.qw-option');
+        options.forEach(function(opt) {
+            opt.classList.remove('selected');
+            if (opt.textContent.trim() === value) opt.classList.add('selected');
+        });
+    }
+}
+
+function selectQawendaFill(index, value) {
+    var data = getQawendaData();
+    if (!data.todayAnswers) data.todayAnswers = [];
+    data.todayAnswers[index] = value;
+    saveQawendaData(data);
+}
+
+// ========== 生成问题 ==========
+async function generateQawendaQuestions() {
+    var data = checkQawendaDate();
+    if (!data.selectedChar) {
+        showToast('请先在设置中选择角色');
+        return;
+    }
+    if (data.todayAsked) {
+        showToast('今天已经提问过了');
+        return;
+    }
+
+    showToast('正在生成问题…');
+
+    var contact = null;
+    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
+    for (var i = 0; i < contacts.length; i++) {
+        if (contacts[i].id === data.selectedChar) { contact = contacts[i]; break; }
+    }
+    if (!contact) {
+        showToast('未找到该角色');
+        return;
+    }
+
+    var systemPrompt = buildSystemPrompt ? buildSystemPrompt(data.selectedChar) : '';
+    var askPrompt = '你今天是奇问妙答的出题人。请以' + contact.name + '的口吻，根据你们最近的聊天剧情和角色设定，出5道题（选择题为主，可以有1道填空题）。题目应与你们的日常互动相关，语气自然，符合角色性格。\n\n格式要求：每道题用"题号. 题目内容"开头，选择题后面用A. B. C.列出选项，填空题后面注明（填空题）。\n\n不要写答案，不要写解析，只出题目。';
+
+    try {
+        var reply = await callChatAPI([
+            { role: 'system', content: systemPrompt + '\n\n你现在是奇问妙答的出题人，只出题不解答。' },
+            { role: 'user', content: askPrompt }
+        ]);
+
+        var questions = parseQawendaQuestions(reply);
+        if (questions.length === 0) {
+            showToast('问题生成失败，请重试');
+            return;
+        }
+
+        data.todayAsked = true;
+        data.todayQuestions = questions;
+        data.todayAnswers = new Array(questions.length).fill('');
+        data.todayScored = false;
+        saveQawendaData(data);
+        showToast('问题已生成');
+        renderQawenda(data);
+    } catch (e) {
+        showToast('问题生成失败，请重试');
+    }
+}
+
+// ========== 解析AI返回的问题 ==========
+function parseQawendaQuestions(rawText) {
+    var questions = [];
+    var lines = rawText.split('\n').filter(function(l) { return l.trim(); });
+
+    var currentQ = null;
+    var options = [];
+
+    lines.forEach(function(line) {
+        var qMatch = line.match(/^(\d+)[\.、]\s*(.+)/);
+        if (qMatch) {
+            if (currentQ) {
+                if (options.length > 0) {
+                    currentQ.options = options;
+                    currentQ.type = 'choice';
+                } else {
+                    currentQ.type = 'fill';
+                }
+                questions.push(currentQ);
+            }
+            currentQ = { question: qMatch[2], type: 'choice', options: [] };
+            options = [];
+        } else {
+            var optMatch = line.match(/^[A-D][\.、]\s*(.+)/);
+            if (optMatch && currentQ) {
+                options.push(optMatch[1]);
+            }
+        }
+    });
+
+    if (currentQ) {
+        if (options.length > 0) {
+            currentQ.options = options;
+            currentQ.type = 'choice';
+        } else {
+            currentQ.type = 'fill';
+        }
+        questions.push(currentQ);
+    }
+
+    return questions.slice(0, 6);
+}
+
+// ========== 提交答案并评分 ==========
+async function submitQawendaAnswers() {
+    var data = getQawendaData();
+    if (!data.todayAsked || data.todayQuestions.length === 0) return;
+
+    // 检查是否全部答完
+    var allAnswered = true;
+    for (var i = 0; i < data.todayQuestions.length; i++) {
+        if (!data.todayAnswers[i] || data.todayAnswers[i].trim() === '') {
+            allAnswered = false;
+            break;
+        }
+    }
+    if (!allAnswered) {
+        showToast('请完成所有题目后再提交');
+        return;
+    }
+
+    showToast('正在评分…');
+
+    var contact = null;
+    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
+    for (var j = 0; j < contacts.length; j++) {
+        if (contacts[j].id === data.selectedChar) { contact = contacts[j]; break; }
+    }
+
+    var systemPrompt = buildSystemPrompt ? buildSystemPrompt(data.selectedChar) : '';
+
+    // 构造评分请求
+    var scorePrompt = '请以' + contact.name + '的口吻，对用户刚才的回答进行评分和评价。满分' + data.todayQuestions.length + '分。\n\n';
+    data.todayQuestions.forEach(function(q, k) {
+        scorePrompt += '第' + (k + 1) + '题：' + q.question + '\n用户回答：' + (data.todayAnswers[k] || '未答') + '\n\n';
+    });
+    scorePrompt += '请逐题给出评价（每题一句话），最后给出总分。格式：\n1. 评价：xxx（得分）\n2. 评价：xxx（得分）\n...\n总分：X分';
+
+    try {
+        var reply = await callChatAPI([
+            { role: 'system', content: systemPrompt + '\n\n你现在要批改用户的答题。评价要符合角色性格，语气自然。回答优秀的即使不是预设答案也可以给分。' },
+            { role: 'user', content: scorePrompt }
+        ]);
+
+        // 解析评分
+        parseQawendaScores(reply, data);
+        data.todayScored = true;
+        saveQawendaData(data);
+        showToast('评分完成');
+        renderQawenda(data);
+    } catch (e) {
+        showToast('评分失败，请重试');
+    }
+}
+
+// ========== 解析评分 ==========
+function parseQawendaScores(rawText, data) {
+    var lines = rawText.split('\n').filter(function(l) { return l.trim(); });
+    var totalScore = 0;
+
+    lines.forEach(function(line) {
+        // 匹配 "1. 评价：xxx（1分）" 或 "1. 评价：xxx"
+        var match = line.match(/^(\d+)[\.、]\s*(.+)/);
+        if (match) {
+            var idx = parseInt(match[1]) - 1;
+            var content = match[2];
+            var scoreMatch = content.match(/（(\d+)分）/) || content.match(/\((\d+)分\)/);
+            var score = scoreMatch ? parseInt(scoreMatch[1]) : 0;
+            if (idx >= 0 && idx < data.todayQuestions.length) {
+                data.todayQuestions[idx].feedback = content;
+                data.todayQuestions[idx].score = score;
+                totalScore += score;
+            }
+        }
+        // 匹配总分
+        var totalMatch = line.match(/总分[：:]\s*(\d+)/);
+        if (totalMatch) {
+            totalScore = parseInt(totalMatch[1]);
+        }
+    });
+
+    data.todayTotalScore = totalScore;
+}
+
+// ========== 计算得分 ==========
+function calcTodayScore(data) {
+    if (data.todayTotalScore) return data.todayTotalScore;
+    var total = 0;
+    if (data.todayQuestions) {
+        data.todayQuestions.forEach(function(q) {
+            if (q.score) total += q.score;
+        });
+    }
+    return total;
+}
+
+// ========== 设置面板 ==========
+function openQawendaSettings() {
+    var data = getQawendaData();
+    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
+
+    var charListHTML = '';
+    if (contacts.length === 0) {
+        charListHTML = '<div style="text-align:center;color:#8e8e93;padding:16px;">暂无角色</div>';
+    } else {
+        contacts.forEach(function(c) {
+            var isActive = c.id === data.selectedChar;
+            var badge = isActive ? '<span style="font-size:10px;color:#fff;background:#1d1d1f;padding:2px 6px;border-radius:4px;margin-left:6px;">当前</span>' : '';
+            charListHTML += '<div class="qw-char-select-item' + (isActive ? ' active' : '') + '" onclick="selectQawendaChar(\'' + c.id + '\')">' + c.name + badge + '</div>';
+        });
+    }
+
+    var overlay = document.createElement('div');
+    overlay.className = 'qw-edit-overlay';
+    overlay.id = 'qwSettingsOverlay';
+    overlay.innerHTML = ''
+        + '<div class="qw-edit-panel" onclick="event.stopPropagation()">'
+        + '<div class="qw-edit-handle"></div>'
+        + '<div class="qw-edit-title">奇问妙答设置</div>'
+        + '<div style="font-size:13px;color:#8e8e93;margin-bottom:8px;">选择出题角色</div>'
+        + charListHTML
+        + '<div class="qw-edit-row" style="margin-top:12px;">'
+        + '<span>自动提问</span>'
+        + '<input type="checkbox" class="ios-switch-sm" ' + (data.autoAsk ? 'checked' : '') + ' onchange="toggleQawendaAuto(this.checked)">'
+        + '</div>'
+        + '<div style="font-size:11px;color:#8e8e93;margin:4px 0 12px;">开启后角色每天自动出题</div>'
+        + '<div class="qw-edit-buttons">'
+        + '<div class="qw-edit-btn-cancel" onclick="closeQawendaSettings()">关闭</div>'
+        + '</div></div>';
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeQawendaSettings(); };
+}
+
+function selectQawendaChar(charId) {
+    var data = getQawendaData();
+    data.selectedChar = charId;
+    saveQawendaData(data);
+    closeQawendaSettings();
+    showToast('角色已选择');
+    renderQawenda(data);
+}
+
+function toggleQawendaAuto(checked) {
+    var data = getQawendaData();
+    data.autoAsk = checked;
+    saveQawendaData(data);
+}
+
+function closeQawendaSettings() {
+    var overlay = document.getElementById('qwSettingsOverlay');
+    if (overlay) overlay.remove();
+}
+
+// ========== 往期记录 ==========
+function openQawendaHistory() {
+    var data = getQawendaData();
+    var history = data.history || [];
+
+    var overlay = document.createElement('div');
+    overlay.className = 'qw-edit-overlay';
+    overlay.id = 'qwHistoryOverlay';
+
+    var historyHTML = '';
+    if (history.length === 0) {
+        historyHTML = '<div style="text-align:center;color:#8e8e93;padding:40px;">暂无往期记录</div>';
+    } else {
+        history.forEach(function(record) {
+            historyHTML += '<div style="font-size:14px;font-weight:600;color:#000;margin:12px 0 8px;">' + record.date + '</div>';
+            record.questions.forEach(function(q, i) {
+                var answer = record.answers[i] || '未答';
+                historyHTML += '<div class="qw-question-card"><div class="qw-question-num">第' + (i + 1) + '题</div><div class="qw-question-text">' + q.question + '</div><div style="font-size:13px;color:#8e8e93;">回答：' + answer + '</div><div class="qw-feedback-card">' + (q.feedback || '暂无评价') + '</div></div>';
+            });
+        });
+    }
+
+    overlay.innerHTML = ''
+        + '<div class="qw-edit-panel" onclick="event.stopPropagation()">'
+        + '<div class="qw-edit-handle"></div>'
+        + '<div class="qw-edit-title">往期记录</div>'
+        + historyHTML
+        + '<div class="qw-edit-buttons"><div class="qw-edit-btn-cancel" onclick="closeQawendaHistory()">关闭</div></div>'
+        + '</div>';
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeQawendaHistory(); };
+}
+
+function closeQawendaHistory() {
+    var overlay = document.getElementById('qwHistoryOverlay');
+    if (overlay) overlay.remove();
+}
+
+// ========== 注册桌面图标 ==========
+// 在 desktop.js 中添加：
+// addDesktopIcon({ id: 'qawenda', name: '奇问妙答', icon: '...', action: 'openQawenda' });
