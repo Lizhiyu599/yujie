@@ -1019,15 +1019,19 @@ window.addEventListener('DOMContentLoaded', () => {
     settingItem.className = 'dock-item';
     settingItem.innerHTML = `
         <div class="dock-icon">
-            <div class="dock-icon-img icon-settings-gear"></div>
+            <div class="dock-icon-img">
+                <svg width="32" height="32" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M50 18 Q58 18 60 26 Q62 34 68 34 Q76 34 78 42 Q80 50 72 54 Q64 58 62 66 Q60 74 54 74 Q46 74 44 66 Q42 58 36 54 Q28 50 30 42 Q32 34 40 34 Q46 34 48 26 Q50 18 50 18Z" />
+                    <circle cx="50" cy="50" r="12"/>
+                </svg>
+            </div>
         </div>
         <div class="dock-label">设置</div>
     `;
     settingItem.onclick = () => {
-    openModal('settingsModal');
-    setTimeout(function() { renderDeviceList(); }, 100);
-};
+        openModal('settingsModal');
+        setTimeout(function() { renderDeviceList(); }, 100);
+    };
 
     dockBar.prepend(settingItem);
 });
-
