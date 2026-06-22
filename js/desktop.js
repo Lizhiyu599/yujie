@@ -807,7 +807,31 @@ worldbookItem.innerHTML = `
 `;
 worldbookItem.onclick = () => { openWorldbook(); };
 dockBar.appendChild(worldbookItem);
-                        
+
+// 美化图标
+const beautifyItem = document.createElement('div');
+beautifyItem.className = 'dock-item';
+beautifyItem.innerHTML = `
+    <div class="dock-icon">
+        <div class="dock-icon-img">
+            <svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="55" y1="70" x2="55" y2="85"/>
+                <path d="M55 15 L40 45 L70 30 L55 15Z"/>
+                <circle cx="38" cy="22" r="2.5"/>
+                <circle cx="74" cy="18" r="2.5"/>
+                <circle cx="48" cy="34" r="2.5"/>
+            </svg>
+        </div>
+    </div>
+    <div class="dock-label">美化</div>
+`;
+beautifyItem.onclick = () => {
+    initBeautify();
+    openModal('beautifyModal');
+    setTimeout(() => { loadCustomWidgetPreviews(); }, 500);
+};
+dockBar.appendChild(beautifyItem);
+    
 // ========== 暴露到全局，供 beautify.js 调用 ==========
 window.getWidgets = getWidgets;
 window.saveWidgets = saveWidgets;
