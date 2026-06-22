@@ -463,3 +463,44 @@
     fill: #8e8e93;
     text-anchor: middle;
 }
+
+/* 关系添加面板 - 分区容器 */
+.qb-add-section {
+    margin-bottom: 4px;
+}
+.qb-add-section-title {
+    font-size: 12px;
+    color: #8e8e93;
+    margin: 4px 0;
+    font-weight: 500;
+}
+.qb-add-section-divider {
+    border-top: 0.5px solid rgba(0,0,0,0.06);
+    margin: 10px 0 4px;
+    padding-top: 8px;
+}
+
+/* 设置面板 - 面具一行两个 */
+.qb-mask-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.qb-mask-item {
+    width: calc(50% - 4px);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.5);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(0,0,0,0.04);
+    border-radius: 14px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #000;
+}
+.qb-mask-item.active {
+    border: 1px solid #000;
+}
