@@ -770,13 +770,17 @@ diaryItem.innerHTML = `
     <div class="dock-icon">
         <div class="dock-icon-img">
             <svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M26 50 L20 78 L80 78 L74 50Z"/>
-                <path d="M26 50 L20 22 L80 22 L74 50Z"/>
-                <line x1="20" y1="22" x2="20" y2="78"/>
-                <line x1="30" y1="32" x2="42" y2="32"/>
-                <line x1="30" y1="42" x2="42" y2="42"/>
-                <line x1="58" y1="32" x2="70" y2="32"/>
-                <line x1="58" y1="42" x2="70" y2="42"/>
+                <path d="M74 50 L78 20 L22 20 L26 50Z"/>
+                <path d="M74 50 L78 80 L22 80 L26 50Z"/>
+                <line x1="22" y1="20" x2="22" y2="80"/>
+                <line x1="58" y1="32" x2="68" y2="32"/>
+                <line x1="58" y1="42" x2="68" y2="42"/>
+                <line x1="58" y1="62" x2="68" y2="62"/>
+                <line x1="58" y1="72" x2="68" y2="72"/>
+                <line x1="32" y1="32" x2="42" y2="32"/>
+                <line x1="32" y1="42" x2="42" y2="42"/>
+                <line x1="32" y1="62" x2="42" y2="62"/>
+                <line x1="32" y1="72" x2="42" y2="72"/>
             </svg>
         </div>
     </div>
@@ -792,13 +796,10 @@ worldbookItem.innerHTML = `
     <div class="dock-icon">
         <div class="dock-icon-img">
             <svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="50" y1="20" x2="50" y2="70"/>
-                <line x1="50" y1="40" x2="32" y2="28"/>
-                <line x1="50" y1="40" x2="68" y2="28"/>
-                <line x1="50" y1="55" x2="35" y2="44"/>
-                <circle cx="32" cy="28" r="3"/>
-                <circle cx="68" cy="28" r="3"/>
-                <circle cx="35" cy="44" r="3"/>
+                <path d="M50 18 L35 42 L65 42Z"/>
+                <path d="M50 30 L32 54 L68 54Z"/>
+                <path d="M50 44 L30 68 L70 68Z"/>
+                <line x1="50" y1="64" x2="50" y2="80"/>
             </svg>
         </div>
     </div>
@@ -806,7 +807,7 @@ worldbookItem.innerHTML = `
 `;
 worldbookItem.onclick = () => { openWorldbook(); };
 dockBar.appendChild(worldbookItem);
-
+                        
 // ========== 暴露到全局，供 beautify.js 调用 ==========
 window.getWidgets = getWidgets;
 window.saveWidgets = saveWidgets;
