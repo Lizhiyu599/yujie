@@ -770,23 +770,22 @@ diaryItem.innerHTML = `
     <div class="dock-icon">
         <div class="dock-icon-img">
             <svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M50 20 L22 26 L22 82 L50 76Z"/>
-                <path d="M50 20 L78 26 L78 82 L50 76Z"/>
-                <line x1="50" y1="20" x2="50" y2="76"/>
-                <line x1="30" y1="38" x2="44" y2="36"/>
-                <line x1="30" y1="48" x2="44" y2="46"/>
-                <line x1="30" y1="58" x2="44" y2="56"/>
-                <line x1="56" y1="36" x2="70" y2="38"/>
-                <line x1="56" y1="46" x2="70" y2="48"/>
-                <line x1="56" y1="56" x2="70" y2="58"/>
+                <path d="M26 50 L20 78 L80 78 L74 50Z"/>
+                <path d="M26 50 L20 22 L80 22 L74 50Z"/>
+                <line x1="20" y1="22" x2="20" y2="78"/>
+                <line x1="30" y1="32" x2="42" y2="32"/>
+                <line x1="30" y1="42" x2="42" y2="42"/>
+                <line x1="58" y1="32" x2="70" y2="32"/>
+                <line x1="58" y1="42" x2="70" y2="42"/>
             </svg>
         </div>
     </div>
     <div class="dock-label">日记</div>
 `;
 diaryItem.onclick = () => { openDiary(); };
-dockBar.appendChild(diaryItem); 
-
+dockBar.appendChild(diaryItem);
+});
+    
     // 万象树图标
     const worldbookItem = document.createElement('div');
     worldbookItem.className = 'dock-item';
