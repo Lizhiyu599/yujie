@@ -2218,19 +2218,105 @@ function renderEmojiManage(listView) {
     var emojis = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
     var banned = JSON.parse(localStorage.getItem('banned_emojis') || '[]');
     var gridHTML = '';
-    for (var i = 0; i < 5; i++) {
-        if (i < emojis.length) {
-            var isBanned = banned.indexOf(i) >= 0;
-            gridHTML += '<div class="emoji-manage-item ' + (isBanned ? 'banned' : '') + '" style="background-image:url(' + emojis[i].src + ');" onclick="toggleBanEmoji(' + i + ')">' + (isBanned ? '<div class="emoji-banned-badge">!</div>' : '') + '</div>';
-        } else {
-            gridHTML += '<div class="emoji-manage-add" onclick="importEmojiBatch()"></div>';
-        }
+
+    // 第1个：固定添加按钮
+    gridHTML += '<div class="emoji-manage-add" onclick="importEmojiBatch()"></div>';
+
+    // 后续：所有已导入的表情包
+    for (var i = 0; i < emojis.length; i++) {
+        var isBanned = banned.indexOf(i) >= 0;
+        gridHTML += '<div class="emoji-manage-item ' + (isBanned ? 'banned' : '') + '" id="emojiManageItem' + i + '" style="background-image:url(' + emojis[i].src + ');" data-index="' + i + '"></div>';
     }
+
     var noteHTML = '';
     for (var j = 0; j < emojis.length; j++) {
         noteHTML += '<div class="emoji-manage-note">' + (j + 1) + '. ' + (emojis[j].note || '无备注') + ' <span style="color:#007aff;cursor:pointer;" onclick="editEmojiNote(' + j + ')">编辑</span></div>';
     }
-    listView.innerHTML = '<div class="emoji-manage-grid">' + gridHTML + '</div><div style="padding:4px 16px;font-size:12px;color:#8e8e93;">点击表情包可禁止/解禁角色使用。红色边框=已禁止。</div>' + noteHTML + '<button class="ios-btn-black" style="margin:16px;width:calc(100% - 32px);" onclick="importEmojiBatch()">一键导入表情包（最多5张）</button>';
+
+    listView.innerHTML = ''
+        + '<div class="emoji-manage-grid">' + gridHTML + '</div>'
+        + '<div style="padding:4px 16px;font-size:12px;color:#8e8e93;">双击表情包可禁止/解禁角色使用。长按可删除。红色边框=已禁止。</div>'
+        + noteHTML
+        + '<button class="ios-btn-black" style="margin:16px;width:calc(100% - 32px);" onclick="importEmojiBatch()">一键导入表情包（最多50张）</button>';
+
+    // 绑定表情包事件
+    bindEmojiManageEvents();
+}
+
+function bindEmojiManageEvents() {
+    var items = document.querySelectorAll('.emoji-manage-item');
+    items.forEach(function(item) {
+        var index = parseInt(item.getAttribute('data-index'));
+
+        // 双击检测
+        var clickCount = 0;
+        var clickTimer = null;
+        item.addEventListener('click', function() {
+            clickCount++;
+            if (clickCount === 1) {
+                clickTimer = setTimeout(function() {
+                    clickCount = 0;
+                }, 300);
+            } else if (clickCount === 2) {
+                clearTimeout(clickTimer);
+                clickCount = 0;
+                toggleBanEmoji(index);
+            }
+        });
+
+        // 长按弹出删除按钮
+        var longPressTimer = null;
+        item.addEventListener('touchstart', function(e) {
+            longPressTimer = setTimeout(function() {
+                showEmojiManageDeleteBtn(index, item);
+            }, 600);
+        });
+        item.addEventListener('touchend', function() { clearTimeout(longPressTimer); });
+        item.addEventListener('touchmove', function() { clearTimeout(longPressTimer); });
+    });
+}
+
+function showEmojiManageDeleteBtn(index, el) {
+    var existing = document.getElementById('emojiManageDeleteBtn');
+    if (existing) existing.remove();
+
+    var rect = el.getBoundingClientRect();
+    var btn = document.createElement('div');
+    btn.id = 'emojiManageDeleteBtn';
+    btn.style.cssText = 'position:fixed;z-index:9999;width:22px;height:22px;background:#ff3b30;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2);';
+    btn.innerHTML = 'x';
+    btn.onclick = function(e) {
+        e.stopPropagation();
+        deleteEmojiManageItem(index);
+    };
+    btn.style.top = (rect.top - 8) + 'px';
+    btn.style.left = (rect.right - 14) + 'px';
+    document.body.appendChild(btn);
+
+    setTimeout(function() {
+        document.addEventListener('click', function removeBtn() {
+            var b = document.getElementById('emojiManageDeleteBtn');
+            if (b) b.remove();
+            document.removeEventListener('click', removeBtn);
+        }, { once: true });
+    }, 10);
+}
+
+function deleteEmojiManageItem(index) {
+    var btn = document.getElementById('emojiManageDeleteBtn');
+    if (btn) btn.remove();
+    var emojis = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
+    if (index >= 0 && index < emojis.length) {
+        emojis.splice(index, 1);
+        localStorage.setItem('custom_emojis', JSON.stringify(emojis));
+        // 更新禁止列表索引
+        var banned = JSON.parse(localStorage.getItem('banned_emojis') || '[]');
+        banned = banned.filter(function(b) { return b !== index; }).map(function(b) { return b > index ? b - 1 : b; });
+        localStorage.setItem('banned_emojis', JSON.stringify(banned));
+        var lv = document.getElementById('chatListView');
+        if (lv) renderEmojiManage(lv);
+        showToast('表情包已删除');
+    }
 }
 
 function importEmojiBatch() {
@@ -2242,14 +2328,13 @@ function importEmojiBatch() {
         var files = e.target.files;
         if (!files || files.length === 0) return;
         var emojis = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
-        var count = Math.min(files.length, 5 - emojis.length);
+        var count = Math.min(files.length, 50 - emojis.length);
         var loaded = 0;
         for (var i = 0; i < count; i++) {
             (function(file) {
                 var reader = new FileReader();
                 reader.onload = function(ev) {
                     var src = ev.target.result;
-                    // 弹备注框
                     showEmojiNoteModalForBatch(src, function(note) {
                         emojis.push({ src: src, note: note || '' });
                         localStorage.setItem('custom_emojis', JSON.stringify(emojis));
@@ -2278,37 +2363,32 @@ function showEmojiNoteModalForBatch(src, callback) {
         + '<textarea class="caption-textarea" id="emojiNoteBatchTextarea" placeholder="输入备注，让AI知道它的含义"></textarea>'
         + '<div class="caption-buttons">'
         + '<div class="payment-btn-cancel" onclick="closeEmojiNoteBatch()">取消</div>'
-        + '<div class="payment-btn-confirm" onclick="confirmEmojiNoteBatch(\'' + src + '\')">确定</div>'
+        + '<div class="payment-btn-confirm" onclick="confirmEmojiNoteBatch()">确定</div>'
         + '</div></div>';
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) closeEmojiNoteBatch(); };
     window._emojiNoteBatchCallback = callback;
-    window._emojiNoteBatchSrc = src;
 }
 
 function closeEmojiNoteBatch() {
     var overlay = document.getElementById('emojiNoteBatchOverlay');
     if (overlay) overlay.remove();
-    if (window._emojiNoteBatchCallback) {
-        window._emojiNoteBatchCallback('');
-    }
+    if (window._emojiNoteBatchCallback) { window._emojiNoteBatchCallback(''); }
     window._emojiNoteBatchCallback = null;
 }
 
-function confirmEmojiNoteBatch(src) {
+function confirmEmojiNoteBatch() {
     var note = document.getElementById('emojiNoteBatchTextarea').value.trim();
     var overlay = document.getElementById('emojiNoteBatchOverlay');
     if (overlay) overlay.remove();
-    if (window._emojiNoteBatchCallback) {
-        window._emojiNoteBatchCallback(note);
-    }
+    if (window._emojiNoteBatchCallback) { window._emojiNoteBatchCallback(note); }
     window._emojiNoteBatchCallback = null;
 }
 
 function toggleBanEmoji(index) {
     var banned = JSON.parse(localStorage.getItem('banned_emojis') || '[]');
     var pos = banned.indexOf(index);
-    if (pos >= 0) banned.splice(pos, 1); else banned.push(index);
+    if (pos >= 0) { banned.splice(pos, 1); } else { banned.push(index); }
     localStorage.setItem('banned_emojis', JSON.stringify(banned));
     var lv = document.getElementById('chatListView');
     if (lv) renderEmojiManage(lv);
@@ -2317,7 +2397,12 @@ function toggleBanEmoji(index) {
 function editEmojiNote(index) {
     var emojis = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
     var note = prompt('输入表情包含义（角色可读取）：', emojis[index].note || '');
-    if (note !== null) { emojis[index].note = note; localStorage.setItem('custom_emojis', JSON.stringify(emojis)); var lv = document.getElementById('chatListView'); if (lv) renderEmojiManage(lv); }
+    if (note !== null) {
+        emojis[index].note = note;
+        localStorage.setItem('custom_emojis', JSON.stringify(emojis));
+        var lv = document.getElementById('chatListView');
+        if (lv) renderEmojiManage(lv);
+    }
 }
 
 // ========== 设置页面 ==========
