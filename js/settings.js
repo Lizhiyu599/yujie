@@ -1015,24 +1015,37 @@ window.addEventListener('DOMContentLoaded', () => {
     const dockBar = document.getElementById('dockBar');
     if (!dockBar) return;
 
+    // 动态生成六瓣齿轮路径
+    function makeGearPath(cx, cy, outerR, innerR, teeth) {
+        const points = [];
+        const total = teeth * 2;
+        for (let i = 0; i < total; i++) {
+            const angle = (Math.PI * 2 * i) / total - Math.PI / 2;
+            const r = i % 2 === 0 ? outerR : innerR;
+            points.push([
+                cx + r * Math.cos(angle),
+                cy + r * Math.sin(angle)
+            ]);
+        }
+        // 用平滑曲线连接
+        let d = `M ${points[0][0].toFixed(2)} ${points[0][1].toFixed(2)}`;
+        for (let i = 1; i < points.length; i++) {
+            d += ` L ${points[i][0].toFixed(2)} ${points[i][1].toFixed(2)}`;
+        }
+        d += ' Z';
+        return d;
+    }
+
+    const gearPath = makeGearPath(50, 50, 34, 26, 6);
+
     const settingItem = document.createElement('div');
     settingItem.className = 'dock-item';
     settingItem.innerHTML = `
         <div class="dock-icon">
             <div class="dock-icon-img">
                 <svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="
-                        M50 20 C53 20 56 22 57 25
-                        C60 23 64 23 67 25 C69 28 69 32 67 35
-                        C70 37 72 40 72 44 C72 47 70 50 68 52
-                        C70 55 70 59 68 62 C65 65 61 65 58 63
-                        C56 66 53 68 50 68 C47 68 44 66 42 63
-                        C39 65 35 65 32 62 C30 59 30 55 32 52
-                        C30 50 28 47 28 44 C28 40 30 37 33 35
-                        C31 32 31 28 33 25 C36 23 40 23 43 25
-                        C44 22 47 20 50 20Z
-                    "/>
-                    <circle cx="50" cy="44" r="11"/>
+                    <path d="${gearPath}"/>
+                    <circle cx="50" cy="50" r="12"/>
                 </svg>
             </div>
         </div>
