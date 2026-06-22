@@ -1,19 +1,26 @@
 /**
  * 牵绊 - 关系图谱
  * 用户与角色/NPC的关系可视化
- * 支持面具切换、NPC管理、连线显示、自定义关系类型
+ * 支持面具切换（独立关系网）、NPC管理、连线显示、自定义关系类型
  * 支持角色↔角色、角色↔NPC关系
  * 仅显示有关系网的节点
  */
 
-// ========== 关系数据存储 ==========
+// ========== 按面具存储数据 ==========
 function getQianbanData() {
     var raw = localStorage.getItem('qianban_data');
-    return raw ? JSON.parse(raw) : { relations: [], npcs: [] };
+    var allData = raw ? JSON.parse(raw) : {};
+    var maskId = getActiveMaskId();
+    if (!allData[maskId]) allData[maskId] = { relations: [], npcs: [] };
+    return allData[maskId];
 }
 
 function saveQianbanData(data) {
-    localStorage.setItem('qianban_data', JSON.stringify(data));
+    var raw = localStorage.getItem('qianban_data');
+    var allData = raw ? JSON.parse(raw) : {};
+    var maskId = getActiveMaskId();
+    allData[maskId] = data;
+    localStorage.setItem('qianban_data', JSON.stringify(allData));
 }
 
 // ========== 预设关系类型 ==========
@@ -209,8 +216,8 @@ function openQianbanSettings() {
     masks.forEach(function(m) {
         var isActive = m.id === activeId;
         var avatarHTML = m.avatar
-            ? '<div class="qb-detail-avatar" style="background-image:url(' + m.avatar + ');background-size:cover;background-position:center;width:36px;height:36px;border-radius:50%;flex-shrink:0;"></div>'
-            : '<div class="qb-detail-avatar" style="width:36px;height:36px;border-radius:50%;background:#e5e5ea;display:flex;align-items:center;justify-content:center;font-size:16px;color:#8e8e93;flex-shrink:0;">' + (m.name ? m.name.charAt(0) : '?') + '</div>';
+            ? '<div style="width:36px;height:36px;border-radius:50%;background-image:url(' + m.avatar + ');background-size:cover;background-position:center;flex-shrink:0;"></div>'
+            : '<div style="width:36px;height:36px;border-radius:50%;background:#e5e5ea;display:flex;align-items:center;justify-content:center;font-size:16px;color:#8e8e93;flex-shrink:0;">' + (m.name ? m.name.charAt(0) : '?') + '</div>';
         maskHTML += '<div class="qb-mask-item' + (isActive ? ' active' : '') + '" onclick="selectQianbanMask(\'' + m.id + '\')">' + avatarHTML + '<span style="font-size:13px;">' + m.name + '</span></div>';
     });
     maskHTML += '</div>';
@@ -266,23 +273,17 @@ function deleteNPC(id) {
     renderQianban();
 }
 
-// ========== 添加关系面板（支持角色↔角色、角色↔NPC） ==========
+// ========== 添加关系面板 ==========
 function openAddRelation() {
     var data = getQianbanData();
     var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
     var npcs = data.npcs || [];
+    var userInfo = getActiveUserInfo();
 
-    // 起点选项：用户 + 所有角色 + 所有NPC
-    var fromOptions = '';
-    fromOptions += '<div class="qb-add-option selected" onclick="selectRelationFrom(\'user\', \'我\', this)">我</div>';
-    contacts.forEach(function(c) {
-        fromOptions += '<div class="qb-add-option" onclick="selectRelationFrom(\'' + c.id + '\', \'' + c.name + '\', this)">' + c.name + '</div>';
-    });
-    npcs.forEach(function(n) {
-        fromOptions += '<div class="qb-add-option" onclick="selectRelationFrom(\'' + n.id + '\', \'' + n.name + '\', this)">' + n.name + '</div>';
-    });
+    // 用户（固定起点，默认选中）
+    var fromOptions = '<div class="qb-add-option selected" onclick="selectRelationFrom(\'user\', \'' + userInfo.name + '\', this)">' + userInfo.name + '</div>';
 
-    // 终点选项：分角色和NPC两个独立区块
+    // 终点选项：角色和NPC两个独立区块
     var toOptions = '';
     toOptions += '<div class="qb-add-section"><div class="qb-add-section-title">角色</div><div class="qb-add-options" id="qbToRoleOptions">';
     if (contacts.length === 0) {
@@ -318,7 +319,7 @@ function openAddRelation() {
         <div class="qb-edit-panel" onclick="event.stopPropagation()">
             <div class="qb-edit-handle"></div>
             <div class="qb-edit-title">添加关系</div>
-            <div style="font-size:13px;color:#8e8e93;margin-bottom:8px;">选择人物</div>
+            <div style="font-size:13px;color:#8e8e93;margin-bottom:8px;">我的面具</div>
             <div class="qb-add-options" id="qbFromOptions">${fromOptions}</div>
             <div style="font-size:13px;color:#8e8e93;margin:12px 0 8px;">选择关系对象</div>
             ${toOptions}
@@ -336,7 +337,7 @@ function openAddRelation() {
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) closeAddRelation(); };
 
-    qbSelectedFrom = { id: 'user', name: '我' };
+    qbSelectedFrom = { id: 'user', name: userInfo.name };
     qbSelectedTo = null;
     qbSelectedType = null;
 }
@@ -350,7 +351,6 @@ function selectRelationFrom(id, name, el) {
     var opts = document.querySelectorAll('#qbFromOptions .qb-add-option');
     opts.forEach(function(o) { o.classList.remove('selected'); });
     el.classList.add('selected');
-    // 刷新终点选项，排除已选起点
     refreshToOptions(id);
 }
 
