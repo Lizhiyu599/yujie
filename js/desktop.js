@@ -811,3 +811,4 @@ dockBar.appendChild(worldbookItem);
 window.getWidgets = getWidgets;
 window.saveWidgets = saveWidgets;
 window.renderWidgets = renderWidgets;
+});
