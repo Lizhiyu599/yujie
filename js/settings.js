@@ -1019,7 +1019,7 @@ window.addEventListener('DOMContentLoaded', () => {
     settingItem.className = 'dock-item';
     settingItem.innerHTML = `
         <div class="dock-icon">
-            <div class="dock-icon-img">设</div>
+            <div class="dock-icon-img icon-settings-gear"></div>
         </div>
         <div class="dock-label">设置</div>
     `;
