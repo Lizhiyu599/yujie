@@ -2219,10 +2219,8 @@ function renderEmojiManage(listView) {
     var banned = JSON.parse(localStorage.getItem('banned_emojis') || '[]');
     var gridHTML = '';
 
-    // 第1个：固定添加按钮
     gridHTML += '<div class="emoji-manage-add" onclick="importEmojiBatch()"></div>';
 
-    // 后续：所有已导入的表情包
     for (var i = 0; i < emojis.length; i++) {
         var isBanned = banned.indexOf(i) >= 0;
         gridHTML += '<div class="emoji-manage-item ' + (isBanned ? 'banned' : '') + '" id="emojiManageItem' + i + '" style="background-image:url(' + emojis[i].src + ');" data-index="' + i + '"></div>';
@@ -2237,9 +2235,8 @@ function renderEmojiManage(listView) {
         + '<div class="emoji-manage-grid">' + gridHTML + '</div>'
         + '<div style="padding:4px 16px;font-size:12px;color:#8e8e93;">双击表情包可禁止/解禁角色使用。长按可删除。红色边框=已禁止。</div>'
         + noteHTML
-        + '<button class="ios-btn-black" style="margin:16px;width:calc(100% - 32px);" onclick="importEmojiBatch()">一键导入表情包（最多50张）</button>';
+        + '<button class="ios-btn-black" style="margin:16px;width:calc(100% - 32px);" onclick="importEmojiBatch()">一键导入表情包</button>';
 
-    // 绑定表情包事件
     bindEmojiManageEvents();
 }
 
@@ -2248,7 +2245,6 @@ function bindEmojiManageEvents() {
     items.forEach(function(item) {
         var index = parseInt(item.getAttribute('data-index'));
 
-        // 双击检测
         var clickCount = 0;
         var clickTimer = null;
         item.addEventListener('click', function() {
@@ -2264,7 +2260,6 @@ function bindEmojiManageEvents() {
             }
         });
 
-        // 长按弹出删除按钮
         var longPressTimer = null;
         item.addEventListener('touchstart', function(e) {
             longPressTimer = setTimeout(function() {
@@ -2309,7 +2304,6 @@ function deleteEmojiManageItem(index) {
     if (index >= 0 && index < emojis.length) {
         emojis.splice(index, 1);
         localStorage.setItem('custom_emojis', JSON.stringify(emojis));
-        // 更新禁止列表索引
         var banned = JSON.parse(localStorage.getItem('banned_emojis') || '[]');
         banned = banned.filter(function(b) { return b !== index; }).map(function(b) { return b > index ? b - 1 : b; });
         localStorage.setItem('banned_emojis', JSON.stringify(banned));
@@ -2334,9 +2328,9 @@ function importEmojiBatch() {
             (function(file) {
                 var reader = new FileReader();
                 reader.onload = function(ev) {
-                    var src = ev.target.result;
-                    showEmojiNoteModalForBatch(src, function(note) {
-                        emojis.push({ src: src, note: note || '' });
+                    window._emojiNoteBatchImage = ev.target.result;
+                    showEmojiNoteModalForBatch(function(note) {
+                        emojis.push({ src: window._emojiNoteBatchImage, note: note || '' });
                         localStorage.setItem('custom_emojis', JSON.stringify(emojis));
                         loaded++;
                         if (loaded === count) {
@@ -2353,7 +2347,7 @@ function importEmojiBatch() {
     input.click();
 }
 
-function showEmojiNoteModalForBatch(src, callback) {
+function showEmojiNoteModalForBatch(callback) {
     var overlay = document.createElement('div');
     overlay.className = 'caption-modal-overlay';
     overlay.id = 'emojiNoteBatchOverlay';
