@@ -770,17 +770,17 @@ diaryItem.innerHTML = `
     <div class="dock-icon">
         <div class="dock-icon-img">
             <svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M74 50 L78 20 L22 20 L26 50Z"/>
-                <path d="M74 50 L78 80 L22 80 L26 50Z"/>
-                <line x1="22" y1="20" x2="22" y2="80"/>
-                <line x1="58" y1="32" x2="68" y2="32"/>
-                <line x1="58" y1="42" x2="68" y2="42"/>
-                <line x1="58" y1="62" x2="68" y2="62"/>
-                <line x1="58" y1="72" x2="68" y2="72"/>
-                <line x1="32" y1="32" x2="42" y2="32"/>
-                <line x1="32" y1="42" x2="42" y2="42"/>
-                <line x1="32" y1="62" x2="42" y2="62"/>
-                <line x1="32" y1="72" x2="42" y2="72"/>
+                <path d="M50 26 L78 20 L78 80 L50 74Z"/>
+                <path d="M50 26 L22 20 L22 80 L50 74Z"/>
+                <line x1="22" y1="20" x2="78" y2="20"/>
+                <line x1="38" y1="32" x2="50" y2="32"/>
+                <line x1="38" y1="42" x2="50" y2="42"/>
+                <line x1="38" y1="62" x2="50" y2="62"/>
+                <line x1="38" y1="72" x2="50" y2="72"/>
+                <line x1="50" y1="32" x2="62" y2="32"/>
+                <line x1="50" y1="42" x2="62" y2="42"/>
+                <line x1="50" y1="62" x2="62" y2="62"/>
+                <line x1="50" y1="72" x2="62" y2="72"/>
             </svg>
         </div>
     </div>
@@ -796,10 +796,10 @@ worldbookItem.innerHTML = `
     <div class="dock-icon">
         <div class="dock-icon-img">
             <svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M50 18 L35 42 L65 42Z"/>
-                <path d="M50 30 L32 54 L68 54Z"/>
-                <path d="M50 44 L30 68 L70 68Z"/>
-                <line x1="50" y1="64" x2="50" y2="80"/>
+                <path d="M50 22 L36 44 L64 44Z"/>
+                <path d="M50 36 L30 58 L70 58Z"/>
+                <path d="M50 50 L34 70 L66 70Z"/>
+                <line x1="50" y1="66" x2="50" y2="82"/>
             </svg>
         </div>
     </div>
