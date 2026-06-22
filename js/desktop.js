@@ -784,7 +784,6 @@ diaryItem.innerHTML = `
 `;
 diaryItem.onclick = () => { openDiary(); };
 dockBar.appendChild(diaryItem);
-});
     
     // 万象树图标
     const worldbookItem = document.createElement('div');
