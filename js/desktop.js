@@ -814,10 +814,12 @@ beautifyItem.innerHTML = `
     <div class="dock-icon">
         <div class="dock-icon-img">
             <svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="48" y1="60" x2="42" y2="84"/>
-                <polygon points="48,6 54,28 78,32 58,48 64,72 48,56 32,72 38,48 18,32 42,28"/>
-                <circle cx="74" cy="14" r="1.8"/>
-                <circle cx="20" cy="12" r="1.8"/>
+                <g transform="rotate(-15 50 50)">
+                    <line x1="50" y1="68" x2="50" y2="86"/>
+                    <polygon points="50,12 56,32 78,34 60,48 66,68 50,56 34,68 40,48 22,34 44,32"/>
+                    <circle cx="76" cy="22" r="1.5"/>
+                    <circle cx="24" cy="20" r="1.5"/>
+                </g>
             </svg>
         </div>
     </div>
