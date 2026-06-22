@@ -1021,7 +1021,7 @@ window.addEventListener('DOMContentLoaded', () => {
         <div class="dock-icon">
             <div class="dock-icon-img">
                 <svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M50 30 C56 30 57 38 62 40 C68 42 68 48 70 52 C72 56 66 58 64 62 C62 68 56 66 52 68 C48 70 48 64 44 64 C40 64 40 70 36 68 C30 66 34 60 32 56 C30 52 38 50 36 44 C34 38 40 40 42 34 C44 30 44 30 50 30Z"/>
+                    <path d="M50 24 Q52 34 58 32 Q68 34 70 42 Q72 52 62 54 Q58 60 62 68 Q64 78 56 76 Q46 74 42 68 Q36 72 30 66 Q24 58 34 52 Q40 44 34 36 Q30 26 40 28 Q44 34 50 24Z"/>
                     <circle cx="50" cy="50" r="10"/>
                 </svg>
             </div>
