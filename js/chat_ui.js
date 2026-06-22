@@ -2111,7 +2111,12 @@ function openWalletPage() {
     var plusBtn = document.querySelector('.nav-plus-btn');
     if (titleEl) titleEl.textContent = '服务';
     if (plusBtn) plusBtn.style.display = 'none';
-    if (backBtn) backBtn.onclick = function() { switchChatTab('me', document.querySelector('.tab-item:nth-child(4)')); };
+    backBtn.onclick = function() {
+    var tabItems = document.querySelectorAll('.tab-fixed-bottom .tab-item');
+    if (tabItems.length >= 4) {
+        switchChatTab('me', tabItems[3]);
+    }
+};
     var balance = getWalletBalance();
     var records = getWalletRecords();
     var recordsHTML = records.length === 0 ? '<div class="wallet-empty">暂无记录</div>' : records.map(function(r) { var cls = r.type === 'recharge' || r.type === 'receive' ? 'in' : 'out'; var prefix = r.type === 'recharge' || r.type === 'receive' ? '+' : '-'; return '<div class="wallet-record-item"><span>' + r.note + '</span><span class="record-amount ' + cls + '">' + prefix + r.amount.toFixed(2) + '</span></div>'; }).join('');
@@ -2156,7 +2161,12 @@ function openFavoritesPage() {
     var plusBtn = document.querySelector('.nav-plus-btn');
     if (titleEl) titleEl.textContent = '收藏';
     if (plusBtn) plusBtn.style.display = 'none';
-    if (backBtn) backBtn.onclick = function() { switchChatTab('me', document.querySelector('.tab-item:nth-child(4)')); };
+    backBtn.onclick = function() {
+    var tabItems = document.querySelectorAll('.tab-fixed-bottom .tab-item');
+    if (tabItems.length >= 4) {
+        switchChatTab('me', tabItems[3]);
+    }
+};
     var favs = getFavorites();
     var contactIds = {};
     favs.forEach(function(f) { contactIds[f.contactId] = f.contactName; });
@@ -2200,7 +2210,12 @@ function openEmojiManagePage() {
     var plusBtn = document.querySelector('.nav-plus-btn');
     if (titleEl) titleEl.textContent = '表情包';
     if (plusBtn) plusBtn.style.display = 'none';
-    if (backBtn) backBtn.onclick = function() { switchChatTab('me', document.querySelector('.tab-item:nth-child(4)')); };
+    backBtn.onclick = function() {
+    var tabItems = document.querySelectorAll('.tab-fixed-bottom .tab-item');
+    if (tabItems.length >= 4) {
+        switchChatTab('me', tabItems[3]);
+    }
+};
     renderEmojiManage(listView);
 }
 
