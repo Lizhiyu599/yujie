@@ -2274,7 +2274,12 @@ function openSettingsPage() {
     var plusBtn = document.querySelector('.nav-plus-btn');
     if (titleEl) titleEl.textContent = '设置';
     if (plusBtn) plusBtn.style.display = 'none';
-    if (backBtn) backBtn.onclick = function() { switchChatTab('me', document.querySelector('.tab-item:nth-child(4)')); };
+    if (backBtn) backBtn.onclick = function() {
+    var tabItems = document.querySelectorAll('.tab-fixed-bottom .tab-item');
+    if (tabItems.length >= 4) {
+        switchChatTab('me', tabItems[3]);
+    }
+};
     var globalBg = localStorage.getItem('global_chat_bg') || '';
     listView.innerHTML = '<div class="settings-list"><div class="settings-list-item" onclick="openMaskEditor()">个人资料 <span class="settings-arrow">></span></div></div><div class="settings-section-title" style="margin-left:16px;">全局背景图</div><div class="settings-hint">提示：此处更换4个聊天页面的壁纸。</div><div class="glass-card" style="margin:0 16px 10px;"><div class="global-bg-preview" id="globalBgPreview" style="background-image:url(' + globalBg + ');" onclick="document.getElementById(\'globalBgInput\').click()">' + (globalBg ? '' : '点击更换全局背景图') + '</div><input type="file" id="globalBgInput" accept="image/*" style="display:none;" onchange="handleGlobalBg(event)"><button class="black-btn" onclick="clearGlobalBg()">清除全局背景图</button></div><div class="settings-list"><div class="settings-list-item"><span>拍拍</span><input type="checkbox" class="ios-switch-sm" id="swPat" ' + (localStorage.getItem('pat_enabled') === 'true' ? 'checked' : '') + ' onchange="togglePat(this.checked)"></div></div><div class="settings-hint">提示：拍一拍开启后，角色与你互动时将出现。</div><div class="glass-card" style="margin:0 16px 10px;"><div class="pat-input-row"><span>角色</span><input type="text" class="pat-input" id="patAction" value="' + (localStorage.getItem('pat_action') || '拍了拍') + '" maxlength="4"><span>了</span><input type="text" class="pat-input" id="patTarget" value="' + (localStorage.getItem('pat_target') || '我') + '" maxlength="4"><span>我的</span><input type="text" class="pat-input" id="patBody" value="' + (localStorage.getItem('pat_body') || '肩膀') + '" maxlength="4"></div><div class="pat-preview" id="patPreview"></div><button class="black-btn" onclick="savePat()">保存</button></div>';
     updatePatPreview();
