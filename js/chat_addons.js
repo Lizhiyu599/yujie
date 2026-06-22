@@ -239,10 +239,17 @@ async function callImageAPI(prompt) {
 
         const data = await response.json();
         if (data.data && data.data[0] && data.data[0].url) {
-            return data.data[0].url;
+    if (typeof addGalleryImage === 'function') {
+        addGalleryImage(data.data[0].url, prompt);
+    }
+    return data.data[0].url;
         }
         if (data.data && data.data[0] && data.data[0].b64_json) {
-            return 'data:image/png;base64,' + data.data[0].b64_json;
+    var imgSrc = 'data:image/png;base64,' + data.data[0].b64_json;
+    if (typeof addGalleryImage === 'function') {
+        addGalleryImage(imgSrc, prompt);
+    }
+    return imgSrc;
         }
         return null;
     } catch (e) {
