@@ -789,17 +789,16 @@ diaryItem.innerHTML = `
 diaryItem.onclick = () => { openDiary(); };
 dockBar.appendChild(diaryItem);
     
-    // 万象树图标
+// 万象树图标
 const worldbookItem = document.createElement('div');
 worldbookItem.className = 'dock-item';
 worldbookItem.innerHTML = `
     <div class="dock-icon">
         <div class="dock-icon-img">
             <svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M50 16 L38 36 L62 36Z"/>
-                <path d="M50 30 L32 52 L68 52Z"/>
-                <path d="M50 44 L34 64 L66 64Z"/>
-                <line x1="50" y1="62" x2="50" y2="78"/>
+                <path d="M50 18 L34 42 L66 42Z"/>
+                <path d="M50 36 L30 62 L70 62Z"/>
+                <line x1="50" y1="58" x2="50" y2="78"/>
             </svg>
         </div>
     </div>
@@ -815,11 +814,10 @@ beautifyItem.innerHTML = `
     <div class="dock-icon">
         <div class="dock-icon-img">
             <svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="55" y1="70" x2="55" y2="85"/>
-                <path d="M55 15 L40 45 L70 30 L55 15Z"/>
-                <circle cx="38" cy="22" r="2.5"/>
-                <circle cx="74" cy="18" r="2.5"/>
-                <circle cx="48" cy="34" r="2.5"/>
+                <line x1="50" y1="68" x2="50" y2="86"/>
+                <polygon points="50,10 57,35 82,35 62,52 70,78 50,62 30,78 38,52 18,35 43,35"/>
+                <circle cx="76" cy="16" r="2"/>
+                <circle cx="22" cy="14" r="2"/>
             </svg>
         </div>
     </div>
@@ -830,7 +828,7 @@ beautifyItem.onclick = () => {
     openModal('beautifyModal');
     setTimeout(() => { loadCustomWidgetPreviews(); }, 500);
 };
-dockBar.appendChild(beautifyItem);
+dockBar.appendChild(beautifyItem); 
     
 // ========== 暴露到全局，供 beautify.js 调用 ==========
 window.getWidgets = getWidgets;
