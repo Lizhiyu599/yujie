@@ -1020,9 +1020,9 @@ window.addEventListener('DOMContentLoaded', () => {
     settingItem.innerHTML = `
         <div class="dock-icon">
             <div class="dock-icon-img">
-                <svg width="32" height="32" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M50 18 Q58 18 60 26 Q62 34 68 34 Q76 34 78 42 Q80 50 72 54 Q64 58 62 66 Q60 74 54 74 Q46 74 44 66 Q42 58 36 54 Q28 50 30 42 Q32 34 40 34 Q46 34 48 26 Q50 18 50 18Z" />
-                    <circle cx="50" cy="50" r="12"/>
+                <svg width="32" height="32" viewBox="0 0 120 120" fill="none" stroke="#555" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M60 22 C70 22 72 34 78 36 C86 38 86 46 90 52 C94 58 86 62 84 68 C82 76 74 74 68 78 C62 82 60 72 54 72 C46 72 44 82 38 78 C30 74 34 66 30 60 C26 54 36 52 36 44 C36 36 44 38 48 32 C50 28 54 22 60 22Z"/>
+                    <circle cx="60" cy="60" r="12"/>
                 </svg>
             </div>
         </div>
