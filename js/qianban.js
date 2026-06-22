@@ -1,7 +1,7 @@
 /**
  * 牵绊 - 关系图谱
  * 支持面具切换、NPC管理、双向感情标签、角色↔角色/NPC关系
- * 点击角色切换中心、箭头在线两侧、NPC不切换中心
+ * 点击角色切换中心、标签竖排在关系线两侧、NPC不切换中心
  */
 
 // ========== 预设感情标签 ==========
@@ -95,6 +95,19 @@ function calcNodePositions(nodeCount, centerX, centerY, rx, ry) {
     return positions;
 }
 
+// ========== 标签竖排辅助 ==========
+function makeVerticalLabel(text, x, y) {
+    if (!text) return '';
+    var chars = text.split('');
+    var html = '';
+    var lineHeight = 8;
+    var startY = y - ((chars.length - 1) * lineHeight) / 2;
+    for (var i = 0; i < chars.length; i++) {
+        html += '<text x="' + x + '%" y="' + (startY + i * lineHeight) + '%" text-anchor="middle" font-size="7" fill="#8e8e93">' + chars[i] + '</text>';
+    }
+    return html;
+}
+
 // ========== 打开/关闭 ==========
 function openQianban() {
     var appWindow = document.getElementById('qianbanAppWindow');
@@ -155,7 +168,7 @@ function renderQianban() {
     var cx = 50, cy = 40, rx = 34, ry = 26;
     var positions = calcNodePositions(others.length, cx, cy, rx, ry);
 
-    // SVG连线（标签偏移到线两侧）
+    // SVG连线（标签竖排在线的两侧，箭头指向对方）
     var svgElements = '';
     relations.forEach(function(r) {
         var fn = nodeMap[r.from];
@@ -178,24 +191,37 @@ function renderQianban() {
             fx = fp.x; fy = fp.y; tx = tp.x; ty = tp.y;
         }
 
+        // 线段
         svgElements += '<line x1="' + fx + '%" y1="' + fy + '%" x2="' + tx + '%" y2="' + ty + '%" stroke="#c7c7cc" stroke-width="1" stroke-dasharray="4 3"/>';
 
+        // 方向向量和法向量
         var dx = tx - fx;
         var dy = ty - fy;
         var len = Math.sqrt(dx * dx + dy * dy) || 1;
         var nx = -dy / len;
         var ny = dx / len;
-        var offset = 4;
+        var offset = 5;
 
+        // 起点侧标签竖排 + 箭头指向终点
         if (r.fromToType) {
-            var lx1 = fx + dx * 0.3 + nx * offset;
-            var ly1 = fy + dy * 0.3 + ny * offset;
-            svgElements += '<text x="' + lx1 + '%" y="' + ly1 + '%" text-anchor="middle" font-size="7" fill="#8e8e93">' + r.fromToType + '</text>';
+            var lx1 = fx + dx * 0.28 + nx * offset;
+            var ly1 = fy + dy * 0.28 + ny * offset;
+            svgElements += makeVerticalLabel(r.fromToType, lx1, ly1);
+            // 箭头
+            var ax1 = fx + dx * 0.35 + nx * (offset + 2);
+            var ay1 = fy + dy * 0.35 + ny * (offset + 2);
+            svgElements += '<text x="' + ax1 + '%" y="' + ay1 + '%" text-anchor="middle" font-size="6" fill="#c7c7cc">→</text>';
         }
+
+        // 终点侧标签竖排 + 箭头指向起点
         if (r.toFromType) {
-            var lx2 = tx - dx * 0.3 + nx * offset;
-            var ly2 = ty - dy * 0.3 + ny * offset;
-            svgElements += '<text x="' + lx2 + '%" y="' + ly2 + '%" text-anchor="middle" font-size="7" fill="#8e8e93">' + r.toFromType + '</text>';
+            var lx2 = tx - dx * 0.28 + nx * offset;
+            var ly2 = ty - dy * 0.28 + ny * offset;
+            svgElements += makeVerticalLabel(r.toFromType, lx2, ly2);
+            // 箭头
+            var ax2 = tx - dx * 0.35 + nx * (offset + 2);
+            var ay2 = ty - dy * 0.35 + ny * (offset + 2);
+            svgElements += '<text x="' + ax2 + '%" y="' + ay2 + '%" text-anchor="middle" font-size="6" fill="#c7c7cc">←</text>';
         }
     });
 
@@ -245,7 +271,7 @@ function renderQianban() {
 
 function switchQianbanCenter(nodeId) {
     qbCurrentCenter = nodeId;
-    renderQianban(); 
+    renderQianban();
 }
 
 // ========== 设置面板 ==========
