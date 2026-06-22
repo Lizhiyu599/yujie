@@ -786,12 +786,26 @@ diaryItem.onclick = () => { openDiary(); };
 dockBar.appendChild(diaryItem);
     
     // 万象树图标
-    const worldbookItem = document.createElement('div');
-    worldbookItem.className = 'dock-item';
-    worldbookItem.innerHTML = '<div class="dock-icon"><div class="dock-icon-img">象</div></div><div class="dock-label">万象树</div>';
-    worldbookItem.onclick = () => { openWorldbook(); };
-    dockBar.appendChild(worldbookItem);
-});
+const worldbookItem = document.createElement('div');
+worldbookItem.className = 'dock-item';
+worldbookItem.innerHTML = `
+    <div class="dock-icon">
+        <div class="dock-icon-img">
+            <svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="50" y1="20" x2="50" y2="70"/>
+                <line x1="50" y1="40" x2="32" y2="28"/>
+                <line x1="50" y1="40" x2="68" y2="28"/>
+                <line x1="50" y1="55" x2="35" y2="44"/>
+                <circle cx="32" cy="28" r="3"/>
+                <circle cx="68" cy="28" r="3"/>
+                <circle cx="35" cy="44" r="3"/>
+            </svg>
+        </div>
+    </div>
+    <div class="dock-label">万象树</div>
+`;
+worldbookItem.onclick = () => { openWorldbook(); };
+dockBar.appendChild(worldbookItem);
 
 // ========== 暴露到全局，供 beautify.js 调用 ==========
 window.getWidgets = getWidgets;
