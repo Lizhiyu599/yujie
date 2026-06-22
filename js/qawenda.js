@@ -109,7 +109,7 @@ function renderQawenda(data) {
             if (q.type === 'choice') {
                 q.options.forEach(function(opt, oi) {
                     var selClass = data.todayAnswers[i] === opt ? ' selected' : '';
-                    bodyHTML += '<div class="qw-option' + selClass + '" onclick="selectQawendaOption(' + i + ', \'' + opt.replace(/'/g, "\\'") + '\')"><div class="qw-option-radio"></div>' + opt + '</div>';
+                    bodyHTML += '<div class="qw-option' + selClass + '" data-value="' + opt.replace(/"/g, '&quot;') + '" onclick="selectQawendaOption(' + i + ', \'' + opt.replace(/'/g, "\\'") + '\')"><div class="qw-option-radio"></div>' + opt + '</div>';
                 });
             } else {
                 bodyHTML += '<input type="text" class="qw-fill-input" id="qwFillInput' + i + '" placeholder="输入你的答案..." value="' + (data.todayAnswers[i] || '') + '" onchange="selectQawendaFill(' + i + ', this.value)">';
@@ -135,20 +135,23 @@ function renderQawenda(data) {
         + '</div>';
 }
 
-// ========== 选择选项 ==========
+// ========== 选择选项（修复高亮） ==========
 function selectQawendaOption(index, value) {
     var data = getQawendaData();
     if (!data.todayAnswers) data.todayAnswers = [];
     data.todayAnswers[index] = value;
     saveQawendaData(data);
 
-    // 立即更新当前卡片选项的选中样式
     var card = document.getElementById('qwQuestion' + index);
     if (card) {
         var options = card.querySelectorAll('.qw-option');
         options.forEach(function(opt) {
-            opt.classList.remove('selected');
-            if (opt.textContent.trim() === value) opt.classList.add('selected');
+            var optValue = opt.getAttribute('data-value') || opt.textContent.trim();
+            if (optValue === value) {
+                opt.classList.add('selected');
+            } else {
+                opt.classList.remove('selected');
+            }
         });
     }
 }
@@ -198,11 +201,11 @@ async function generateQawendaQuestions() {
     }
 
     var systemPrompt = buildSystemPrompt ? buildSystemPrompt(data.selectedChar) : '';
-    var askPrompt = '你今天是奇问妙答的出题人。请以' + contact.name + '的口吻，根据以下最近的聊天剧情和角色设定，出5道题（选择题为主，可以有1道填空题）。题目应与你们的日常互动相关，主要基于当天的对话内容，也可以涉及以前的事情。语气自然，符合角色性格。\n\n【最近的聊天记录】\n' + chatContent + '\n\n格式要求：每道题用"题号. 题目内容"开头，选择题后面用A. B. C.列出选项，填空题后面注明（填空题）。\n\n不要写答案，不要写解析，只出题目。';
+    var askPrompt = '你今天是奇问妙答的出题人。请以' + contact.name + '的口吻，根据以下最近的聊天剧情和角色设定，出5道题（选择题为主，可以有1道填空题）。题目应与你们的日常互动相关，主要基于当天的对话内容，也可以涉及以前的事情。可以出一些送命题——比如关于前任、暧昧对象的细节问题，答对了反而说明用户对别人太上心。语气自然，符合角色性格。\n\n【最近的聊天记录】\n' + chatContent + '\n\n格式要求：每道题用"题号. 题目内容"开头，选择题后面用A. B. C.列出选项，填空题后面注明（填空题）。\n\n不要写答案，不要写解析，只出题目。';
 
     try {
         var reply = await callChatAPI([
-            { role: 'system', content: systemPrompt + '\n\n你现在是奇问妙答的出题人，只出题不解答。题目基于聊天剧情。' },
+            { role: 'system', content: systemPrompt + '\n\n你现在是奇问妙答的出题人，只出题不解答。题目基于聊天剧情，可以包含送命题。' },
             { role: 'user', content: askPrompt }
         ]);
 
@@ -267,12 +270,11 @@ function parseQawendaQuestions(rawText) {
     return questions.slice(0, 6);
 }
 
-// ========== 提交答案并评分 ==========
+// ========== 提交答案并评分（支持角色恶意打0分） ==========
 async function submitQawendaAnswers() {
     var data = getQawendaData();
     if (!data.todayAsked || data.todayQuestions.length === 0) return;
 
-    // 检查是否全部答完
     var allAnswered = true;
     for (var i = 0; i < data.todayQuestions.length; i++) {
         if (!data.todayAnswers[i] || data.todayAnswers[i].trim() === '') {
@@ -295,20 +297,18 @@ async function submitQawendaAnswers() {
 
     var systemPrompt = buildSystemPrompt ? buildSystemPrompt(data.selectedChar) : '';
 
-    // 构造评分请求
     var scorePrompt = '请以' + contact.name + '的口吻，对用户刚才的回答进行评分和评价。每题满分1分，总共' + data.todayQuestions.length + '分。\n\n';
     data.todayQuestions.forEach(function(q, k) {
         scorePrompt += '第' + (k + 1) + '题：' + q.question + '\n用户回答：' + (data.todayAnswers[k] || '未答') + '\n\n';
     });
-    scorePrompt += '请逐题给出评价（每题一句话），最后给出总分。每题只能给0分或1分。回答优秀即使不是预设答案也可以给1分。格式：\n1. 评价：xxx（1分）\n2. 评价：xxx（0分）\n...\n总分：X分';
+    scorePrompt += '请逐题给出评价（每题一句话），最后给出总分。每题只能给0分或1分。\n\n重要规则：如果问题涉及前任、暧昧对象或其他让角色吃醋的敏感话题，用户回答正确说明对别人太了解、太在意，角色可以恶意给0分并表达吃醋或不满。回答错误反而可能让角色开心给1分。根据角色性格和问题语境自主判断。\n\n格式：\n1. 评价：xxx（1分）\n2. 评价：xxx（0分）\n...\n总分：X分';
 
     try {
         var reply = await callChatAPI([
-            { role: 'system', content: systemPrompt + '\n\n你现在要批改用户的答题。每题最多1分。评价要符合角色性格，语气自然。' },
+            { role: 'system', content: systemPrompt + '\n\n你现在要批改用户的答题。每题最多1分。送命题答对可以给0分，答错可以给1分。评价要符合角色性格。' },
             { role: 'user', content: scorePrompt }
         ]);
 
-        // 解析评分
         parseQawendaScores(reply, data);
         data.todayScored = true;
         saveQawendaData(data);
@@ -325,7 +325,6 @@ function parseQawendaScores(rawText, data) {
     var totalScore = 0;
 
     lines.forEach(function(line) {
-        // 匹配 "1. 评价：xxx（1分）" 或 "1. 评价：xxx"
         var match = line.match(/^(\d+)[\.、]\s*(.+)/);
         if (match) {
             var idx = parseInt(match[1]) - 1;
@@ -338,7 +337,6 @@ function parseQawendaScores(rawText, data) {
                 totalScore += score;
             }
         }
-        // 匹配总分
         var totalMatch = line.match(/总分[：:]\s*(\d+)/);
         if (totalMatch) {
             totalScore = Math.min(parseInt(totalMatch[1]), data.todayQuestions.length);
