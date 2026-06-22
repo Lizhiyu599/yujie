@@ -2,6 +2,7 @@
  * 牵绊 - 关系图谱
  * 用户与角色/NPC的关系可视化
  * 支持面具切换、NPC管理、连线显示、自定义关系类型
+ * 支持角色↔角色、角色↔NPC关系
  */
 
 // ========== 关系数据存储 ==========
@@ -251,27 +252,38 @@ function deleteNPC(id) {
     renderQianban();
 }
 
-// ========== 添加关系面板 ==========
+// ========== 添加关系面板（支持角色↔角色、角色↔NPC） ==========
 function openAddRelation() {
     var data = getQianbanData();
     var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
     var npcs = data.npcs || [];
 
-    var targetOptions = '';
-    targetOptions += '<div style="font-size:12px;color:#8e8e93;margin:4px 0;">角色</div>';
+    // 起点选项：用户 + 所有角色 + 所有NPC
+    var fromOptions = '';
+    fromOptions += '<div class="qb-add-option selected" onclick="selectRelationFrom(\'user\', \'我\', this)">我</div>';
+    contacts.forEach(function(c) {
+        fromOptions += '<div class="qb-add-option" onclick="selectRelationFrom(\'' + c.id + '\', \'' + c.name + '\', this)">' + c.name + '</div>';
+    });
+    npcs.forEach(function(n) {
+        fromOptions += '<div class="qb-add-option" onclick="selectRelationFrom(\'' + n.id + '\', \'' + n.name + '\', this)">' + n.name + '</div>';
+    });
+
+    // 终点选项：分角色和NPC两个区块
+    var toOptions = '';
+    toOptions += '<div style="font-size:12px;color:#8e8e93;margin:4px 0;font-weight:500;">角色</div>';
     if (contacts.length === 0) {
-        targetOptions += '<div style="color:#8e8e93;font-size:12px;padding:4px;">暂无角色</div>';
+        toOptions += '<div style="color:#8e8e93;font-size:12px;padding:4px;">暂无角色</div>';
     } else {
         contacts.forEach(function(c) {
-            targetOptions += '<div class="qb-add-option" onclick="selectRelationTarget(\'' + c.id + '\', \'' + c.name + '\', this)">' + c.name + '</div>';
+            toOptions += '<div class="qb-add-option" onclick="selectRelationTo(\'' + c.id + '\', \'' + c.name + '\', this)">' + c.name + '</div>';
         });
     }
-    targetOptions += '<div style="font-size:12px;color:#8e8e93;margin:8px 0 4px;">NPC</div>';
+    toOptions += '<div style="font-size:12px;color:#8e8e93;margin:10px 0 4px;font-weight:500;border-top:0.5px solid rgba(0,0,0,0.06);padding-top:8px;">NPC</div>';
     if (npcs.length === 0) {
-        targetOptions += '<div style="color:#8e8e93;font-size:12px;padding:4px;">暂无NPC</div>';
+        toOptions += '<div style="color:#8e8e93;font-size:12px;padding:4px;">暂无NPC</div>';
     } else {
         npcs.forEach(function(n) {
-            targetOptions += '<div class="qb-add-option" onclick="selectRelationTarget(\'' + n.id + '\', \'' + n.name + '\', this)">' + n.name + '</div>';
+            toOptions += '<div class="qb-add-option" onclick="selectRelationTo(\'' + n.id + '\', \'' + n.name + '\', this)">' + n.name + '</div>';
         });
     }
 
@@ -288,9 +300,11 @@ function openAddRelation() {
         <div class="qb-edit-panel" onclick="event.stopPropagation()">
             <div class="qb-edit-handle"></div>
             <div class="qb-edit-title">添加关系</div>
-            <div style="font-size:13px;color:#8e8e93;margin-bottom:8px;">选择对象</div>
-            <div class="qb-add-options" id="qbTargetOptions">${targetOptions}</div>
-            <div style="font-size:13px;color:#8e8e93;margin-bottom:8px;">选择关系类型</div>
+            <div style="font-size:13px;color:#8e8e93;margin-bottom:8px;">关系起点（谁的关系）</div>
+            <div class="qb-add-options" id="qbFromOptions">${fromOptions}</div>
+            <div style="font-size:13px;color:#8e8e93;margin:12px 0 8px;">关系终点（和谁的关系）</div>
+            <div class="qb-add-options" id="qbToOptions">${toOptions}</div>
+            <div style="font-size:13px;color:#8e8e93;margin:12px 0 8px;">选择关系类型</div>
             <div class="qb-add-options" id="qbTypeOptions">${typeOptions}</div>
             <div id="qbCustomTypeInput" style="display:none;margin:8px 0;">
                 <input type="text" class="ios-input" id="qbCustomTypeField" placeholder="输入自定义关系类型">
@@ -303,14 +317,27 @@ function openAddRelation() {
     `;
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) closeAddRelation(); };
+
+    // 重置选择状态
+    qbSelectedFrom = { id: 'user', name: '我' };
+    qbSelectedTo = null;
+    qbSelectedType = null;
 }
 
-var qbSelectedTarget = null;
+var qbSelectedFrom = { id: 'user', name: '我' };
+var qbSelectedTo = null;
 var qbSelectedType = null;
 
-function selectRelationTarget(id, name, el) {
-    qbSelectedTarget = { id: id, name: name };
-    var opts = document.querySelectorAll('#qbTargetOptions .qb-add-option');
+function selectRelationFrom(id, name, el) {
+    qbSelectedFrom = { id: id, name: name };
+    var opts = document.querySelectorAll('#qbFromOptions .qb-add-option');
+    opts.forEach(function(o) { o.classList.remove('selected'); });
+    el.classList.add('selected');
+}
+
+function selectRelationTo(id, name, el) {
+    qbSelectedTo = { id: id, name: name };
+    var opts = document.querySelectorAll('#qbToOptions .qb-add-option');
     opts.forEach(function(o) { o.classList.remove('selected'); });
     el.classList.add('selected');
 }
@@ -332,15 +359,20 @@ function showCustomRelationInput(el) {
 }
 
 function closeAddRelation() {
-    qbSelectedTarget = null;
+    qbSelectedFrom = { id: 'user', name: '我' };
+    qbSelectedTo = null;
     qbSelectedType = null;
     var overlay = document.getElementById('qbAddRelationOverlay');
     if (overlay) overlay.remove();
 }
 
 function confirmAddRelation() {
-    if (!qbSelectedTarget || !qbSelectedType) {
-        showToast('请选择对象和关系类型');
+    if (!qbSelectedFrom || !qbSelectedTo || !qbSelectedType) {
+        showToast('请选择起点、终点和关系类型');
+        return;
+    }
+    if (qbSelectedFrom.id === qbSelectedTo.id) {
+        showToast('起点和终点不能相同');
         return;
     }
     var finalType = qbSelectedType;
@@ -352,9 +384,10 @@ function confirmAddRelation() {
     if (!data.relations) data.relations = [];
     data.relations.push({
         id: 'rel_' + Date.now(),
-        from: 'user',
-        to: qbSelectedTarget.id,
-        toName: qbSelectedTarget.name,
+        from: qbSelectedFrom.id,
+        fromName: qbSelectedFrom.name,
+        to: qbSelectedTo.id,
+        toName: qbSelectedTo.name,
         type: finalType,
         createdAt: Date.now()
     });
@@ -576,9 +609,12 @@ function openQianbanDetail(nodeId) {
         relatedHTML = '<div style="text-align:center;color:#8e8e93;padding:20px;">暂无关系记录</div>';
     } else {
         relatedRelations.forEach(function(r) {
-            var otherName = r.from === nodeId ? (r.toName || r.to) : (r.from === 'user' ? getActiveUserInfo().name : r.from);
-            if (r.from === nodeId && r.to === 'user') otherName = getActiveUserInfo().name;
-            if (r.to === nodeId && r.from === 'user') otherName = getActiveUserInfo().name;
+            var otherName = '';
+            if (r.from === nodeId) {
+                otherName = r.toName || r.to;
+            } else {
+                otherName = r.fromName || r.from;
+            }
             relatedHTML += '<div class="qb-detail-stat"><span>' + otherName + '</span><span class="stat-value">' + r.type + '</span></div>';
         });
     }
@@ -610,5 +646,5 @@ function openQianbanDetail(nodeId) {
 
 function closeQianbanDetail() {
     var overlay = document.getElementById('qbDetailOverlay');
-    if (overlay) overlay.remove();
+    if (overlay) overlay.remove(); 
 }
