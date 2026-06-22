@@ -19,14 +19,19 @@ function saveIcons(icons) {
 
 function addDesktopIcon(item) {
     const icons = getIcons();
-    if (icons.find(i => i.id === item.id)) return;
-    icons.push({
+    const existing = icons.findIndex(i => i.id === item.id);
+    const newItem = {
         id: item.id,
         type: 'app',
         name: item.name,
         icon: item.icon || '',
         action: item.action || null
-    });
+    };
+    if (existing !== -1) {
+        icons[existing] = newItem; // 更新已有的
+    } else {
+        icons.push(newItem); // 新增
+    }
     saveIcons(icons);
     renderDesktopIcons();
 }
