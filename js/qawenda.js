@@ -2,6 +2,7 @@
  * 奇问妙答 - 角色每日问答
  * 选择题为主，6道题6分
  * 支持往期记录、自动提问、手动刷新
+ * 题目基于聊天剧情生成
  */
 
 // ========== 数据存储 ==========
@@ -32,7 +33,6 @@ function checkQawendaDate() {
     var now = new Date();
     var todayStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日';
     if (data.todayDate !== todayStr) {
-        // 新的一天，保存昨天的记录到历史
         if (data.todayQuestions.length > 0 && data.todayScored) {
             if (!data.history) data.history = [];
             data.history.unshift({
@@ -42,7 +42,6 @@ function checkQawendaDate() {
             });
             if (data.history.length > 50) data.history = data.history.slice(0, 50);
         }
-        // 重置今日状态
         data.todayDate = todayStr;
         data.todayAsked = false;
         data.todayQuestions = [];
@@ -96,7 +95,6 @@ function renderQawenda(data) {
         bodyHTML = '<div class="qw-waiting">请先在设置中选择角色</div>';
         bottomHTML = '<button class="qw-btn qw-btn-black" onclick="openQawendaSettings()">设置</button>';
     } else if (data.todayScored) {
-        // 已评分，显示结果
         bodyHTML += '<div class="qw-char-card"><div class="qw-char-avatar" style="' + charAvatarBg + '">' + charAvatar + '</div><div class="qw-char-info"><div class="qw-char-name">' + charName + '</div><div class="qw-char-hint">今日问答已完成</div></div></div>';
         bodyHTML += '<div class="qw-score-display">今日得分：' + calcTodayScore(data) + ' / ' + data.todayQuestions.length + '</div>';
         data.todayQuestions.forEach(function(q, i) {
@@ -105,7 +103,6 @@ function renderQawenda(data) {
         });
         bottomHTML = '<button class="qw-btn qw-btn-white" onclick="openQawendaHistory()">往期记录</button>';
     } else if (data.todayAsked && data.todayQuestions.length > 0) {
-        // 已出题，等待答题
         bodyHTML += '<div class="qw-char-card"><div class="qw-char-avatar" style="' + charAvatarBg + '">' + charAvatar + '</div><div class="qw-char-info"><div class="qw-char-name">' + charName + '</div><div class="qw-char-hint">今天问了你 ' + data.todayQuestions.length + ' 道题</div></div></div>';
         data.todayQuestions.forEach(function(q, i) {
             bodyHTML += '<div class="qw-question-card" id="qwQuestion' + i + '"><div class="qw-question-num">第' + (i + 1) + '题 · ' + (q.type === 'choice' ? '选择题' : '填空题') + '</div><div class="qw-question-text">' + q.question + '</div>';
@@ -121,7 +118,6 @@ function renderQawenda(data) {
         });
         bottomHTML = '<button class="qw-btn qw-btn-black" onclick="submitQawendaAnswers()">提交答案</button>';
     } else {
-        // 等待提问
         bodyHTML += '<div class="qw-char-card"><div class="qw-char-avatar" style="' + charAvatarBg + '">' + charAvatar + '</div><div class="qw-char-info"><div class="qw-char-name">' + charName + '</div><div class="qw-char-hint">等待今天的提问...</div></div></div>';
         bodyHTML += '<div class="qw-waiting">今天还没有问题<br>点击下方按钮让角色出题吧</div>';
         bottomHTML = '<button class="qw-btn qw-btn-black" onclick="generateQawendaQuestions()">刷新提问</button>';
@@ -146,7 +142,7 @@ function selectQawendaOption(index, value) {
     data.todayAnswers[index] = value;
     saveQawendaData(data);
 
-    // 刷新选项显示
+    // 立即更新当前卡片选项的选中样式
     var card = document.getElementById('qwQuestion' + index);
     if (card) {
         var options = card.querySelectorAll('.qw-option');
@@ -164,7 +160,7 @@ function selectQawendaFill(index, value) {
     saveQawendaData(data);
 }
 
-// ========== 生成问题 ==========
+// ========== 生成问题（基于聊天剧情） ==========
 async function generateQawendaQuestions() {
     var data = checkQawendaDate();
     if (!data.selectedChar) {
@@ -188,12 +184,25 @@ async function generateQawendaQuestions() {
         return;
     }
 
+    // 取最近聊天记录
+    var chatContent = '';
+    if (typeof getRecentHistory === 'function') {
+        var historyMessages = getRecentHistory(data.selectedChar, 30);
+        historyMessages.forEach(function(m) {
+            var roleName = m.role === 'user' ? '用户' : contact.name;
+            chatContent += roleName + '：' + m.content + '\n';
+        });
+    }
+    if (!chatContent.trim()) {
+        chatContent = '今天还没有对话记录。';
+    }
+
     var systemPrompt = buildSystemPrompt ? buildSystemPrompt(data.selectedChar) : '';
-    var askPrompt = '你今天是奇问妙答的出题人。请以' + contact.name + '的口吻，根据你们最近的聊天剧情和角色设定，出5道题（选择题为主，可以有1道填空题）。题目应与你们的日常互动相关，语气自然，符合角色性格。\n\n格式要求：每道题用"题号. 题目内容"开头，选择题后面用A. B. C.列出选项，填空题后面注明（填空题）。\n\n不要写答案，不要写解析，只出题目。';
+    var askPrompt = '你今天是奇问妙答的出题人。请以' + contact.name + '的口吻，根据以下最近的聊天剧情和角色设定，出5道题（选择题为主，可以有1道填空题）。题目应与你们的日常互动相关，主要基于当天的对话内容，也可以涉及以前的事情。语气自然，符合角色性格。\n\n【最近的聊天记录】\n' + chatContent + '\n\n格式要求：每道题用"题号. 题目内容"开头，选择题后面用A. B. C.列出选项，填空题后面注明（填空题）。\n\n不要写答案，不要写解析，只出题目。';
 
     try {
         var reply = await callChatAPI([
-            { role: 'system', content: systemPrompt + '\n\n你现在是奇问妙答的出题人，只出题不解答。' },
+            { role: 'system', content: systemPrompt + '\n\n你现在是奇问妙答的出题人，只出题不解答。题目基于聊天剧情。' },
             { role: 'user', content: askPrompt }
         ]);
 
@@ -287,15 +296,15 @@ async function submitQawendaAnswers() {
     var systemPrompt = buildSystemPrompt ? buildSystemPrompt(data.selectedChar) : '';
 
     // 构造评分请求
-    var scorePrompt = '请以' + contact.name + '的口吻，对用户刚才的回答进行评分和评价。满分' + data.todayQuestions.length + '分。\n\n';
+    var scorePrompt = '请以' + contact.name + '的口吻，对用户刚才的回答进行评分和评价。每题满分1分，总共' + data.todayQuestions.length + '分。\n\n';
     data.todayQuestions.forEach(function(q, k) {
         scorePrompt += '第' + (k + 1) + '题：' + q.question + '\n用户回答：' + (data.todayAnswers[k] || '未答') + '\n\n';
     });
-    scorePrompt += '请逐题给出评价（每题一句话），最后给出总分。格式：\n1. 评价：xxx（得分）\n2. 评价：xxx（得分）\n...\n总分：X分';
+    scorePrompt += '请逐题给出评价（每题一句话），最后给出总分。每题只能给0分或1分。回答优秀即使不是预设答案也可以给1分。格式：\n1. 评价：xxx（1分）\n2. 评价：xxx（0分）\n...\n总分：X分';
 
     try {
         var reply = await callChatAPI([
-            { role: 'system', content: systemPrompt + '\n\n你现在要批改用户的答题。评价要符合角色性格，语气自然。回答优秀的即使不是预设答案也可以给分。' },
+            { role: 'system', content: systemPrompt + '\n\n你现在要批改用户的答题。每题最多1分。评价要符合角色性格，语气自然。' },
             { role: 'user', content: scorePrompt }
         ]);
 
@@ -322,7 +331,7 @@ function parseQawendaScores(rawText, data) {
             var idx = parseInt(match[1]) - 1;
             var content = match[2];
             var scoreMatch = content.match(/（(\d+)分）/) || content.match(/\((\d+)分\)/);
-            var score = scoreMatch ? parseInt(scoreMatch[1]) : 0;
+            var score = scoreMatch ? Math.min(parseInt(scoreMatch[1]), 1) : 0;
             if (idx >= 0 && idx < data.todayQuestions.length) {
                 data.todayQuestions[idx].feedback = content;
                 data.todayQuestions[idx].score = score;
@@ -332,7 +341,7 @@ function parseQawendaScores(rawText, data) {
         // 匹配总分
         var totalMatch = line.match(/总分[：:]\s*(\d+)/);
         if (totalMatch) {
-            totalScore = parseInt(totalMatch[1]);
+            totalScore = Math.min(parseInt(totalMatch[1]), data.todayQuestions.length);
         }
     });
 
@@ -445,7 +454,3 @@ function closeQawendaHistory() {
     var overlay = document.getElementById('qwHistoryOverlay');
     if (overlay) overlay.remove();
 }
-
-// ========== 注册桌面图标 ==========
-// 在 desktop.js 中添加：
-// addDesktopIcon({ id: 'qawenda', name: '奇问妙答', icon: '...', action: 'openQawenda' });
