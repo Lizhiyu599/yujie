@@ -357,6 +357,8 @@ function backToChatList() {
 
 // ========== 让AI先说话 ==========
 function triggerAIReply() {
+    if (window.ChatState.isAITyping) return;
+    
     const contactId = window.ChatState.currentContactId || 'c1';
     const contact = getContactById(contactId);
     const contactName = contact ? contact.name : 'AI';
@@ -393,7 +395,7 @@ if (messagesEl2) {
         if (titleEl) titleEl.textContent = contactName;
         window.ChatState.isAITyping = false;
     });
-}          
+}
 
 // ========== 心理状态窗切换 ==========
 function toggleChatMental() {
