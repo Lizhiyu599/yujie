@@ -102,14 +102,15 @@ function addCustomEmoji() {
         if (!file) return;
         const reader = new FileReader();
         reader.onload = function(ev) {
-            showEmojiNoteModal(ev.target.result);
+            window._emojiAddImage = ev.target.result;
+            showEmojiNoteModal();
         };
         reader.readAsDataURL(file);
     };
     input.click();
 }
 
-function showEmojiNoteModal(emojiSrc) {
+function showEmojiNoteModal() {
     const overlay = document.createElement('div');
     overlay.className = 'caption-modal-overlay';
     overlay.id = 'emojiNoteOverlay';
@@ -119,7 +120,7 @@ function showEmojiNoteModal(emojiSrc) {
             <textarea class="caption-textarea" id="emojiNoteTextarea" placeholder="输入备注，让AI知道它的含义"></textarea>
             <div class="caption-buttons">
                 <div class="payment-btn-cancel" onclick="closeEmojiNoteModal()">取消</div>
-                <div class="payment-btn-confirm" onclick="confirmAddEmoji('${emojiSrc}')">确定</div>
+                <div class="payment-btn-confirm" onclick="confirmAddEmoji()">确定</div>
             </div>
         </div>
     `;
@@ -130,17 +131,21 @@ function showEmojiNoteModal(emojiSrc) {
 function closeEmojiNoteModal() {
     const overlay = document.getElementById('emojiNoteOverlay');
     if (overlay) overlay.remove();
+    window._emojiAddImage = null;
 }
 
-function confirmAddEmoji(src) {
+function confirmAddEmoji() {
     const note = document.getElementById('emojiNoteTextarea').value.trim();
     closeEmojiNoteModal();
+    const src = window._emojiAddImage;
+    if (!src) return;
     const emojiData = { src: src, note: note || '' };
     const saved = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
     saved.push(emojiData);
     localStorage.setItem('custom_emojis', JSON.stringify(saved));
     showToast('表情包已添加');
     switchAddPanelTab('emoji', document.getElementById('tabEmoji'));
+    window._emojiAddImage = null;
 }
 
 // ========== 表情包长按删除 ==========
