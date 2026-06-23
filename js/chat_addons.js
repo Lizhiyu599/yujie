@@ -144,13 +144,10 @@ function confirmAddEmoji() {
     saved.push(emojiData);
     localStorage.setItem('custom_emojis', JSON.stringify(saved));
     showToast('表情包已添加');
-var panel = document.getElementById('addPanelFull');
-if (panel && panel.style.display === 'block') {
     if (typeof renderAddPanelContent === 'function') {
         renderAddPanelContent('emoji');
     }
-}
-window._emojiAddImage = null;
+    window._emojiAddImage = null;
 }
 
 // ========== 表情包长按删除 ==========
