@@ -135,6 +135,136 @@ const CORE_RULES = [
     }
 ];
 
+// ========== 预设数据存储（用户可见） ==========
+function getPresets() {
+    const raw = localStorage.getItem('worldbook_presets');
+    return raw ? JSON.parse(raw) : [];
+}
+
+function savePresets(presets) {
+    localStorage.setItem('worldbook_presets', JSON.stringify(presets));
+}
+
+const BUILTIN_PRESETS = [];
+
+function initPresets() {
+    const existing = getPresets();
+    if (existing.length === 0) {
+        savePresets([]);
+    }
+}
+
+function getCoreRulesText() {
+    return CORE_RULES.map(r => r.content).join('\n\n');
+}
+
+function getFullSystemPrompt() {
+    let prompt = getCoreRulesText();
+    const presets = getPresets();
+    if (presets.length > 0) {
+        const userPresets = presets.map(p => p.content).join('\n\n');
+        prompt += '\n\n【用户自定义规则】\n' + userPresets;
+    }
+    return prompt;
+}
+
+// ========== 当前视图 ==========
+let wbCurrentFilter = 'all';
+let wbSearchQuery = '';
+
+function openWorldbook() {
+    initPresets();
+    let appWindow = document.getElementById('worldbookAppWindow');
+    if (!appWindow) {
+        appWindow = document.createElement('div');
+        appWindow.id = 'worldbookAppWindow';
+        appWindow.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:#f2f2f7;z-index:200;display:none;flex-direction:column;';
+        document.getElementById('desktop').appendChild(appWindow);
+    }
+    wbCurrentFilter = 'all';
+    wbSearchQuery = '';
+    renderWorldbook();
+    appWindow.style.display = 'flex';
+}
+
+function closeWorldbook() {
+    const appWindow = document.getElementById('worldbookAppWindow');
+    if (appWindow) appWindow.style.display = 'none';
+}
+
+function renderWorldbook() {
+    const appWindow = document.getElementById('worldbookAppWindow');
+    if (!appWindow) return;
+
+    const presets = getPresets();
+    let filtered = wbCurrentFilter === 'all' 
+        ? presets 
+        : presets.filter(p => p.type === wbCurrentFilter);
+    
+    if (wbSearchQuery) {
+        const q = wbSearchQuery.toLowerCase();
+        filtered = filtered.filter(p => p.name.toLowerCase().includes(q));
+    }
+
+    let cardsHTML = '';
+    if (filtered.length === 0) {
+        cardsHTML = '<div class="wb-empty">暂无自定义预设</div>';
+    } else {
+        filtered.forEach(p => {
+            const charLabel = p.characterId ? ' · ' + (p.characterName || '已绑定角色') : '';
+            cardsHTML += `
+                <div class="wb-preset-card" id="preset-card-${p.id}" onclick="editPreset('${p.id}')">
+                    <div class="wb-preset-header">
+                        <span class="wb-preset-name">${p.name}</span>
+                        <span class="wb-preset-badge ${p.type}">${p.type === 'global' ? '全局' : '局部'}${charLabel}</span>
+                    </div>
+                    <div class="wb-preset-desc">${p.content.substring(0, 80)}${p.content.length > 80 ? '...' : ''}</div>
+                    <div class="wb-preset-actions">
+                        <span class="wb-preset-action" onclick="event.stopPropagation(); togglePresetType('${p.id}')">切换分支</span>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    appWindow.innerHTML = `
+        <div class="worldbook-app">
+            <div class="wb-top-bar">
+                <div class="wb-back-btn" onclick="closeWorldbook()">‹</div>
+                <div class="wb-top-title">万 象 树</div>
+                <div class="wb-top-spacer"></div>
+            </div>
+
+            <div class="wb-body">
+                <div class="wb-section-title">自定义预设</div>
+                <input type="text" class="wb-search-input" id="wbSearchInput" placeholder="搜索预设..." value="${wbSearchQuery}" 
+                       oninput="wbSearchQuery = this.value; renderWorldbook();">
+                ${cardsHTML}
+                <button class="wb-add-btn" onclick="addNewPreset()">+ 新建预设</button>
+            </div>
+
+            <div class="wb-bottom-bar">
+                <span class="wb-tab ${wbCurrentFilter === 'all' ? 'active' : ''}" onclick="filterPresets('all')">全部</span>
+                <span class="wb-tab ${wbCurrentFilter === 'global' ? 'active' : ''}" onclick="filterPresets('global')">全局</span>
+                <span class="wb-tab ${wbCurrentFilter === 'local' ? 'active' : ''}" onclick="filterPresets('local')">局部</span>
+            </div>
+        </div>
+    `;
+}
+
+function filterPresets(type) {
+    wbCurrentFilter = type;
+    renderWorldbook();
+}
+
+function addNewPreset() {
+    openPresetEditor(null);
+}
+
+function editPreset(id) {
+    openPresetEditor(id);
+}
+
 // ========== 预设编辑器 ==========
 let wbEditType = 'global';
 let wbEditCharacterId = '';
