@@ -869,6 +869,7 @@ function sendStickerFromBot(src, note) {
     var nRow = document.createElement('div');
     nRow.className = 'bubble-narration';
     nRow.textContent = '（发送了表情包：' + note + '）';
+    nRow.style.display = 'none';
     messages.appendChild(nRow);
     messages.scrollTop = messages.scrollHeight;
     saveChatHistory(window.ChatState.currentContactId);
