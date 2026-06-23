@@ -697,3 +697,5 @@ function initBeautify() { renderBeautifyIcons(); loadSavedIcons(); loadSavedWall
 if (typeof registerModal === 'function') {
     registerModal('beautifyModal', '美化', beautifyHTML);
 }
+
+startTopBarClock();
