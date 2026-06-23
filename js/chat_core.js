@@ -149,10 +149,6 @@ async function sendChatMessage() {
     appendMessage('user', text);
     input.value = '';
 
-    window.ChatState.isAITyping = true;
-    const titleEl = document.getElementById('chatTitle');
-    if (titleEl) titleEl.innerHTML = '<span class="nav-typing">输入中...</span>';
-
     if (document.getElementById('chatMessages')) saveChatHistory(contactId);
 
     const systemPrompt = buildSystemPrompt(contactId);
