@@ -665,6 +665,7 @@ function getRecentHistory(contactId, maxCount) {
 
 function saveChatHistory(contactId) {
     var messages = document.getElementById('chatMessages');
+    if (!messages) return;
     if (messages) {
         var html = messages.innerHTML;
         if (html.length > 300000) {
