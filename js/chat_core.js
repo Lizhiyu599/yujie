@@ -382,9 +382,9 @@ if (transferMatch) {
 
     // ===== 检测角色旁白发表情包 =====
 var emojiAllow = (ChatConfig && ChatConfig.settings && ChatConfig.settings.emojiAllow) !== false;
-var emojiMatch = cleanContent.match(/[\(\（]([^\)\）]*)发送了表情包[：:]\s*([^\)\）]+)[\)\）]/);
-if (emojiAllow && emojiMatch && emojiMatch[2]) {
-    var emojiNote = emojiMatch[2].trim();
+var emojiMatch = cleanContent.match(/[\(\（]发送了表情包[：:]\s*(.+?)[\)\）](?=[^\)\）]*$)/);
+if (emojiAllow && emojiMatch && emojiMatch[1]) {
+    var emojiNote = emojiMatch[1].trim();
     var emojis = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
     var banned = JSON.parse(localStorage.getItem('banned_emojis') || '[]');
     var found = null;
@@ -397,7 +397,7 @@ if (emojiAllow && emojiMatch && emojiMatch[2]) {
     if (found) {
         sendStickerFromBot(found.src, emojiNote);
     }
-    cleanContent = cleanContent.replace(/[\(\（]\s*发送了表情包[：:]\s*[^\)\）]+[\)\）]/g, '');
+    cleanContent = cleanContent.replace(/[\(\（]发送了表情包[：:].+?[\)\）]/g, '');
 }
     
     // ===== 检测角色旁白发图片 =====
