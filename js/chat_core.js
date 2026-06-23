@@ -494,8 +494,13 @@ if (diaryAuto && diaryChar === contactId && typeof generateDiaryContent === 'fun
     var mental = window.ChatConfig && window.ChatConfig.mental;
     var prevFav = parseInt(localStorage.getItem('diary_last_fav_' + contactId) || mental.favorability);
     var favChange = Math.abs(mental.favorability - prevFav);
-    if (favChange >= 10) {
+    // 检查今天自动生成了几篇
+    var todayKey = new Date().getFullYear() + '年' + (new Date().getMonth() + 1) + '月' + new Date().getDate() + '日';
+    var autoCountKey = 'diary_auto_count_' + contactId + '_' + todayKey;
+    var autoCount = parseInt(localStorage.getItem(autoCountKey) || 0);
+    if (favChange >= 10 && autoCount < 2) {
         localStorage.setItem('diary_last_fav_' + contactId, mental.favorability);
+        localStorage.setItem(autoCountKey, autoCount + 1);
         generateDiaryContent(contactId).then(function(content) {
             if (content) {
                 var now = new Date();
