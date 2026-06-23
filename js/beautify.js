@@ -699,3 +699,4 @@ if (typeof registerModal === 'function') {
 }
 
 startTopBarClock();
+loadSavedWallpaper();
