@@ -368,8 +368,20 @@ function triggerAIReply() {
     const systemPrompt = buildSystemPrompt(contactId);
     const memoryCount = parseInt(getContactSetting(contactId, 'memoryCount', '50'));
     const historyMessages = getRecentHistory(contactId, memoryCount);
-    const userMessage = '（用户暂时没有说话，你可以先开口）';
-
+    var stickerNote = '';
+var messagesEl2 = document.getElementById('chatMessages');
+if (messagesEl2) {
+    var hiddenNarrations2 = messagesEl2.querySelectorAll('.bubble-narration[style*="display: none"]');
+    hiddenNarrations2.forEach(function(n) {
+        var nt = n.textContent.trim();
+        if (nt && nt.indexOf('发送了表情包') >= 0) {
+            stickerNote = nt;
+        }
+    });
+}
+    
+    const userMessage = stickerNote ? stickerNote : '（用户暂时没有说话，你可以先开口）';
+    
     callChatAPI([
         { role: 'system', content: systemPrompt },
         ...historyMessages,
