@@ -79,7 +79,8 @@ if (emojiNotes.length > 0) {
     prompt += '\n\n【发送表情包】你可以给用户发表情包。发表情包时用旁白表示：（发送了表情包：备注文字）。以下是你可以使用的表情包备注列表：' + emojiNotes.join('、') + '。根据你的性格和聊天情境自主选择合适的表情包。活泼角色可以多用，高冷角色少用或不用。';
 }
 
-return prompt;
+    return prompt;
+}
     
 // ========== 获取联系人 ==========
 function getContactById(contactId) {
