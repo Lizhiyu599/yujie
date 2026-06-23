@@ -135,12 +135,12 @@ function closeEmojiNoteModal() {
 }
 
 function confirmAddEmoji() {
-    const note = document.getElementById('emojiNoteTextarea').value.trim();
+    var src = window._emojiAddImage;
+    var note = document.getElementById('emojiNoteTextarea').value.trim();
     closeEmojiNoteModal();
-    const src = window._emojiAddImage;
     if (!src) return;
-    const emojiData = { src: src, note: note || '' };
-    const saved = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
+    var emojiData = { src: src, note: note || '' };
+    var saved = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
     saved.push(emojiData);
     localStorage.setItem('custom_emojis', JSON.stringify(saved));
     showToast('表情包已添加');
