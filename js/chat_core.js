@@ -12,9 +12,6 @@ window.ChatState = window.ChatState || {
     lastMessageTime: null
 };
 
-// ========== 翻译缓存 ==========
-window._translateCache = window._translateCache || {};
-
 // ========== 构建系统提示 ==========
 function buildSystemPrompt(contactId) {
     let prompt = '';
@@ -53,8 +50,18 @@ function buildSystemPrompt(contactId) {
 
     prompt += '\n\n【发送图片】你可以给用户发送图片。当用户说想看你、想看你的样子、想看你的手、想看周围环境等，你可以发图片。发图片时用旁白表示：（发了一张图片：描述文字）。描述文字用于生成图片，要详细描写画面内容，包括外貌、穿着、场景、动作、光线等。';
 
-    prompt += '\n\n【发送表情包】你可以给用户发表情包。发表情包时用旁白表示：（发送了表情包：备注文字）。备注文字必须和用户给你的表情包备注完全一致，系统会自动匹配对应图片。如果不确定备注文字，不要发表情包。被禁止的表情包你无法使用。根据你的性格决定是否发表情包——活泼角色可以多用，高冷角色少用或不用。';
-    
+    var emojiList = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
+    var bannedEmojis = JSON.parse(localStorage.getItem('banned_emojis') || '[]');
+    var emojiNotes = [];
+    for (var ei = 0; ei < emojiList.length; ei++) {
+        if (emojiList[ei].note && bannedEmojis.indexOf(ei) < 0) {
+            emojiNotes.push(emojiList[ei].note);
+        }
+    }
+    if (emojiNotes.length > 0) {
+        prompt += '\n\n【发送表情包】你可以给用户发表情包。发表情包时用旁白表示：（发送了表情包：备注文字）。以下是你可以使用的表情包备注列表：' + emojiNotes.join('、') + '。根据你的性格和聊天情境自主选择合适的表情包。活泼角色可以多用，高冷角色少用或不用。';
+    }
+
     return prompt;
 }
 
