@@ -840,3 +840,36 @@ function confirmSendLink() {
 
     saveChatHistory(window.ChatState.currentContactId);
     }
+
+function sendStickerFromBot(src, note) {
+    var messages = document.getElementById('chatMessages');
+    if (!messages) return;
+    var row = document.createElement('div');
+    row.className = 'bubble-row assistant';
+    var avatar = document.createElement('div');
+    avatar.className = 'bubble-avatar bot-avatar';
+    avatar.textContent = getContactById(window.ChatState.currentContactId)?.avatar || 'AI';
+    var bubble = document.createElement('div');
+    bubble.className = 'bubble bubble-assistant';
+    bubble.style.backgroundImage = 'url(' + src + ')';
+    bubble.style.backgroundSize = 'cover';
+    bubble.style.backgroundPosition = 'center';
+    bubble.style.width = '100px';
+    bubble.style.height = '100px';
+    bubble.style.padding = '0';
+    bubble.style.borderRadius = '12px';
+    bubble.textContent = '';
+    bubble.onclick = function() { openImageViewer(src); };
+    row.appendChild(avatar);
+    row.appendChild(bubble);
+    messages.appendChild(row);
+
+    var nRow = document.createElement('div');
+    nRow.className = 'bubble-narration';
+    nRow.textContent = '（发送了表情包：' + note + '）';
+    messages.appendChild(nRow);
+    messages.scrollTop = messages.scrollHeight;
+    saveChatHistory(window.ChatState.currentContactId);
+}
+
+
