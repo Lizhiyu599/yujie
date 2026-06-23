@@ -372,7 +372,7 @@ if (emojiAllow && emojiMatch && emojiMatch[2]) {
     var banned = JSON.parse(localStorage.getItem('banned_emojis') || '[]');
     var found = null;
     for (var ei = 0; ei < emojis.length; ei++) {
-        if (emojis[ei].note === emojiNote && banned.indexOf(ei) < 0) {
+        if (emojis[ei].note && emojiNote.indexOf(emojis[ei].note) >= 0 && banned.indexOf(ei) < 0) {
             found = emojis[ei];
             break;
         }
