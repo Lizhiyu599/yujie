@@ -40,31 +40,42 @@ function buildSystemPrompt(contactId) {
     }
 
     prompt += '\n\n【记忆连续性】你必须记住和用户之前聊过的所有内容。称呼要前后一致，不能上一句叫姐姐下一句又改口。认真阅读聊天历史，保持对话连贯。';
-    var now = new Date();
-    var timeStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日 ' + now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-    prompt += '\n\n【当前时间】' + timeStr + '。你可以根据时间自然调整对话。比如深夜会关心用户怎么还不睡，早上会问早安。用户可能用旁白修改时间，以用户旁白为准。\n';
+var now = new Date();
+var timeStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日 ' + now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+prompt += '\n\n【当前时间】' + timeStr + '。你可以根据时间自然调整对话。比如深夜会关心用户怎么还不睡，早上会问早安。用户可能用旁白修改时间，以用户旁白为准。\n';
 
-    prompt += '\n\n【红包和转账-最高优先级·严格遵守】\n用户让你发红包时，只发红包。格式：（给用户发了一个红包，金额X元）\n用户让你发转账时，只发转账。格式：（给用户转账X元，备注：...）\n红包和转账是不同的东西，不要混淆。用户说"红包"就发红包，用户说"转账"就发转账，不要自己替换。\n用户说"发两个转账"就发两个转账，不要发红包。\n金额必须大于0。红包金额上限200元，转账金额上限20000元。\n不要解释、不要模拟、不要说"发送成功"。只发格式正确的旁白。\n\n如果你决定接收用户的红包或转账，在旁白中说"接收了红包"或"收下了转账"。如果要退还转账，在旁白中说"退还了转账"。\n\n重要：接收红包/转账时，必须在旁白中写清楚金额。例如：（接收了红包，金额10元）或（收下了转账，金额50元）。';
-
-    prompt += '\n\n【语音消息】你可以给用户发语音消息。发语音时用旁白表示：（发了一条语音消息：内容）。系统会自动生成语音气泡。';
-
-    prompt += '\n\n【发送图片】你可以给用户发送图片。当用户说想看你、想看你的样子、想看你的手、想看周围环境等，你可以发图片。发图片时用旁白表示：（发了一张图片：描述文字）。描述文字用于生成图片，要详细描写画面内容，包括外貌、穿着、场景、动作、光线等。';
-
-    var emojiList = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
-    var bannedEmojis = JSON.parse(localStorage.getItem('banned_emojis') || '[]');
-    var emojiNotes = [];
-    for (var ei = 0; ei < emojiList.length; ei++) {
-        if (emojiList[ei].note && bannedEmojis.indexOf(ei) < 0) {
-            emojiNotes.push(emojiList[ei].note);
-        }
+var summaryBooks = typeof getShiyilinBooks === 'function' ? getShiyilinBooks() : [];
+var summaryText = '';
+for (var si = 0; si < summaryBooks.length; si++) {
+    if (summaryBooks[si].contactId === contactId && summaryBooks[si].summary) {
+        summaryText = summaryBooks[si].summary;
+        break;
     }
-    if (emojiNotes.length > 0) {
-        prompt += '\n\n【发送表情包】你可以给用户发表情包。发表情包时用旁白表示：（发送了表情包：备注文字）。以下是你可以使用的表情包备注列表：' + emojiNotes.join('、') + '。根据你的性格和聊天情境自主选择合适的表情包。活泼角色可以多用，高冷角色少用或不用。';
-    }
-
-    return prompt;
+}
+if (summaryText) {
+    prompt += '\n\n【拾忆林记忆】以下是关于你们过去互动的总结，你可以在聊天中自然地回忆起这些内容。不要生硬地背诵，而是在相关话题出现时像活人一样自然地联想起来：\n' + summaryText + '\n';
 }
 
+prompt += '\n\n【红包和转账-最高优先级·严格遵守】\n用户让你发红包时，只发红包。格式：（给用户发了一个红包，金额X元）\n用户让你发转账时，只发转账。格式：（给用户转账X元，备注：...）\n红包和转账是不同的东西，不要混淆。用户说"红包"就发红包，用户说"转账"就发转账，不要自己替换。\n用户说"发两个转账"就发两个转账，不要发红包。\n金额必须大于0。红包金额上限200元，转账金额上限20000元。\n不要解释、不要模拟、不要说"发送成功"。只发格式正确的旁白。\n\n如果你决定接收用户的红包或转账，在旁白中说"接收了红包"或"收下了转账"。如果要退还转账，在旁白中说"退还了转账"。\n\n重要：接收红包/转账时，必须在旁白中写清楚金额。例如：（接收了红包，金额10元）或（收下了转账，金额50元）。';
+
+prompt += '\n\n【语音消息】你可以给用户发语音消息。发语音时用旁白表示：（发了一条语音消息：内容）。系统会自动生成语音气泡。';
+
+prompt += '\n\n【发送图片】你可以给用户发送图片。当用户说想看你、想看你的样子、想看你的手、想看周围环境等，你可以发图片。发图片时用旁白表示：（发了一张图片：描述文字）。描述文字用于生成图片，要详细描写画面内容，包括外貌、穿着、场景、动作、光线等。';
+
+var emojiList = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
+var bannedEmojis = JSON.parse(localStorage.getItem('banned_emojis') || '[]');
+var emojiNotes = [];
+for (var ei = 0; ei < emojiList.length; ei++) {
+    if (emojiList[ei].note && bannedEmojis.indexOf(ei) < 0) {
+        emojiNotes.push(emojiList[ei].note);
+    }
+}
+if (emojiNotes.length > 0) {
+    prompt += '\n\n【发送表情包】你可以给用户发表情包。发表情包时用旁白表示：（发送了表情包：备注文字）。以下是你可以使用的表情包备注列表：' + emojiNotes.join('、') + '。根据你的性格和聊天情境自主选择合适的表情包。活泼角色可以多用，高冷角色少用或不用。';
+}
+
+return prompt;
+    
 // ========== 获取联系人 ==========
 function getContactById(contactId) {
     if (!window.ChatConfig || !window.ChatConfig.contacts) return null;
