@@ -650,22 +650,27 @@ function getRecentHistory(contactId, maxCount) {
     return result;
 }
 
-// ========== 聊天历史存储 ==========
 function saveChatHistory(contactId) {
-    const messages = document.getElementById('chatMessages');
+    var messages = document.getElementById('chatMessages');
     if (messages) {
-        localStorage.setItem('chat_history_' + contactId, messages.innerHTML);
-    }
-}
-
-function loadChatHistory(contactId) {
-    const messages = document.getElementById('chatMessages');
-    if (!messages) return;
-    const saved = localStorage.getItem('chat_history_' + contactId);
-    if (saved) {
-        messages.innerHTML = saved;
-        messages.scrollTop = messages.scrollHeight;
-        restorePaymentCardStates();
+        var html = messages.innerHTML;
+        if (html.length > 300000) {
+            html = html.slice(html.length - 300000);
+        }
+        try {
+            localStorage.setItem('chat_history_' + contactId, html);
+        } catch (e) {
+            // 存储满了，清掉最旧的聊天记录
+            var keys = [];
+            for (var i = 0; i < localStorage.length; i++) {
+                var k = localStorage.key(i);
+                if (k.startsWith('chat_history_')) keys.push(k);
+            }
+            if (keys.length > 0) {
+                localStorage.removeItem(keys[0]);
+                try { localStorage.setItem('chat_history_' + contactId, html); } catch (e2) {}
+            }
+        }
     }
 }
 
