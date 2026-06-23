@@ -350,9 +350,9 @@ if (transferMatch) {
 }
 
 // ===== 检测角色旁白发表情包 =====
-    var emojiAllow = (ChatConfig && ChatConfig.settings && ChatConfig.settings.emojiAllow) !== false;
-    var emojiMatch = cleanContent.match(/[\(\（]([^\)\）]*)发送了表情包[：:]\s*([^\)\）]+)[\)\）]/);
-    if (emojiAllow && emojiMatch && emojiMatch[2])
+var emojiAllow = (ChatConfig && ChatConfig.settings && ChatConfig.settings.emojiAllow) !== false;
+var emojiMatch = cleanContent.match(/[\(\（]([^\)\）]*)发送了表情包[：:]\s*([^\)\）]+)[\)\）]/);
+if (emojiAllow && emojiMatch && emojiMatch[2]) {
     var emojiNote = emojiMatch[2].trim();
     var emojis = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
     var banned = JSON.parse(localStorage.getItem('banned_emojis') || '[]');
@@ -467,8 +467,6 @@ if (transferMatch) {
     if (titleEl) titleEl.textContent = contactName;
     window.ChatState.isAITyping = false;
 
-window.ChatState.isAITyping = false;
-
 // ===== 自动日记检测 =====
 var diaryAuto = localStorage.getItem('diary_auto_enabled') === 'true';
 var diaryChar = localStorage.getItem('diary_selected_char');
@@ -491,8 +489,6 @@ if (diaryAuto && diaryChar === contactId && typeof generateDiaryContent === 'fun
 }
 
 saveChatHistory(contactId);
-    
-    saveChatHistory(contactId);
 }        
 
 // ========== 格式化时间 ==========
