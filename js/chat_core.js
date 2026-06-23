@@ -687,6 +687,16 @@ function saveChatHistory(contactId) {
         }
     }
 }
+function loadChatHistory(contactId) {
+    var messages = document.getElementById('chatMessages');
+    if (!messages) return;
+    var saved = localStorage.getItem('chat_history_' + contactId);
+    if (saved) {
+        messages.innerHTML = saved;
+        messages.scrollTop = messages.scrollHeight;
+        restorePaymentCardStates();
+    }
+}
 
 // ========== 恢复红包卡片状态 ==========
 function restorePaymentCardStates() {
