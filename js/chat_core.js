@@ -549,8 +549,38 @@ function appendMessage(role, text) {
 
         const avatar = document.createElement('div');
         avatar.className = 'bubble-avatar ' + (role === 'user' ? 'user-avatar' : 'bot-avatar');
-        avatar.textContent = role === 'user' ? '我' : (getContactById(window.ChatState.currentContactId)?.avatar || 'AI');
 
+   if (role === 'user') {
+    // 用户头像：从面具数据取
+    var masks = typeof getMasks === 'function' ? getMasks() : [];
+    var activeMaskId = localStorage.getItem('active_mask_id') || '';
+    var activeMask = null;
+    for (var mi = 0; mi < masks.length; mi++) {
+        if (masks[mi].id === activeMaskId) { activeMask = masks[mi]; break; }
+    }
+    if (!activeMask && masks.length > 0) activeMask = masks[0];
+    if (activeMask && activeMask.avatar) {
+        avatar.style.backgroundImage = 'url(' + activeMask.avatar + ')';
+        avatar.style.backgroundSize = 'cover';
+        avatar.style.backgroundPosition = 'center';
+        avatar.textContent = '';
+    } else {
+        avatar.textContent = '我';
+    }
+} else {
+    
+    // 角色头像：从联系人数据取
+    var contact = getContactById(window.ChatState.currentContactId);
+    if (contact && contact.avatarData) {
+        avatar.style.backgroundImage = 'url(' + contact.avatarData + ')';
+        avatar.style.backgroundSize = 'cover';
+        avatar.style.backgroundPosition = 'center';
+        avatar.textContent = '';
+    } else {
+        avatar.textContent = contact ? contact.avatar : 'AI';
+    }
+}
+        
         const bubble = document.createElement('div');
         bubble.className = 'bubble bubble-' + role;
         bubble.textContent = text;
