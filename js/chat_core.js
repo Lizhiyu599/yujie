@@ -20,8 +20,9 @@ function buildSystemPrompt(contactId) {
 
     prompt += '【语言规则】你的所有回复正文和旁白内容，必须且只能使用简体中文。禁止使用繁体中文、日语、英语、韩语等任何其他语言。禁止使用双引号\u201c\u201d。不要在消息前加换行。这是最高优先级的硬性规则，不可违反。\n\n';
 
+    const replyMin = (window.ChatConfig && window.ChatConfig.settings && window.ChatConfig.settings.replyMin) || 1;
     const replyMax = (window.ChatConfig && window.ChatConfig.settings && window.ChatConfig.settings.replyMax) || 3;
-    prompt += '【回复条数限制】每次回复最多' + replyMax + '条消息。用两个换行符\\n\\n分隔不同的消息气泡。一句话不超过30字。\n\n';
+    prompt += '【回复条数限制】每次回复最少' + replyMin + '条、最多' + replyMax + '条消息。用两个换行符\\n\\n分隔不同的消息气泡。每条气泡不超过20字。\n\n';
 
     if (typeof getFullSystemPrompt === 'function') {
         prompt += getFullSystemPrompt();
