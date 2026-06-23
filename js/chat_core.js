@@ -355,8 +355,15 @@ if (transferMatch) {
         cleanContent = cleanContent.replace(transferMatch[0], '');
     }
 }
+    
+    // ===== 检测角色旁白发语音 =====
+    var voiceMatch = cleanContent.match(/[\(\（]([^\)\）]*)发了一条语音消息[：:]\s*([^\)\）]+)[\)\）]/);
+    if (voiceMatch && voiceMatch[2]) {
+        sendVoiceBubble('assistant', voiceMatch[2].trim(), null, false);
+        cleanContent = cleanContent.replace(voiceMatch[0], '');
+    }
 
-// ===== 检测角色旁白发表情包 =====
+    // ===== 检测角色旁白发表情包 =====
 var emojiAllow = (ChatConfig && ChatConfig.settings && ChatConfig.settings.emojiAllow) !== false;
 var emojiMatch = cleanContent.match(/[\(\（]([^\)\）]*)发送了表情包[：:]\s*([^\)\）]+)[\)\）]/);
 if (emojiAllow && emojiMatch && emojiMatch[2]) {
@@ -376,13 +383,6 @@ if (emojiAllow && emojiMatch && emojiMatch[2]) {
     cleanContent = cleanContent.replace(emojiMatch[0], '');
 }
     
-    // ===== 检测角色旁白发语音 =====
-    var voiceMatch = cleanContent.match(/[\(\（]([^\)\）]*)发了一条语音消息[：:]\s*([^\)\）]+)[\)\）]/);
-    if (voiceMatch && voiceMatch[2]) {
-        sendVoiceBubble('assistant', voiceMatch[2].trim(), null, false);
-        cleanContent = cleanContent.replace(voiceMatch[0], '');
-    }
-
     // ===== 检测角色旁白发图片 =====
     var imageMatch = cleanContent.match(/[\(\（]([^\)\）]*)发了一张图片[：:]\s*([^\)\）]+)[\)\）]/);
     if (imageMatch && imageMatch[2]) {
