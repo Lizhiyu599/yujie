@@ -44,7 +44,8 @@ var now = new Date();
 var timeStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日 ' + now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
 prompt += '\n\n【当前时间】' + timeStr + '。你可以根据时间自然调整对话。比如深夜会关心用户怎么还不睡，早上会问早安。用户可能用旁白修改时间，以用户旁白为准。\n';
 
-var summaryBooks = typeof getShiyilinBooks === 'function' ? getShiyilinBooks() : [];
+var summaryBooks = [];
+try { var raw = localStorage.getItem('shiyilin_books'); if (raw) summaryBooks = JSON.parse(raw); } catch(e) {}    
 var summaryText = '';
 for (var si = 0; si < summaryBooks.length; si++) {
     if (summaryBooks[si].contactId === contactId && summaryBooks[si].summary) {
