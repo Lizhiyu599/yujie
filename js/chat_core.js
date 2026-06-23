@@ -380,7 +380,7 @@ if (emojiAllow && emojiMatch && emojiMatch[2]) {
     if (found) {
         sendStickerFromBot(found.src, emojiNote);
     }
-    cleanContent = cleanContent.replace(emojiMatch[0], '');
+    cleanContent = cleanContent.replace(/[\(\（]\s*发送了表情包[：:]\s*[^\)\）]+[\)\）]/g, '');
 }
     
     // ===== 检测角色旁白发图片 =====
