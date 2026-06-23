@@ -69,6 +69,7 @@ function loadContactSettings(contactId) {
     settings.autoMsg = getContactSetting(contactId, 'autoMsg', false);
     settings.autoMsgFreq = parseInt(getContactSetting(contactId, 'autoMsgFreq', '0'));
     settings.pronoun = getContactSetting(contactId, 'pronoun', 'you');
+    settings.emojiAllow = getContactSetting(contactId, 'emojiAllow', true);
     settings.autoMoment = getContactSetting(contactId, 'autoMoment', false);
     settings.autoMomentFreq = parseInt(getContactSetting(contactId, 'autoMomentFreq', '0'));
     settings.summaryCount = parseInt(getContactSetting(contactId, 'summaryCount', '50'));
@@ -2544,6 +2545,12 @@ function openChatSettings() {
                     <div style="font-size:12px;color:#8e8e93;margin-top:6px;">提示：非简体中文的内容都将自动翻译成简体中文。</div>
                 </div>
 
+                <div class="settings-section-title">角色表情包</div>
+<div class="glass-card">
+    <div class="switch-row"><span>允许角色发表情包</span><input type="checkbox" class="ios-switch-sm" id="swEmojiAllow" ${settings.emojiAllow !== false ? 'checked' : ''} onchange="toggleEmojiAllow(this.checked)"></div>
+    <div style="font-size:12px;color:#8e8e93;margin-top:6px;">提示：关闭后角色不会发送任何表情包。开启后角色根据人设自行决定。</div>
+</div>
+
                 <div class="settings-section-title">自动发动态</div>
                 <div class="glass-card">
                     <div class="switch-row"><span>自动发动态</span><input type="checkbox" class="ios-switch-sm" id="swAutoMoment" ${settings.autoMoment === true ? 'checked' : ''} onchange="toggleAutoMoment(this.checked)"></div>
@@ -2843,3 +2850,9 @@ function blockContact() {
 function deleteContact() {
     showToast('删除功能即将上线');
 }       
+
+function toggleEmojiAllow(checked) {
+    window.ChatConfig.settings.emojiAllow = checked;
+    var contactId = window.ChatState.currentContactId || 'c1';
+    setContactSetting(contactId, 'emojiAllow', checked);
+}
