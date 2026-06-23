@@ -348,6 +348,25 @@ if (transferMatch) {
         cleanContent = cleanContent.replace(transferMatch[0], '');
     }
 }
+
+// ===== 检测角色旁白发表情包 =====
+var emojiMatch = cleanContent.match(/[\(\（]([^\)\）]*)发送了表情包[：:]\s*([^\)\）]+)[\)\）]/);
+if (emojiMatch && emojiMatch[2]) {
+    var emojiNote = emojiMatch[2].trim();
+    var emojis = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
+    var banned = JSON.parse(localStorage.getItem('banned_emojis') || '[]');
+    var found = null;
+    for (var ei = 0; ei < emojis.length; ei++) {
+        if (emojis[ei].note === emojiNote && banned.indexOf(ei) < 0) {
+            found = emojis[ei];
+            break;
+        }
+    }
+    if (found) {
+        sendStickerFromBot(found.src, emojiNote);
+    }
+    cleanContent = cleanContent.replace(emojiMatch[0], '');
+}
     
     // ===== 检测角色旁白发语音 =====
     var voiceMatch = cleanContent.match(/[\(\（]([^\)\）]*)发了一条语音消息[：:]\s*([^\)\）]+)[\)\）]/);
