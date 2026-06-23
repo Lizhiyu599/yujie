@@ -350,7 +350,7 @@ if (transferMatch) {
 }
 
 // ===== 检测角色旁白发表情包 =====
-    var emojiAllow = ChatConfig?.settings?.emojiAllow !== false;
+    var emojiAllow = (ChatConfig && ChatConfig.settings && ChatConfig.settings.emojiAllow) !== false;
     var emojiMatch = cleanContent.match(/[\(\（]([^\)\）]*)发送了表情包[：:]\s*([^\)\）]+)[\)\）]/);
     if (emojiAllow && emojiMatch && emojiMatch[2])
     var emojiNote = emojiMatch[2].trim();
