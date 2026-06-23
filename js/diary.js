@@ -1,6 +1,7 @@
 /**
  * 玉界 - 日记软件
  * 包含：日记本 UI 渲染、翻页动画、日历跳转、日记设置、数据持久化、角色选择
+ * 支持长日记自动分页，左右翻页翻阅
  */
 
 // ========== 日记数据存储 ==========
@@ -93,6 +94,48 @@ function renderDiaryApp() {
     updateBottomBar();
 }
 
+// ========== 获取所有页面数据 ==========
+function getAllPagesData() {
+    const diaries = getDiaries();
+    const allPages = [];
+    const charsPerPage = 280;
+
+    diaries.forEach((diary, diaryIndex) => {
+        const paragraphs = diary.content.split(/\n{2,}/).filter(p => p.trim());
+        const subPages = [];
+
+        paragraphs.forEach(para => {
+            if (!subPages.length || (subPages[subPages.length - 1].length + para.length) > charsPerPage) {
+                if (para.length > charsPerPage) {
+                    let remaining = para;
+                    while (remaining.length > 0) {
+                        const chunk = remaining.substring(0, charsPerPage);
+                        remaining = remaining.substring(charsPerPage);
+                        subPages.push(chunk);
+                    }
+                } else {
+                    subPages.push(para);
+                }
+            } else {
+                subPages[subPages.length - 1] += '\n\n' + para;
+            }
+        });
+
+        if (subPages.length === 0) subPages.push(diary.content);
+
+        subPages.forEach((pageContent, subIndex) => {
+            allPages.push({
+                diaryIndex: diaryIndex,
+                subIndex: subIndex,
+                totalSubPages: subPages.length,
+                date: diary.date,
+                content: pageContent
+            });
+        });
+    });
+    return allPages;
+}
+
 // ========== 渲染日记内页 ==========
 function renderDiaryPages() {
     const book = document.getElementById('diaryBook');
@@ -100,16 +143,20 @@ function renderDiaryPages() {
 
     const diaries = getDiaries();
     const fontSettings = getDiaryFontSettings();
+    const allPages = getAllPagesData();
 
     const oldPages = book.querySelectorAll('.diary-page');
     oldPages.forEach(p => p.remove());
 
-    if (diaries.length === 0) return;
+    if (allPages.length === 0) return;
 
-    diaries.forEach((diary, index) => {
+    const currentPage = allPages[currentPageIndex];
+    const currentDiaryIndex = currentPage ? currentPage.diaryIndex : 0;
+
+    allPages.forEach((pageData, index) => {
         const page = document.createElement('div');
         page.className = 'diary-page';
-        page.style.zIndex = diaries.length - index + 10;
+        page.style.zIndex = allPages.length - index + 10;
 
         if (!isCoverOpen) {
             page.classList.add('behind');
@@ -120,31 +167,29 @@ function renderDiaryPages() {
             holesHTML += '<div class="page-hole"></div>';
         }
 
+        const globalPageNum = index + 1;
+        const isLeftPage = index % 2 === 0;
+
         page.innerHTML = `
             <div class="binding-edge"></div>
             <div class="page-holes">${holesHTML}</div>
-            <div class="page-number left-num">${index * 2 + 1}</div>
-            <div class="page-number right-num">${index * 2 + 2}</div>
+            <div class="page-number left-num">${isLeftPage ? globalPageNum : ''}</div>
+            <div class="page-number right-num">${isLeftPage ? '' : globalPageNum}</div>
             <div class="diary-page-content">
-                <div class="diary-entry-date">${diary.date}</div>
+                <div class="diary-entry-date">${pageData.date}${pageData.totalSubPages > 1 ? ' (' + (pageData.subIndex + 1) + '/' + pageData.totalSubPages + ')' : ''}</div>
                 <div class="diary-entry-text" style="
                     font-size: ${17 + parseInt(fontSettings.size) / 5}px;
                     color: ${fontSettings.color};
                     ${fontSettings.fontFamily ? 'font-family: ' + fontSettings.fontFamily + ';' : ''}
-                ">${diary.content}</div>
+                ">${pageData.content}</div>
             </div>
         `;
 
         book.appendChild(page);
     });
 
-    updatePageVisibility();
-}
-
-// ========== 更新页面翻页状态 ==========
-function updatePageVisibility() {
-    const pages = document.querySelectorAll('.diary-page');
-    pages.forEach((page, index) => {
+    // 翻页状态
+    document.querySelectorAll('.diary-page').forEach((page, index) => {
         page.classList.remove('flipped', 'current', 'behind');
         if (index < currentPageIndex) {
             page.classList.add('flipped');
@@ -158,7 +203,7 @@ function updatePageVisibility() {
 
 // ========== 更新底部工具栏 ==========
 function updateBottomBar() {
-    const diaries = getDiaries();
+    const allPages = getAllPagesData();
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
 
@@ -169,11 +214,16 @@ function updateBottomBar() {
         if (!isCoverOpen) {
             nextBtn.textContent = '翻开';
             nextBtn.disabled = false;
-        } else if (currentPageIndex >= diaries.length - 1) {
-            nextBtn.textContent = '下一页 ›';
+        } else if (currentPageIndex >= allPages.length - 1) {
+            nextBtn.textContent = '下一篇 ›';
             nextBtn.disabled = true;
         } else {
-            nextBtn.textContent = '下一页 ›';
+            const nextPage = allPages[currentPageIndex + 1];
+            if (nextPage && nextPage.diaryIndex !== allPages[currentPageIndex].diaryIndex) {
+                nextBtn.textContent = '下一篇 ›';
+            } else {
+                nextBtn.textContent = '翻页 ›';
+            }
             nextBtn.disabled = false;
         }
     }
@@ -208,20 +258,20 @@ function prevPage() {
     if (!isCoverOpen) return;
     if (currentPageIndex > 0) {
         currentPageIndex--;
-        updatePageVisibility();
+        renderDiaryPages();
         updateBottomBar();
     }
 }
 
 function nextPage() {
-    const diaries = getDiaries();
     if (!isCoverOpen) {
         openCover();
         return;
     }
-    if (currentPageIndex < diaries.length - 1) {
+    const allPages = getAllPagesData();
+    if (currentPageIndex < allPages.length - 1) {
         currentPageIndex++;
-        updatePageVisibility();
+        renderDiaryPages();
         updateBottomBar();
     }
 }
@@ -312,16 +362,24 @@ function renderDiaryCalendarGrid() {
 
 function jumpToDiary(index) {
     closeDiaryCalendar();
+    const allPages = getAllPagesData();
+    let targetPage = 0;
+    for (let i = 0; i < allPages.length; i++) {
+        if (allPages[i].diaryIndex === index) {
+            targetPage = i;
+            break;
+        }
+    }
     if (!isCoverOpen) {
         openCover();
         setTimeout(() => {
-            currentPageIndex = index;
-            updatePageVisibility();
+            currentPageIndex = targetPage;
+            renderDiaryPages();
             updateBottomBar();
         }, 500);
     } else {
-        currentPageIndex = index;
-        updatePageVisibility();
+        currentPageIndex = targetPage;
+        renderDiaryPages();
         updateBottomBar();
     }
 }
@@ -550,17 +608,17 @@ function generateDiary() {
             var now = new Date();
             var dateStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日';
             var diaries = getDiaries();
-            // 删除占位日记
             diaries = diaries.filter(function(d) { return d.content.indexOf('今天翻开日记本') < 0; });
             diaries.push({ date: dateStr, content: content });
             saveDiaries(diaries);
             showToast('日记已生成');
-            renderDiaryPages();
-            updateBottomBar();
+            currentPageIndex = 0;
+            isCoverOpen = false;
+            renderDiaryApp();
         }).catch(function() {
             showToast('日记生成失败，请重试');
         });
     } else {
         showToast('生成功能暂未接入，请等待后续更新');
-    } 
-}
+    }
+        }
