@@ -98,7 +98,7 @@ function renderDiaryApp() {
 function getAllPagesData() {
     const diaries = getDiaries();
     const allPages = [];
-    const charsPerPage = 280;
+    const charsPerPage = 190;
 
     diaries.forEach((diary, diaryIndex) => {
         const paragraphs = diary.content.split(/\n{2,}/).filter(p => p.trim());
