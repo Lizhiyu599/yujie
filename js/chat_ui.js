@@ -497,7 +497,7 @@ function sendVoiceMessage(text) {
     messages.appendChild(transRow);
 
     messages.scrollTop = messages.scrollHeight;
-    saveChatHistory(contactId);
+    if (document.getElementById('chatMessages')) saveChatHistory(contactId);
 
     const contact = getContactById(contactId);
     const contactName = contact ? contact.name : 'AI';
