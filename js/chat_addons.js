@@ -906,16 +906,21 @@ function sendStickerFromBot(src, note) {
 // ========== 线下模式切换 ==========
 function switchToOffline() {
     toggleAddPanel();
+    // 切换前保存当前聊天记录
+    var currentId = window.ChatState.currentContactId || (window.ChatConfig && window.ChatConfig.contacts[0] ? window.ChatConfig.contacts[0].id : 'c1');
+    if (typeof saveChatHistory === 'function') saveChatHistory(currentId);
     window.ChatState.isOfflineMode = true;
-    var contactId = window.ChatState.currentContactId || (window.ChatConfig && window.ChatConfig.contacts[0] ? window.ChatConfig.contacts[0].id : 'c1');
+    var contactId = window.ChatState.currentContactId || currentId;
     showToast('已切换到线下模式');
     enterChat(contactId);
 }
 
 function switchToOnline() {
     toggleAddPanel();
+    var currentId = window.ChatState.currentContactId || (window.ChatConfig && window.ChatConfig.contacts[0] ? window.ChatConfig.contacts[0].id : 'c1');
+    if (typeof saveChatHistory === 'function') saveChatHistory(currentId);
     window.ChatState.isOfflineMode = false;
-    var contactId = window.ChatState.currentContactId || (window.ChatConfig && window.ChatConfig.contacts[0] ? window.ChatConfig.contacts[0].id : 'c1');
+    var contactId = window.ChatState.currentContactId || currentId;
     showToast('已切换到线上模式');
     enterChat(contactId);
 }
