@@ -750,8 +750,30 @@ function getRecentHistory(contactId, maxCount) {
     }
 
     return result;
+} 
+
+function saveChatHistory(contactId) {
+    var messages = document.getElementById('chatMessages');
+    if (!messages) return;
+    var html = messages.innerHTML;
+    if (html.length > 300000) {
+        html = html.slice(html.length - 300000);
+    }
+    try {
+        var storageKey = (window.ChatState && window.ChatState.isOfflineMode ? 'chat_history_offline_' : 'chat_history_') + contactId;
+        localStorage.setItem(storageKey, html);
+    } catch (e) {
+        var keys = [];
+        for (var i = 0; i < localStorage.length; i++) {
+            var k = localStorage.key(i);
+            if (k.startsWith('chat_history_')) keys.push(k);
+        }
+        if (keys.length > 0) {
+            localStorage.removeItem(keys[0]);
+            try { localStorage.setItem(storageKey, html); } catch (e2) {}
+        }
+    }
 }
-            
 
 // ========== 恢复红包卡片状态 ==========
 function restorePaymentCardStates() {
