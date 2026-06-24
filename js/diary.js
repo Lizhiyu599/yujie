@@ -28,6 +28,8 @@ function saveDiaryFontSettings(settings) {
 }
 
 // ========== 当前状态 ==========
+let isDiaryGenerating = false;
+let diaryLoadingToast = null;
 let currentPageIndex = 0;
 let isCoverOpen = false;
 let diaryCalendarDate = new Date();
@@ -592,15 +594,36 @@ function saveDiaryChar() {
 
 // ========== 手动生成日记（接入AI） ==========
 function generateDiary() {
+    if (isDiaryGenerating) {
+        showToast('日记正在生成中，请稍候');
+        return;
+    }
+    isDiaryGenerating = true;
+    
+    // 显示持续加载弹窗
+    if (diaryLoadingToast) diaryLoadingToast.remove();
+    diaryLoadingToast = document.createElement('div');
+    diaryLoadingToast.className = 'global-toast';
+    diaryLoadingToast.textContent = '正在生成日记…';
+    diaryLoadingToast.style.background = 'rgba(0,0,0,0.75)';
+    diaryLoadingToast.style.color = '#fff';
+    document.body.appendChild(diaryLoadingToast);
+    
     var contactId = getDiarySelectedChar();
     if (!contactId) {
+        if (diaryLoadingToast) diaryLoadingToast.remove();
+        diaryLoadingToast = null;
+        isDiaryGenerating = false;
         showToast('请先在日记设置中选择角色');
         return;
     }
-    showToast('正在生成日记…');
 
     if (typeof generateDiaryContent === 'function') {
         generateDiaryContent(contactId).then(function(content) {
+            if (diaryLoadingToast) diaryLoadingToast.remove();
+            diaryLoadingToast = null;
+            isDiaryGenerating = false;
+            
             if (!content) {
                 showToast('日记生成失败，请重试');
                 return;
@@ -616,9 +639,15 @@ function generateDiary() {
             isCoverOpen = false;
             renderDiaryApp();
         }).catch(function() {
+            if (diaryLoadingToast) diaryLoadingToast.remove();
+            diaryLoadingToast = null;
+            isDiaryGenerating = false;
             showToast('日记生成失败，请重试');
         });
     } else {
+        if (diaryLoadingToast) diaryLoadingToast.remove();
+        diaryLoadingToast = null;
+        isDiaryGenerating = false;
         showToast('生成功能暂未接入，请等待后续更新');
     }
-        }
+}
