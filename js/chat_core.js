@@ -606,9 +606,14 @@ function appendMessage(role, text) {
 }
         
         const bubble = document.createElement('div');
-        bubble.className = 'bubble bubble-' + role;
-        bubble.textContent = text;
-        bubble.id = 'msg-' + Date.now();
+if (window.ChatState && window.ChatState.isOfflineMode) {
+    bubble.className = 'offline-message';
+    bubble.style.cssText = 'padding:8px 0;font-size:15px;line-height:1.8;color:#1d1d1f;word-break:break-word;max-width:100%;';
+} else {
+    bubble.className = 'bubble bubble-' + role;
+}
+bubble.textContent = text;
+bubble.id = 'msg-' + Date.now();
 
         row.appendChild(avatar);
         row.appendChild(bubble);
