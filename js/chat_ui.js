@@ -323,25 +323,28 @@ function enterChat(contactId) {
             </div>
 
             <div class="chat-input-bar">
-                <div class="input-row">
-                    <div class="add-circle" onclick="toggleAddPanel()">+</div>
-                    <div class="chat-input-wrapper" id="chatInputWrapper">
-                        <input type="text" class="chat-input" id="chatInput" placeholder="输入消息…" onkeypress="if(event.key==='Enter') handleSendOrReply()">
-                        <div class="mic-btn" id="micBtn" onclick="toggleVoiceMode()">
-                            <span class="mic-icon-body"></span>
-                            <span class="mic-icon-arc"></span>
-                        </div>
-                    </div>
-                    <span class="chat-send-btn" id="chatSendBtn" onclick="handleSendOrReply()">↑</span>
-                </div>
-                <div class="add-panel-full" id="addPanelFull" style="display:none;">
-                    <div class="add-panel-tabs">
-                        <span class="add-panel-tab active" id="tabEmoji" onclick="switchAddPanelTab('emoji', this)">表情包</span>
-                        <span class="add-panel-tab" id="tabFunc" onclick="switchAddPanelTab('func', this)">功能</span>
-                    </div>
-                    <div class="add-panel-body" id="addPanelBody"></div>
-                </div>
-            </div>
+    <div class="input-row">
+        <div class="add-circle" onclick="toggleAddPanel()">+</div>
+        <div class="chat-input-wrapper" id="chatInputWrapper">
+            <input type="text" class="chat-input" id="chatInput" placeholder="${window.ChatState && window.ChatState.isOfflineMode ? '输入消息…' : '输入消息…'}" onkeypress="if(event.key==='Enter') handleSendOrReply()">
+            ${window.ChatState && window.ChatState.isOfflineMode ? '' : `
+            <div class="mic-btn" id="micBtn" onclick="toggleVoiceMode()">
+                <span class="mic-icon-body"></span>
+                <span class="mic-icon-arc"></span>
+            </div>`}
+        </div>
+        <span class="chat-send-btn" id="chatSendBtn" onclick="handleSendOrReply()">↑</span>
+    </div>
+    <div class="add-panel-full" id="addPanelFull" style="display:none;">
+        <div class="add-panel-tabs">
+            ${window.ChatState && window.ChatState.isOfflineMode ? `
+            <span class="add-panel-tab active" id="tabScene" onclick="switchAddPanelTab('func', this)">场景</span>` : `
+            <span class="add-panel-tab active" id="tabEmoji" onclick="switchAddPanelTab('emoji', this)">表情包</span>
+            <span class="add-panel-tab" id="tabFunc" onclick="switchAddPanelTab('func', this)">功能</span>`}
+        </div>
+        <div class="add-panel-body" id="addPanelBody"></div>
+    </div>
+</div>
         </div>
     `;
 
