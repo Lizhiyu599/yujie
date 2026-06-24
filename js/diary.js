@@ -7,14 +7,17 @@
 // ========== 日记数据存储 ==========
 function getDiaries() {
     var contactId = getDiarySelectedChar();
-    var key = 'diary_entries_' + (contactId || 'default');
+    var key = contactId ? 'diary_entries_' + contactId : 'diary_entries';
     var raw = localStorage.getItem(key);
+    if (!raw && contactId) {
+        raw = localStorage.getItem('diary_entries');
+    }
     return raw ? JSON.parse(raw) : [];
 }
 
 function saveDiaries(diaries) {
     var contactId = getDiarySelectedChar();
-    var key = 'diary_entries_' + (contactId || 'default');
+    var key = contactId ? 'diary_entries_' + contactId : 'diary_entries';
     localStorage.setItem(key, JSON.stringify(diaries));
 }
 
