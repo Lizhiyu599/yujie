@@ -784,6 +784,9 @@ localStorage.setItem(storageKey, html);
 function loadChatHistory(contactId) {
     var messages = document.getElementById('chatMessages');
     if (!messages) return;
+    // 清除旧的合并数据
+    var oldMerged = messages.querySelectorAll('.online-merged, .offline-merged');
+    for (var om = 0; om < oldMerged.length; om++) { oldMerged[om].remove(); }
     var storageKey = (window.ChatState && window.ChatState.isOfflineMode ? 'chat_history_offline_' : 'chat_history_') + contactId;
     var saved = localStorage.getItem(storageKey);
     if (saved) {
