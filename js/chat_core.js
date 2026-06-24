@@ -704,6 +704,31 @@ function getRecentHistory(contactId, maxCount) {
     const messages = document.getElementById('chatMessages');
     if (!messages) return [];
 
+    // 合并另一模式的聊天记录以供API读取
+    if (window.ChatState && window.ChatState.isOfflineMode) {
+        var onlineKey = 'chat_history_' + contactId;
+        var onlineSaved = localStorage.getItem(onlineKey);
+        if (onlineSaved && !messages.querySelector('.online-merged')) {
+            var mergeDiv = document.createElement('div');
+            mergeDiv.className = 'online-merged';
+            mergeDiv.style.display = 'none';
+            mergeDiv.innerHTML = onlineSaved;
+            messages.appendChild(mergeDiv);
+            setTimeout(function() { if (mergeDiv.parentNode) mergeDiv.remove(); }, 100);
+        }
+    } else {
+        var offlineKey = 'chat_history_offline_' + contactId;
+        var offlineSaved = localStorage.getItem(offlineKey);
+        if (offlineSaved && !messages.querySelector('.offline-merged')) {
+            var mergeDiv2 = document.createElement('div');
+            mergeDiv2.className = 'offline-merged';
+            mergeDiv2.style.display = 'none';
+            mergeDiv2.innerHTML = offlineSaved;
+            messages.appendChild(mergeDiv2);
+            setTimeout(function() { if (mergeDiv2.parentNode) mergeDiv2.remove(); }, 100);
+        }
+    }
+
     const result = [];
     const rows = messages.querySelectorAll('.bubble-row');
     const total = rows.length;
