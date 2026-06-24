@@ -1346,13 +1346,13 @@ function editContactPersona(contactId) {
     var existingAppearance = '';
 
     if (contact.persona) {
-        var nameMatch = contact.persona.match(/【姓名】(.+)/);
-        var noteMatch = contact.persona.match(/【昵称\/备注】(.+)/);
-        var genderMatch = contact.persona.match(/【性别】(.+)/);
-        var ageMatch = contact.persona.match(/【年龄】(.+)/);
-        var personalityMatch = contact.persona.match(/【性格】(.+)/);
-        var backgroundMatch = contact.persona.match(/【背景故事】(.+)/);
-        var appearanceMatch = contact.persona.match(/【外貌描述】(.+)/);
+        var nameMatch = contact.persona.match(/【姓名】([\s\S]+?)(?=\n【|$)/);
+        var noteMatch = contact.persona.match(/【昵称\/备注】([\s\S]+?)(?=\n【|$)/);
+        var genderMatch = contact.persona.match(/【性别】([\s\S]+?)(?=\n【|$)/);
+        var ageMatch = contact.persona.match(/【年龄】([\s\S]+?)(?=\n【|$)/);
+        var personalityMatch = contact.persona.match(/【性格】([\s\S]+?)(?=\n【|$)/);
+        var backgroundMatch = contact.persona.match(/【背景故事】([\s\S]+?)(?=\n【|$)/);
+        var appearanceMatch = contact.persona.match(/【外貌描述】([\s\S]+?)(?=\n【|$)/);
         if (nameMatch) existingName = nameMatch[1];
         if (noteMatch) existingNote = noteMatch[1];
         if (genderMatch) existingGender = genderMatch[1];
