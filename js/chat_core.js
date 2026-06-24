@@ -20,7 +20,8 @@ function buildSystemPrompt(contactId) {
   if (window.ChatState && window.ChatState.isOfflineMode) {
     prompt += '【当前模式：线下面对面聊天】\n';
     prompt += '你们现在在同一空间里，面对面说话。你说的每一句话都是直接说出口的，用户能听到你的语气、看到你的表情和动作。\n';
-    prompt += '你需要同时描写场景、环境、角色表情、动作、语气，以及你说的话。每次回复字数上限由用户在场景设置中设定（默认300字）。\n';
+    var offlineWordLimit = parseInt(localStorage.getItem('offline_word_limit') || 300);
+    prompt += '你需要同时描写场景、环境、角色表情、动作、语气，以及你说的话。每次回复字数必须达到' + offlineWordLimit + '字，这是硬性要求，不得少于这个数字。\n';
     prompt += '回复格式：角色说出口的话必须用中文双引号\u201c\u201d包裹，旁白叙述不加引号。示例：\n';
     prompt += '\u201c姐姐你终于来了\u201d\n他抬头有些可怜巴巴幽怨的看着你\n\u201c还以为你要放我鸽子呢\u201d\n';
     prompt += '双引号内的=说出口的话，没引号的=旁白描述。两者自然穿插。\n';
