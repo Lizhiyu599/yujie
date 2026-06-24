@@ -907,7 +907,7 @@ function sendStickerFromBot(src, note) {
 function switchToOffline() {
     toggleAddPanel();
     window.ChatState.isOfflineMode = true;
-    const contactId = window.ChatState.currentContactId || 'c1';
+    var contactId = window.ChatState.currentContactId || (window.ChatConfig && window.ChatConfig.contacts[0] ? window.ChatConfig.contacts[0].id : 'c1');
     showToast('已切换到线下模式');
     enterChat(contactId);
 }
@@ -915,7 +915,7 @@ function switchToOffline() {
 function switchToOnline() {
     toggleAddPanel();
     window.ChatState.isOfflineMode = false;
-    const contactId = window.ChatState.currentContactId || 'c1';
+    var contactId = window.ChatState.currentContactId || (window.ChatConfig && window.ChatConfig.contacts[0] ? window.ChatConfig.contacts[0].id : 'c1');
     showToast('已切换到线上模式');
     enterChat(contactId);
 }
