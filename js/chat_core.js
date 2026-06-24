@@ -10,6 +10,7 @@ window.ChatState = window.ChatState || {
     isAITyping: false,
     quotedMsg: null,
     lastMessageTime: null
+    isOfflineMode: false
 };
 
 // ========== 构建系统提示 ==========
