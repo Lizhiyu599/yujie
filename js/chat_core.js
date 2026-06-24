@@ -579,6 +579,12 @@ function appendMessage(role, text) {
         avatar.className = 'bubble-avatar ' + (role === 'user' ? 'user-avatar' : 'bot-avatar');
 
    if (role === 'user') {
+       if (window.ChatState && window.ChatState.isOfflineMode) {
+    var existingUserAvatars = messages.querySelectorAll('.bubble-row.user .user-avatar');
+    if (existingUserAvatars.length > 0) {
+        avatar.style.display = 'none';
+    }
+       }
     // 用户头像：从面具数据取
     var masks = typeof getMasks === 'function' ? getMasks() : [];
     var activeMaskId = localStorage.getItem('active_mask_id') || '';
