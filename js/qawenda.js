@@ -1,30 +1,40 @@
 /**
  * 奇问妙答 - 角色每日问答
- * 选择题为主，6道题6分
- * 支持往期记录、自动提问、手动刷新
+ * 选择题为主，6-10道题
+ * 支持往期记录、自动提问、手动刷新、角色隔离
  * 题目基于聊天剧情生成
  */
 
 // ========== 数据存储 ==========
 function getQawendaData() {
-    var raw = localStorage.getItem('qawenda_data');
+    var contactId = getQawendaSelectedChar();
+    var key = 'qawenda_data_' + (contactId || 'default');
+    var raw = localStorage.getItem(key);
     if (raw) {
         return JSON.parse(raw);
     }
     return {
-        selectedChar: '',
+        selectedChar: contactId || '',
         autoAsk: false,
         todayDate: '',
         todayAsked: false,
         todayQuestions: [],
         todayAnswers: [],
         todayScored: false,
+        todayManualCount: 0,
+        todayAutoCount: 0,
         history: []
     };
 }
 
 function saveQawendaData(data) {
-    localStorage.setItem('qawenda_data', JSON.stringify(data));
+    var contactId = data.selectedChar || getQawendaSelectedChar();
+    var key = 'qawenda_data_' + (contactId || 'default');
+    localStorage.setItem(key, JSON.stringify(data));
+}
+
+function getQawendaSelectedChar() {
+    return localStorage.getItem('qawenda_selected_char') || '';
 }
 
 // ========== 检查日期是否更新 ==========
@@ -47,10 +57,16 @@ function checkQawendaDate() {
         data.todayQuestions = [];
         data.todayAnswers = [];
         data.todayScored = false;
+        data.todayManualCount = 0;
+        data.todayAutoCount = 0;
         saveQawendaData(data);
     }
     return data;
 }
+
+// ========== 加载弹窗相关 ==========
+let qawendaLoadingToast = null;
+let isQawendaGenerating = false;
 
 // ========== 打开软件 ==========
 function openQawenda() {
@@ -116,7 +132,11 @@ function renderQawenda(data) {
             }
             bodyHTML += '</div>';
         });
+        var manRemain = 2 - (data.todayManualCount || 0);
         bottomHTML = '<button class="qw-btn qw-btn-black" onclick="submitQawendaAnswers()">提交答案</button>';
+        if (manRemain > 0) {
+            bottomHTML += '<button class="qw-btn qw-btn-white" onclick="regenerateQawendaQuestions()">刷新提问（剩' + manRemain + '次）</button>';
+        }
     } else {
         bodyHTML += '<div class="qw-char-card"><div class="qw-char-avatar" style="' + charAvatarBg + '">' + charAvatar + '</div><div class="qw-char-info"><div class="qw-char-name">' + charName + '</div><div class="qw-char-hint">等待今天的提问...</div></div></div>';
         bodyHTML += '<div class="qw-waiting">今天还没有问题<br>点击下方按钮让角色出题吧</div>';
@@ -164,18 +184,36 @@ function selectQawendaFill(index, value) {
 }
 
 // ========== 生成问题（基于聊天剧情） ==========
-async function generateQawendaQuestions() {
+async function generateQawendaQuestions(isRegenerate) {
+    if (isQawendaGenerating) {
+        showToast('问题正在生成中，请稍候');
+        return;
+    }
+
     var data = checkQawendaDate();
     if (!data.selectedChar) {
         showToast('请先在设置中选择角色');
         return;
     }
-    if (data.todayAsked) {
-        showToast('今天已经提问过了');
+
+    // 手动生成限制：最多2次/天
+    if (!isRegenerate && data.todayManualCount >= 2) {
+        showToast('今天手动生成已达上限（2次）');
+        return;
+    }
+    if (isRegenerate && data.todayManualCount >= 2) {
+        showToast('今天手动生成已达上限（2次）');
         return;
     }
 
-    showToast('正在生成问题…');
+    isQawendaGenerating = true;
+    if (qawendaLoadingToast) qawendaLoadingToast.remove();
+    qawendaLoadingToast = document.createElement('div');
+    qawendaLoadingToast.className = 'global-toast';
+    qawendaLoadingToast.textContent = '正在生成问题…';
+    qawendaLoadingToast.style.background = 'rgba(0,0,0,0.75)';
+    qawendaLoadingToast.style.color = '#fff';
+    document.body.appendChild(qawendaLoadingToast);
 
     var contact = null;
     var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
@@ -183,11 +221,13 @@ async function generateQawendaQuestions() {
         if (contacts[i].id === data.selectedChar) { contact = contacts[i]; break; }
     }
     if (!contact) {
+        if (qawendaLoadingToast) qawendaLoadingToast.remove();
+        qawendaLoadingToast = null;
+        isQawendaGenerating = false;
         showToast('未找到该角色');
         return;
     }
 
-    // 取最近聊天记录
     var chatContent = '';
     if (typeof getRecentHistory === 'function') {
         var historyMessages = getRecentHistory(data.selectedChar, 30);
@@ -201,7 +241,7 @@ async function generateQawendaQuestions() {
     }
 
     var systemPrompt = buildSystemPrompt ? buildSystemPrompt(data.selectedChar) : '';
-    var askPrompt = '你今天是奇问妙答的出题人。请以' + contact.name + '的口吻，根据以下最近的聊天剧情和角色设定，出5道题（选择题为主，可以有1道填空题）。题目应与你们的日常互动相关，主要基于当天的对话内容，也可以涉及以前的事情。可以出一些送命题——比如关于前任、暧昧对象的细节问题，答对了反而说明用户对别人太上心。语气自然，符合角色性格。\n\n【最近的聊天记录】\n' + chatContent + '\n\n格式要求：每道题用"题号. 题目内容"开头，选择题后面用A. B. C.列出选项，填空题后面注明（填空题）。\n\n不要写答案，不要写解析，只出题目。';
+    var askPrompt = '你今天是奇问妙答的出题人。请以' + contact.name + '的口吻，根据以下最近的聊天剧情和角色设定，出6-10道题。\n\n【题目比例要求】选择题占2/3，填空题占1/3。\n\n题目应与你们的日常互动相关，主要基于当天的对话内容，也可以涉及以前的事情。可以出一些送命题——比如关于前任、暧昧对象的细节问题，答对了反而说明用户对别人太上心。语气自然，符合角色性格。\n\n【最近的聊天记录】\n' + chatContent + '\n\n格式要求：每道题用"题号. 题目内容"开头，选择题后面用A. B. C.列出选项，填空题后面注明（填空题）。\n\n不要写答案，不要写解析，只出题目。';
 
     try {
         var reply = await callChatAPI([
@@ -211,6 +251,9 @@ async function generateQawendaQuestions() {
 
         var questions = parseQawendaQuestions(reply);
         if (questions.length === 0) {
+            if (qawendaLoadingToast) qawendaLoadingToast.remove();
+            qawendaLoadingToast = null;
+            isQawendaGenerating = false;
             showToast('问题生成失败，请重试');
             return;
         }
@@ -219,12 +262,24 @@ async function generateQawendaQuestions() {
         data.todayQuestions = questions;
         data.todayAnswers = new Array(questions.length).fill('');
         data.todayScored = false;
+        data.todayManualCount = (data.todayManualCount || 0) + 1;
         saveQawendaData(data);
-        showToast('问题已生成');
+        
+        if (qawendaLoadingToast) qawendaLoadingToast.remove();
+        qawendaLoadingToast = null;
+        isQawendaGenerating = false;
+        showToast('问题已生成（共' + questions.length + '题）');
         renderQawenda(data);
     } catch (e) {
+        if (qawendaLoadingToast) qawendaLoadingToast.remove();
+        qawendaLoadingToast = null;
+        isQawendaGenerating = false;
         showToast('问题生成失败，请重试');
     }
+}
+
+function regenerateQawendaQuestions() {
+    generateQawendaQuestions(true);
 }
 
 // ========== 解析AI返回的问题 ==========
@@ -267,7 +322,7 @@ function parseQawendaQuestions(rawText) {
         questions.push(currentQ);
     }
 
-    return questions.slice(0, 6);
+    return questions.slice(0, 10);
 }
 
 // ========== 提交答案并评分（支持角色恶意打0分） ==========
@@ -387,7 +442,7 @@ function openQawendaSettings() {
         + '<span>自动提问</span>'
         + '<input type="checkbox" class="ios-switch-sm" ' + (data.autoAsk ? 'checked' : '') + ' onchange="toggleQawendaAuto(this.checked)">'
         + '</div>'
-        + '<div style="font-size:11px;color:#8e8e93;margin:4px 0 12px;">开启后角色每天自动出题</div>'
+        + '<div style="font-size:11px;color:#8e8e93;margin:4px 0 12px;">开启后角色每天自动出题（最多1次）</div>'
         + '<div class="qw-edit-buttons">'
         + '<div class="qw-edit-btn-cancel" onclick="closeQawendaSettings()">关闭</div>'
         + '</div></div>';
@@ -396,11 +451,10 @@ function openQawendaSettings() {
 }
 
 function selectQawendaChar(charId) {
-    var data = getQawendaData();
-    data.selectedChar = charId;
-    saveQawendaData(data);
+    localStorage.setItem('qawenda_selected_char', charId);
     closeQawendaSettings();
     showToast('角色已选择');
+    var data = getQawendaData();
     renderQawenda(data);
 }
 
