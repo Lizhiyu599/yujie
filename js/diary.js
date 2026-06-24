@@ -110,26 +110,21 @@ function getAllPagesData() {
     const charsPerPage = 190;
 
     diaries.forEach((diary, diaryIndex) => {
-        const paragraphs = diary.content.split(/\n{2,}/).filter(p => p.trim());
+        const paragraphs = diary.content.split(/\n/).filter(p => p.trim());
         const subPages = [];
+        let currentPage = '';
 
         paragraphs.forEach(para => {
-            if (!subPages.length || (subPages[subPages.length - 1].length + para.length) > charsPerPage) {
-                if (para.length > charsPerPage) {
-                    let remaining = para;
-                    while (remaining.length > 0) {
-                        const chunk = remaining.substring(0, charsPerPage);
-                        remaining = remaining.substring(charsPerPage);
-                        subPages.push(chunk);
-                    }
-                } else {
-                    subPages.push(para);
-                }
+            if (!currentPage) {
+                currentPage = para;
+            } else if ((currentPage.length + para.length + 1) <= charsPerPage) {
+                currentPage += '\n' + para;
             } else {
-                subPages[subPages.length - 1] += '\n\n' + para;
+                subPages.push(currentPage);
+                currentPage = para;
             }
         });
-
+        if (currentPage) subPages.push(currentPage);
         if (subPages.length === 0) subPages.push(diary.content);
 
         subPages.forEach((pageContent, subIndex) => {
