@@ -258,7 +258,7 @@ async function generateQawendaQuestions(isRegenerate) {
     }
 
     var systemPrompt = buildSystemPrompt ? buildSystemPrompt(data.selectedChar) : '';
-    var askPrompt = '你今天是奇问妙答的出题人。请以' + contact.name + '的口吻，根据以下最近的聊天剧情和角色设定，出6-10道题。\n\n【题目比例要求】选择题占2/3，填空题占1/3。\n\n题目应与你们的日常互动相关，主要基于当天的对话内容，也可以涉及以前的事情。可以出一些送命题——比如关于前任、暧昧对象的细节问题，答对了反而说明用户对别人太上心。语气自然，符合角色性格。\n\n【最近的聊天记录】\n' + chatContent + '\n\n格式要求：每道题用"题号. 题目内容"开头，选择题后面用A. B. C.列出选项，填空题后面注明（填空题）。\n\n不要写答案，不要写解析，只出题目。';
+    var askPrompt = '你今天是奇问妙答的出题人。请以' + contact.name + '的口吻，根据以下素材出题。\n\n【硬性要求-必须遵守】总共出6-10道题。其中选择题占大多数，填空题只放在最后。具体规则：6题=5选择+1填空（填空在最后1题），7题=6选择+1填空（填空在最后1题），8题=6选择+2填空（填空在最后2题），9题=7选择+2填空（填空在最后2题），10题=8选择+2填空（填空在最后2题）。选择题永远在前面，填空题永远在最后。\n\n题目应与你们的日常互动相关，主要基于当天的对话内容，也可以涉及以前的事情。可以出一些送命题——比如关于前任、暧昧对象的细节问题，答对了反而说明用户对别人太上心。语气自然，符合角色性格。\n\n【最近的聊天记录】\n' + chatContent + '\n\n【格式要求-严格遵守】每道题用"题号. 题目内容"开头。选择题必须列出A. B. C. D.等选项，用"A. 选项内容"的格式。填空题后面注明（填空题）。不要写答案，不要写解析，只出题目。';
 
     try {
         var reply = await callChatAPI([
@@ -322,7 +322,7 @@ function parseQawendaQuestions(rawText) {
             currentQ = { question: qMatch[2], type: 'choice', options: [] };
             options = [];
         } else {
-            var optMatch = line.match(/^[A-D][\.、]\s*(.+)/);
+            var optMatch = line.match(/^[A-D][\)\.\、]\s*(.+)/);
             if (optMatch && currentQ) {
                 options.push(optMatch[1]);
             }
