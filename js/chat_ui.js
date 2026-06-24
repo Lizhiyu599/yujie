@@ -1194,7 +1194,7 @@ function renderContactsList() {
     listView.insertAdjacentHTML('beforeend', indexHTML);
 
     listView.querySelectorAll('.contacts-section-title').forEach(title => {
-        title.style.cssText = 'background:#f2f2f7;padding:6px 16px;font-size:13px;color:#8e8e93;font-weight:500;';
+    title.style.cssText = 'background:transparent;padding:6px 16px;font-size:13px;color:#8e8e93;font-weight:500;';
     });
 }
 
