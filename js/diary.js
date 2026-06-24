@@ -204,6 +204,7 @@ pages.forEach(function(page, index) {
         page.classList.add('behind');
     }
 });
+}    
     
 // ========== 更新底部工具栏 ==========
 function updateBottomBar() {
