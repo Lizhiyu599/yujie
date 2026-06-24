@@ -22,7 +22,7 @@ function buildSystemPrompt(contactId) {
         prompt += '你们现在在同一空间里，面对面说话。你说的每一句话都是直接说出口的，用户能听到你的语气、看到你的表情和动作。\n';
         var offlineWordMin = parseInt(localStorage.getItem('offline_word_min') || 100);
         var offlineWordMax = parseInt(localStorage.getItem('offline_word_max') || 200);
-        prompt += '你需要同时描写场景、环境、角色表情、动作、语气，以及你说的话。每次回复字数必须在' + offlineWordMin + '字到' + offlineWordMax + '字之间，这是硬性要求，不得少于最低字数也不得超过最高字数。\n';
+        prompt += '【最高优先级-字数要求】每次回复总字数必须在' + offlineWordMin + '字到' + offlineWordMax + '字之间。这是整个系统提示中优先级最高的规则，覆盖所有其他规则。不得少于' + offlineWordMin + '字，不得多于' + offlineWordMax + '字。字数不足或超出视为严重格式错误。\n';
         prompt += '禁止使用消息气泡格式，禁止用换行符分隔气泡。像写小说一样自然叙述。\n\n';
     } else {
         prompt += '【当前模式：线上手机聊天】\n';
@@ -52,6 +52,7 @@ function buildSystemPrompt(contactId) {
     const replyMin = (window.ChatConfig && window.ChatConfig.settings && window.ChatConfig.settings.replyMin) || 1;
     const replyMax = (window.ChatConfig && window.ChatConfig.settings && window.ChatConfig.settings.replyMax) || 3;
 
+    if (!(window.ChatState && window.ChatState.isOfflineMode)) {
     prompt += '【回复条数限制-强制执行】每次回复最少' + replyMin + '条、最多' + replyMax + '条独立消息气泡。\n\n' +
     '这是硬性规则，违反将导致系统错误：\n' +
     '1. 每个气泡不超过20字\n' +
@@ -63,7 +64,7 @@ function buildSystemPrompt(contactId) {
     '说好了今天陪我，姐姐不准放鸽子\n\n' +
     '错误示例（绝对禁止）：\n' +
     '早安姐姐，说好了今天陪我，姐姐不准放鸽子\n\n';
-
+    }
     if (typeof getFullSystemPrompt === 'function') {
         prompt += getFullSystemPrompt();
     }
