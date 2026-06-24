@@ -748,7 +748,8 @@ localStorage.setItem(storageKey, html);
 function loadChatHistory(contactId) {
     var messages = document.getElementById('chatMessages');
     if (!messages) return;
-    var saved = localStorage.getItem('chat_history_' + contactId);
+    var storageKey = (window.ChatState && window.ChatState.isOfflineMode ? 'chat_history_offline_' : 'chat_history_') + contactId;
+var saved = localStorage.getItem(storageKey);
     if (saved) {
         messages.innerHTML = saved;
         messages.scrollTop = messages.scrollHeight;
