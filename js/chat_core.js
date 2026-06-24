@@ -592,6 +592,14 @@ function appendMessage(role, text) {
         avatar.textContent = '我';
     }
 } else {
+
+     // 线下模式：只在第一条角色消息显示头像
+    if (window.ChatState && window.ChatState.isOfflineMode) {
+        var existingBotAvatars = messages.querySelectorAll('.bubble-row.assistant .bot-avatar');
+        if (existingBotAvatars.length > 0) {
+            avatar.style.display = 'none';
+        }
+    }
     
     // 角色头像：从联系人数据取
     var contact = getContactById(window.ChatState.currentContactId);
