@@ -17,24 +17,37 @@ window.ChatState = window.ChatState || {
 function buildSystemPrompt(contactId) {
     let prompt = '';
     // 线下/线上模式切换
-  if (window.ChatState && window.ChatState.isOfflineMode) {
-    prompt += '【当前模式：线下面对面聊天】\n';
-    prompt += '你们现在在同一空间里，面对面说话。你说的每一句话都是直接说出口的，用户能听到你的语气、看到你的表情和动作。\n';
-    var offlineWordMin = parseInt(localStorage.getItem('offline_word_min') || 100);
-    var offlineWordMax = parseInt(localStorage.getItem('offline_word_max') || 200);
-    prompt += '你需要同时描写场景、环境、角色表情、动作、语气，以及你说的话。每次回复字数必须在' + offlineWordMin + '字到' + offlineWordMax + '字之间，这是硬性要求，不得少于最低字数也不得超过最高字数。\n';  
-    prompt += '回复格式：角色说出口的话必须用中文双引号\u201c\u201d包裹，旁白叙述不加引号。示例：\n';
-    prompt += '\u201c姐姐你终于来了\u201d\n他抬头有些可怜巴巴幽怨的看着你\n\u201c还以为你要放我鸽子呢\u201d\n';
-    prompt += '双引号内的=说出口的话，没引号的=旁白描述。两者自然穿插。\n';
-    prompt += '禁止使用消息气泡格式，禁止用换行符分隔气泡。像写小说一样自然叙述。\n\n';
-} else {
-    prompt += '【当前模式：线上手机聊天】\n';
-    prompt += '你们正在通过手机发消息聊天，不在同一个空间。你只能通过文字消息和旁白来交流。\n\n';
-}
+    if (window.ChatState && window.ChatState.isOfflineMode) {
+        prompt += '【当前模式：线下面对面聊天】\n';
+        prompt += '你们现在在同一空间里，面对面说话。你说的每一句话都是直接说出口的，用户能听到你的语气、看到你的表情和动作。\n';
+        var offlineWordMin = parseInt(localStorage.getItem('offline_word_min') || 100);
+        var offlineWordMax = parseInt(localStorage.getItem('offline_word_max') || 200);
+        prompt += '你需要同时描写场景、环境、角色表情、动作、语气，以及你说的话。每次回复字数必须在' + offlineWordMin + '字到' + offlineWordMax + '字之间，这是硬性要求，不得少于最低字数也不得超过最高字数。\n';
+        prompt += '禁止使用消息气泡格式，禁止用换行符分隔气泡。像写小说一样自然叙述。\n\n';
+    } else {
+        prompt += '【当前模式：线上手机聊天】\n';
+        prompt += '你们正在通过手机发消息聊天，不在同一个空间。你只能通过文字消息和旁白来交流。\n\n';
+    }
 
     prompt += '【最高优先级·状态更新】你的每次回复，必须在最后一行附加一段完整的JSON状态信息，格式严格如下（不要省略任何字段，不要嵌套在其他内容里，必须单独一行）：\n{"mood":"心情(10字内)","favorability":好感度数字(0-100),"action":"动作(20字内)","thought":"内心想法(30字内)"}\n这是强制要求，每次回复都必须包含此JSON，否则系统无法正确运行。\n\n';
 
-    prompt += '【语言规则】你的所有回复正文和旁白内容，必须且只能使用简体中文。禁止使用繁体中文、日语、英语、韩语等任何其他语言。禁止使用双引号\u201c\u201d。不要在消息前加换行。这是最高优先级的硬性规则，不可违反。\n\n';
+    if (window.ChatState && window.ChatState.isOfflineMode) {
+        prompt += '【语言规则】你的所有回复正文和旁白内容，必须且只能使用简体中文。禁止使用繁体中文、日语、英语、韩语等任何其他语言。不要在消息前加换行。这是最高优先级的硬性规则，不可违反。\n\n';
+    } else {
+        prompt += '【语言规则】你的所有回复正文和旁白内容，必须且只能使用简体中文。禁止使用繁体中文、日语、英语、韩语等任何其他语言。禁止使用双引号\u201c\u201d。不要在消息前加换行。这是最高优先级的硬性规则，不可违反。\n\n';
+    }
+
+    // 线下模式：双引号 + 格式规则
+    if (window.ChatState && window.ChatState.isOfflineMode) {
+        prompt += '【最高优先级-格式规则】角色说出口的话必须用中文双引号\u201c\u201d包裹。不带引号的内容视为旁白叙述。\n';
+        prompt += '正确示例：\n';
+        prompt += '\u201c姐姐你终于来了\u201d\n';
+        prompt += '他抬头有些可怜巴巴幽怨的看着你\n';
+        prompt += '\u201c还以为你要放我鸽子呢\u201d\n';
+        prompt += '旁白和对话必须各自独立成段，用换行分隔，禁止挤在同一行。\n';
+        prompt += '错误示例（绝对禁止）：他看着眼前的事物很惊讶，震惊，痛苦，迷茫。\u201c\u2026为什么\u2026为什么！？\u201d\n';
+        prompt += '每一句说出口的话都必须加引号并独占一行，这是强制格式，违反视为格式错误。\n\n';
+    }
 
     const replyMin = (window.ChatConfig && window.ChatConfig.settings && window.ChatConfig.settings.replyMin) || 1;
     const replyMax = (window.ChatConfig && window.ChatConfig.settings && window.ChatConfig.settings.replyMax) || 3;
@@ -50,7 +63,7 @@ function buildSystemPrompt(contactId) {
     '说好了今天陪我，姐姐不准放鸽子\n\n' +
     '错误示例（绝对禁止）：\n' +
     '早安姐姐，说好了今天陪我，姐姐不准放鸽子\n\n';
-    
+
     if (typeof getFullSystemPrompt === 'function') {
         prompt += getFullSystemPrompt();
     }
@@ -87,7 +100,7 @@ try {
 } catch(e) {}
 if (summaryText) {
     prompt += '\n\n【拾忆林记忆】以下是关于你们过去互动的总结，你可以在聊天中自然地回忆起这些内容。不要生硬地背诵，而是在相关话题出现时像活人一样自然地联想起来：\n' + summaryText + '\n';
-}    
+}
 
 prompt += '\n\n【红包和转账-最高优先级·严格遵守】\n用户让你发红包时，只发红包。格式：（给用户发了一个红包，金额X元）\n用户让你发转账时，只发转账。格式：（给用户转账X元，备注：...）\n红包和转账是不同的东西，不要混淆。用户说"红包"就发红包，用户说"转账"就发转账，不要自己替换。\n用户说"发两个转账"就发两个转账，不要发红包。\n金额必须大于0。红包金额上限200元，转账金额上限20000元。\n不要解释、不要模拟、不要说"发送成功"。只发格式正确的旁白。\n\n如果你决定接收用户的红包或转账，在旁白中说"接收了红包"或"收下了转账"。如果要退还转账，在旁白中说"退还了转账"。\n\n重要：接收红包/转账时，必须在旁白中写清楚金额。例如：（接收了红包，金额10元）或（收下了转账，金额50元）。';
 
@@ -109,7 +122,7 @@ if (emojiNotes.length > 0) {
 
     return prompt;
 }
-    
+   
 // ========== 获取联系人 ==========
 function getContactById(contactId) {
     if (!window.ChatConfig || !window.ChatConfig.contacts) return null;
