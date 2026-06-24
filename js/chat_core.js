@@ -729,7 +729,8 @@ function saveChatHistory(contactId) {
             html = html.slice(html.length - 300000);
         }
         try {
-            localStorage.setItem('chat_history_' + contactId, html);
+            var storageKey = (window.ChatState && window.ChatState.isOfflineMode ? 'chat_history_offline_' : 'chat_history_') + contactId;
+localStorage.setItem(storageKey, html);
         } catch (e) {
             // 存储满了，清掉最旧的聊天记录
             var keys = [];
@@ -739,7 +740,7 @@ function saveChatHistory(contactId) {
             }
             if (keys.length > 0) {
                 localStorage.removeItem(keys[0]);
-                try { localStorage.setItem('chat_history_' + contactId, html); } catch (e2) {}
+                try { localStorage.setItem(storageKey, html); } catch (e2) {}
             }
         }
     }
