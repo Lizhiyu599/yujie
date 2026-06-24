@@ -198,21 +198,17 @@ function renderDiaryPages() {
     });
 
     // 翻页状态
-requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-        document.querySelectorAll('.diary-page').forEach((page, index) => {
-            page.classList.remove('flipped', 'current', 'behind');
-            if (index < currentPageIndex) {
-                page.classList.add('flipped');
-            } else if (index === currentPageIndex) {
-                page.classList.add('current');
-            } else {
-                page.classList.add('behind');
-            }
-        });
-    });
+var pages = book.querySelectorAll('.diary-page');
+pages.forEach(function(page, index) {
+    page.classList.remove('flipped', 'current', 'behind');
+    if (index < currentPageIndex) {
+        page.classList.add('flipped');
+    } else if (index === currentPageIndex) {
+        page.classList.add('current');
+    } else {
+        page.classList.add('behind');
+    }
 });
-}
     
 // ========== 更新底部工具栏 ==========
 function updateBottomBar() {
