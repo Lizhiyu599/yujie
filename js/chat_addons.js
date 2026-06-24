@@ -1,12 +1,34 @@
 /**
  * 玉界 - 聊天附加功能
- * 包含：表情包面板渲染、发送贴纸、相册、图片查看器、位置、红包、转账、链接
+ * 包含：表情包面板渲染、发送贴纸、相册、图片查看器、位置、红包、转账、链接、线下模式切换
  */
 
 // ========== 表情包面板渲染 ==========
 function renderAddPanelContent(tab) {
     const body = document.getElementById('addPanelBody');
     if (!body) return;
+
+    // 线下模式：只显示场景设置面板
+    if (window.ChatState && window.ChatState.isOfflineMode) {
+        body.innerHTML = `
+            <div class="offline-panel">
+                <div class="offline-panel-title">场景字数设置</div>
+                <div class="offline-slider-row">
+                    <span>每次回复字数上限</span>
+                    <span class="offline-slider-val" id="offlineWordLimitVal">${localStorage.getItem('offline_word_limit') || '300'}</span>
+                </div>
+                <div class="offline-preset-btns">
+                    <button class="offline-preset-btn" onclick="setOfflineWordLimit(300)">300</button>
+                    <button class="offline-preset-btn" onclick="setOfflineWordLimit(500)">500</button>
+                    <button class="offline-preset-btn" onclick="setOfflineWordLimit(700)">700</button>
+                    <button class="offline-preset-btn" onclick="setOfflineWordLimit(800)">800</button>
+                </div>
+                <input type="number" class="offline-custom-input" id="offlineCustomLimit" placeholder="自定义字数" min="50" max="3000" onchange="setOfflineWordLimit(this.value)">
+                <button class="offline-switch-btn" onclick="switchToOnline()">切换到线上</button>
+            </div>
+        `;
+        return;
+    }
 
     if (tab === 'emoji') {
         const savedEmojis = JSON.parse(localStorage.getItem('custom_emojis') || '[]');
@@ -877,4 +899,30 @@ function sendStickerFromBot(src, note) {
     saveChatHistory(window.ChatState.currentContactId);
 }
 
+// ========== 线下模式切换 ==========
+function switchToOffline() {
+    toggleAddPanel();
+    window.ChatState.isOfflineMode = true;
+    const contactId = window.ChatState.currentContactId || 'c1';
+    showToast('已切换到线下模式');
+    enterChat(contactId);
+}
+
+function switchToOnline() {
+    toggleAddPanel();
+    window.ChatState.isOfflineMode = false;
+    const contactId = window.ChatState.currentContactId || 'c1';
+    showToast('已切换到线上模式');
+    enterChat(contactId);
+}
+
+function setOfflineWordLimit(val) {
+    val = parseInt(val);
+    if (val < 50) val = 50;
+    if (val > 3000) val = 3000;
+    localStorage.setItem('offline_word_limit', val);
+    var valEl = document.getElementById('offlineWordLimitVal');
+    if (valEl) valEl.textContent = val;
+    showToast('字数上限已设为' + val);
+}
 
