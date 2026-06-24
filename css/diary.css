@@ -345,7 +345,7 @@
 /* ===== 日记内容区 ===== */
 .diary-page-content {
     flex: 1;
-    overflow-y: auto;
+    overflow-y: hidden;
     padding: 8px 12px 30px;
     position: relative;
     z-index: 1;
