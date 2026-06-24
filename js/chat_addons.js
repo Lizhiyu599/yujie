@@ -18,12 +18,16 @@ function renderAddPanelContent(tab) {
                     <span class="offline-slider-val" id="offlineWordLimitVal">${localStorage.getItem('offline_word_limit') || '300'}</span>
                 </div>
                 <div class="offline-preset-btns">
-                    <button class="offline-preset-btn" onclick="setOfflineWordLimit(300)">300</button>
-                    <button class="offline-preset-btn" onclick="setOfflineWordLimit(500)">500</button>
-                    <button class="offline-preset-btn" onclick="setOfflineWordLimit(700)">700</button>
-                    <button class="offline-preset-btn" onclick="setOfflineWordLimit(800)">800</button>
-                </div>
-                <input type="number" class="offline-custom-input" id="offlineCustomLimit" placeholder="自定义字数" min="50" max="3000" onchange="setOfflineWordLimit(this.value)">
+    <button class="offline-preset-btn" id="presetBtn100" onclick="selectOfflinePreset(100, 200, this)">100-200</button>
+    <button class="offline-preset-btn" id="presetBtn200" onclick="selectOfflinePreset(200, 500, this)">200-500</button>
+    <button class="offline-preset-btn" id="presetBtn500" onclick="selectOfflinePreset(500, 700, this)">500-700</button>
+    <button class="offline-preset-btn" id="presetBtn700" onclick="selectOfflinePreset(700, 800, this)">700-800</button>
+</div>
+<div class="offline-custom-row">
+    <input type="number" class="offline-custom-input" id="offlineCustomMin" placeholder="最少字" min="50" style="flex:1;">
+    <input type="number" class="offline-custom-input" id="offlineCustomMax" placeholder="最多字" min="50" style="flex:1;">
+    <button class="offline-custom-confirm" onclick="confirmOfflineCustom()">确定</button>
+</div>
                 <button class="offline-switch-btn" onclick="switchToOnline()">切换到线上</button>
             </div>
         `;
@@ -916,13 +920,22 @@ function switchToOnline() {
     enterChat(contactId);
 }
 
-function setOfflineWordLimit(val) {
-    val = parseInt(val);
-    if (val < 50) val = 50;
-    if (val > 3000) val = 3000;
-    localStorage.setItem('offline_word_limit', val);
-    var valEl = document.getElementById('offlineWordLimitVal');
-    if (valEl) valEl.textContent = val;
-    showToast('字数上限已设为' + val);
+function selectOfflinePreset(min, max, el) {
+    localStorage.setItem('offline_word_min', min);
+    localStorage.setItem('offline_word_max', max);
+    document.querySelectorAll('.offline-preset-btn').forEach(function(b) { b.style.background = ''; b.style.color = ''; });
+    el.style.background = '#1d1d1f';
+    el.style.color = '#fff';
+    showToast('字数设为' + min + '-' + max);
 }
 
+function confirmOfflineCustom() {
+    var min = parseInt(document.getElementById('offlineCustomMin').value) || 100;
+    var max = parseInt(document.getElementById('offlineCustomMax').value) || 300;
+    if (min > max) { var tmp = min; min = max; max = tmp; }
+    if (min < 50) min = 50;
+    localStorage.setItem('offline_word_min', min);
+    localStorage.setItem('offline_word_max', max);
+    document.querySelectorAll('.offline-preset-btn').forEach(function(b) { b.style.background = ''; b.style.color = ''; });
+    showToast('字数设为' + min + '-' + max);
+}
