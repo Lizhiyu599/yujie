@@ -6,12 +6,16 @@
 
 // ========== 日记数据存储 ==========
 function getDiaries() {
-    const raw = localStorage.getItem('diary_entries');
+    var contactId = getDiarySelectedChar();
+    var key = 'diary_entries_' + (contactId || 'default');
+    var raw = localStorage.getItem(key);
     return raw ? JSON.parse(raw) : [];
 }
 
 function saveDiaries(diaries) {
-    localStorage.setItem('diary_entries', JSON.stringify(diaries));
+    var contactId = getDiarySelectedChar();
+    var key = 'diary_entries_' + (contactId || 'default');
+    localStorage.setItem(key, JSON.stringify(diaries));
 }
 
 function getDiaryFontSettings() {
