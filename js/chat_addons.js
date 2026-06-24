@@ -49,7 +49,10 @@ function renderAddPanelContent(tab) {
                     <div class="func-icon">链</div>
                     <div class="func-label">链接</div>
                 </div>
-            </div>
+            <div class="func-item" onclick="switchToOffline()">
+    <div class="func-icon">⇲</div>
+    <div class="func-label">线下</div>
+</div>
         `;
     }
 }
