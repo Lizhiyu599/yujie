@@ -2531,3 +2531,25 @@
     background: #3a3a3c;
     transform: scale(0.98);
 }
+
+.offline-custom-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    align-items: center;
+}
+.offline-custom-row .offline-custom-input {
+    flex: 1;
+    margin-bottom: 0;
+}
+.offline-custom-confirm {
+    padding: 10px 14px;
+    background: #1d1d1f;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
