@@ -359,7 +359,11 @@ async function submitQawendaAnswers() {
         return;
     }
 
-    showToast('正在评分…');
+    if (qawendaLoadingToast) qawendaLoadingToast.remove();
+qawendaLoadingToast = document.createElement('div');
+qawendaLoadingToast.className = 'global-toast';
+qawendaLoadingToast.textContent = '正在评分…';
+document.body.appendChild(qawendaLoadingToast);
 
     var contact = null;
     var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
@@ -384,9 +388,11 @@ async function submitQawendaAnswers() {
         parseQawendaScores(reply, data);
         data.todayScored = true;
         saveQawendaData(data);
+        if (qawendaLoadingToast) { qawendaLoadingToast.remove(); qawendaLoadingToast = null; }
         showToast('评分完成');
         renderQawenda(data);
     } catch (e) {
+        if (qawendaLoadingToast) { qawendaLoadingToast.remove(); qawendaLoadingToast = null; }
         showToast('评分失败，请重试');
     }
 }
