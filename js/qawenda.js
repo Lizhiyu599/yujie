@@ -211,8 +211,6 @@ async function generateQawendaQuestions(isRegenerate) {
     qawendaLoadingToast = document.createElement('div');
     qawendaLoadingToast.className = 'global-toast';
     qawendaLoadingToast.textContent = '正在生成问题…';
-    qawendaLoadingToast.style.background = 'rgba(0,0,0,0.75)';
-    qawendaLoadingToast.style.color = '#fff';
     document.body.appendChild(qawendaLoadingToast);
 
     var contact = null;
