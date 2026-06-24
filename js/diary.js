@@ -212,7 +212,8 @@ requestAnimationFrame(() => {
         });
     });
 });
-
+}
+    
 // ========== 更新底部工具栏 ==========
 function updateBottomBar() {
     const allPages = getAllPagesData();
