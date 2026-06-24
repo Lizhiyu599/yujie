@@ -124,9 +124,9 @@ function renderQawenda(data) {
             bodyHTML += '<div class="qw-question-card" id="qwQuestion' + i + '"><div class="qw-question-num">第' + (i + 1) + '题 · ' + (q.type === 'choice' ? '选择题' : '填空题') + '</div><div class="qw-question-text">' + q.question + '</div>';
             if (q.type === 'choice') {
                 q.options.forEach(function(opt, oi) {
-                    var selClass = data.todayAnswers[i] === opt ? ' selected' : '';
-                    bodyHTML += '<div class="qw-option' + selClass + '" data-value="' + opt.replace(/"/g, '&quot;') + '" onclick="selectQawendaOption(' + i + ', \'' + opt.replace(/'/g, "\\'") + '\')"><div class="qw-option-radio"></div>' + opt + '</div>';
-                });
+    var selClass = data.todayAnswers[i] === opt ? ' selected' : '';
+    bodyHTML += '<div class="qw-option' + selClass + '" data-qindex="' + i + '" data-optindex="' + oi + '" onclick="selectQawendaOptionByIndex(' + i + ', ' + oi + ')"><div class="qw-option-radio"></div>' + opt + '</div>';
+});
             } else {
                 bodyHTML += '<input type="text" class="qw-fill-input" id="qwFillInput' + i + '" placeholder="输入你的答案..." value="' + (data.todayAnswers[i] || '') + '" onchange="selectQawendaFill(' + i + ', this.value)">';
             }
@@ -181,6 +181,25 @@ function selectQawendaFill(index, value) {
     if (!data.todayAnswers) data.todayAnswers = [];
     data.todayAnswers[index] = value;
     saveQawendaData(data);
+}
+
+function selectQawendaOptionByIndex(qIndex, optIndex) {
+    var data = getQawendaData();
+    if (!data.todayQuestions || !data.todayQuestions[qIndex]) return;
+    var options = data.todayQuestions[qIndex].options;
+    var value = options[optIndex];
+    if (!data.todayAnswers) data.todayAnswers = [];
+    data.todayAnswers[qIndex] = value;
+    saveQawendaData(data);
+
+    var card = document.getElementById('qwQuestion' + qIndex);
+    if (card) {
+        var allOptions = card.querySelectorAll('.qw-option');
+        allOptions.forEach(function(opt) {
+            opt.classList.remove('selected');
+        });
+        allOptions[optIndex].classList.add('selected');
+    }
 }
 
 // ========== 生成问题（基于聊天剧情） ==========
