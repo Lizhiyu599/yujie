@@ -303,7 +303,7 @@ function enterChat(contactId) {
                     <span class="nav-mental-btn" onclick="toggleChatMental()">○</span>
                 </div>
             </div>
-            <div class="chat-messages" id="chatMessages" style="background-image:url(${savedBg});">
+              <div class="chat-messages" id="chatMessages" style="${savedBg ? 'background-image:url(' + savedBg + ');background-size:cover;background-position:center;' : ''}">
                 <div style="text-align:center;color:#c7c7cc;font-size:13px;margin-top:20px;">现在可以开始聊天了</div>
             </div>
 
