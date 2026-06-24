@@ -22,8 +22,13 @@ function buildSystemPrompt(contactId) {
 
     const replyMin = (window.ChatConfig && window.ChatConfig.settings && window.ChatConfig.settings.replyMin) || 1;
     const replyMax = (window.ChatConfig && window.ChatConfig.settings && window.ChatConfig.settings.replyMax) || 3;
-    prompt += '【回复条数限制】每次回复最少' + replyMin + '条、最多' + replyMax + '条消息。用两个换行符\\n\\n分隔不同的消息气泡。每条气泡不超过20字。\n\n';
 
+    prompt += '【回复条数限制-强制执行】每次回复最少' + replyMin + '条、最多' + replyMax + '条独立消息气泡。\n\n' +
+    '这是硬性规则，违反将导致系统错误：\n' +
+    '1. 每个气泡不超过20字\n' +
+    '2. 气泡之间必须用两个换行符分隔\n' +
+    '3. 禁止把多句话塞进同一个气泡\n\n';
+    
     if (typeof getFullSystemPrompt === 'function') {
         prompt += getFullSystemPrompt();
     }
