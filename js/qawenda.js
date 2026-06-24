@@ -403,12 +403,12 @@ function parseQawendaScores(rawText, data) {
     var totalScore = 0;
 
     lines.forEach(function(line) {
-        var match = line.match(/^(\d+)[\.、]\s*(.+)/);
+        var match = line.match(/^(\d+)[\.、\)]\s*(.+)/);
         if (match) {
             var idx = parseInt(match[1]) - 1;
             var content = match[2];
-            var scoreMatch = content.match(/（(\d+)分）/) || content.match(/\((\d+)分\)/);
-            var score = scoreMatch ? Math.min(parseInt(scoreMatch[1]), 1) : 0;
+            var scoreMatch = content.match(/（(\d+)分）/) || content.match(/\((\d+)分\)/) || content.match(/(\d+)分/);
+            var score = scoreMatch ? Math.min(parseInt(scoreMatch[1]), 1) : 1;
             if (idx >= 0 && idx < data.todayQuestions.length) {
                 data.todayQuestions[idx].feedback = content;
                 data.todayQuestions[idx].score = score;
