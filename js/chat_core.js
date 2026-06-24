@@ -540,9 +540,11 @@ if (diaryAuto && diaryChar === contactId && typeof generateDiaryContent === 'fun
             if (content) {
                 var now = new Date();
                 var dateStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日';
-                var diaries = getDiaries ? getDiaries() : [];
-                diaries.push({ date: dateStr, content: content });
-                if (typeof saveDiaries === 'function') saveDiaries(diaries);
+                var contactId2 = diaryChar;
+var diaryKey2 = 'diary_entries_' + (contactId2 || 'default');
+var diaries2 = JSON.parse(localStorage.getItem(diaryKey2) || '[]');
+diaries2.push({ date: dateStr, content: content });
+localStorage.setItem(diaryKey2, JSON.stringify(diaries2));
             }
         }).catch(function() {});
     }
