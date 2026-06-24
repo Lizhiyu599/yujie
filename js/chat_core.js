@@ -799,6 +799,19 @@ function saveChatHistory(contactId) {
         }
     }
 }
+function loadChatHistory(contactId) {
+    var messages = document.getElementById('chatMessages');
+    if (!messages) return;
+    var oldMerged = messages.querySelectorAll('.online-merged, .offline-merged');
+    for (var om = 0; om < oldMerged.length; om++) { oldMerged[om].remove(); }
+    var storageKey = (window.ChatState && window.ChatState.isOfflineMode ? 'chat_history_offline_' : 'chat_history_') + contactId;
+    var saved = localStorage.getItem(storageKey);
+    if (saved) {
+        messages.innerHTML = saved;
+        messages.scrollTop = messages.scrollHeight;
+        restorePaymentCardStates();
+    }
+}
 
 // ========== 恢复红包卡片状态 ==========
 function restorePaymentCardStates() {
