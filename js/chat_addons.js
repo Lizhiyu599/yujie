@@ -931,6 +931,8 @@ function selectOfflinePreset(min, max, el) {
     document.querySelectorAll('.offline-preset-btn').forEach(function(b) { b.style.background = ''; b.style.color = ''; });
     el.style.background = '#1d1d1f';
     el.style.color = '#fff';
+    var valEl = document.getElementById('offlineWordLimitVal');
+    if (valEl) valEl.textContent = min + '-' + max;
     showToast('字数设为' + min + '-' + max);
 }
 
@@ -942,5 +944,7 @@ function confirmOfflineCustom() {
     localStorage.setItem('offline_word_min', min);
     localStorage.setItem('offline_word_max', max);
     document.querySelectorAll('.offline-preset-btn').forEach(function(b) { b.style.background = ''; b.style.color = ''; });
+    var valEl = document.getElementById('offlineWordLimitVal');
+    if (valEl) valEl.textContent = min + '-' + max;
     showToast('字数设为' + min + '-' + max);
 }
