@@ -715,31 +715,6 @@ function getRecentHistory(contactId, maxCount) {
     const messages = document.getElementById('chatMessages');
     if (!messages) return [];
 
-    // 合并另一模式的聊天记录以供API读取
-    if (window.ChatState && window.ChatState.isOfflineMode) {
-        var onlineKey = 'chat_history_' + contactId;
-        var onlineSaved = localStorage.getItem(onlineKey);
-        if (onlineSaved && !messages.querySelector('.online-merged')) {
-            var mergeDiv = document.createElement('div');
-            mergeDiv.className = 'online-merged';
-            mergeDiv.style.display = 'none';
-            mergeDiv.innerHTML = onlineSaved;
-            messages.appendChild(mergeDiv);
-            setTimeout(function() { if (mergeDiv.parentNode) mergeDiv.remove(); }, 100);
-        }
-    } else {
-        var offlineKey = 'chat_history_offline_' + contactId;
-        var offlineSaved = localStorage.getItem(offlineKey);
-        if (offlineSaved && !messages.querySelector('.offline-merged')) {
-            var mergeDiv2 = document.createElement('div');
-            mergeDiv2.className = 'offline-merged';
-            mergeDiv2.style.display = 'none';
-            mergeDiv2.innerHTML = offlineSaved;
-            messages.appendChild(mergeDiv2);
-            setTimeout(function() { if (mergeDiv2.parentNode) mergeDiv2.remove(); }, 100);
-        }
-    }
-
     const result = [];
     const rows = messages.querySelectorAll('.bubble-row');
     const total = rows.length;
@@ -753,48 +728,29 @@ function getRecentHistory(contactId, maxCount) {
         result.push({ role: role, content: bubble.textContent });
     }
 
+    // 合并另一模式的聊天记录
+    var otherKey = (window.ChatState && window.ChatState.isOfflineMode ? 'chat_history_' : 'chat_history_offline_') + contactId;
+    var otherSaved = localStorage.getItem(otherKey);
+    if (otherSaved) {
+        var tempDiv = document.createElement('div');
+        tempDiv.innerHTML = otherSaved;
+        var otherRows = tempDiv.querySelectorAll('.bubble-row');
+        for (var j = 0; j < otherRows.length; j++) {
+            var otherRow = otherRows[j];
+            var otherBubble = otherRow.querySelector('.bubble');
+            if (!otherBubble) continue;
+            var otherRole = otherRow.classList.contains('user') ? 'user' : 'assistant';
+            result.push({ role: otherRole, content: otherBubble.textContent });
+        }
+    }
+
+    if (result.length > maxCount * 2) {
+        result.splice(0, result.length - maxCount * 2);
+    }
+
     return result;
 }
-
-function saveChatHistory(contactId) {
-    var messages = document.getElementById('chatMessages');
-    if (!messages) return;
-    if (messages) {
-        var html = messages.innerHTML;
-        if (html.length > 300000) {
-            html = html.slice(html.length - 300000);
-        }
-        try {
-            var storageKey = (window.ChatState && window.ChatState.isOfflineMode ? 'chat_history_offline_' : 'chat_history_') + contactId;
-localStorage.setItem(storageKey, html);
-        } catch (e) {
-            // 存储满了，清掉最旧的聊天记录
-            var keys = [];
-            for (var i = 0; i < localStorage.length; i++) {
-                var k = localStorage.key(i);
-                if (k.startsWith('chat_history_')) keys.push(k);
-            }
-            if (keys.length > 0) {
-                localStorage.removeItem(keys[0]);
-                try { localStorage.setItem(storageKey, html); } catch (e2) {}
-            }
-        }
-    }
-}
-function loadChatHistory(contactId) {
-    var messages = document.getElementById('chatMessages');
-    if (!messages) return;
-    // 清除旧的合并数据
-    var oldMerged = messages.querySelectorAll('.online-merged, .offline-merged');
-    for (var om = 0; om < oldMerged.length; om++) { oldMerged[om].remove(); }
-    var storageKey = (window.ChatState && window.ChatState.isOfflineMode ? 'chat_history_offline_' : 'chat_history_') + contactId;
-    var saved = localStorage.getItem(storageKey);
-    if (saved) {
-        messages.innerHTML = saved;
-        messages.scrollTop = messages.scrollHeight;
-        restorePaymentCardStates();
-    }
-}
+            
 
 // ========== 恢复红包卡片状态 ==========
 function restorePaymentCardStates() {
