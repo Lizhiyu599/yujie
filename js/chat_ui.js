@@ -440,6 +440,15 @@ function handleSendOrReply() {
     const input = document.getElementById('chatInput');
     if (!input) return;
 
+    if (window.ChatState && window.ChatState.isOfflineMode) {
+        if (input.value.trim()) {
+            sendChatMessage();
+        } else {
+            triggerAIReply();
+        }
+        return;
+    }
+
     if (window._isVoiceMode) {
         const text = input.value.trim();
         if (!text) {
