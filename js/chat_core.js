@@ -9,7 +9,7 @@ window.ChatState = window.ChatState || {
     currentContactId: null,
     isAITyping: false,
     quotedMsg: null,
-    lastMessageTime: null
+    lastMessageTime: null,
     isOfflineMode: false
 };
 
