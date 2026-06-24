@@ -760,7 +760,8 @@ function saveChatHistory(contactId) {
         html = html.slice(html.length - 300000);
     }
     try {
-        var storageKey = (window.ChatState && window.ChatState.isOfflineMode ? 'chat_history_offline_' : 'chat_history_') + contactId;
+        var isOffline = (window.ChatState && window.ChatState.isOfflineMode) ? true : false;
+        var storageKey = (isOffline ? 'chat_history_offline_' : 'chat_history_') + contactId;
         localStorage.setItem(storageKey, html);
     } catch (e) {
         var keys = [];
@@ -770,7 +771,11 @@ function saveChatHistory(contactId) {
         }
         if (keys.length > 0) {
             localStorage.removeItem(keys[0]);
-            try { localStorage.setItem(storageKey, html); } catch (e2) {}
+            try {
+                var isOffline2 = (window.ChatState && window.ChatState.isOfflineMode) ? true : false;
+                var storageKey2 = (isOffline2 ? 'chat_history_offline_' : 'chat_history_') + contactId;
+                localStorage.setItem(storageKey2, html);
+            } catch (e2) {}
         }
     }
 }
