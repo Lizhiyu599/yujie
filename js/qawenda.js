@@ -359,27 +359,39 @@ async function submitQawendaAnswers() {
 
 // ========== 解析评分 ==========
 function parseQawendaScores(rawText, data) {
-    var lines = rawText.split('\n').filter(function(l) { return l.trim(); });
     var totalScore = 0;
+    var lines = rawText.split('\n');
+    var scoreIndex = 0;
 
-    lines.forEach(function(line) {
-        var match = line.match(/^(\d+)[\.、\)]\s*(.+)/);
-        if (match) {
-            var idx = parseInt(match[1]) - 1;
-            var content = match[2];
-            var scoreMatch = content.match(/（(\d+)分）/) || content.match(/\((\d+)分\)/) || content.match(/(\d+)分/);
-            var score = scoreMatch ? Math.min(parseInt(scoreMatch[1]), 1) : 1;
-            if (idx >= 0 && idx < data.todayQuestions.length) {
-                data.todayQuestions[idx].feedback = content;
-                data.todayQuestions[idx].score = score;
-                totalScore += score;
-            }
-        }
+    for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (!line) continue;
+        
+        // 检查是否是总分行
         var totalMatch = line.match(/总分[：:]\s*(\d+)/);
         if (totalMatch) {
             totalScore = Math.min(parseInt(totalMatch[1]), data.todayQuestions.length);
+            continue;
         }
-    });
+
+        // 尝试匹配题号和内容
+        var match = line.match(/^(\d+)[\.、\)]\s*(.+)/);
+        if (match && scoreIndex < data.todayQuestions.length) {
+            var content = match[2];
+            var scoreMatch = content.match(/（(\d+)分）/) || content.match(/\((\d+)分\)/) || content.match(/(\d+)分/);
+            var score = scoreMatch ? Math.min(parseInt(scoreMatch[1]), 1) : 1;
+            data.todayQuestions[scoreIndex].feedback = content;
+            data.todayQuestions[scoreIndex].score = score;
+            scoreIndex++;
+        }
+    }
+
+    // 如果没解析到总分，用累计的
+    if (totalScore === 0) {
+        for (var j = 0; j < data.todayQuestions.length; j++) {
+            if (data.todayQuestions[j].score) totalScore += data.todayQuestions[j].score;
+        }
+    }
 
     data.todayTotalScore = totalScore;
 }
