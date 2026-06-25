@@ -636,7 +636,8 @@ function appendMessage(role, text) {
        }
     // 用户头像：从面具数据取
     var masks = typeof getMasks === 'function' ? getMasks() : [];
-    var activeMaskId = localStorage.getItem('active_mask_id') || '';
+    var contactForMask = getContactById(window.ChatState.currentContactId);
+    var activeMaskId = (contactForMask && contactForMask.maskId) ? contactForMask.maskId : localStorage.getItem('active_mask_id') || '';
     var activeMask = null;
     for (var mi = 0; mi < masks.length; mi++) {
         if (masks[mi].id === activeMaskId) { activeMask = masks[mi]; break; }
