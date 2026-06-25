@@ -117,20 +117,16 @@ function renderQawenda(data) {
             var answer = data.todayAnswers[i] || '';
             bodyHTML += '<div class="qw-question-card"><div class="qw-question-num">第' + (i + 1) + '题</div><div class="qw-question-text">' + q.question + '</div><div style="font-size:13px;color:#8e8e93;">你的回答：' + answer + '</div><div class="qw-feedback-card">' + (q.feedback || '暂无评价') + '</div></div>';
         });
-        var manRemain = 2 - (data.todayManualCount || 0);
-bottomHTML = '<button class="qw-btn qw-btn-white" onclick="openQawendaHistory()">往期记录</button>';
-if (manRemain > 0) {
-    bottomHTML += '<button class="qw-btn qw-btn-black" onclick="regenerateQawendaQuestions()">再次提问（剩' + manRemain + '次）</button>';
-}
+        bottomHTML = '<button class="qw-btn qw-btn-white" onclick="openQawendaHistory()">往期记录</button>';
     } else if (data.todayAsked && data.todayQuestions.length > 0) {
         bodyHTML += '<div class="qw-char-card"><div class="qw-char-avatar" style="' + charAvatarBg + '">' + charAvatar + '</div><div class="qw-char-info"><div class="qw-char-name">' + charName + '</div><div class="qw-char-hint">今天问了你 ' + data.todayQuestions.length + ' 道题</div></div></div>';
         data.todayQuestions.forEach(function(q, i) {
             bodyHTML += '<div class="qw-question-card" id="qwQuestion' + i + '"><div class="qw-question-num">第' + (i + 1) + '题 · ' + (q.type === 'choice' ? '选择题' : '填空题') + '</div><div class="qw-question-text">' + q.question + '</div>';
             if (q.type === 'choice') {
                 q.options.forEach(function(opt, oi) {
-    var selClass = data.todayAnswers[i] === opt ? ' selected' : '';
-    bodyHTML += '<div class="qw-option' + selClass + '" data-qindex="' + i + '" data-optindex="' + oi + '" onclick="selectQawendaOptionByIndex(' + i + ', ' + oi + ')"><div class="qw-option-radio"></div>' + opt + '</div>';
-});
+                    var selClass = data.todayAnswers[i] === opt ? ' selected' : '';
+                    bodyHTML += '<div class="qw-option' + selClass + '" data-value="' + opt.replace(/"/g, '&quot;') + '" onclick="selectQawendaOption(' + i + ', \'' + opt.replace(/'/g, "\\'") + '\')"><div class="qw-option-radio"></div>' + opt + '</div>';
+                });
             } else {
                 bodyHTML += '<input type="text" class="qw-fill-input" id="qwFillInput' + i + '" placeholder="输入你的答案..." value="' + (data.todayAnswers[i] || '') + '" onchange="selectQawendaFill(' + i + ', this.value)">';
             }
@@ -155,7 +151,7 @@ if (manRemain > 0) {
         + '</div>';
 }
 
-// ========== 选择选项（修复高亮） ==========
+// ========== 选择选项（点击直接选中） ==========
 function selectQawendaOption(index, value) {
     var data = getQawendaData();
     if (!data.todayAnswers) data.todayAnswers = [];
@@ -183,27 +179,8 @@ function selectQawendaFill(index, value) {
     saveQawendaData(data);
 }
 
-function selectQawendaOptionByIndex(qIndex, optIndex) {
-    var data = getQawendaData();
-    if (!data.todayQuestions || !data.todayQuestions[qIndex]) return;
-    var options = data.todayQuestions[qIndex].options;
-    var value = options[optIndex];
-    if (!data.todayAnswers) data.todayAnswers = [];
-    data.todayAnswers[qIndex] = value;
-    saveQawendaData(data);
-
-    var card = document.getElementById('qwQuestion' + qIndex);
-    if (card) {
-        var allOptions = card.querySelectorAll('.qw-option');
-        allOptions.forEach(function(opt) {
-            opt.classList.remove('selected');
-        });
-        allOptions[optIndex].classList.add('selected');
-    }
-}
-
 // ========== 生成问题（基于聊天剧情） ==========
-async function generateQawendaQuestions(isRegenerate) {
+async function generateQawendaQuestions() {
     if (isQawendaGenerating) {
         showToast('问题正在生成中，请稍候');
         return;
@@ -215,12 +192,7 @@ async function generateQawendaQuestions(isRegenerate) {
         return;
     }
 
-    // 手动生成限制：最多2次/天
-    if (!isRegenerate && data.todayManualCount >= 2) {
-        showToast('今天手动生成已达上限（2次）');
-        return;
-    }
-    if (isRegenerate && data.todayManualCount >= 2) {
+    if (data.todayManualCount >= 2) {
         showToast('今天手动生成已达上限（2次）');
         return;
     }
@@ -258,11 +230,11 @@ async function generateQawendaQuestions(isRegenerate) {
     }
 
     var systemPrompt = buildSystemPrompt ? buildSystemPrompt(data.selectedChar) : '';
-    var askPrompt = '你今天是奇问妙答的出题人。请以' + contact.name + '的口吻，根据以下素材出题。\n\n【硬性要求-必须遵守】总共出6-10道题。其中选择题占大多数，填空题只放在最后。具体规则：6题=5选择+1填空（填空在最后1题），7题=6选择+1填空（填空在最后1题），8题=6选择+2填空（填空在最后2题），9题=7选择+2填空（填空在最后2题），10题=8选择+2填空（填空在最后2题）。选择题永远在前面，填空题永远在最后。\n\n【关系约束】题目尺度必须符合你和用户当前的关系阶段。暗恋阶段不要问过于亲密或露骨的问题，保持试探和暧昧的尺度。恋爱/同居阶段可以更大胆。根据你的人设和当前关系来决定题目尺度。\n\n题目应与你们的日常互动相关，主要基于当天的对话内容，也可以涉及以前的事情。可以出一些送命题——比如关于前任、暧昧对象的细节问题，答对了反而说明用户对别人太上心。语气自然，符合角色性格。\n\n【最近的聊天记录】\n' + chatContent + '\n\n【格式要求-严格遵守】每道题用"题号. 题目内容"开头。选择题必须列出A. B. C. D.等选项，用"A. 选项内容"的格式。填空题后面注明（填空题）。不要写答案，不要写解析，只出题目。';
+    var askPrompt = '你今天是奇问妙答的出题人。请以' + contact.name + '的口吻，根据以下素材出题。\n\n【硬性要求】出6-10道题，选择题占大多数，填空题1-2道放在最后。\n\n【关系约束】题目尺度必须符合你和用户当前的关系阶段，根据人设和当前关系来决定题目尺度。\n\n题目应与你们的日常互动相关，可以涉及以前的事情。可以出送命题。\n\n【最近的聊天记录】\n' + chatContent + '\n\n【格式要求】每道题用"题号. 题目内容"开头。选择题列出A. B. C. D.选项。填空题注明（填空题）。不要写答案。';
 
-try {
+    try {
         var reply = await callChatAPI([
-            { role: 'system', content: systemPrompt + '\n\n你现在是奇问妙答的出题人，只出题不解答。题目基于聊天剧情，可以包含送命题。' },
+            { role: 'system', content: systemPrompt + '\n\n你现在是奇问妙答的出题人，只出题不解答。' },
             { role: 'user', content: askPrompt }
         ]);
 
@@ -293,10 +265,6 @@ try {
         isQawendaGenerating = false;
         showToast('问题生成失败，请重试');
     }
-}
-
-function regenerateQawendaQuestions() {
-    generateQawendaQuestions(true);
 }
 
 // ========== 解析AI返回的问题 ==========
@@ -342,7 +310,7 @@ function parseQawendaQuestions(rawText) {
     return questions.slice(0, 10);
 }
 
-// ========== 提交答案并评分（支持角色恶意打0分） ==========
+// ========== 提交答案并评分 ==========
 async function submitQawendaAnswers() {
     var data = getQawendaData();
     if (!data.todayAsked || data.todayQuestions.length === 0) return;
@@ -360,10 +328,10 @@ async function submitQawendaAnswers() {
     }
 
     if (qawendaLoadingToast) qawendaLoadingToast.remove();
-qawendaLoadingToast = document.createElement('div');
-qawendaLoadingToast.className = 'global-toast';
-qawendaLoadingToast.textContent = '正在评分…';
-document.body.appendChild(qawendaLoadingToast);
+    qawendaLoadingToast = document.createElement('div');
+    qawendaLoadingToast.className = 'global-toast';
+    qawendaLoadingToast.textContent = '正在评分…';
+    document.body.appendChild(qawendaLoadingToast);
 
     var contact = null;
     var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
@@ -377,11 +345,11 @@ document.body.appendChild(qawendaLoadingToast);
     data.todayQuestions.forEach(function(q, k) {
         scorePrompt += '第' + (k + 1) + '题：' + q.question + '\n用户回答：' + (data.todayAnswers[k] || '未答') + '\n\n';
     });
-    scorePrompt += '请逐题给出评价（每题一句话），最后给出总分。每题只能给0分或1分。\n\n重要规则：如果问题涉及前任、暧昧对象或其他让角色吃醋的敏感话题，用户回答正确说明对别人太了解、太在意，角色可以恶意给0分并表达吃醋或不满。回答错误反而可能让角色开心给1分。根据角色性格和问题语境自主判断。\n\n格式：\n1. 评价：xxx（1分）\n2. 评价：xxx（0分）\n...\n总分：X分';
+    scorePrompt += '请逐题给出评价（每题一句话），最后给出总分。每题只能给0分或1分。送命题答对可以给0分。\n\n格式：\n1. 评价：xxx（1分）\n2. 评价：xxx（0分）\n...\n总分：X分';
 
     try {
         var reply = await callChatAPI([
-            { role: 'system', content: systemPrompt + '\n\n你现在要批改用户的答题。每题最多1分。送命题答对可以给0分，答错可以给1分。评价要符合角色性格。' },
+            { role: 'system', content: systemPrompt + '\n\n你现在要批改用户的答题。每题最多1分。评价要符合角色性格。' },
             { role: 'user', content: scorePrompt }
         ]);
 
