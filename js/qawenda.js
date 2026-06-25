@@ -230,7 +230,7 @@ async function generateQawendaQuestions() {
     }
 
     var systemPrompt = buildSystemPrompt ? buildSystemPrompt(data.selectedChar) : '';
-    var askPrompt = '你今天是奇问妙答的出题人。请以' + contact.name + '的口吻，根据以下素材出题。\n\n【硬性要求】出6-10道题，选择题占大多数，填空题1-2道放在最后。\n\n【关系约束】题目尺度必须符合你和用户当前的关系阶段，根据人设和当前关系来决定题目尺度。\n\n题目应与你们的日常互动相关，可以涉及以前的事情。可以出送命题。\n\n【最近的聊天记录】\n' + chatContent + '\n\n【格式要求】每道题用"题号. 题目内容"开头。选择题列出A. B. C. D.选项。填空题注明（填空题）。不要写答案。';
+    var askPrompt = '你今天是奇问妙答的出题人。请以' + contact.name + '的口吻出题。\n\n【强制要求】出6-10道选择题，不能少于6道。\n\n题目基于以下聊天记录，可以涉及以前的事，可以出送命题。\n\n【最近的聊天记录】\n' + chatContent + '\n\n【格式-必须严格遵守】每道题格式如下：\n1. 题目内容\nA. 选项一\nB. 选项二\nC. 选项三\nD. 选项四\n\n每道题的每个选项必须独占一行，用"A. ""B. ""C. ""D. "开头。不要写答案。';
 
     try {
         var reply = await callChatAPI([
@@ -271,20 +271,14 @@ async function generateQawendaQuestions() {
 function parseQawendaQuestions(rawText) {
     var questions = [];
     var lines = rawText.split('\n').filter(function(l) { return l.trim(); });
-
     var currentQ = null;
     var options = [];
 
     lines.forEach(function(line) {
         var qMatch = line.match(/^(\d+)[\.、]\s*(.+)/);
         if (qMatch) {
-            if (currentQ) {
-                if (options.length > 0) {
-                    currentQ.options = options;
-                    currentQ.type = 'choice';
-                } else {
-                    currentQ.type = 'fill';
-                }
+            if (currentQ && options.length > 0) {
+                currentQ.options = options;
                 questions.push(currentQ);
             }
             currentQ = { question: qMatch[2], type: 'choice', options: [] };
@@ -296,14 +290,8 @@ function parseQawendaQuestions(rawText) {
             }
         }
     });
-
-    if (currentQ) {
-        if (options.length > 0) {
-            currentQ.options = options;
-            currentQ.type = 'choice';
-        } else {
-            currentQ.type = 'fill';
-        }
+    if (currentQ && options.length > 0) {
+        currentQ.options = options;
         questions.push(currentQ);
     }
 
