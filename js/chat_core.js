@@ -764,7 +764,7 @@ function getRecentHistory(contactId, maxCount) {
             var otherRow = otherRows[j];
             var otherBubble = otherRow.querySelector('.bubble');
             if (!otherBubble) continue;
-            var otherRole = otherRow.classList.contains('user') ? 'user' : 'assistant';
+            var otherRole = otherRow.classList.contains('user') || otherRow.getAttribute('data-role') === 'user' ? 'user' : 'assistant';
             result.push({ role: otherRole, content: otherBubble.textContent });
         }
     }
