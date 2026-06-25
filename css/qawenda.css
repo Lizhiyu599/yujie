@@ -150,14 +150,13 @@
     border-color: #1d1d1f;
 }
 .qw-option-radio {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 8px;
     width: 20px;
     height: 20px;
     border: 2px solid #c7c7cc;
     border-radius: 50%;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 .qw-option.selected .qw-option-radio {
     border-color: #fff;
