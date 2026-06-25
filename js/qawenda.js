@@ -117,7 +117,11 @@ function renderQawenda(data) {
             var answer = data.todayAnswers[i] || '';
             bodyHTML += '<div class="qw-question-card"><div class="qw-question-num">第' + (i + 1) + '题</div><div class="qw-question-text">' + q.question + '</div><div style="font-size:13px;color:#8e8e93;">你的回答：' + answer + '</div><div class="qw-feedback-card">' + (q.feedback || '暂无评价') + '</div></div>';
         });
-        bottomHTML = '<button class="qw-btn qw-btn-white" onclick="openQawendaHistory()">往期记录</button>';
+        var manRemain = 2 - (data.todayManualCount || 0);
+bottomHTML = '<button class="qw-btn qw-btn-white" onclick="openQawendaHistory()">往期记录</button>';
+if (manRemain > 0) {
+    bottomHTML += '<button class="qw-btn qw-btn-black" onclick="generateQawendaQuestions()">再次提问（剩' + manRemain + '次）</button>';
+}
     } else if (data.todayAsked && data.todayQuestions.length > 0) {
         bodyHTML += '<div class="qw-char-card"><div class="qw-char-avatar" style="' + charAvatarBg + '">' + charAvatar + '</div><div class="qw-char-info"><div class="qw-char-name">' + charName + '</div><div class="qw-char-hint">今天问了你 ' + data.todayQuestions.length + ' 道题</div></div></div>';
         data.todayQuestions.forEach(function(q, i) {
