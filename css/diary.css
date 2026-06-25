@@ -345,11 +345,11 @@
 /* ===== 日记内容区 ===== */
 .diary-page-content {
     flex: 1;
-    overflow-y: hidden;
+    overflow-y: auto;
+    max-height: calc(100% - 60px);
     padding: 8px 12px 30px;
     position: relative;
     z-index: 1;
-    -webkit-overflow-scrolling: touch;
 }
 .diary-page-content::-webkit-scrollbar { width: 3px; }
 .diary-page-content::-webkit-scrollbar-thumb {
