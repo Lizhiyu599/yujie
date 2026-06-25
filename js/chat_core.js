@@ -73,6 +73,17 @@ function buildSystemPrompt(contactId) {
     if (contact && contact.persona) {
         prompt += '\n\n【当前角色人设】\n' + contact.persona;
     }
+    // 当前面具信息
+if (contact && contact.maskId) {
+    var masks = typeof getMasks === 'function' ? getMasks() : [];
+    var activeMask = null;
+    for (var mi = 0; mi < masks.length; mi++) {
+        if (masks[mi].id === contact.maskId) { activeMask = masks[mi]; break; }
+    }
+    if (activeMask && activeMask.persona) {
+        prompt += '\n\n【当前用户身份】' + activeMask.persona;
+    }
+}
 
     const narrationEnabled = ChatConfig?.settings?.onlineNarration !== false;
     if (narrationEnabled) {
