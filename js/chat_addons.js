@@ -906,9 +906,18 @@ function sendStickerFromBot(src, note) {
 // ========== 线下模式切换 ==========
 function switchToOffline() {
     toggleAddPanel();
-    // 切换前保存当前聊天记录
     var currentId = window.ChatState.currentContactId || (window.ChatConfig && window.ChatConfig.contacts[0] ? window.ChatConfig.contacts[0].id : 'c1');
     if (typeof saveChatHistory === 'function') saveChatHistory(currentId);
+    // 自动总结
+    if (typeof generateSummary === 'function') {
+        generateSummary(currentId).then(function(summary) {
+            if (summary && typeof saveShiyilinSummary === 'function') {
+                var now = new Date();
+                var dateStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日';
+                saveShiyilinSummary(currentId, dateStr, summary);
+            }
+        }).catch(function(){});
+    }
     window.ChatState.isOfflineMode = true;
     var contactId = window.ChatState.currentContactId || currentId;
     showToast('已切换到线下模式');
@@ -919,6 +928,15 @@ function switchToOnline() {
     toggleAddPanel();
     var currentId = window.ChatState.currentContactId || (window.ChatConfig && window.ChatConfig.contacts[0] ? window.ChatConfig.contacts[0].id : 'c1');
     if (typeof saveChatHistory === 'function') saveChatHistory(currentId);
+    if (typeof generateSummary === 'function') {
+        generateSummary(currentId).then(function(summary) {
+            if (summary && typeof saveShiyilinSummary === 'function') {
+                var now = new Date();
+                var dateStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日';
+                saveShiyilinSummary(currentId, dateStr, summary);
+            }
+        }).catch(function(){});
+    }
     window.ChatState.isOfflineMode = false;
     var contactId = window.ChatState.currentContactId || currentId;
     showToast('已切换到线上模式');
