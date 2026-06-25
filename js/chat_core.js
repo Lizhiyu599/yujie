@@ -133,6 +133,17 @@ if (qawendaRaw) {
         }
     } catch(e) {}
 }
+    // NPC 信息
+var qbKey2 = 'qianban_data';
+var qbAll2 = JSON.parse(localStorage.getItem(qbKey2) || '{}');
+var currentMaskId2 = (contact && contact.maskId) ? contact.maskId : (localStorage.getItem('active_mask_id') || '');
+var qbData2 = qbAll2[currentMaskId2] || { npcs: [] };
+if (qbData2.npcs && qbData2.npcs.length > 0) {
+    prompt += '\n\n【你认识的人】以下是你生活中认识的人，你可以在聊天中自然地提到他们：\n';
+    qbData2.npcs.forEach(function(npc) {
+        prompt += '- ' + npc.name + '（' + (npc.gender || '未知') + '）\n';
+    });
+}
 
 prompt += '\n\n【红包和转账-最高优先级·严格遵守】\n用户让你发红包时，只发红包。格式：（给用户发了一个红包，金额X元）\n用户让你发转账时，只发转账。格式：（给用户转账X元，备注：...）\n红包和转账是不同的东西，不要混淆。用户说"红包"就发红包，用户说"转账"就发转账，不要自己替换。\n用户说"发两个转账"就发两个转账，不要发红包。\n金额必须大于0。红包金额上限200元，转账金额上限20000元。\n不要解释、不要模拟、不要说"发送成功"。只发格式正确的旁白。\n\n如果你决定接收用户的红包或转账，在旁白中说"接收了红包"或"收下了转账"。如果要退还转账，在旁白中说"退还了转账"。\n\n重要：接收红包/转账时，必须在旁白中写清楚金额。例如：（接收了红包，金额10元）或（收下了转账，金额50元）。';
 
