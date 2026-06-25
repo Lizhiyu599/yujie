@@ -1078,7 +1078,7 @@ function checkCreateButton() {
     const personality = document.getElementById('charPersonalityInput')?.value.trim() || '';
     const background = document.getElementById('charBackgroundInput')?.value.trim() || '';
 
-    const allFilled = name && note && age && personality && background;
+    const allFilled = name && age && personality && background;
     const btn = document.getElementById('createCharBtn');
 
     if (btn) {
