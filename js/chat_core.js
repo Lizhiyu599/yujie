@@ -745,7 +745,7 @@ function getRecentHistory(contactId, maxCount) {
 
     for (let i = start; i < total; i++) {
         const row = rows[i];
-        const bubble = row.querySelector('.bubble');
+        const bubble = row.querySelector('.bubble') || row.querySelector('.offline-message');
         if (!bubble) continue;
         const role = row.classList.contains('user') ? 'user' : 'assistant';
         result.push({ role: role, content: bubble.textContent });
