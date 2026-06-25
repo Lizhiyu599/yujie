@@ -353,7 +353,7 @@ async function submitQawendaAnswers() {
         renderQawenda(data);
     } catch (e) {
         if (qawendaLoadingToast) { qawendaLoadingToast.remove(); qawendaLoadingToast = null; }
-        showToast('评分失败，请重试');
+        showToast('评分失败：' + (e.message || '未知错误'));
     }
 }
 
