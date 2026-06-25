@@ -331,8 +331,8 @@ async function submitQawendaAnswers() {
         if (contacts[j].id === data.selectedChar) { contact = contacts[j]; break; }
     }
 
-    var systemPrompt = buildSystemPrompt ? buildSystemPrompt(data.selectedChar) : '';
-
+    var systemPrompt = '你正在批改答题。请以角色口吻，对每道题给出简短评价和分数（0分或1分）。格式：1. 评价（1分） 2. 评价（0分） ... 总分：X分';
+    
     var scorePrompt = '请以' + contact.name + '的口吻，对用户刚才的回答进行评分和评价。每题满分1分，总共' + data.todayQuestions.length + '分。\n\n';
     data.todayQuestions.forEach(function(q, k) {
         scorePrompt += '第' + (k + 1) + '题：' + q.question + '\n用户回答：' + (data.todayAnswers[k] || '未答') + '\n\n';
