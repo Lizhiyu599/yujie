@@ -288,7 +288,8 @@ async function callImageAPI(prompt) {
         }
         return null;
     } catch (e) {
-        return null;
+    showToast('总结失败：' + (e.message || '未知错误'));
+    return null;
     }
 }
 
