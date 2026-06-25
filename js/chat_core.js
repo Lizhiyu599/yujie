@@ -757,7 +757,7 @@ function getRecentHistory(contactId, maxCount) {
     if (otherSaved) {
         var tempDiv = document.createElement('div');
         tempDiv.innerHTML = otherSaved;
-        var otherRows = tempDiv.querySelectorAll('.bubble-row');
+        var otherRows = tempDiv.querySelectorAll('.bubble-row, [data-role]');
         for (var j = 0; j < otherRows.length; j++) {
             var otherRow = otherRows[j];
             var otherBubble = otherRow.querySelector('.bubble');
