@@ -809,6 +809,11 @@ function loadChatHistory(contactId) {
     var storageKey = (window.ChatState && window.ChatState.isOfflineMode ? 'chat_history_offline_' : 'chat_history_') + contactId;
     var saved = localStorage.getItem(storageKey);
     if (saved) {
+        // 清洗乱码数据
+        if (saved.indexOf('/v') === 0 || saved.indexOf('http') === 0 || saved.length < 20) {
+            localStorage.removeItem(storageKey);
+            return;
+        }
         messages.innerHTML = saved;
         messages.scrollTop = messages.scrollHeight;
         restorePaymentCardStates();
