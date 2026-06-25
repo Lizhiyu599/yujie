@@ -230,8 +230,8 @@ async function generateQawendaQuestions() {
     }
 
     var systemPrompt = buildSystemPrompt ? buildSystemPrompt(data.selectedChar) : '';
-    var askPrompt = '你今天是奇问妙答的出题人。请以' + contact.name + '的口吻出题。\n\n【强制要求】出6-10道选择题，不能少于6道。\n\n题目基于以下聊天记录，可以涉及以前的事，可以出送命题。\n\n【最近的聊天记录】\n' + chatContent + '\n\n【格式-必须严格遵守】每道题格式如下：\n1. 题目内容\nA. 选项一\nB. 选项二\nC. 选项三\nD. 选项四\n\n每道题的每个选项必须独占一行，用"A. ""B. ""C. ""D. "开头。不要写答案。';
-
+    var askPrompt = '你今天是奇问妙答的出题人。请以' + contact.name + '的口吻出题。\n\n【强制要求】出6-10道选择题，不能少于6道。\n\n题目基于以下聊天记录，可以涉及以前的事，可以出送命题。\n\n【语言风格】可以暧昧、可以挑逗、可以有情欲暗示，但用词要缠绵拉扯、情意绵绵，不要直接使用器官词汇或直白粗俗的表达。\n\n【最近的聊天记录】\n' + chatContent + '\n\n【格式-必须严格遵守】每道题格式如下：\n1. 题目内容\nA. 选项一\nB. 选项二\nC. 选项三\nD. 选项四\n\n每道题的每个选项必须独占一行，用"A. ""B. ""C. ""D. "开头。不要写答案。';
+    
     try {
         var reply = await callChatAPI([
             { role: 'system', content: systemPrompt + '\n\n你现在是奇问妙答的出题人，只出题不解答。' },
@@ -333,7 +333,7 @@ async function submitQawendaAnswers() {
     data.todayQuestions.forEach(function(q, k) {
         scorePrompt += '第' + (k + 1) + '题：' + q.question + '\n用户回答：' + (data.todayAnswers[k] || '未答') + '\n\n';
     });
-    scorePrompt += '请逐题给出评价（每题一句话），最后给出总分。每题只能给0分或1分。送命题答对可以给0分。\n\n格式：\n1. 评价：xxx（1分）\n2. 评价：xxx（0分）\n...\n总分：X分';
+    scorePrompt += '请逐题给出评价，最后给出总分。每题只能给0分或1分。\n\n【送命题评分规则】送命题是指涉及前任、暧昧对象等敏感话题的题目。评分逻辑：如果用户对别人表现得太了解、太在意、记得太清楚，说明用户对那个人太上心，角色应该吃醋给0分。如果用户答错或表现得不了解不在意，说明用户心里没有别人，角色应该开心给1分。根据角色性格和问题语境自主判断。\n\n【必须严格遵守的输出格式】\n1. 评价内容（1分）\n2. 评价内容（0分）\n3. 评价内容（1分）\n...\n总分：X分\n\n每道题都必须有评价，不能跳过任何一题。';
 
     try {
         var reply = await callChatAPI([
