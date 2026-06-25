@@ -1092,31 +1092,72 @@ function getRandomMomentPrompt(contact) {
 function getRelativeTimeForMoment(timestamp) { var d = new Date(timestamp); return (d.getMonth() + 1) + '.' + d.getDate() + ' ' + d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0'); }
 
 // ========== 生成聊天总结 ==========
-async function generateSummary(contactId) {
-    var historyMessages = getRecentHistory(contactId, 100);
-    if (historyMessages.length === 0) {
-        return null;
+function switchToOffline() {
+    toggleAddPanel();
+    var currentId = window.ChatState.currentContactId || (window.ChatConfig && window.ChatConfig.contacts[0] ? window.ChatConfig.contacts[0].id : 'c1');
+    if (typeof saveChatHistory === 'function') saveChatHistory(currentId);
+    
+    // 显示总结弹窗
+    var summaryToast = document.createElement('div');
+    summaryToast.className = 'global-toast';
+    summaryToast.textContent = '正在总结对话…';
+    summaryToast.style.background = 'rgba(0,0,0,0.75)';
+    summaryToast.style.color = '#fff';
+    document.body.appendChild(summaryToast);
+    
+    window.ChatState.isOfflineMode = true;
+    var contactId = window.ChatState.currentContactId || currentId;
+    
+    if (typeof generateSummary === 'function') {
+        generateSummary(currentId).then(function(summary) {
+            if (summary && typeof saveShiyilinSummary === 'function') {
+                var now = new Date();
+                var dateStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日';
+                saveShiyilinSummary(currentId, dateStr, summary);
+            }
+            if (summaryToast) summaryToast.remove();
+            enterChat(contactId);
+        }).catch(function(){
+            if (summaryToast) summaryToast.remove();
+            enterChat(contactId);
+        });
+    } else {
+        if (summaryToast) summaryToast.remove();
+        enterChat(contactId);
     }
+}
 
-    var contact = getContactById(contactId);
-    var contactName = contact ? contact.name : 'AI';
-
-    var chatContent = '';
-    historyMessages.forEach(function(m) {
-        var roleName = m.role === 'user' ? '用户' : contactName;
-        chatContent += roleName + '：' + m.content + '\n';
-    });
-
-    var summaryPrompt = '请根据以下聊天记录，用简练的中文总结今天发生的重要事件、对话要点、情感变化。以旁白口吻写，不超过200字。\n\n' + chatContent;
-
-    try {
-        var reply = await callChatAPI([
-            { role: 'system', content: '你是一个擅长总结对话的助手。用简洁优美的中文总结，不要添加额外评论。' },
-            { role: 'user', content: summaryPrompt }
-        ]);
-        return reply.replace(/\{[^}]*\}/g, '').trim();
-    } catch (e) {
-        return null;
+function switchToOnline() {
+    toggleAddPanel();
+    var currentId = window.ChatState.currentContactId || (window.ChatConfig && window.ChatConfig.contacts[0] ? window.ChatConfig.contacts[0].id : 'c1');
+    if (typeof saveChatHistory === 'function') saveChatHistory(currentId);
+    
+    var summaryToast = document.createElement('div');
+    summaryToast.className = 'global-toast';
+    summaryToast.textContent = '正在总结对话…';
+    summaryToast.style.background = 'rgba(0,0,0,0.75)';
+    summaryToast.style.color = '#fff';
+    document.body.appendChild(summaryToast);
+    
+    window.ChatState.isOfflineMode = false;
+    var contactId = window.ChatState.currentContactId || currentId;
+    
+    if (typeof generateSummary === 'function') {
+        generateSummary(currentId).then(function(summary) {
+            if (summary && typeof saveShiyilinSummary === 'function') {
+                var now = new Date();
+                var dateStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日';
+                saveShiyilinSummary(currentId, dateStr, summary);
+            }
+            if (summaryToast) summaryToast.remove();
+            enterChat(contactId);
+        }).catch(function(){
+            if (summaryToast) summaryToast.remove();
+            enterChat(contactId);
+        });
+    } else {
+        if (summaryToast) summaryToast.remove();
+        enterChat(contactId);
     }
 }
 
