@@ -362,37 +362,57 @@ function parseQawendaScores(rawText, data) {
     var totalScore = 0;
     var lines = rawText.split('\n');
     var scoreIndex = 0;
+    var feedbacks = [];
 
     for (var i = 0; i < lines.length; i++) {
         var line = lines[i].trim();
         if (!line) continue;
-        
-        // 检查是否是总分行
+
+        // 总分行
         var totalMatch = line.match(/总分[：:]\s*(\d+)/);
         if (totalMatch) {
             totalScore = Math.min(parseInt(totalMatch[1]), data.todayQuestions.length);
             continue;
         }
 
-        // 尝试匹配题号和内容
-        var match = line.match(/^(\d+)[\.、\)]\s*(.+)/);
+        // 匹配题号行：1. / 1、/ 第1题 等
+        var match = line.match(/^(?:第)?(\d+)[题\.、\)）]\s*(.*)/) ;
         if (match && scoreIndex < data.todayQuestions.length) {
-            var content = match[2];
-            var scoreMatch = content.match(/（(\d+)分）/) || content.match(/\((\d+)分\)/) || content.match(/(\d+)分/);
-            var score = scoreMatch ? Math.min(parseInt(scoreMatch[1]), 1) : 1;
-            data.todayQuestions[scoreIndex].feedback = content;
-            data.todayQuestions[scoreIndex].score = score;
+            var content = match[2] || '';
+            // 往后收集多行内容直到下一个题号
+            var j = i + 1;
+            while (j < lines.length) {
+                var next = lines[j].trim();
+                if (!next) { j++; continue; }
+                if (next.match(/^(?:第)?(\d+)[题\.、\)）]/) || next.match(/总分[：:]/)) break;
+                content += ' ' + next;
+                j++;
+            }
+            i = j - 1;
+
+            // 提取分数
+            var scoreMatch = content.match(/（(\d+)分）/) 
+                || content.match(/\((\d+)分\)/) 
+                || content.match(/[给得](\d+)分/)
+                || content.match(/(\d+)\s*[\/\\]\s*1/)
+                || content.match(/(\d+)分/);
+            var score = scoreMatch ? Math.min(parseInt(scoreMatch[1]), 1) : 0;
+
+            feedbacks.push({ content: content.trim(), score: score });
             scoreIndex++;
         }
     }
 
-    // 如果没解析到总分，用累计的
-    if (totalScore === 0) {
-        for (var j = 0; j < data.todayQuestions.length; j++) {
-            if (data.todayQuestions[j].score) totalScore += data.todayQuestions[j].score;
-        }
+    // 写回题目
+    for (var k = 0; k < feedbacks.length && k < data.todayQuestions.length; k++) {
+        data.todayQuestions[k].feedback = feedbacks[k].content;
+        data.todayQuestions[k].score = feedbacks[k].score;
     }
 
+    // 总分兜底
+    if (totalScore === 0) {
+        feedbacks.forEach(function(f) { totalScore += f.score; });
+    }
     data.todayTotalScore = totalScore;
 }
 
