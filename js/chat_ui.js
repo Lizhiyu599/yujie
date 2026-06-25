@@ -932,11 +932,22 @@ function initiateGroupChat() {
 }
 
 // ========== 添加好友页面 ==========
+var charSelectedMaskId = localStorage.getItem('active_mask_id') || '';
+
+function selectCharMask(maskId, el) {
+    charSelectedMaskId = maskId;
+    var items = document.querySelectorAll('#charMaskSelector .qw-char-select-item');
+    items.forEach(function(item) { item.style.border = '1px solid rgba(0,0,0,0.06)'; item.classList.remove('active'); });
+    el.style.border = '1px solid #000';
+    el.classList.add('active');
+}
+
 function showCreateCharacterPage() {
     const appWindow = document.getElementById('chatAppWindow');
     if (!appWindow) return;
 
     charAvatarData = '';
+    charSelectedMaskId = localStorage.getItem('active_mask_id') || '';
     var globalBg = localStorage.getItem('global_chat_bg') || '';
 
     appWindow.innerHTML = `
@@ -964,6 +975,11 @@ function showCreateCharacterPage() {
                 <div class="settings-section-title">备注</div>
                 <div class="glass-card">
                     <input type="text" id="charNoteInput" class="search-input" placeholder="请输入你给角色的备注">
+                </div>
+
+                <div class="settings-section-title">聊天使用的面具</div>
+                <div class="glass-card">
+                    <div id="charMaskSelector" style="display:flex;flex-direction:column;gap:6px;"></div>
                 </div>
 
                 <div class="settings-section-title">性别</div>
@@ -1006,6 +1022,20 @@ function showCreateCharacterPage() {
             </div>
         </div>
     `;
+
+    // 渲染面具选择器
+    var masks = typeof getMasks === 'function' ? getMasks() : [];
+    var activeMaskId = localStorage.getItem('active_mask_id') || '';
+    if (masks.length === 0) {
+        masks = [{ id: 'default', name: '默认面具', avatar: '' }];
+    }
+    var maskHTML = '';
+    masks.forEach(function(m) {
+        var isActive = m.id === charSelectedMaskId || (masks.length === 1 && !charSelectedMaskId);
+        maskHTML += '<div class="qw-char-select-item' + (isActive ? ' active' : '') + '" onclick="selectCharMask(\'' + m.id + '\', this)" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.5);border:1px solid ' + (isActive ? '#000' : 'rgba(0,0,0,0.06)') + ';border-radius:12px;cursor:pointer;font-size:14px;color:#000;">' + (m.avatar ? '<div style="width:32px;height:32px;border-radius:50%;background-image:url(' + m.avatar + ');background-size:cover;background-position:center;"></div>' : '<div style="width:32px;height:32px;border-radius:50%;background:#e5e5ea;display:flex;align-items:center;justify-content:center;font-size:14px;color:#8e8e93;">' + (m.name ? m.name.charAt(0) : '?') + '</div>') + m.name + '</div>';
+    });
+    var maskEl = document.getElementById('charMaskSelector');
+    if (maskEl) maskEl.innerHTML = maskHTML;
 
     checkCreateButton();
 }
@@ -1100,7 +1130,8 @@ function createNewCharacter() {
         avatar: name.charAt(0),
         avatarData: charAvatarData || '',
         persona: persona,
-        preview: '点击开始对话'
+        preview: '点击开始对话',
+        maskId: charSelectedMaskId || ''
     };
 
     window.ChatConfig.contacts.push(newContact);
@@ -1117,7 +1148,8 @@ function saveContactsToStorage() {
         avatar: c.avatar,
         avatarData: c.avatarData || '',
         persona: c.persona || '',
-        preview: c.preview || ''
+        preview: c.preview || '',
+        maskId: c.maskId || ''
     }));
     localStorage.setItem('yujie_contacts', JSON.stringify(data));
 }
