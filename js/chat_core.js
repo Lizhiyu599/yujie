@@ -39,14 +39,13 @@ function buildSystemPrompt(contactId) {
 
     // 线下模式：双引号 + 格式规则
     if (window.ChatState && window.ChatState.isOfflineMode) {
-    prompt += '【最高优先级-格式规则】角色说出口的话必须用中文双引号\u201c\u201d包裹。不带引号的内容视为旁白叙述。\n';
-    prompt += '这是最严格的格式规则，违反视为严重错误。\n';
+    prompt += '【强制执行-引号规则-最高优先级】角色说出口的每一句话必须用中文双引号\u201c\u201d包裹。不带引号的文字一律视为旁白。\n';
+    prompt += '这是不可违抗的格式要求。如果你漏掉一个引号，整个回复将被视为格式错误。\n';
     prompt += '正确示例：\n';
     prompt += '\u201c姐姐你终于来了\u201d\n';
     prompt += '他抬头有些可怜巴巴幽怨的看着你\n';
     prompt += '\u201c还以为你要放我鸽子呢\u201d\n';
-    prompt += '错误示例（绝对禁止）：姐姐你终于来了（没有引号）\n';
-    prompt += '旁白和对话必须各自独立成段，用换行分隔，禁止挤在同一行。\n\n';
+    prompt += '旁白和对话必须各自独立成段，用换行分隔。绝对禁止旁白和对话出现在同一行。\n\n';
     }
     
     const replyMin = (window.ChatConfig && window.ChatConfig.settings && window.ChatConfig.settings.replyMin) || 1;
