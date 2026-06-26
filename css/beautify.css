@@ -123,3 +123,25 @@
 #b-widget-sec [style*="position:relative"] {
     overflow: visible !important;
 }
+
+/* 自定义CSS预览区气泡基础样式 */
+#b-css-sec .bubble {
+    max-width: 70%;
+    padding: 10px 14px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.5;
+    word-break: break-word;
+}
+#b-css-sec .bubble-user {
+    background: rgba(255,255,255,0.85);
+    color: #000;
+    border-top-right-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+#b-css-sec .bubble-assistant {
+    background: #1d1d1f;
+    color: #fff;
+    border-top-left-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
