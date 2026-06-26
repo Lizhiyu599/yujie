@@ -676,9 +676,11 @@ document.addEventListener('click', function(e) {
 
 function menuCopy() {
     if (bubbleMenuTarget) {
-        navigator.clipboard.writeText(bubbleMenuTarget.textContent).then(() => showToast('已复制'));
+        navigator.clipboard.writeText(bubbleMenuTarget.textContent).then(function() {
+            showToast('已复制');
+        });
     }
-    const menu = document.getElementById('bubbleMenu');
+    var menu = document.getElementById('bubbleMenu');
     if (menu) menu.style.display = 'none';
 }
 
@@ -694,14 +696,14 @@ function menuFavorite() {
     } else {
         showToast('收藏功能即将上线');
     }
-    const menu = document.getElementById('bubbleMenu');
+    var menu = document.getElementById('bubbleMenu');
     if (menu) menu.style.display = 'none';
 }
 
 function menuRegret() {
-    const menu = document.getElementById('bubbleMenu');
+    var menu = document.getElementById('bubbleMenu');
     if (menu) menu.style.display = 'none';
-    const overlay = document.createElement('div');
+    var overlay = document.createElement('div');
     overlay.className = 'regret-modal-overlay';
     overlay.id = 'regretModalOverlay';
     overlay.innerHTML = `
@@ -719,60 +721,59 @@ function menuRegret() {
 }
 
 function closeRegretModal() {
-    const overlay = document.getElementById('regretModalOverlay');
+    var overlay = document.getElementById('regretModalOverlay');
     if (overlay) overlay.remove();
 }
 
 function confirmRegret() {
-    const hint = document.getElementById('regretTextarea').value.trim();
+    var hint = document.getElementById('regretTextarea').value.trim();
     closeRegretModal();
 
     if (!bubbleMenuTarget) return;
-    const messages = document.getElementById('chatMessages');
+    var messages = document.getElementById('chatMessages');
     if (!messages) return;
 
-    let targetRow = bubbleMenuTarget.closest('.bubble-row');
-if (!targetRow) targetRow = bubbleMenuTarget;
+    var targetRow = bubbleMenuTarget.closest('.bubble-row');
+    if (!targetRow) targetRow = bubbleMenuTarget;
 
-let found = false;
-const children = Array.from(messages.children);
-for (let i = children.length - 1; i >= 0; i--) {
-    var child = children[i];
-    if (child === targetRow || child.contains(bubbleMenuTarget)) found = true;
-    if (found) {
-        // 只删角色消息，保留用户消息和时间戳
-        var isUserRow = child.classList.contains('user') || child.getAttribute('data-role') === 'user';
-        var isTimeStamp = child.classList.contains('chat-time-stamp');
-        if (!isUserRow && !isTimeStamp) {
-            child.remove();
+    var allChildren = messages.querySelectorAll('.bubble-row, .bubble-narration, .chat-time-stamp, .translate-row, .voice-transcript-row');
+    var found = false;
+    for (var i = allChildren.length - 1; i >= 0; i--) {
+        var child = allChildren[i];
+        if (child === targetRow || child.contains(bubbleMenuTarget)) found = true;
+        if (found) {
+            var isUserRow = child.classList.contains('user') || child.getAttribute('data-role') === 'user';
+            var isTimeStamp = child.classList.contains('chat-time-stamp');
+            if (!isUserRow && !isTimeStamp) {
+                child.remove();
+            }
         }
     }
-}
-    
+
     saveChatHistory(window.ChatState.currentContactId);
 
     setTimeout(function() {
-        const contactId = window.ChatState.currentContactId || 'c1';
-        const contact = getContactById(contactId);
-        const contactName = contact ? contact.name : 'AI';
+        var contactId = window.ChatState.currentContactId || 'c1';
+        var contact = getContactById(contactId);
+        var contactName = contact ? contact.name : 'AI';
 
         window.ChatState.isAITyping = true;
-        const titleEl = document.getElementById('chatTitle');
+        var titleEl = document.getElementById('chatTitle');
         if (titleEl) titleEl.innerHTML = '<span class="nav-typing">输入中…</span>';
 
-        const systemPrompt = buildSystemPrompt(contactId);
-        const userMessage = hint || '请重新回复，换一种表达方式';
-        const memoryCount = parseInt(getContactSetting(contactId, 'memoryCount', '50'));
-        const historyMessages = getRecentHistory(contactId, memoryCount);
-        const allMessages = [
+        var systemPrompt = buildSystemPrompt(contactId);
+        var userMessage = hint || '请重新回复，换一种表达方式';
+        var memoryCount = parseInt(getContactSetting(contactId, 'memoryCount', '50'));
+        var historyMessages = getRecentHistory(contactId, memoryCount);
+        var allMessages = [
             { role: 'system', content: systemPrompt },
             ...historyMessages,
             { role: 'user', content: userMessage }
         ];
 
-        callChatAPI(allMessages).then(reply => {
+        callChatAPI(allMessages).then(function(reply) {
             processAIReply(reply, contactName, contactId);
-        }).catch(error => {
+        }).catch(function(error) {
             appendMessage('assistant', '抱歉，消息发送失败：' + error.message);
             if (titleEl) titleEl.textContent = contactName;
             window.ChatState.isAITyping = false;
@@ -782,22 +783,22 @@ for (let i = children.length - 1; i >= 0; i--) {
 
 function menuMultiSelect() {
     showToast('多选功能即将上线');
-    const menu = document.getElementById('bubbleMenu');
+    var menu = document.getElementById('bubbleMenu');
     if (menu) menu.style.display = 'none';
 }
 
 function menuQuote() {
     if (!bubbleMenuTarget) return;
-    const contactId = window.ChatState.currentContactId || 'c1';
-    const contact = getContactById(contactId);
-    const name = contact ? contact.name : '角色';
-    const text = bubbleMenuTarget.textContent;
-    const maxChars = 14;
-    const prefix = name + '：';
-    const firstLineContent = text.substring(0, maxChars - prefix.length);
-    const line1 = prefix + firstLineContent;
-    const remaining = text.substring(firstLineContent.length);
-    let line2 = '';
+    var contactId = window.ChatState.currentContactId || 'c1';
+    var contact = getContactById(contactId);
+    var name = contact ? contact.name : '角色';
+    var text = bubbleMenuTarget.textContent;
+    var maxChars = 14;
+    var prefix = name + '：';
+    var firstLineContent = text.substring(0, maxChars - prefix.length);
+    var line1 = prefix + firstLineContent;
+    var remaining = text.substring(firstLineContent.length);
+    var line2 = '';
     if (remaining.length > 0) {
         line2 = remaining.substring(0, maxChars);
         if (remaining.length > maxChars) line2 += '…';
@@ -805,12 +806,12 @@ function menuQuote() {
 
     window.ChatState.quotedMsg = { n: name, t: text };
 
-    const existingPreview = document.getElementById('quotePreview');
+    var existingPreview = document.getElementById('quotePreview');
     if (existingPreview) existingPreview.remove();
 
-    const inputBar = document.querySelector('.chat-input-bar');
+    var inputBar = document.querySelector('.chat-input-bar');
     if (inputBar) {
-        const preview = document.createElement('div');
+        var preview = document.createElement('div');
         preview.id = 'quotePreview';
         preview.className = 'quote-preview';
         preview.innerHTML = `
@@ -823,54 +824,54 @@ function menuQuote() {
         inputBar.insertBefore(preview, inputBar.firstChild);
     }
 
-    const menu = document.getElementById('bubbleMenu');
+    var menu = document.getElementById('bubbleMenu');
     if (menu) menu.style.display = 'none';
     showToast('已引用');
 }
 
 function cancelQuote() {
     window.ChatState.quotedMsg = null;
-    const preview = document.getElementById('quotePreview');
+    var preview = document.getElementById('quotePreview');
     if (preview) preview.remove();
 }
 
 function menuTranslate() {
     if (!bubbleMenuTarget) return;
-    const row = bubbleMenuTarget.closest('.bubble-row');
-    const next = row ? row.nextElementSibling : null;
+    var row = bubbleMenuTarget.closest('.bubble-row');
+    var next = row ? row.nextElementSibling : null;
 
     if (next && next.classList.contains('translate-row')) {
         next.style.display = next.style.display === 'none' ? 'flex' : 'none';
-        const menu = document.getElementById('bubbleMenu');
+        var menu = document.getElementById('bubbleMenu');
         if (menu) menu.style.display = 'none';
         return;
     }
 
-    const text = bubbleMenuTarget.textContent;
+    var text = bubbleMenuTarget.textContent;
     if (!needsTranslation(text)) {
         showToast('已是简体中文');
-        const menu = document.getElementById('bubbleMenu');
+        var menu = document.getElementById('bubbleMenu');
         if (menu) menu.style.display = 'none';
         return;
     }
 
     if (window._translateCache[text]) {
         appendTranslationRow(row, window._translateCache[text]);
-        const menu = document.getElementById('bubbleMenu');
+        var menu = document.getElementById('bubbleMenu');
         if (menu) menu.style.display = 'none';
         return;
     }
 
     showToast('翻译中…');
-    translateText(text).then(translated => {
+    translateText(text).then(function(translated) {
         window._translateCache[text] = translated;
         appendTranslationRow(row, translated);
-    }).catch(() => {
+    }).catch(function() {
         showToast('翻译失败');
     });
 
-    const menu = document.getElementById('bubbleMenu');
-    if (menu) menu.style.display = 'none' ;
+    var menu = document.getElementById('bubbleMenu');
+    if (menu) menu.style.display = 'none';
 }
 
 // ========== 右上角 + 弹出菜单 ==========
