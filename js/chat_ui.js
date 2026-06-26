@@ -430,13 +430,25 @@ function enterGroupChat(groupId) {
             </div>
 
             <div class="chat-input-bar">
-                <div class="input-row">
-                    <div class="chat-input-wrapper" id="chatInputWrapper" style="flex:1;">
-                        <input type="text" class="chat-input" id="chatInput" placeholder="输入消息…" onkeypress="if(event.key==='Enter') handleSendOrReply()">
-                    </div>
-                    <span class="chat-send-btn" id="chatSendBtn" onclick="handleSendOrReply()">↑</span>
-                </div>
+    <div class="input-row">
+        <div class="add-circle" onclick="toggleAddPanel()">+</div>
+        <div class="chat-input-wrapper" id="chatInputWrapper">
+            <input type="text" class="chat-input" id="chatInput" placeholder="输入消息…" onkeypress="if(event.key==='Enter') handleSendOrReply()">
+            <div class="mic-btn" id="micBtn" onclick="toggleVoiceMode()">
+                <span class="mic-icon-body"></span>
+                <span class="mic-icon-arc"></span>
             </div>
+        </div>
+        <span class="chat-send-btn" id="chatSendBtn" onclick="handleSendOrReply()">↑</span>
+    </div>
+    <div class="add-panel-full" id="addPanelFull" style="display:none;">
+        <div class="add-panel-tabs">
+            <span class="add-panel-tab active" id="tabEmoji" onclick="switchAddPanelTab('emoji', this)">表情包</span>
+            <span class="add-panel-tab" id="tabFunc" onclick="switchAddPanelTab('func', this)">功能</span>
+        </div>
+        <div class="add-panel-body" id="addPanelBody"></div>
+    </div>
+</div>
         </div>
     `;
 
