@@ -2890,6 +2890,7 @@ function manualSummary() {
 }).catch(function(e) {
     showToast('总结生成失败：' + (e.message || '未知错误'));
 });
+}
 
 function clearChatHistory() {
     const contactId = window.ChatState?.currentContactId || 'c1';
