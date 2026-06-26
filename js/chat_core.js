@@ -1,3 +1,8 @@
+window.onerror = function(msg, url, line) {
+    alert('错误：' + msg + '\n文件：' + url + '\n行：' + line);
+    return true;
+};
+
 /**
  * 玉界 - 聊天核心
  * 包含：消息收发、API 对接、系统提示拼接、状态栏更新、翻译、时间戳、上下文记忆、
