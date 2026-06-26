@@ -998,16 +998,20 @@ function closeEditMsg() {
 function confirmEditMsg() {
     var newText = document.getElementById('editMsgTextarea').value.trim();
     closeEditMsg();
-    if (!newText || !bubbleMenuTarget) return;
+    if (!bubbleMenuTarget) return;
     
-    // 修改 DOM 中的文字
-    bubbleMenuTarget.textContent = newText;
-    
-    // 保存到聊天记录
     var contactId = window.ChatState.currentContactId || 'c1';
-    if (typeof saveChatHistory === 'function') saveChatHistory(contactId);
     
-    showToast('消息已修改');
+    if (!newText) {
+        // 删掉该气泡所在行
+        var row = bubbleMenuTarget.closest('.bubble-row');
+        if (row) row.remove();
+    } else {
+        bubbleMenuTarget.textContent = newText;
+    }
+    
+    if (typeof saveChatHistory === 'function') saveChatHistory(contactId);
+    showToast(newText ? '消息已修改' : '消息已删除');
 }
 
 // ========== 右上角 + 弹出菜单 ==========
