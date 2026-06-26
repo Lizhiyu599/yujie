@@ -669,21 +669,30 @@ function openGroupInfo(groupId) {
                     <div style="font-size:18px;font-weight:600;color:#000;margin-top:8px;">${group.name}</div>
                 </div>
 
-                <div class="settings-section-title">群成员 <span style="color:#8e8e93;font-size:14px;">${memberCount + 1}人</span></div>
-                <div class="glass-card" style="display:flex;align-items:center;gap:8px;padding:12px;">
-                    ${membersHTML}
-                    <div class="group-member-avatar" onclick="inviteToGroup('${groupId}')" style="background:#e5e5ea;display:flex;align-items:center;justify-content:center;font-size:20px;color:#8e8e93;cursor:pointer;">+</div>
-                    ${memberCount > 3 ? '<div class="group-member-avatar" onclick="viewAllMembers(\'' + groupId + '\')" style="background:#e5e5ea;display:flex;align-items:center;justify-content:center;font-size:16px;color:#8e8e93;cursor:pointer;">…</div>' : ''}
+                                <div class="settings-section-title">群成员 <span style="color:#8e8e93;font-size:14px;">${memberCount + 1}人</span></div>
+                <div class="group-members-grid">
+                    ${displayMembers.map(function(mid) {
+                        var c = contacts.find(function(ct) { return ct.id === mid; });
+                        if (!c) return '';
+                        return '<div class="group-member-cell"><div class="group-member-avatar" style="background-image:url(' + (c.avatarData || '') + ');background-size:cover;background-position:center;">' + (c.avatarData ? '' : c.avatar) + '</div><div class="group-member-name">' + c.name + '</div></div>';
+                    }).join('')}
+                    <div class="group-member-cell" onclick="inviteToGroup('${groupId}')">
+                        <div class="group-member-avatar group-add-btn">+</div>
+                        <div class="group-member-name">邀请</div>
+                    </div>
+                    ${memberCount > 3 ? '<div class="group-member-cell" onclick="viewAllMembers(\'' + groupId + '\')"><div class="group-member-avatar group-more-btn">…</div><div class="group-member-name">更多</div></div>' : ''}
                 </div>
 
-                <div class="settings-section-title">群聊名称</div>
-                <div class="glass-card" onclick="editGroupName('${groupId}')">
-                    <div class="ios-row"><span>群聊名称</span><span style="color:#555;">${group.name}</span></div>
-                </div>
-
-                <div class="settings-section-title">群备注</div>
-                <div class="glass-card" onclick="editGroupNote('${groupId}')">
-                    <div class="ios-row"><span>群备注</span><span style="color:#8e8e93;">${group.note || '未设置'}</span></div>
+                <div class="settings-section-title">群信息</div>
+                <div class="glass-card">
+                    <div class="ios-row" onclick="editGroupName('${groupId}')">
+                        <span>群聊名称</span>
+                        <span style="color:#555;">${group.name} ></span>
+                    </div>
+                    <div class="ios-row" style="border-bottom:none;" onclick="editGroupNote('${groupId}')">
+                        <span>群备注</span>
+                        <span style="color:#8e8e93;">${group.note || '未设置'} ></span>
+                    </div>
                 </div>
 
                 <div class="settings-section-title">搜索聊天记录</div>
