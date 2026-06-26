@@ -731,7 +731,10 @@ function confirmRegret() {
     const messages = document.getElementById('chatMessages');
     if (!messages) return;
 
-    let found = false;
+    let targetRow = bubbleMenuTarget.closest('.bubble-row');
+if (!targetRow) targetRow = bubbleMenuTarget;
+
+let found = false;
 const children = Array.from(messages.children);
 for (let i = children.length - 1; i >= 0; i--) {
     var child = children[i];
