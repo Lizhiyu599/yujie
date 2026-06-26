@@ -421,9 +421,9 @@ function enterGroupChat(groupId) {
             <div class="chat-nav">
                 <div class="nav-status-bar"></div>
                 <div class="nav-body">
-                    <span class="nav-back" onclick="backToChatList()">‹</span>
-                    <span class="nav-title" id="chatTitle" onclick="openGroupSettings('${groupId}')">${group.name}（${group.members.length + 1}）</span>
-                </div>
+                    <span class="nav-title" id="chatTitle">${group.name}（${group.members.length + 1}）</span>
+<span class="nav-group-menu" onclick="openGroupInfo('${groupId}')" style="position:absolute;right:16px;font-size:20px;color:#555;cursor:pointer;">☰</span>
+                    </div>
             </div>
             <div class="chat-messages" id="chatMessages" style="background-image:url(${globalBg});">
                 <div style="text-align:center;color:#c7c7cc;font-size:13px;margin-top:20px;">欢迎来到${group.name}</div>
