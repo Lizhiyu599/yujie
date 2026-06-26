@@ -2887,9 +2887,10 @@ function manualSummary() {
         var dateStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日';
         saveShiyilinSummary(contactId, dateStr, summary);
         showToast('已存入拾忆林');
-    }).catch(function() {
-        showToast('总结生成失败，请重试');
-    });
+    }
+     }).catch(function(e) {
+    showToast('总结生成失败：' + (e.message || '未知错误'));
+     });                                                                   
 }
 
 function clearChatHistory() {
