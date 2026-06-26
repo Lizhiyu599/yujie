@@ -461,6 +461,7 @@ async function sendGroupMessage() {
     var input = document.getElementById('chatInput');
     if (!input || !input.value.trim()) return;
     if (window.ChatState.isAITyping) return;
+    showToast('发送群聊消息...');
 
     var text = input.value.trim();
     var groupId = window.ChatState.currentGroupId;
