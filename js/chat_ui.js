@@ -241,12 +241,37 @@ function renderChatList() {
     if (!listView) return;
 
     const contacts = window.ChatConfig.contacts;
-    if (contacts.length === 0) {
+    var groups = JSON.parse(localStorage.getItem('group_chats') || '[]');
+    var activeMaskId = localStorage.getItem('active_mask_id') || '';
+    // 筛选当前面具的群聊
+    var myGroups = groups.filter(function(g) { return g.maskId === activeMaskId || !g.maskId; });
+
+    if (contacts.length === 0 && myGroups.length === 0) {
         listView.innerHTML = '<div style="padding:60px 20px;text-align:center;color:#8e8e93;">暂无联系人<br><br>点击右上角 + 添加好友</div>';
         return;
     }
 
-    listView.innerHTML = contacts.map(c => {
+    var html = '';
+
+    // 群聊列表
+    if (myGroups.length > 0) {
+        html += '<div class="contacts-section-title" style="background:transparent;padding:6px 16px;font-size:13px;color:#8e8e93;font-weight:500;">群聊</div>';
+        myGroups.forEach(function(g) {
+            html += `
+                <div class="chat-list-item" onclick="enterGroupChat('${g.id}')">
+                    <div class="chat-avatar" style="${g.avatar ? 'background-image:url(' + g.avatar + ');background-size:cover;background-position:center;' : ''}">${g.avatar ? '&nbsp;' : '群'}</div>
+                    <div class="chat-info">
+                        <div class="chat-name">${g.name} (${g.members.length}人)</div>
+                        <div class="chat-preview"></div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '<div style="border-bottom:0.5px solid rgba(0,0,0,0.05);margin:4px 0;"></div>';
+    }
+
+    // 联系人列表
+    html += contacts.map(c => {
         const unread = getUnreadCount(c.id);
         const badgeHTML = unread > 0 ? '<span class="chat-unread-badge">' + (unread > 99 ? '99+' : unread) + '</span>' : '';
         const avatarContent = c.avatarData 
@@ -263,6 +288,8 @@ function renderChatList() {
             </div>
         `;
     }).join('');
+
+    listView.innerHTML = html;
 }
 
 // ========== 切换标签栏 ==========
