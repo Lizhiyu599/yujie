@@ -145,8 +145,7 @@ function initBubbleMenu() {
         <div class="menu-row">
             <div class="menu-item" data-action="menuQuote">引用</div>
             <div class="menu-item" data-action="menuTranslate">翻译</div>
-            <div class="menu-item empty"></div>
-            <div class="menu-item empty"></div>
+            <div class="menu-item" data-action="menuEdit">编辑</div>
         </div>
     `;
     document.body.appendChild(menu);
@@ -966,6 +965,49 @@ function menuTranslate() {
 
     var menu = document.getElementById('bubbleMenu');
     if (menu) menu.style.display = 'none';
+}
+
+function menuEdit() {
+    if (!bubbleMenuTarget) return;
+    var text = bubbleMenuTarget.textContent;
+    var menu = document.getElementById('bubbleMenu');
+    if (menu) menu.style.display = 'none';
+    
+    var overlay = document.createElement('div');
+    overlay.className = 'caption-modal-overlay';
+    overlay.id = 'editMsgOverlay';
+    overlay.innerHTML = `
+        <div class="caption-modal">
+            <div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">编辑消息</div>
+            <textarea class="caption-textarea" id="editMsgTextarea" style="height:100px;">${text}</textarea>
+            <div class="caption-buttons">
+                <div class="payment-btn-cancel" onclick="closeEditMsg()">取消</div>
+                <div class="payment-btn-confirm" onclick="confirmEditMsg()">确定</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeEditMsg(); };
+}
+
+function closeEditMsg() {
+    var overlay = document.getElementById('editMsgOverlay');
+    if (overlay) overlay.remove();
+}
+
+function confirmEditMsg() {
+    var newText = document.getElementById('editMsgTextarea').value.trim();
+    closeEditMsg();
+    if (!newText || !bubbleMenuTarget) return;
+    
+    // 修改 DOM 中的文字
+    bubbleMenuTarget.textContent = newText;
+    
+    // 保存到聊天记录
+    var contactId = window.ChatState.currentContactId || 'c1';
+    if (typeof saveChatHistory === 'function') saveChatHistory(contactId);
+    
+    showToast('消息已修改');
 }
 
 // ========== 右上角 + 弹出菜单 ==========
