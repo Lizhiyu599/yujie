@@ -2880,8 +2880,6 @@ function manualSummary() {
     var loadingToast = document.createElement('div');
     loadingToast.className = 'global-toast';
     loadingToast.textContent = '正在生成总结…';
-    loadingToast.style.background = 'rgba(0,0,0,0.75)';
-    loadingToast.style.color = '#fff';
     document.body.appendChild(loadingToast);
 
     generateSummary(contactId).then(function(summary) {
