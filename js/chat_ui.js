@@ -452,7 +452,7 @@ function enterGroupChat(groupId) {
             </div>
         </div>
     `;
-
+    window.ChatState.currentGroupId = groupId;
     loadGroupChatHistory(groupId);
 }
 
@@ -899,13 +899,13 @@ function toggleVoiceMode() {
 // ========== 发送/回复逻辑 ==========
 function handleSendOrReply() {
     // 群聊模式
-    if (window.ChatState.currentGroupId) {
-    var groupInput = document.getElementById('chatInput');
-    if (!groupInput) return;
-    if (groupInput.value.trim()) {
-        sendGroupMessage();
-    }
-    return;
+    if (window.ChatState && window.ChatState.currentGroupId) {
+        var groupInput = document.getElementById('chatInput');
+        if (!groupInput) return;
+        if (groupInput.value.trim()) {
+            sendGroupMessage();
+        }
+        return;
     }
 
     const input = document.getElementById('chatInput');
