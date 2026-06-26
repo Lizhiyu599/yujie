@@ -522,13 +522,14 @@ function appendGroupMessage(role, text, senderName) {
     bubble.textContent = text;
     bubble.id = 'msg-' + Date.now();
 
-    row.appendChild(avatar);
-// 名字放在头像旁边，气泡上方
-var nameWrapper = document.createElement('div');
-nameWrapper.style.cssText = 'display:flex;align-items:flex-end;height:40px;padding-left:8px;';
-nameWrapper.appendChild(nameLabel);
-row.appendChild(nameWrapper);
-row.appendChild(bubble);
+    var leftSide = document.createElement('div');
+leftSide.style.cssText = 'display:flex;flex-direction:column;align-items:flex-end;flex:1;';
+
+leftSide.appendChild(nameLabel);
+leftSide.appendChild(bubble);
+
+row.appendChild(leftSide);
+row.appendChild(avatar);
     messages.appendChild(row);
     messages.scrollTop = messages.scrollHeight;
     return row;
