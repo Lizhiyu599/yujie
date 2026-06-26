@@ -582,23 +582,6 @@ function buildGroupSystemPrompt(groupId) {
     var contacts = window.ChatConfig.contacts || [];
     var membersInfo = group.members.map(function(mid) {
         var c = contacts.find(function(ct) { return ct.id === mid; });
-        return c ? c.name : '未知';
-    }).join('、');
-
-    var prompt = '【群聊模式】你现在在一个群聊中，群名：' + group.name + '，群成员：' + membersInfo + '。\n';
-    prompt += '用户以"我"的身份发言。你可以看到其他成员的发言，可以自然地和群里的任何人互动，可以插话、可以回应别人、可以主动发起话题。\n';
-    prompt += '你的每次回复会在群聊中显示你的名字。\n';
-    return prompt;
-}
-
-function buildGroupSystemPrompt(groupId) {
-    var groups = JSON.parse(localStorage.getItem('group_chats') || '[]');
-    var group = groups.find(function(g) { return g.id === groupId; });
-    if (!group) return '';
-
-    var contacts = window.ChatConfig.contacts || [];
-    var membersInfo = group.members.map(function(mid) {
-        var c = contacts.find(function(ct) { return ct.id === mid; });
         if (!c) return '';
         return '- ' + c.name + '（性格：' + (c.persona ? c.persona.substring(0, 80) : '未知') + '）';
     }).join('\n');
