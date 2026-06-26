@@ -664,17 +664,16 @@ function openGroupInfo(groupId) {
                     ${memberCount > 3 ? '<div class="group-member-cell" onclick="viewAllMembers(\'' + groupId + '\')"><div class="group-member-avatar group-more-btn">…</div><div class="group-member-name">更多</div></div>' : ''}
                 </div>
 
-                <div class="settings-section-title">群信息</div>
-                <div class="glass-card">
-                    <div class="ios-row" onclick="editGroupName('${groupId}')">
-                        <span>群聊名称</span>
-                        <span style="color:#555;">${group.name} ></span>
-                    </div>
-                    <div class="ios-row" style="border-bottom:none;" onclick="editGroupNote('${groupId}')">
-                        <span>群备注</span>
-                        <span style="color:#8e8e93;">${group.note || '未设置'} ></span>
-                    </div>
-                </div>
+                <div class="glass-card" style="padding:6px 0;margin-bottom:16px;">
+    <div class="ios-row" onclick="editGroupName('${groupId}')" style="padding:10px 16px;">
+        <span style="font-size:14px;">群聊名称</span>
+        <span style="font-size:14px;color:#555;">${group.name} ></span>
+    </div>
+    <div class="ios-row" onclick="editGroupNote('${groupId}')" style="padding:10px 16px;border-bottom:none;">
+        <span style="font-size:14px;">群备注</span>
+        <span style="font-size:14px;color:#8e8e93;">${group.note || '未设置'} ></span>
+    </div>
+</div>
 
                 <div class="settings-section-title">搜索聊天记录</div>
                 <div class="glass-card">
