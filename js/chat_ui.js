@@ -705,6 +705,124 @@ function openGroupInfo(groupId) {
     `;
 }
 
+function updateGroupAvatar(groupId, e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+        var groups = JSON.parse(localStorage.getItem('group_chats') || '[]');
+        var group = groups.find(function(g) { return g.id === groupId; });
+        if (group) {
+            group.avatar = ev.target.result;
+            localStorage.setItem('group_chats', JSON.stringify(groups));
+            var preview = document.getElementById('groupInfoAvatar');
+            if (preview) { preview.style.backgroundImage = 'url(' + ev.target.result + ')'; preview.innerText = ''; }
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+function inviteToGroup(groupId) {
+    var groups = JSON.parse(localStorage.getItem('group_chats') || '[]');
+    var group = groups.find(function(g) { return g.id === groupId; });
+    if (!group) return;
+    var activeMaskId = group.maskId || localStorage.getItem('active_mask_id') || '';
+    var contacts = window.ChatConfig.contacts || [];
+    var availableContacts = contacts.filter(function(c) {
+        return (c.maskId || '') === activeMaskId && group.members.indexOf(c.id) < 0;
+    });
+    if (availableContacts.length === 0) {
+        showToast('没有可邀请的好友');
+        return;
+    }
+    // 简化版：直接选第一个可用联系人加入
+    var toAdd = availableContacts[0].id;
+    group.members.push(toAdd);
+    localStorage.setItem('group_chats', JSON.stringify(groups));
+    showToast('已邀请 ' + availableContacts[0].name + ' 加入群聊');
+    openGroupInfo(groupId);
+}
+
+function viewAllMembers(groupId) {
+    var groups = JSON.parse(localStorage.getItem('group_chats') || '[]');
+    var group = groups.find(function(g) { return g.id === groupId; });
+    if (!group) return;
+    var contacts = window.ChatConfig.contacts || [];
+    var memberNames = group.members.map(function(mid) {
+        var c = contacts.find(function(ct) { return ct.id === mid; });
+        return c ? c.name : '未知';
+    }).join('、');
+    alert('全部成员（' + (group.members.length + 1) + '人）：\n' + memberNames + '\n以及你（用户）');
+}
+
+function editGroupName(groupId) {
+    var newName = prompt('修改群聊名称：');
+    if (!newName || !newName.trim()) return;
+    var groups = JSON.parse(localStorage.getItem('group_chats') || '[]');
+    var group = groups.find(function(g) { return g.id === groupId; });
+    if (group) {
+        group.name = newName.trim();
+        localStorage.setItem('group_chats', JSON.stringify(groups));
+        showToast('群名已修改');
+        openGroupInfo(groupId);
+    }
+}
+
+function editGroupNote(groupId) {
+    var groups = JSON.parse(localStorage.getItem('group_chats') || '[]');
+    var group = groups.find(function(g) { return g.id === groupId; });
+    var currentNote = group ? (group.note || '') : '';
+    var newNote = prompt('修改群备注：', currentNote);
+    if (newNote === null) return;
+    if (group) {
+        group.note = newNote.trim();
+        localStorage.setItem('group_chats', JSON.stringify(groups));
+        showToast('群备注已修改');
+        openGroupInfo(groupId);
+    }
+}
+
+function searchGroupHistory(groupId, query) {
+    var result = document.getElementById('groupSearchResult');
+    if (!result) return;
+    if (!query.trim()) { result.classList.remove('show'); return; }
+    var saved = localStorage.getItem('chat_history_group_' + groupId);
+    if (!saved) { result.innerHTML = '<div style="color:#8e8e93;">暂无聊天记录</div>'; result.classList.add('show'); return; }
+    var tempDiv = document.createElement('div');
+    tempDiv.innerHTML = saved;
+    var text = tempDiv.innerText;
+    var q = query.toLowerCase();
+    var sentences = text.split(/[。\n？！!?]/);
+    var matches = sentences.filter(function(s) { return s.toLowerCase().indexOf(q) >= 0; });
+    if (matches.length > 0) {
+        result.innerHTML = matches.slice(0, 5).map(function(s) {
+            return '<div style="padding:4px 0;border-bottom:0.5px dashed rgba(0,0,0,0.05);">' + s.trim().replace(new RegExp(q, 'gi'), '<b>$&</b>') + '</div>';
+        }).join('');
+    } else {
+        result.innerHTML = '<div style="color:#8e8e93;">未找到相关内容</div>';
+    }
+    result.classList.add('show');
+}
+
+function clearGroupHistory(groupId) {
+    if (confirm('确定清空所有群聊记录？')) {
+        localStorage.removeItem('chat_history_group_' + groupId);
+        showToast('聊天记录已清空');
+    }
+}
+
+function disbandGroup(groupId) {
+    if (confirm('确定解散该群聊？此操作不可恢复。')) {
+        var groups = JSON.parse(localStorage.getItem('group_chats') || '[]');
+        groups = groups.filter(function(g) { return g.id !== groupId; });
+        localStorage.setItem('group_chats', JSON.stringify(groups));
+        localStorage.removeItem('chat_history_group_' + groupId);
+        showToast('群聊已解散');
+        closeChat();
+        setTimeout(function() { openChat(); }, 100);
+    }
+}
+
 // ========== 返回会话列表 ==========
 function backToChatList() {
     window.ChatState.currentContactId = null;
