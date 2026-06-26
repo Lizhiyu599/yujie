@@ -688,6 +688,16 @@ function toggleVoiceMode() {
 
 // ========== 发送/回复逻辑 ==========
 function handleSendOrReply() {
+    // 群聊模式
+    if (window.ChatState.currentGroupId) {
+        var input = document.getElementById('chatInput');
+        if (!input) return;
+        if (input.value.trim()) {
+            sendGroupMessage();
+        }
+        return;
+    }
+
     const input = document.getElementById('chatInput');
     if (!input) return;
 
