@@ -103,11 +103,12 @@ const beautifyHTML = `
         <div class="ios-group" style="padding:16px;">
             <div style="background:#f2f2f7; border-radius:16px; padding:16px; margin-bottom:16px; display:flex; flex-direction:column; gap:10px;">
                 <div style="display:flex; justify-content:flex-end;">
-                    <div class="css-preview-bubble css-preview-user">咋样我的美化？</div>
-                </div>
-                <div style="display:flex; justify-content:flex-start;">
-                    <div class="css-preview-bubble css-preview-bot">绝了女神！好崇拜。</div>
-                </div>
+                    <div style="display:flex; justify-content:flex-end;">
+    <div class="bubble bubble-user">咋样我的美化？</div>
+</div>
+<div style="display:flex; justify-content:flex-start;">
+    <div class="bubble bubble-assistant">绝了女神！好崇拜。</div>
+</div>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:flex-end;">
                 <label class="ios-label">CSS代码</label>
