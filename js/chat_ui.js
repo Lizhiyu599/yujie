@@ -486,8 +486,8 @@ async function sendGroupMessage() {
         ]);
         processGroupReply(reply, groupId);
     } catch(e) {
-        appendGroupMessage('system', '消息发送失败：' + e.message, '');
-        window.ChatState.isAITyping = false;
+    appendGroupMessage('system', '消息发送失败：' + e.message, '');
+    window.ChatState.isAITyping = false;
     }
 }
 
