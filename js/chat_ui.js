@@ -1120,7 +1120,9 @@ function togglePlusMenu(e) {
 }
 
 function initiateGroupChat() {
-    showToast('群聊功能即将上线');
+    var menu = document.getElementById('plusMenuPopup');
+    if (menu) menu.remove();
+    showCreateGroupPage();
 }
 
 // ========== 添加好友页面 ==========
@@ -1361,6 +1363,152 @@ function loadContactsFromStorage() {
 window.addEventListener('DOMContentLoaded', function() {
     loadContactsFromStorage();
 });
+
+// ========== 创建群聊页面 ==========
+var groupAvatarData = '';
+var groupSelectedMembers = [];
+
+function showCreateGroupPage() {
+    var appWindow = document.getElementById('chatAppWindow');
+    if (!appWindow) return;
+
+    groupAvatarData = '';
+    groupSelectedMembers = [];
+    
+    var activeMaskId = localStorage.getItem('active_mask_id') || '';
+    var contacts = window.ChatConfig.contacts || [];
+    // 筛选同面具的联系人
+    var sameMaskContacts = contacts.filter(function(c) {
+        return (c.maskId || '') === activeMaskId || !c.maskId;
+    });
+    
+    var globalBg = localStorage.getItem('global_chat_bg') || '';
+
+    appWindow.innerHTML = `
+        <div class="chat-shell" style="background-image:url(${globalBg});background-size:cover;background-position:center;">
+            <div class="chat-nav">
+                <div class="nav-status-bar"></div>
+                <div class="nav-body">
+                    <span class="nav-back" onclick="renderChatShell()">‹</span>
+                    <span class="nav-title">创建群聊</span>
+                </div>
+            </div>
+            <div style="flex:1;overflow-y:auto;padding:16px;">
+
+                <div style="text-align:center;margin-bottom:20px;">
+                    <div id="groupAvatarPreview" style="width:80px;height:80px;border-radius:40px;background:#e5e5ea;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:32px;color:#8e8e93;cursor:pointer;background-size:cover;background-position:center;" onclick="document.getElementById('groupAvatarInput').click()">+</div>
+                    <input type="file" id="groupAvatarInput" accept="image/*" style="display:none;" onchange="previewGroupAvatar(event)">
+                    <div style="font-size:11px;color:#8e8e93;">点击上传群头像（可不填）</div>
+                </div>
+
+                <div class="settings-section-title">群聊名称</div>
+                <div class="glass-card">
+                    <input type="text" id="groupNameInput" class="search-input" placeholder="请输入群聊名称">
+                </div>
+
+                <div class="settings-section-title">邀请好友</div>
+                <div class="list-header" onclick="toggleSection('groupMemberSection', this)">
+                    <span>选择成员（${sameMaskContacts.length}位好友）</span>
+                    <span class="toggle-arrow">›</span>
+                </div>
+                <div id="groupMemberSection" class="collapsible-section" style="display:none;">
+                    <div class="ios-group" id="groupMemberList">
+                        ${sameMaskContacts.map(function(c) {
+                            return `
+                                <div class="ios-row group-member-item" data-cid="${c.id}" onclick="toggleGroupMember('${c.id}', this)">
+                                    <div style="display:flex;align-items:center;gap:12px;">
+                                        <div style="width:40px;height:40px;border-radius:20px;background:#1d1d1f;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;background-size:cover;background-position:center;${c.avatarData ? 'background-image:url(' + c.avatarData + ');' : ''}">${c.avatarData ? '' : c.avatar}</div>
+                                        <span>${c.name}</span>
+                                    </div>
+                                    <div class="group-check-circle">○</div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+
+                <button class="black-btn" id="createGroupBtn" onclick="createGroupChat()" style="margin-top:20px;margin-bottom:30px;opacity:0.4;pointer-events:none;">创建群聊</button>
+            </div>
+        </div>
+    `;
+
+    checkGroupButton();
+}
+
+function previewGroupAvatar(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+        groupAvatarData = ev.target.result;
+        var preview = document.getElementById('groupAvatarPreview');
+        if (preview) {
+            preview.style.backgroundImage = 'url(' + ev.target.result + ')';
+            preview.innerText = '';
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+function toggleGroupMember(cid, el) {
+    var idx = groupSelectedMembers.indexOf(cid);
+    if (idx >= 0) {
+        groupSelectedMembers.splice(idx, 1);
+        el.querySelector('.group-check-circle').innerHTML = '○';
+        el.classList.remove('selected');
+    } else {
+        groupSelectedMembers.push(cid);
+        el.querySelector('.group-check-circle').innerHTML = '●';
+        el.classList.add('selected');
+    }
+    checkGroupButton();
+}
+
+function checkGroupButton() {
+    var name = document.getElementById('groupNameInput')?.value.trim() || '';
+    var btn = document.getElementById('createGroupBtn');
+    if (btn) {
+        if (name && groupSelectedMembers.length >= 2) {
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'auto';
+        } else {
+            btn.style.opacity = '0.4';
+            btn.style.pointerEvents = 'none';
+        }
+    }
+}
+
+document.addEventListener('input', function(e) {
+    if (e.target && e.target.id === 'groupNameInput') {
+        checkGroupButton();
+    }
+});
+
+function createGroupChat() {
+    var name = document.getElementById('groupNameInput').value.trim();
+    if (!name) { showToast('请输入群聊名称'); return; }
+    if (groupSelectedMembers.length < 2) { showToast('请至少选择2位好友'); return; }
+
+    var activeMaskId = localStorage.getItem('active_mask_id') || '';
+
+    var newGroup = {
+        id: 'g_' + Date.now(),
+        name: name,
+        avatar: groupAvatarData || '',
+        maskId: activeMaskId,
+        members: groupSelectedMembers,
+        adminIds: [activeMaskId],
+        createdAt: Date.now()
+    };
+
+    var groups = JSON.parse(localStorage.getItem('group_chats') || '[]');
+    groups.push(newGroup);
+    localStorage.setItem('group_chats', JSON.stringify(groups));
+
+    showToast('群聊 ' + name + ' 创建成功');
+    closeChat();
+    setTimeout(function() { openChat(); }, 100);
+}
 
 // ========== 联系人列表渲染 ==========
 function renderContactsList() {
