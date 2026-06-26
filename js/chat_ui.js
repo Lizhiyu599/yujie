@@ -510,16 +510,12 @@ function appendGroupMessage(role, text, senderName) {
 
     var avatar = document.createElement('div');
     avatar.className = 'bubble-avatar ' + (role === 'user' ? 'user-avatar' : 'bot-avatar');
-    if (role === 'user') {
-        avatar.textContent = '我';
-    } else {
-        avatar.textContent = senderName ? senderName.charAt(0) : 'AI';
-    }
+    avatar.textContent = role === 'user' ? '我' : (senderName ? senderName.charAt(0) : 'AI');
 
     var nameLabel = document.createElement('div');
     nameLabel.className = 'group-sender-name';
-    nameLabel.textContent = senderName || 'AI';
-    nameLabel.style.cssText = 'font-size:11px;color:#8e8e93;margin-bottom:2px;padding-left:4px;';
+    nameLabel.textContent = senderName || '';
+    nameLabel.style.cssText = 'font-size:11px;color:#8e8e93;margin-bottom:2px;';
 
     var bubble = document.createElement('div');
     bubble.className = 'bubble bubble-' + role;
@@ -527,11 +523,8 @@ function appendGroupMessage(role, text, senderName) {
     bubble.id = 'msg-' + Date.now();
 
     row.appendChild(avatar);
-    var contentWrap = document.createElement('div');
-    contentWrap.style.cssText = 'display:flex;flex-direction:column;max-width:75%;';
-    contentWrap.appendChild(nameLabel);
-    contentWrap.appendChild(bubble);
-    row.appendChild(contentWrap);
+    row.appendChild(nameLabel);
+    row.appendChild(bubble);
     messages.appendChild(row);
     messages.scrollTop = messages.scrollHeight;
     return row;
