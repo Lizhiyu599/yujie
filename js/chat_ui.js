@@ -527,7 +527,7 @@ function appendGroupMessage(role, text, senderName) {
 
     row.appendChild(avatar);
     var contentWrap = document.createElement('div');
-    contentWrap.style.cssText = 'display:flex;flex-direction:column;';
+    contentWrap.style.cssText = 'display:flex;flex-direction:column;max-width:75%;';
     contentWrap.appendChild(nameLabel);
     contentWrap.appendChild(bubble);
     row.appendChild(contentWrap);
