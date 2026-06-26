@@ -103,7 +103,6 @@ const beautifyHTML = `
         <div class="ios-group" style="padding:16px;">
             <div style="background:#f2f2f7; border-radius:16px; padding:16px; margin-bottom:16px; display:flex; flex-direction:column; gap:10px;">
                 <div style="display:flex; justify-content:flex-end;">
-                    <div style="display:flex; justify-content:flex-end;">
     <div class="bubble bubble-user">咋样我的美化？</div>
 </div>
 <div style="display:flex; justify-content:flex-start;">
