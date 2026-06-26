@@ -95,30 +95,30 @@ const beautifyHTML = `
     </div>
 
     <!-- 自定义css -->
-    <div class="list-header" onclick="toggleSection('b-css-sec', this)">
-        <span>自定义css</span>
-        <span class="toggle-arrow" style="color:#8e8e93;">›</span>
-    </div>
-    <div id="b-css-sec" class="collapsible-section" style="display:none;">
-        <div class="ios-group" style="padding:16px;">
-            <div style="background:#f2f2f7; border-radius:16px; padding:16px; margin-bottom:16px; display:flex; flex-direction:column; gap:10px;">
-                <div style="display:flex; justify-content:flex-end;">
-    <div class="bubble bubble-user">咋样我的美化？</div>
+<div class="list-header" onclick="toggleSection('b-css-sec', this)">
+    <span>自定义css</span>
+    <span class="toggle-arrow" style="color:#8e8e93;">›</span>
 </div>
-<div style="display:flex; justify-content:flex-start;">
-    <div class="bubble bubble-assistant">绝了女神！好崇拜。</div>
-</div>
+<div id="b-css-sec" class="collapsible-section" style="display:none;">
+    <div class="ios-group" style="padding:16px;">
+        <div style="background:#f2f2f7; border-radius:16px; padding:16px; margin-bottom:16px; display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; justify-content:flex-end;">
+                <div class="bubble bubble-user">咋样我的美化？</div>
             </div>
-            <div style="display:flex; justify-content:space-between; align-items:flex-end;">
-                <label class="ios-label">CSS代码</label>
-                <span style="font-size:13px; color:#ff3b30; cursor:pointer; margin-bottom:6px;" onclick="document.getElementById('custom-css-input').value=''">
-                    一键清除
-                </span>
+            <div style="display:flex; justify-content:flex-start;">
+                <div class="bubble bubble-assistant">绝了女神！好崇拜。</div>
             </div>
-            <textarea id="custom-css-input" class="ios-input" style="height:120px; resize:none;" placeholder="输入css代码..."></textarea>
-            <button class="ios-btn-black" onclick="saveCustomCSS()">保存css</button>
         </div>
+        <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+            <label class="ios-label">CSS代码</label>
+            <span style="font-size:13px; color:#ff3b30; cursor:pointer; margin-bottom:6px;" onclick="document.getElementById('custom-css-input').value=''">
+                一键清除
+            </span>
+        </div>
+        <textarea id="custom-css-input" class="ios-input" style="height:120px; resize:none;" placeholder="输入css代码..."></textarea>
+        <button class="ios-btn-black" onclick="saveCustomCSS()">保存css</button>
     </div>
+</div>
 
     <!-- 小组件 -->
     <div class="list-header" onclick="toggleSection('b-widget-sec', this); setTimeout(function(){ loadCustomWidgetPreviews(); }, 300);">
