@@ -629,6 +629,82 @@ function processGroupReply(rawContent, groupId) {
     saveGroupChatHistory(groupId);
 }
 
+// ========== 群聊信息页面 ==========
+function openGroupInfo(groupId) {
+    var groups = JSON.parse(localStorage.getItem('group_chats') || '[]');
+    var group = groups.find(function(g) { return g.id === groupId; });
+    if (!group) return;
+
+    var appWindow = document.getElementById('chatAppWindow');
+    if (!appWindow) return;
+
+    var contacts = window.ChatConfig.contacts || [];
+    var membersHTML = '';
+    var memberCount = group.members.length;
+    var displayMembers = group.members.slice(0, 3);
+    
+    displayMembers.forEach(function(mid) {
+        var c = contacts.find(function(ct) { return ct.id === mid; });
+        if (c) {
+            membersHTML += '<div class="group-member-avatar" style="background-image:url(' + (c.avatarData || '') + ');background-size:cover;background-position:center;">' + (c.avatarData ? '' : c.avatar) + '</div>';
+        }
+    });
+
+    var globalBg = localStorage.getItem('global_chat_bg') || '';
+
+    appWindow.innerHTML = `
+        <div class="chat-shell" style="background-image:url(${globalBg});background-size:cover;background-position:center;">
+            <div class="chat-nav">
+                <div class="nav-status-bar"></div>
+                <div class="nav-body">
+                    <span class="nav-back" onclick="enterGroupChat('${groupId}')">‹</span>
+                    <span class="nav-title">群聊信息</span>
+                </div>
+            </div>
+            <div style="flex:1;overflow-y:auto;padding:16px;">
+
+                <div style="text-align:center;margin-bottom:20px;">
+                    <div id="groupInfoAvatar" style="width:80px;height:80px;border-radius:40px;background:#e5e5ea;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:32px;color:#8e8e93;background-size:cover;background-position:center;${group.avatar ? 'background-image:url(' + group.avatar + ');' : ''}" onclick="document.getElementById('groupInfoAvatarInput').click()">${group.avatar ? '' : '群'}</div>
+                    <input type="file" id="groupInfoAvatarInput" accept="image/*" style="display:none;" onchange="updateGroupAvatar('${groupId}', event)">
+                    <div style="font-size:18px;font-weight:600;color:#000;margin-top:8px;">${group.name}</div>
+                </div>
+
+                <div class="settings-section-title">群成员 <span style="color:#8e8e93;font-size:14px;">${memberCount + 1}人</span></div>
+                <div class="glass-card" style="display:flex;align-items:center;gap:8px;padding:12px;">
+                    ${membersHTML}
+                    <div class="group-member-avatar" onclick="inviteToGroup('${groupId}')" style="background:#e5e5ea;display:flex;align-items:center;justify-content:center;font-size:20px;color:#8e8e93;cursor:pointer;">+</div>
+                    ${memberCount > 3 ? '<div class="group-member-avatar" onclick="viewAllMembers(\'' + groupId + '\')" style="background:#e5e5ea;display:flex;align-items:center;justify-content:center;font-size:16px;color:#8e8e93;cursor:pointer;">…</div>' : ''}
+                </div>
+
+                <div class="settings-section-title">群聊名称</div>
+                <div class="glass-card" onclick="editGroupName('${groupId}')">
+                    <div class="ios-row"><span>群聊名称</span><span style="color:#555;">${group.name}</span></div>
+                </div>
+
+                <div class="settings-section-title">群备注</div>
+                <div class="glass-card" onclick="editGroupNote('${groupId}')">
+                    <div class="ios-row"><span>群备注</span><span style="color:#8e8e93;">${group.note || '未设置'}</span></div>
+                </div>
+
+                <div class="settings-section-title">搜索聊天记录</div>
+                <div class="glass-card">
+                    <input type="text" class="search-input" placeholder="搜索群聊记录..." oninput="searchGroupHistory('${groupId}', this.value)">
+                    <div class="search-result" id="groupSearchResult"></div>
+                </div>
+
+                <div class="danger-fold" onclick="toggleDangerZone()">
+                    <span>危险区</span><span class="arrow" id="dangerArrow">></span>
+                </div>
+                <div class="danger-content" id="dangerContent">
+                    <button class="white-btn" onclick="clearGroupHistory('${groupId}')">清空聊天记录</button>
+                    <button class="white-btn" style="border-color:#ff3b30;color:#ff3b30;" onclick="disbandGroup('${groupId}')">解散群聊</button>
+                </div>
+
+            </div>
+        </div>
+    `;
+}
+
 // ========== 返回会话列表 ==========
 function backToChatList() {
     window.ChatState.currentContactId = null;
