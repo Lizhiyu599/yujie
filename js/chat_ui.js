@@ -591,23 +591,57 @@ function buildGroupSystemPrompt(groupId) {
     return prompt;
 }
 
+function buildGroupSystemPrompt(groupId) {
+    var groups = JSON.parse(localStorage.getItem('group_chats') || '[]');
+    var group = groups.find(function(g) { return g.id === groupId; });
+    if (!group) return '';
+
+    var contacts = window.ChatConfig.contacts || [];
+    var membersInfo = group.members.map(function(mid) {
+        var c = contacts.find(function(ct) { return ct.id === mid; });
+        if (!c) return '';
+        return '- ' + c.name + '（性格：' + (c.persona ? c.persona.substring(0, 80) : '未知') + '）';
+    }).join('\n');
+
+    var prompt = '【群聊模式】你现在在一个群聊中。群名：' + group.name + '。\n\n';
+    prompt += '群成员（包括用户"我"）：\n' + membersInfo + '\n- 我（用户）\n\n';
+    prompt += '【发言规则-最高优先级】\n';
+    prompt += '1. 每次回复时，你必须从群成员中选择一个人来发言。在回复开头用【发言人：名字】标明是谁在说话。\n';
+    prompt += '2. 选择谁发言要基于：该角色的性格是否会在此时说话、该角色和当前话题的相关度、该角色的活跃度。\n';
+    prompt += '3. 不同角色轮流发言，不要总是同一个人说话。\n';
+    prompt += '4. 每个角色发言时必须严格符合自己的人设和性格。\n';
+    prompt += '5. 用户以"我"的身份发言。\n';
+    prompt += '6. 可以在一条回复中让多个人发言，用【发言人：名字】分隔。\n';
+    return prompt;
+}
+
 function processGroupReply(rawContent, groupId) {
     var titleEl = document.getElementById('chatTitle');
     var groups = JSON.parse(localStorage.getItem('group_chats') || '[]');
     var group = groups.find(function(g) { return g.id === groupId; });
     var groupName = group ? group.name : '群聊';
 
-        // 随机选一个成员作为发言人
-    var members = group.members;
-    var randomMemberId = members[Math.floor(Math.random() * members.length)];
     var contacts = window.ChatConfig.contacts || [];
-    var sender = contacts.find(function(c) { return c.id === randomMemberId; });
-    var senderName = sender ? sender.name : 'AI';
-
-    var cleanContent = rawContent.replace(/\{[^}]*\}/g, '').trim();
-    appendGroupMessage('assistant', cleanContent, senderName);
     
-    if (titleEl) titleEl.textContent = groupName + ' (' + members.length + '人)';
+    // 解析发言人
+    var parts = rawContent.split(/【发言人：(.+?)】/);
+    if (parts.length > 1) {
+        for (var i = 1; i < parts.length; i += 2) {
+            var senderName = parts[i].trim();
+            var content = (parts[i + 1] || '').replace(/\{[^}]*\}/g, '').trim();
+            if (content) {
+                appendGroupMessage('assistant', content, senderName);
+            }
+        }
+    } else {
+        // 没有发言人标记，用群名
+        var cleanContent = rawContent.replace(/\{[^}]*\}/g, '').trim();
+        if (cleanContent) {
+            appendGroupMessage('assistant', cleanContent, '群消息');
+        }
+    }
+    
+    if (titleEl) titleEl.textContent = groupName + '（' + (group.members.length + 1) + '）';
     window.ChatState.isAITyping = false;
     saveGroupChatHistory(groupId);
 }
