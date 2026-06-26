@@ -781,10 +781,104 @@ function confirmRegret() {
     }, 100);
 }
 
+var multiSelectMode = false;
+var multiSelected = [];
+
 function menuMultiSelect() {
-    showToast('多选功能即将上线');
     var menu = document.getElementById('bubbleMenu');
     if (menu) menu.style.display = 'none';
+    
+    multiSelectMode = true;
+    multiSelected = [];
+    
+    // 给所有角色气泡加上勾选框
+    var bubbles = document.querySelectorAll('#chatMessages .bubble-assistant');
+    bubbles.forEach(function(bubble, index) {
+        bubble.setAttribute('data-ms-index', index);
+        bubble.classList.add('multi-selectable');
+        var check = document.createElement('div');
+        check.className = 'ms-check';
+        check.innerHTML = '○';
+        bubble.appendChild(check);
+        
+        bubble.addEventListener('click', function(e) {
+            if (!multiSelectMode) return;
+            e.stopPropagation();
+            toggleMultiSelect(index, bubble);
+        });
+    });
+    
+    // 底部确认按钮
+    showMultiSelectBar();
+}
+
+function toggleMultiSelect(index, bubble) {
+    var idx = multiSelected.indexOf(index);
+    if (idx >= 0) {
+        multiSelected.splice(idx, 1);
+        bubble.querySelector('.ms-check').innerHTML = '○';
+        bubble.classList.remove('ms-selected');
+    } else {
+        multiSelected.push(index);
+        bubble.querySelector('.ms-check').innerHTML = '●';
+        bubble.classList.add('ms-selected');
+    }
+    updateMultiSelectCount();
+}
+
+function showMultiSelectBar() {
+    var oldBar = document.getElementById('multiSelectBar');
+    if (oldBar) oldBar.remove();
+    
+    var bar = document.createElement('div');
+    bar.id = 'multiSelectBar';
+    bar.className = 'multi-select-bar';
+    bar.innerHTML = `
+        <span class="ms-bar-cancel" onclick="cancelMultiSelect()">取消</span>
+        <span class="ms-bar-count" id="msBarCount">已选 0 条</span>
+        <span class="ms-bar-confirm" onclick="confirmMultiSelect()">确认收藏</span>
+    `;
+    document.body.appendChild(bar);
+}
+
+function updateMultiSelectCount() {
+    var countEl = document.getElementById('msBarCount');
+    if (countEl) countEl.textContent = '已选 ' + multiSelected.length + ' 条';
+}
+
+function cancelMultiSelect() {
+    multiSelectMode = false;
+    multiSelected = [];
+    var bar = document.getElementById('multiSelectBar');
+    if (bar) bar.remove();
+    document.querySelectorAll('.ms-check').forEach(function(c) { c.remove(); });
+    document.querySelectorAll('.multi-selectable').forEach(function(b) {
+        b.classList.remove('multi-selectable', 'ms-selected');
+        b.removeAttribute('data-ms-index');
+    });
+}
+
+function confirmMultiSelect() {
+    if (multiSelected.length === 0) {
+        showToast('请先选择消息');
+        return;
+    }
+    var contactId = window.ChatState.currentContactId || 'c1';
+    var contact = getContactById(contactId);
+    var contactName = contact ? contact.name : 'AI';
+    var bubbles = document.querySelectorAll('#chatMessages .bubble-assistant');
+    var count = 0;
+    multiSelected.forEach(function(index) {
+        if (bubbles[index]) {
+            var text = bubbles[index].textContent.replace(/[○●]/g, '').trim();
+            if (typeof addFavorite === 'function') {
+                addFavorite(text, contactId, contactName);
+                count++;
+            }
+        }
+    });
+    cancelMultiSelect();
+    showToast('已收藏 ' + count + ' 条消息');
 }
 
 function menuQuote() {
