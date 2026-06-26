@@ -691,8 +691,8 @@ if (window.ChatState && window.ChatState.isOfflineMode) {
     bubble.className = 'bubble bubble-' + role;
 }
 // 引用消息气泡
-if (role === 'user' && window.ChatState.quotedMsg) {
-    bubble.className = 'bubble bubble-user quote-bubble';
+if (window.ChatState.quotedMsg && (role === 'user' || role === 'assistant')) {
+    bubble.className = 'bubble bubble-' + role + ' quote-bubble';
     bubble.innerHTML = `
         <div class="quote-bubble-text">${text}</div>
         <div class="quote-bubble-ref">
@@ -703,7 +703,7 @@ if (role === 'user' && window.ChatState.quotedMsg) {
     window.ChatState.quotedMsg = null;
 } else {
     bubble.textContent = text;
-}        
+}
 bubble.id = 'msg-' + Date.now();
 
         row.appendChild(avatar);
