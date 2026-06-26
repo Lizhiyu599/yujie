@@ -909,7 +909,17 @@ function switchToOffline() {
     toggleAddPanel();
     var currentId = window.ChatState.currentContactId || (window.ChatConfig && window.ChatConfig.contacts[0] ? window.ChatConfig.contacts[0].id : 'c1');
     if (typeof saveChatHistory === 'function') saveChatHistory(currentId);
-    // 自动总结
+    
+    var summaryToast = document.createElement('div');
+    summaryToast.className = 'global-toast';
+    summaryToast.textContent = '正在总结对话…';
+    summaryToast.style.background = 'rgba(0,0,0,0.75)';
+    summaryToast.style.color = '#fff';
+    document.body.appendChild(summaryToast);
+    
+    window.ChatState.isOfflineMode = true;
+    var contactId = window.ChatState.currentContactId || currentId;
+    
     if (typeof generateSummary === 'function') {
         generateSummary(currentId).then(function(summary) {
             if (summary && typeof saveShiyilinSummary === 'function') {
@@ -917,18 +927,33 @@ function switchToOffline() {
                 var dateStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日';
                 saveShiyilinSummary(currentId, dateStr, summary);
             }
-        }).catch(function(){});
+            if (summaryToast) summaryToast.remove();
+            enterChat(contactId);
+        }).catch(function(){
+            if (summaryToast) summaryToast.remove();
+            enterChat(contactId);
+        });
+    } else {
+        if (summaryToast) summaryToast.remove();
+        enterChat(contactId);
     }
-    window.ChatState.isOfflineMode = true;
-    var contactId = window.ChatState.currentContactId || currentId;
-    showToast('已切换到线下模式');
-    enterChat(contactId);
 }
 
 function switchToOnline() {
     toggleAddPanel();
     var currentId = window.ChatState.currentContactId || (window.ChatConfig && window.ChatConfig.contacts[0] ? window.ChatConfig.contacts[0].id : 'c1');
     if (typeof saveChatHistory === 'function') saveChatHistory(currentId);
+    
+    var summaryToast = document.createElement('div');
+    summaryToast.className = 'global-toast';
+    summaryToast.textContent = '正在总结对话…';
+    summaryToast.style.background = 'rgba(0,0,0,0.75)';
+    summaryToast.style.color = '#fff';
+    document.body.appendChild(summaryToast);
+    
+    window.ChatState.isOfflineMode = false;
+    var contactId = window.ChatState.currentContactId || currentId;
+    
     if (typeof generateSummary === 'function') {
         generateSummary(currentId).then(function(summary) {
             if (summary && typeof saveShiyilinSummary === 'function') {
@@ -936,12 +961,16 @@ function switchToOnline() {
                 var dateStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日';
                 saveShiyilinSummary(currentId, dateStr, summary);
             }
-        }).catch(function(){});
+            if (summaryToast) summaryToast.remove();
+            enterChat(contactId);
+        }).catch(function(){
+            if (summaryToast) summaryToast.remove();
+            enterChat(contactId);
+        });
+    } else {
+        if (summaryToast) summaryToast.remove();
+        enterChat(contactId);
     }
-    window.ChatState.isOfflineMode = false;
-    var contactId = window.ChatState.currentContactId || currentId;
-    showToast('已切换到线上模式');
-    enterChat(contactId);
 }
 
 function selectOfflinePreset(min, max, el) {
