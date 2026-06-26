@@ -331,6 +331,7 @@ function enterChat(contactId) {
     if (!contact) return;
 
     window.ChatState = window.ChatState || {};
+    window.ChatState.currentGroupId = null;
     window.ChatState.currentContactId = contactId;
     loadContactSettings(contactId);
 
