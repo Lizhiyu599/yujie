@@ -921,7 +921,8 @@ function menuQuote() {
     if (!bubbleMenuTarget) return;
     var contactId = window.ChatState.currentContactId || 'c1';
     var contact = getContactById(contactId);
-    var name = contact ? contact.name : '角色';
+    var isUserBubble = bubbleMenuTarget.classList.contains('bubble-user');
+    var name = isUserBubble ? '我' : (contact ? contact.name : '角色');
     var text = bubbleMenuTarget.textContent;
     var maxChars = 14;
     var prefix = name + '：';
