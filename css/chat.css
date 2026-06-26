@@ -2653,3 +2653,6 @@
     font-weight: 600;
     cursor: pointer;
 }
+#userBubbleMenu {
+    width: 210px !important;
+}
