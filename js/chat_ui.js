@@ -422,7 +422,7 @@ function enterGroupChat(groupId) {
                 <div class="nav-status-bar"></div>
                 <div class="nav-body">
                     <span class="nav-title" id="chatTitle">${group.name}（${group.members.length + 1}）</span>
-<span class="nav-group-menu" onclick="openGroupInfo('${groupId}')" style="position:absolute;right:16px;font-size:20px;color:#555;cursor:pointer;">☰</span>
+<span class="nav-group-menu" onclick="openGroupInfo('${groupId}')" style="position:absolute;right:40px;font-size:20px;color:#555;cursor:pointer;">☰</span>
                     </div>
             </div>
             <div class="chat-messages" id="chatMessages" style="background-image:url(${globalBg});">
