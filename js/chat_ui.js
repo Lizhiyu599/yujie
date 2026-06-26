@@ -736,20 +736,20 @@ function confirmRegret() {
     var targetRow = bubbleMenuTarget.closest('.bubble-row');
     if (!targetRow) targetRow = bubbleMenuTarget;
 
-    var allChildren = messages.querySelectorAll('.bubble-row, .bubble-narration, .chat-time-stamp, .translate-row, .voice-transcript-row');
-    var found = false;
-    for (var i = allChildren.length - 1; i >= 0; i--) {
-        var child = allChildren[i];
-        if (child === targetRow || child.contains(bubbleMenuTarget)) found = true;
-        if (found) {
-            var isUserRow = child.classList.contains('user') || child.getAttribute('data-role') === 'user';
-            var isTimeStamp = child.classList.contains('chat-time-stamp');
-            if (!isUserRow && !isTimeStamp) {
-                child.remove();
-            }
+  var allChildren = messages.querySelectorAll('.bubble-row, .bubble-narration, .chat-time-stamp, .translate-row, .voice-transcript-row');
+  var found = false;
+  for (var i = 0; i < allChildren.length; i++) {
+    var child = allChildren[i];
+    if (child === targetRow || child.contains(bubbleMenuTarget)) found = true;
+    if (found) {
+        var isUserRow = child.classList.contains('user') || child.getAttribute('data-role') === 'user';
+        var isTimeStamp = child.classList.contains('chat-time-stamp');
+        if (!isUserRow && !isTimeStamp) {
+            child.remove();
         }
     }
-
+}
+    
     saveChatHistory(window.ChatState.currentContactId);
 
     setTimeout(function() {
