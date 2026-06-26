@@ -255,7 +255,6 @@ function renderChatList() {
 
     // 群聊列表
     if (myGroups.length > 0) {
-        html += '<div class="contacts-section-title" style="background:transparent;padding:6px 16px;font-size:13px;color:#8e8e93;font-weight:500;">群聊</div>';
         myGroups.forEach(function(g) {
             html += `
                 <div class="chat-list-item" onclick="enterGroupChat('${g.id}')">
@@ -267,7 +266,6 @@ function renderChatList() {
                 </div>
             `;
         });
-        html += '<div style="border-bottom:0.5px solid rgba(0,0,0,0.05);margin:4px 0;"></div>';
     }
 
     // 联系人列表
