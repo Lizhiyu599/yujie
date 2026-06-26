@@ -175,6 +175,15 @@ function initUserBubbleMenu() {
         </div>
     `;
     document.body.appendChild(menu);
+
+    menu.querySelectorAll('.menu-item[data-action]').forEach(function(item) {
+        item.addEventListener('touchend', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            var fn = window[this.getAttribute('data-action')];
+            if (typeof fn === 'function') fn();
+        });
+    });
 }
 
 // ========== 打开聊天软件 ==========
