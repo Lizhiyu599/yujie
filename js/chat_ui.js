@@ -731,12 +731,16 @@ function confirmRegret() {
     const messages = document.getElementById('chatMessages');
     if (!messages) return;
 
-    let found = false;
-    const children = Array.from(messages.children);
-    for (let i = children.length - 1; i >= 0; i--) {
-        if (children[i] === bubbleMenuTarget) found = true;
-        if (found) children[i].remove();
-    }
+    // 找到被重回消息所在的 bubble-row
+let targetRow = bubbleMenuTarget.closest('.bubble-row');
+if (!targetRow) targetRow = bubbleMenuTarget;
+
+let found = false;
+const children = Array.from(messages.children);
+for (let i = children.length - 1; i >= 0; i--) {
+    if (children[i] === targetRow || children[i].contains(bubbleMenuTarget)) found = true;
+    if (found) children[i].remove();
+}
 
     saveChatHistory(window.ChatState.currentContactId);
 
