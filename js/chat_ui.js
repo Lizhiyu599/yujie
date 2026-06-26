@@ -659,22 +659,31 @@ function switchAddPanelTab(tab, el) {
 let bubbleMenuTarget = null;
 
 document.addEventListener('touchstart', function(e) {
-    const bubble = e.target.closest('.bubble-assistant');
+    var bubble = e.target.closest('.bubble-assistant');
+    var isUserBubble = false;
+    if (!bubble) {
+        bubble = e.target.closest('.bubble-user');
+        if (bubble) isUserBubble = true;
+    }
     if (!bubble) {
         if (e.target.closest('.bubble-menu')) return;
-        const menu = document.getElementById('bubbleMenu');
-        if (menu) menu.style.display = 'none';
+        var menu1 = document.getElementById('bubbleMenu');
+        var menu2 = document.getElementById('userBubbleMenu');
+        if (menu1) menu1.style.display = 'none';
+        if (menu2) menu2.style.display = 'none';
         return;
     }
     bubbleMenuTarget = bubble;
-    let pressTimer = setTimeout(function() {
-        const menu = document.getElementById('bubbleMenu');
+    var pressTimer = setTimeout(function() {
+        initBubbleMenu();
+        initUserBubbleMenu();
+        var menu = isUserBubble ? document.getElementById('userBubbleMenu') : document.getElementById('bubbleMenu');
         if (!menu) return;
         menu.style.visibility = 'hidden';
         menu.style.display = 'block';
-        const menuH = menu.offsetHeight || 80;
-        const menuW = menu.offsetWidth || 260;
-        const rect = bubble.getBoundingClientRect();
+        var menuH = menu.offsetHeight || 80;
+        var menuW = menu.offsetWidth || (isUserBubble ? 200 : 260);
+        var rect = bubble.getBoundingClientRect();
         menu.style.top = Math.max(10, rect.top - menuH - 8) + 'px';
         menu.style.left = Math.max(10, Math.min(rect.left, window.innerWidth - menuW - 10)) + 'px';
         menu.style.visibility = '';
@@ -684,9 +693,11 @@ document.addEventListener('touchstart', function(e) {
 });
 
 document.addEventListener('click', function(e) {
-    if (!e.target.closest('.bubble-menu') && !e.target.closest('.bubble-assistant')) {
-        const menu = document.getElementById('bubbleMenu');
-        if (menu) menu.style.display = 'none';
+    if (!e.target.closest('.bubble-menu') && !e.target.closest('.bubble-assistant') && !e.target.closest('.bubble-user')) {
+        var menu1 = document.getElementById('bubbleMenu');
+        var menu2 = document.getElementById('userBubbleMenu');
+        if (menu1) menu1.style.display = 'none';
+        if (menu2) menu2.style.display = 'none';
     }
 });
 
