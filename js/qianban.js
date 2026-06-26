@@ -71,7 +71,7 @@ function getNodeType(nodeId) {
 }
 
 function getActiveUserInfo() {
-    var masks = getMasks ? getMasks() : [];
+    var masks = (typeof getMasks === 'function') ? getMasks() : [];
     var activeId = getActiveMaskId();
     var m = null;
     for (var i = 0; i < masks.length; i++) {
