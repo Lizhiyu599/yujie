@@ -470,7 +470,7 @@ async function sendGroupMessage() {
     input.value = '';
     saveGroupChatHistory(groupId);
 
-    var systemPrompt = buildGroupSystemPrompt(groupId);
+    var systemPrompt = '这是一个群聊测试。请回复"测试成功"。';
     var memoryCount = 50;
     var historyMessages = getRecentGroupHistory(groupId, memoryCount);
 
