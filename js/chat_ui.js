@@ -160,6 +160,23 @@ function initBubbleMenu() {
     });
 }
 
+// ========== 用户气泡菜单 ==========
+function initUserBubbleMenu() {
+    if (document.getElementById('userBubbleMenu')) return;
+    var menu = document.createElement('div');
+    menu.className = 'bubble-menu';
+    menu.id = 'userBubbleMenu';
+    menu.style.cssText = 'position:fixed;z-index:99999;display:none;width:auto;';
+    menu.innerHTML = `
+        <div class="menu-row">
+            <div class="menu-item" data-action="menuCopy">复制</div>
+            <div class="menu-item" data-action="menuQuote">引用</div>
+            <div class="menu-item" data-action="menuEdit">编辑</div>
+        </div>
+    `;
+    document.body.appendChild(menu);
+}
+
 // ========== 打开聊天软件 ==========
 function openChat() {
     initBubbleMenu();
