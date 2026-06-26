@@ -407,6 +407,13 @@ function processAIReply(rawContent, contactName, contactId) {
         cleanContent = cleanContent.replace(jsonMatch[0], '').trim();
     }
 
+    // 解析角色引用
+    var quoteMatch = cleanContent.match(/【引用】([^：]+)：([\s\S]+?)【\/引用】/);
+    if (quoteMatch) {
+        window.ChatState.quotedMsg = { n: quoteMatch[1], t: quoteMatch[2].trim() };
+        cleanContent = cleanContent.replace(quoteMatch[0], '').trim();
+    }
+
     // ===== 检测角色旁白接收红包/转账（只处理卡片，不渲染旁白） =====
     var acceptMatch = cleanContent.match(/[\(\（]([^\)\）]*)(接收了红包|收下了红包|收下了转账|接收了转账|收啦|收了红包|收了转账)[^\)\）]*[\)\）]/);
     var accepted = false;
