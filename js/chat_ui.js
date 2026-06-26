@@ -515,7 +515,7 @@ function appendGroupMessage(role, text, senderName) {
     var nameLabel = document.createElement('div');
     nameLabel.className = 'group-sender-name';
     nameLabel.textContent = senderName || '';
-    nameLabel.style.cssText = 'font-size:11px;color:#8e8e93;margin-bottom:2px;';
+    nameLabel.style.cssText = 'font-size:11px;color:#8e8e93;';
 
     var bubble = document.createElement('div');
     bubble.className = 'bubble bubble-' + role;
@@ -523,8 +523,12 @@ function appendGroupMessage(role, text, senderName) {
     bubble.id = 'msg-' + Date.now();
 
     row.appendChild(avatar);
-    row.appendChild(nameLabel);
-    row.appendChild(bubble);
+// 名字放在头像旁边，气泡上方
+var nameWrapper = document.createElement('div');
+nameWrapper.style.cssText = 'display:flex;align-items:flex-end;height:40px;padding-left:8px;';
+nameWrapper.appendChild(nameLabel);
+row.appendChild(nameWrapper);
+row.appendChild(bubble);
     messages.appendChild(row);
     messages.scrollTop = messages.scrollHeight;
     return row;
