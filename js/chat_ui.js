@@ -421,58 +421,39 @@ function enterGroupChat(groupId) {
             <div class="chat-nav">
                 <div class="nav-status-bar"></div>
                 <div class="nav-body">
+                    <span class="nav-back" onclick="backToChatList()">‹</span>
                     <span class="nav-title" id="chatTitle">${group.name}（${group.members.length + 1}）</span>
-<span class="nav-group-menu" onclick="openGroupInfo('${groupId}')" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:20px;color:#555;cursor:pointer;z-index:5;">☰</span>
-                    </div>
+                    <span class="nav-group-menu" onclick="openGroupInfo('${groupId}')" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:20px;color:#555;cursor:pointer;z-index:5;">☰</span>
+                </div>
             </div>
             <div class="chat-messages" id="chatMessages" style="background-image:url(${globalBg});">
                 <div style="text-align:center;color:#c7c7cc;font-size:13px;margin-top:20px;">欢迎来到${group.name}</div>
             </div>
 
             <div class="chat-input-bar">
-    <div class="input-row">
-        <div class="add-circle" onclick="toggleAddPanel()">+</div>
-        <div class="chat-input-wrapper" id="chatInputWrapper">
-            <input type="text" class="chat-input" id="chatInput" placeholder="输入消息…" onkeypress="if(event.key==='Enter') handleSendOrReply()">
-            <div class="mic-btn" id="micBtn" onclick="toggleVoiceMode()">
-                <span class="mic-icon-body"></span>
-                <span class="mic-icon-arc"></span>
+                <div class="input-row">
+                    <div class="add-circle" onclick="toggleAddPanel()">+</div>
+                    <div class="chat-input-wrapper" id="chatInputWrapper">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="输入消息…" onkeypress="if(event.key==='Enter') handleSendOrReply()">
+                        <div class="mic-btn" id="micBtn" onclick="toggleVoiceMode()">
+                            <span class="mic-icon-body"></span>
+                            <span class="mic-icon-arc"></span>
+                        </div>
+                    </div>
+                    <span class="chat-send-btn" id="chatSendBtn" onclick="handleSendOrReply()">↑</span>
+                </div>
+                <div class="add-panel-full" id="addPanelFull" style="display:none;">
+                    <div class="add-panel-tabs">
+                        <span class="add-panel-tab active" id="tabEmoji" onclick="switchAddPanelTab('emoji', this)">表情包</span>
+                        <span class="add-panel-tab" id="tabFunc" onclick="switchAddPanelTab('func', this)">功能</span>
+                    </div>
+                    <div class="add-panel-body" id="addPanelBody"></div>
+                </div>
             </div>
-        </div>
-        <span class="chat-send-btn" id="chatSendBtn" onclick="handleSendOrReply()">↑</span>
-    </div>
-    <div class="add-panel-full" id="addPanelFull" style="display:none;">
-        <div class="add-panel-tabs">
-            <span class="add-panel-tab active" id="tabEmoji" onclick="switchAddPanelTab('emoji', this)">表情包</span>
-            <span class="add-panel-tab" id="tabFunc" onclick="switchAddPanelTab('func', this)">功能</span>
-        </div>
-        <div class="add-panel-body" id="addPanelBody"></div>
-    </div>
-</div>
         </div>
     `;
 
     loadGroupChatHistory(groupId);
-}
-
-function loadGroupChatHistory(groupId) {
-    var messages = document.getElementById('chatMessages');
-    if (!messages) return;
-    var saved = localStorage.getItem('chat_history_group_' + groupId);
-    if (saved) {
-        messages.innerHTML = saved;
-        messages.scrollTop = messages.scrollHeight;
-    }
-}
-
-function saveGroupChatHistory(groupId) {
-    var messages = document.getElementById('chatMessages');
-    if (!messages) return;
-    var html = messages.innerHTML;
-    if (html.length > 300000) html = html.slice(html.length - 300000);
-    try {
-        localStorage.setItem('chat_history_group_' + groupId, html);
-    } catch(e) {}
 }
 
 // ========== 群聊发送消息 ==========
