@@ -403,6 +403,205 @@ function enterChat(contactId) {
     loadChatHistory(contactId);
 }
 
+// ========== 进入群聊 ==========
+function enterGroupChat(groupId) {
+    var groups = JSON.parse(localStorage.getItem('group_chats') || '[]');
+    var group = groups.find(function(g) { return g.id === groupId; });
+    if (!group) return;
+
+    window.ChatState = window.ChatState || {};
+    window.ChatState.currentContactId = null;
+    window.ChatState.currentGroupId = groupId;
+
+    var appWindow = document.getElementById('chatAppWindow');
+    if (!appWindow) return;
+
+    var globalBg = localStorage.getItem('global_chat_bg') || '';
+
+    appWindow.innerHTML = `
+        <div class="chat-overlay" id="chatOverlay">
+            <div class="chat-nav">
+                <div class="nav-status-bar"></div>
+                <div class="nav-body">
+                    <span class="nav-back" onclick="backToChatList()">‹</span>
+                    <span class="nav-title" id="chatTitle" onclick="openGroupSettings('${groupId}')">${group.name} (${group.members.length}人)</span>
+                </div>
+            </div>
+            <div class="chat-messages" id="chatMessages" style="background-image:url(${globalBg});">
+                <div style="text-align:center;color:#c7c7cc;font-size:13px;margin-top:20px;">欢迎来到${group.name}</div>
+            </div>
+
+            <div class="chat-input-bar">
+                <div class="input-row">
+                    <div class="chat-input-wrapper" id="chatInputWrapper" style="flex:1;">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="输入消息…" onkeypress="if(event.key==='Enter') handleSendOrReply()">
+                    </div>
+                    <span class="chat-send-btn" id="chatSendBtn" onclick="handleSendOrReply()">↑</span>
+                </div>
+            </div>
+        </div>
+    `;
+
+    loadGroupChatHistory(groupId);
+}
+
+function loadGroupChatHistory(groupId) {
+    var messages = document.getElementById('chatMessages');
+    if (!messages) return;
+    var saved = localStorage.getItem('chat_history_group_' + groupId);
+    if (saved) {
+        messages.innerHTML = saved;
+        messages.scrollTop = messages.scrollHeight;
+    }
+}
+
+function saveGroupChatHistory(groupId) {
+    var messages = document.getElementById('chatMessages');
+    if (!messages) return;
+    var html = messages.innerHTML;
+    if (html.length > 300000) html = html.slice(html.length - 300000);
+    try {
+        localStorage.setItem('chat_history_group_' + groupId, html);
+    } catch(e) {}
+}
+
+// ========== 群聊发送消息 ==========
+async function sendGroupMessage() {
+    var input = document.getElementById('chatInput');
+    if (!input || !input.value.trim()) return;
+    if (window.ChatState.isAITyping) return;
+
+    var text = input.value.trim();
+    var groupId = window.ChatState.currentGroupId;
+    if (!groupId) return;
+
+    appendGroupMessage('user', text, '我');
+    input.value = '';
+    saveGroupChatHistory(groupId);
+
+    var systemPrompt = buildGroupSystemPrompt(groupId);
+    var memoryCount = 50;
+    var historyMessages = getRecentGroupHistory(groupId, memoryCount);
+
+    window.ChatState.isAITyping = true;
+    var titleEl = document.getElementById('chatTitle');
+    if (titleEl) titleEl.innerHTML = '<span class="nav-typing">输入中...</span>';
+
+    try {
+        var reply = await callChatAPI([
+            { role: 'system', content: systemPrompt },
+            ...historyMessages,
+            { role: 'user', content: text }
+        ]);
+        processGroupReply(reply, groupId);
+    } catch(e) {
+        appendGroupMessage('system', '消息发送失败：' + e.message, '');
+        window.ChatState.isAITyping = false;
+    }
+}
+
+function appendGroupMessage(role, text, senderName) {
+    var messages = document.getElementById('chatMessages');
+    if (!messages) return null;
+
+    if (role === 'narration') {
+        var bubble = document.createElement('div');
+        bubble.className = 'bubble bubble-narration';
+        bubble.textContent = text;
+        messages.appendChild(bubble);
+        return null;
+    }
+
+    var row = document.createElement('div');
+    row.className = 'bubble-row ' + (role === 'user' ? 'user' : 'assistant');
+    row.setAttribute('data-role', role);
+
+    var avatar = document.createElement('div');
+    avatar.className = 'bubble-avatar ' + (role === 'user' ? 'user-avatar' : 'bot-avatar');
+    if (role === 'user') {
+        avatar.textContent = '我';
+    } else {
+        avatar.textContent = senderName ? senderName.charAt(0) : 'AI';
+    }
+
+    var nameLabel = document.createElement('div');
+    nameLabel.className = 'group-sender-name';
+    nameLabel.textContent = senderName || 'AI';
+    nameLabel.style.cssText = 'font-size:11px;color:#8e8e93;margin-bottom:2px;padding-left:4px;';
+
+    var bubble = document.createElement('div');
+    bubble.className = 'bubble bubble-' + role;
+    bubble.textContent = text;
+    bubble.id = 'msg-' + Date.now();
+
+    row.appendChild(avatar);
+    var contentWrap = document.createElement('div');
+    contentWrap.style.cssText = 'display:flex;flex-direction:column;';
+    contentWrap.appendChild(nameLabel);
+    contentWrap.appendChild(bubble);
+    row.appendChild(contentWrap);
+    messages.appendChild(row);
+    messages.scrollTop = messages.scrollHeight;
+    return row;
+}
+
+function getRecentGroupHistory(groupId, maxCount) {
+    var messages = document.getElementById('chatMessages');
+    if (!messages) return [];
+    var result = [];
+    var rows = messages.querySelectorAll('.bubble-row');
+    var total = rows.length;
+    var start = Math.max(0, total - maxCount);
+    for (var i = start; i < total; i++) {
+        var row = rows[i];
+        var bubble = row.querySelector('.bubble');
+        if (!bubble) continue;
+        var role = row.classList.contains('user') ? 'user' : 'assistant';
+        var nameEl = row.querySelector('.group-sender-name');
+        var senderName = nameEl ? nameEl.textContent : '';
+        result.push({ role: role, content: (senderName ? senderName + '：' : '') + bubble.textContent });
+    }
+    return result;
+}
+
+function buildGroupSystemPrompt(groupId) {
+    var groups = JSON.parse(localStorage.getItem('group_chats') || '[]');
+    var group = groups.find(function(g) { return g.id === groupId; });
+    if (!group) return '';
+
+    var contacts = window.ChatConfig.contacts || [];
+    var membersInfo = group.members.map(function(mid) {
+        var c = contacts.find(function(ct) { return ct.id === mid; });
+        return c ? c.name : '未知';
+    }).join('、');
+
+    var prompt = '【群聊模式】你现在在一个群聊中，群名：' + group.name + '，群成员：' + membersInfo + '。\n';
+    prompt += '用户以"我"的身份发言。你可以看到其他成员的发言，可以自然地和群里的任何人互动，可以插话、可以回应别人、可以主动发起话题。\n';
+    prompt += '你的每次回复会在群聊中显示你的名字。\n';
+    return prompt;
+}
+
+function processGroupReply(rawContent, groupId) {
+    var titleEl = document.getElementById('chatTitle');
+    var groups = JSON.parse(localStorage.getItem('group_chats') || '[]');
+    var group = groups.find(function(g) { return g.id === groupId; });
+    var groupName = group ? group.name : '群聊';
+
+        // 随机选一个成员作为发言人
+    var members = group.members;
+    var randomMemberId = members[Math.floor(Math.random() * members.length)];
+    var contacts = window.ChatConfig.contacts || [];
+    var sender = contacts.find(function(c) { return c.id === randomMemberId; });
+    var senderName = sender ? sender.name : 'AI';
+
+    var cleanContent = rawContent.replace(/\{[^}]*\}/g, '').trim();
+    appendGroupMessage('assistant', cleanContent, senderName);
+    
+    if (titleEl) titleEl.textContent = groupName + ' (' + members.length + '人)';
+    window.ChatState.isAITyping = false;
+    saveGroupChatHistory(groupId);
+}
+
 // ========== 返回会话列表 ==========
 function backToChatList() {
     window.ChatState.currentContactId = null;
