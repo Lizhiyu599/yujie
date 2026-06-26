@@ -102,7 +102,7 @@ function getPinyinFirstLetter(char) {
             'F': '发乏伐罚阀法帆番翻凡烦繁反返犯泛饭范方坊芳防妨房仿访纺放飞非菲肥匪废沸肺费分纷芬坟粉份奋愤丰风枫封疯峰锋蜂冯逢缝讽凤佛否夫肤扶服浮符幅福抚府辅腐父付妇负附复赴副傅富腹覆',
             'G': '该改概盖干甘杆肝赶敢感刚岗纲钢港高稿告戈哥鸽割歌革阁格葛隔个各给根跟更耕工弓公功攻供宫恭巩共贡勾沟狗构购够估孤姑古谷股骨鼓固故顾瓜刮挂拐怪关观官冠馆管贯惯灌罐光广归龟规硅鬼柜贵桂滚棍锅国果过',
             'H': '哈还孩海害含寒喊汉汗旱航豪好号浩耗喝合何和河核荷盒贺黑痕很狠恨哼恒横衡轰哄红宏虹洪鸿侯喉猴后候厚乎呼忽胡壶湖糊虎互户护花华滑化划画话怀坏欢还环缓幻换唤荒慌皇黄煌晃灰挥恢辉回毁悔汇会绘惠慧昏婚浑魂混活火伙或货获祸惑霍',
-            'J': '击机肌鸡积基激及吉级即急疾集籍几己挤计记纪技际剂季既继寄加夹佳家嘉甲假价驾架嫁尖坚间肩艰兼监减剪检简见件建剑健舰渐践鉴键箭江姜将浆讲奖降酱交郊娇浇骄胶焦角饺脚搅叫轿较教阶接揭街节劫杰洁结捷截竭姐解介戒届界借今斤金津筋仅紧尽劲近进晋浸禁京经惊晶睛精井景警净径竞竟敬境静镜纠久九酒旧救就舅拘居鞠局菊橘举矩句巨拒具俱剧据距惧锯聚捐卷倦决绝觉掘军均君菌俊峻',
+            'J': '蒋击机肌鸡积基激及吉级即急疾集籍几己挤计记纪技际剂季既继寄加夹佳家嘉甲假价驾架嫁尖坚间肩艰兼监减剪检简见件建剑健舰渐践鉴键箭江姜将浆讲奖降酱交郊娇浇骄胶焦角饺脚搅叫轿较教阶接揭街节劫杰洁结捷截竭姐解介戒届界借今斤金津筋仅紧尽劲近进晋浸禁京经惊晶睛精井景警净径竞竟敬境静镜纠久九酒旧救就舅拘居鞠局菊橘举矩句巨拒具俱剧据距惧锯聚捐卷倦决绝觉掘军均君菌俊峻',
             'K': '卡开凯慨刊堪砍看康抗考烤靠科棵颗壳咳可渴克刻客课肯垦恳空孔恐控口扣枯哭苦库裤酷夸跨块快宽款狂况矿框亏葵愧溃昆困扩括阔',
             'L': '拉喇腊蜡辣啦来赖兰栏蓝篮览懒烂滥郎狼廊朗浪劳牢老乐勒雷泪类累冷厘梨狸离李里理力历厉立丽利例隶粒连怜帘莲联廉脸练炼恋链良凉梁粮两亮辆量辽疗聊了料列劣烈猎裂邻林临淋灵铃陵零龄领另令刘流留硫柳六龙笼隆楼漏露卢芦炉鲁陆录鹿碌路驴旅铝履律率绿卵乱掠略伦轮论罗萝螺洛落',
             'M': '妈麻马玛码骂吗买麦卖脉蛮满曼慢忙芒盲茫猫毛矛茅茂冒贸帽貌么没玫眉梅媒煤每美妹门闷们萌盟猛梦弥迷谜米密蜜眠绵棉免勉面苗描秒妙灭民敏名明鸣命摸模膜摩磨魔抹末沫陌莫漠墨默谋某母亩牡木目牧墓幕暮慕',
@@ -261,7 +261,7 @@ function renderChatList() {
                 <div class="chat-list-item" onclick="enterGroupChat('${g.id}')">
                     <div class="chat-avatar" style="${g.avatar ? 'background-image:url(' + g.avatar + ');background-size:cover;background-position:center;' : ''}">${g.avatar ? '&nbsp;' : '群'}</div>
                     <div class="chat-info">
-                        <div class="chat-name">${g.name} (${g.members.length}人)</div>
+                        <div class="chat-name">${g.name}（${g.members.length + 1}）</div>
                         <div class="chat-preview"></div>
                     </div>
                 </div>
@@ -424,7 +424,7 @@ function enterGroupChat(groupId) {
                 <div class="nav-status-bar"></div>
                 <div class="nav-body">
                     <span class="nav-back" onclick="backToChatList()">‹</span>
-                    <span class="nav-title" id="chatTitle" onclick="openGroupSettings('${groupId}')">${group.name} (${group.members.length}人)</span>
+                    <span class="nav-title" id="chatTitle" onclick="openGroupSettings('${groupId}')">${group.name}（${group.members.length + 1}）</span>
                 </div>
             </div>
             <div class="chat-messages" id="chatMessages" style="background-image:url(${globalBg});">
