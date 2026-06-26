@@ -717,12 +717,12 @@ function toggleVoiceMode() {
 function handleSendOrReply() {
     // 群聊模式
     if (window.ChatState.currentGroupId) {
-        var input = document.getElementById('chatInput');
-        if (!input) return;
-        if (input.value.trim()) {
-            sendGroupMessage();
-        }
-        return;
+    var groupInput = document.getElementById('chatInput');
+    if (!groupInput) return;
+    if (groupInput.value.trim()) {
+        sendGroupMessage();
+    }
+    return;
     }
 
     const input = document.getElementById('chatInput');
