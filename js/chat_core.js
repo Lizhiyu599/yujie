@@ -834,7 +834,28 @@ function getRecentHistory(contactId, maxCount) {
     if (result.length > maxCount * 2) {
         result.splice(0, result.length - maxCount * 2);
     }
-
+    // 合并群聊记录
+if (contactId) {
+    var groups = JSON.parse(localStorage.getItem('group_chats') || '[]');
+    groups.forEach(function(g) {
+        if (g.members.indexOf(contactId) >= 0) {
+            var groupSaved = localStorage.getItem('chat_history_group_' + g.id);
+            if (groupSaved) {
+                var tempDiv2 = document.createElement('div');
+                tempDiv2.innerHTML = groupSaved;
+                var groupRows = tempDiv2.querySelectorAll('.bubble-row');
+                for (var gj = 0; gj < groupRows.length; gj++) {
+                    var gRow = groupRows[gj];
+                    var gBubble = gRow.querySelector('.bubble');
+                    if (!gBubble) continue;
+                    var gRole = gRow.classList.contains('user') ? 'user' : 'assistant';
+                    var gName = gRow.querySelector('.group-sender-name');
+                    result.push({ role: gRole, content: (gName ? gName.textContent + '：' : '') + gBubble.textContent });
+                }
+            }
+        }
+    });
+}
     return result;
 } 
 
