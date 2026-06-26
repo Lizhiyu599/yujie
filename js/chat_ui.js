@@ -740,31 +740,33 @@ function confirmRegret() {
 
     saveChatHistory(window.ChatState.currentContactId);
 
-    const contactId = window.ChatState.currentContactId || 'c1';
-    const contact = getContactById(contactId);
-    const contactName = contact ? contact.name : 'AI';
+    setTimeout(function() {
+        const contactId = window.ChatState.currentContactId || 'c1';
+        const contact = getContactById(contactId);
+        const contactName = contact ? contact.name : 'AI';
 
-    window.ChatState.isAITyping = true;
-    const titleEl = document.getElementById('chatTitle');
-    if (titleEl) titleEl.innerHTML = '<span class="nav-typing">输入中…</span>';
+        window.ChatState.isAITyping = true;
+        const titleEl = document.getElementById('chatTitle');
+        if (titleEl) titleEl.innerHTML = '<span class="nav-typing">输入中…</span>';
 
-    const systemPrompt = buildSystemPrompt(contactId);
-    const userMessage = hint || '请重新回复，换一种表达方式';
-    const memoryCount = parseInt(getContactSetting(contactId, 'memoryCount', '50'));
-    const historyMessages = getRecentHistory(contactId, memoryCount);
-    const allMessages = [
-        { role: 'system', content: systemPrompt },
-        ...historyMessages,
-        { role: 'user', content: userMessage }
-    ];
+        const systemPrompt = buildSystemPrompt(contactId);
+        const userMessage = hint || '请重新回复，换一种表达方式';
+        const memoryCount = parseInt(getContactSetting(contactId, 'memoryCount', '50'));
+        const historyMessages = getRecentHistory(contactId, memoryCount);
+        const allMessages = [
+            { role: 'system', content: systemPrompt },
+            ...historyMessages,
+            { role: 'user', content: userMessage }
+        ];
 
-    callChatAPI(allMessages).then(reply => {
-        processAIReply(reply, contactName, contactId);
-    }).catch(error => {
-        appendMessage('assistant', '抱歉，消息发送失败：' + error.message);
-        if (titleEl) titleEl.textContent = contactName;
-        window.ChatState.isAITyping = false;
-    });
+        callChatAPI(allMessages).then(reply => {
+            processAIReply(reply, contactName, contactId);
+        }).catch(error => {
+            appendMessage('assistant', '抱歉，消息发送失败：' + error.message);
+            if (titleEl) titleEl.textContent = contactName;
+            window.ChatState.isAITyping = false;
+        });
+    }, 100);
 }
 
 function menuMultiSelect() {
