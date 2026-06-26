@@ -2876,20 +2876,28 @@ function manualSummary() {
     if (!contact) return;
 
     closeChatSettings();
-    showToast('正在生成总结…');
+    
+    var loadingToast = document.createElement('div');
+    loadingToast.className = 'global-toast';
+    loadingToast.textContent = '正在生成总结…';
+    loadingToast.style.background = 'rgba(0,0,0,0.75)';
+    loadingToast.style.color = '#fff';
+    document.body.appendChild(loadingToast);
 
     generateSummary(contactId).then(function(summary) {
-    if (!summary) {
-        showToast('总结生成失败，请重试');
-        return;
-    }
-    var now = new Date();
-    var dateStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日';
-    saveShiyilinSummary(contactId, dateStr, summary);
-    showToast('已存入拾忆林');
-}).catch(function(e) {
-    showToast('总结生成失败：' + (e.message || '未知错误'));
-});
+        if (loadingToast) loadingToast.remove();
+        if (!summary) {
+            showToast('总结生成失败，请重试');
+            return;
+        }
+        var now = new Date();
+        var dateStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日';
+        saveShiyilinSummary(contactId, dateStr, summary);
+        showToast('已存入拾忆林');
+    }).catch(function(e) {
+        if (loadingToast) loadingToast.remove();
+        showToast('总结生成失败：' + (e.message || '未知错误'));
+    });
 }
 
 function clearChatHistory() {
