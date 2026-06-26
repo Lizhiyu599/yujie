@@ -558,7 +558,7 @@ function buildGroupSystemPrompt(groupId) {
     var membersInfo = group.members.map(function(mid) {
         var c = contacts.find(function(ct) { return ct.id === mid; });
         if (!c) return '';
-        return '- ' + c.name + '（性格：' + (c.persona ? c.persona.substring(0, 80) : '未知') + '）';
+        return '- ' + c.name;
     }).join('\n');
 
     var prompt = '【群聊模式】你现在在一个群聊中。群名：' + group.name + '。\n\n';
