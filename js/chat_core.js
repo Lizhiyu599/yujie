@@ -415,7 +415,7 @@ function processAIReply(rawContent, contactName, contactId) {
     }
 
     // ===== 检测角色旁白接收红包/转账（只处理卡片，不渲染旁白） =====
-    var acceptMatch = cleanContent.match(/[\(\（]([^\)\）]*)(接收了|收下了|收啦|收了)(红包|转账)[^\)\）]*[\)\）]/);
+    var acceptMatch = cleanContent.match(/[\(\（]([^\)\）]*)(收|接收|拿|领)[^\)\）]*(红包|转账)[^\)\）]*[\)\）]/);
     var accepted = false;
     if (acceptMatch) {
         accepted = acceptLatestPayment();
