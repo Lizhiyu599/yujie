@@ -2718,6 +2718,3 @@
 .bubble-row.assistant {
     flex-direction: row-reverse;
 }
-#chatMessages .bubble-row.assistant {
-    flex-direction: row-reverse !important;
-}
