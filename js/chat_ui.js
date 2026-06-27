@@ -1500,30 +1500,80 @@ function initiateGroupChat() {
                 var data = JSON.parse(result);
                 importCharacterCard(data);
             } catch (err) {
-                // 不是JSON，当纯文本角色卡处理
+                // PNG：尝试从base64中提取JSON
+                if (result.indexOf('base64,') > 0) {
+                    try {
+                        var base64Data = result.split('base64,')[1] || '';
+                        var raw = atob(base64Data);
+                        var jsonStart = raw.indexOf('{');
+                        var jsonEnd = raw.lastIndexOf('}') + 1;
+                        if (jsonStart >= 0 && jsonEnd > jsonStart) {
+                            var jsonStr = raw.substring(jsonStart, jsonEnd);
+                            var data = JSON.parse(jsonStr);
+                            importCharacterCard(data);
+                            return;
+                        }
+                    } catch(e2) {}
+                }
+                // 纯文本
                 importTextCharacterCard(result);
             }
         };
-        reader.readAsText(file);
+        if (file.name.endsWith('.png')) {
+            reader.readAsDataURL(file);
+        } else {
+            reader.readAsText(file);
+        }
     };
     input.click();
+}
+
+function importCharacterCard(data) {
+    showCreateCharacterPage();
+    setTimeout(function() {
+        var nameEl = document.getElementById('charNameInput');
+        var noteEl = document.getElementById('charNoteInput');
+        var personalityEl = document.getElementById('charPersonalityInput');
+        var backgroundEl = document.getElementById('charBackgroundInput');
+        
+        if (nameEl && data.name) nameEl.value = data.name;
+        if (noteEl && data.name) noteEl.value = data.name;
+        if (personalityEl && data.personality) personalityEl.value = data.personality;
+        if (backgroundEl && data.description) backgroundEl.value = data.description;
+        
+        checkCreateButton();
+        showToast('角色卡已加载，请确认后保存');
+    }, 300);
 }
 
 function importTextCharacterCard(text) {
     showCreateCharacterPage();
     setTimeout(function() {
+        var nameEl = document.getElementById('charNameInput');
+        var noteEl = document.getElementById('charNoteInput');
+        var ageEl = document.getElementById('charAgeInput');
+        var personalityEl = document.getElementById('charPersonalityInput');
         var backgroundEl = document.getElementById('charBackgroundInput');
+
+        var nameMatch = text.match(/【姓名】[\/\*\s]*[：:]*\s*(.+)/);
+        var name = nameMatch ? nameMatch[1].trim() : '';
+        if (nameEl) nameEl.value = name;
+        if (noteEl) noteEl.value = name;
+
+        var ageMatch = text.match(/【年龄】[\/\*\s]*[：:]*\s*(.+)/);
+        if (ageEl && ageMatch) ageEl.value = ageMatch[1].trim();
+
+        if (personalityEl) {
+            var personalityMatch = text.match(/【性格】[\/\*\s]*[：:]*\s*([\s\S]+?)(?=\n【|\n#|$)/);
+            if (personalityMatch) {
+                personalityEl.value = personalityMatch[1].trim();
+            }
+        }
+
         if (backgroundEl) {
             backgroundEl.value = text;
         }
-        // 尝试提取名字
-        var nameMatch = text.match(/【姓名】[：:]*\s*(.+)/);
-        if (nameMatch) {
-            var nameEl = document.getElementById('charNameInput');
-            var noteEl = document.getElementById('charNoteInput');
-            if (nameEl) nameEl.value = nameMatch[1].trim();
-            if (noteEl) noteEl.value = nameMatch[1].trim();
-        }
+
         checkCreateButton();
         showToast('角色卡已加载，请确认后保存');
     }, 300);
