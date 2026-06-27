@@ -609,7 +609,7 @@ function addRefundedCard(side, amount) {
             <div style="width:50px;height:50px;background:#1d1d1f;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><div style="color:#fff;font-size:18px;font-weight:700;">$</div></div>
             <div style="flex:1;min-width:0;">
                 <div style="font-size:13px;color:#8e8e93;margin-bottom:2px;">转账</div>
-                <div style="font-size:18px;font-weight:700;color:#000;">$` + amount + `</div>
+                <div style="font-size:18px;font-weight:700;color:#000;">$` + amount.toFixed(2) + `</div>
                 <div style="font-size:11px;color:#ff3b30;margin-top:4px;font-weight:500;">已退还</div>
             </div>
         </div>
