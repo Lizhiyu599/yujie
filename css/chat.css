@@ -2715,3 +2715,6 @@
     height: 52px !important;
     font-size: 18px;
 }
+.bubble-row.assistant {
+    flex-direction: row-reverse;
+}
