@@ -64,6 +64,12 @@ async function fetchModelsGeneric(baseUrlEl, keyEl, modelEl) {
         showToast('请先填写 Base URL 和 API Key');
         return;
     }
+
+    var loadingToast = document.createElement('div');
+    loadingToast.className = 'global-toast';
+    loadingToast.textContent = '拉取中…';
+    document.body.appendChild(loadingToast);
+
     var endpoint = baseUrl;
     if (endpoint.endsWith('/chat/completions')) {
         endpoint = endpoint.replace('/chat/completions', '');
@@ -75,6 +81,7 @@ async function fetchModelsGeneric(baseUrlEl, keyEl, modelEl) {
             headers: { 'Authorization': 'Bearer ' + apiKey }
         });
         var data = await res.json();
+        if (loadingToast) loadingToast.remove();
         if (data && data.data && Array.isArray(data.data)) {
             var models = data.data.map(function(m) { return m.id; });
             showModelPickerByElement(document.getElementById(modelEl), models);
@@ -83,6 +90,7 @@ async function fetchModelsGeneric(baseUrlEl, keyEl, modelEl) {
             showToast('拉取失败：接口返回格式不支持');
         }
     } catch (e) {
+        if (loadingToast) loadingToast.remove();
         showToast('拉取失败：网络错误或跨域拦截');
     }
 }
