@@ -170,6 +170,7 @@
     margin-bottom: 8px;
 }
 .bubble-row.user {
+    flex-direction: row-reverse;
 }
 .bubble-avatar {
     width: 40px;
