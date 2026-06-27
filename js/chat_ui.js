@@ -1533,13 +1533,22 @@ function importCharacterCard(data) {
         var noteEl = document.getElementById('charNoteInput');
         var personalityEl = document.getElementById('charPersonalityInput');
         var backgroundEl = document.getElementById('charBackgroundInput');
-        
-        if (data.name) {
-            if (nameEl) nameEl.value = data.name;
-            if (noteEl) noteEl.value = data.name;
+        var ageEl = document.getElementById('charAgeInput');
+
+        // 兼容多种JSON结构
+        var charData = data.character || data;
+        var name = charData.name || '';
+        var personality = charData.personality ? (typeof charData.personality === 'string' ? charData.personality : JSON.stringify(charData.personality)) : '';
+        var background = charData.background || charData.description || '';
+        var age = charData.age || '';
+
+        if (name) {
+            if (nameEl) nameEl.value = name;
+            if (noteEl) noteEl.value = name;
         }
-        if (personalityEl && data.personality) personalityEl.value = data.personality;
-        if (backgroundEl && data.description) backgroundEl.value = data.description;
+        if (personalityEl && personality) personalityEl.value = personality;
+        if (backgroundEl && background) backgroundEl.value = background;
+        if (ageEl && age) ageEl.value = age;
         
         checkCreateButton();
         showToast('角色卡已加载，请确认后保存');
