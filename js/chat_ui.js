@@ -480,6 +480,7 @@ async function sendGroupMessage() {
     if (titleEl) titleEl.innerHTML = '<span class="nav-typing">输入中...</span>';
 
     try {
+        showToast('正在等待回复...');
         var reply = await callChatAPI([
             { role: 'system', content: systemPrompt },
             ...historyMessages,
