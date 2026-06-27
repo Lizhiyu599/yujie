@@ -1495,34 +1495,37 @@ function initiateGroupChat() {
         if (!file) return;
         var reader = new FileReader();
         reader.onload = function(ev) {
+            var result = ev.target.result;
             try {
-                var data = JSON.parse(ev.target.result);
+                // 先尝试直接解析 JSON
+                var data = JSON.parse(result);
                 importCharacterCard(data);
             } catch (err) {
-    showToast('解析失败：' + err.message);
+                // JSON 解析失败，尝试从 PNG 中提取
+                if (result.indexOf('tEXt') > 0) {
+                    try {
+                        var base64Data = result.split('base64,')[1] || '';
+                        var raw = atob(base64Data);
+                        var jsonStart = raw.indexOf('{');
+                        var jsonEnd = raw.lastIndexOf('}') + 1;
+                        if (jsonStart >= 0 && jsonEnd > jsonStart) {
+                            var jsonStr = raw.substring(jsonStart, jsonEnd);
+                            var data = JSON.parse(jsonStr);
+                            importCharacterCard(data);
+                            return;
+                        }
+                    } catch(e2) {}
+                }
+                showToast('角色卡格式不支持，请使用 JSON 或 PNG 格式');
             }
         };
-        reader.readAsText(file);
+        if (file.name.endsWith('.png')) {
+            reader.readAsDataURL(file);
+        } else {
+            reader.readAsText(file);
+        }
     };
     input.click();
-}
-
-function importCharacterCard(data) {
-    showCreateCharacterPage();
-    setTimeout(function() {
-        var nameEl = document.getElementById('charNameInput');
-        var noteEl = document.getElementById('charNoteInput');
-        var personalityEl = document.getElementById('charPersonalityInput');
-        var backgroundEl = document.getElementById('charBackgroundInput');
-        
-        if (nameEl && data.name) nameEl.value = data.name;
-        if (noteEl && data.name) noteEl.value = data.name;
-        if (personalityEl && data.personality) personalityEl.value = data.personality;
-        if (backgroundEl && data.description) backgroundEl.value = data.description;
-        
-        checkCreateButton();
-        showToast('角色卡已加载，请确认后保存');
-    }, 300);
 }
 
 // ========== 添加好友页面 ==========
