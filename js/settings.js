@@ -120,6 +120,12 @@ async function fetchModelsForDevice(deviceId) {
         showToast('请先填写完整的 Base URL 和 API Key');
         return;
     }
+
+    var loadingToast = document.createElement('div');
+    loadingToast.className = 'global-toast';
+    loadingToast.textContent = '拉取中…';
+    document.body.appendChild(loadingToast);
+
     let endpoint = baseUrl;
     if (endpoint.endsWith('/chat/completions')) {
         endpoint = endpoint.replace('/chat/completions', '');
@@ -131,6 +137,7 @@ async function fetchModelsForDevice(deviceId) {
             headers: { 'Authorization': 'Bearer ' + apiKey }
         });
         const data = await res.json();
+        if (loadingToast) loadingToast.remove();
         if (data && data.data && Array.isArray(data.data)) {
             const models = data.data.map(m => m.id);
             showModelPickerForDevice(container, models);
@@ -139,6 +146,7 @@ async function fetchModelsForDevice(deviceId) {
             showToast('拉取失败：接口返回格式不支持');
         }
     } catch (e) {
+        if (loadingToast) loadingToast.remove();
         showToast('拉取失败：网络错误或跨域拦截');
     }
 }
