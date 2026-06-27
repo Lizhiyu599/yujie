@@ -602,6 +602,7 @@ function addRefundedCard(side, amount) {
     avatar.className = 'bubble-avatar ' + (side === 'user' ? 'user-avatar' : 'bot-avatar');
     avatar.textContent = side === 'user' ? '我' : (getContactById(window.ChatState.currentContactId)?.avatar || 'AI');
     var card = document.createElement('div');
+    card.className = 'payment-card';
     card.style.cssText = 'background:#fff;border-radius:14px;padding:0;width:220px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
     card.innerHTML = `
         <div style="display:flex;align-items:center;gap:12px;padding:14px;">
