@@ -273,8 +273,8 @@ function acceptLatestPayment() {
         var card = cards[i];
         var msgId = card.getAttribute('data-msg-id');
         var state = getPaymentState(msgId);
+        var type = card.getAttribute('data-type');
         if (state === 'pending') {
-            var type = card.getAttribute('data-type');
             var amount = card.getAttribute('data-amount');
             updatePaymentCardUI(msgId, 'accepted');
             addReceivedCard('assistant', type, amount);
