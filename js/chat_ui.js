@@ -1499,7 +1499,7 @@ function initiateGroupChat() {
                 var data = JSON.parse(ev.target.result);
                 importCharacterCard(data);
             } catch (err) {
-                showToast('角色卡格式不支持');
+    showToast('解析失败：' + err.message);
             }
         };
         reader.readAsText(file);
