@@ -331,7 +331,7 @@ function enterChat(contactId) {
                 <div class="nav-body">
                     <span class="nav-back" onclick="backToChatList()">‹</span>
                     <span class="nav-title" id="chatTitle" onclick="openChatSettings()">${contact.name}</span>
-                    <span class="nav-mental-btn" onclick="toggleChatMental()" style="background-image:url(img/mental.png);background-size:cover;width:28px;height:28px;border-radius:50%;"> </span>
+                    <span class="nav-mental-btn" onclick="toggleChatMental()" style="background-image:url(https://i.ibb.co/zhgJgqxp/retouch-2026062800291648.png);background-size:cover;width:28px;height:28px;border-radius:50%;"> </span>
                 </div>
             </div>
               <div class="chat-messages" id="chatMessages" style="${savedBg ? 'background-image:url(' + savedBg + ');background-size:cover;background-position:center;' : ''}">
