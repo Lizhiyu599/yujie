@@ -784,8 +784,8 @@ function sendBotPaymentCard(type, amount, note) {
     card.onclick = function() { openPaymentModal(msgId); };
     if (isRedPacket) {
         card.innerHTML = `
-            <div style="display:flex;align-items:center;gap:12px;padding:14px;">
-                <div style="width:50px;height:58px;background:#1d1d1f;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;">
+    <div style="display:flex;align-items:center;gap:12px;padding:14px;max-width:220px;box-sizing:border-box;">
+        <div style="width:50px;height:58px;background:#1d1d1f;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;">
                     <div style="position:absolute;top:-3px;left:50%;transform:translateX(-50%);width:18px;height:10px;background:#fff;border-radius:0 0 6px 6px;"></div>
                     <div style="color:#f5c543;font-size:20px;font-weight:800;margin-top:4px;">$</div>
                 </div>
