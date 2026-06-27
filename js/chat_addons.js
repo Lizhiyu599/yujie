@@ -739,7 +739,11 @@ function sendPaymentCard(type, amount, note, method) {
 
     var nRow = document.createElement('div');
     nRow.className = 'bubble-narration';
-    nRow.textContent = '（发送了' + type + amount.toFixed(2) + '元' + (note ? '，备注：' + note : '') + '）';
+    if (type === '红包') {
+    nRow.textContent = '（发了一个红包）';
+} else {
+    nRow.textContent = '（转账' + amount.toFixed(2) + '元）';
+    }
     nRow.style.display = 'none';
     document.getElementById('chatMessages').appendChild(nRow);
 
