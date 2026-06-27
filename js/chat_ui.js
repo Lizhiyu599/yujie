@@ -479,6 +479,7 @@ async function sendGroupMessage() {
     var titleEl = document.getElementById('chatTitle');
     if (titleEl) titleEl.innerHTML = '<span class="nav-typing">输入中...</span>';
 
+    showToast('调试：准备调API');
     try {
         showToast('正在等待回复...');
         var reply = await callChatAPI([
