@@ -578,9 +578,10 @@ function addReceivedCard(side, type, amount) {
     avatar.textContent = side === 'user' ? '我' : (getContactById(window.ChatState.currentContactId)?.avatar || 'AI');
     var card = document.createElement('div');
     card.style.cssText = 'background:#fff;border-radius:14px;padding:0;width:220px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
+    var isRedPacket = type === '红包';
     card.innerHTML = `
         <div style="display:flex;align-items:center;gap:12px;padding:14px;">
-            <div style="width:50px;height:50px;background:#1d1d1f;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><div style="color:#f5c543;font-size:18px;font-weight:700;">$</div></div>
+            <div style="width:50px;height:50px;background:#1d1d1f;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><div style="color:${isRedPacket ? '#f5c543' : '#fff'};font-size:18px;font-weight:700;">$</div></div>
             <div style="flex:1;min-width:0;">
                 <div style="font-size:13px;color:#8e8e93;margin-bottom:2px;">${type}</div>
                 <div style="font-size:18px;font-weight:700;color:#000;">$` + amount + `</div>
