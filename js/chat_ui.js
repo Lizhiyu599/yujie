@@ -1434,7 +1434,7 @@ function togglePlusMenu(e) {
     menu.id = 'plusMenuPopup';
     menu.className = 'plus-menu-popup';
     menu.innerHTML = `
-        <div class="plus-menu-item" id="menuGroupChat">发起群聊</div>
+        <div class="plus-menu-item" id="menuGroupChat">导入角色卡</div>
         <div class="plus-menu-divider"></div>
         <div class="plus-menu-item" id="menuAddFriend">添加好友</div>
     `;
@@ -1487,7 +1487,7 @@ function togglePlusMenu(e) {
 }
 
 function initiateGroupChat() {
-    showToast('群聊功能开发中');
+    showToast('导入角色卡功能开发中');
 }
 
 // ========== 添加好友页面 ==========
