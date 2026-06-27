@@ -1487,7 +1487,42 @@ function togglePlusMenu(e) {
 }
 
 function initiateGroupChat() {
-    showToast('导入角色卡功能开发中');
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,.png';
+    input.onchange = function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+            try {
+                var data = JSON.parse(ev.target.result);
+                importCharacterCard(data);
+            } catch (err) {
+                showToast('角色卡格式不支持');
+            }
+        };
+        reader.readAsText(file);
+    };
+    input.click();
+}
+
+function importCharacterCard(data) {
+    showCreateCharacterPage();
+    setTimeout(function() {
+        var nameEl = document.getElementById('charNameInput');
+        var noteEl = document.getElementById('charNoteInput');
+        var personalityEl = document.getElementById('charPersonalityInput');
+        var backgroundEl = document.getElementById('charBackgroundInput');
+        
+        if (nameEl && data.name) nameEl.value = data.name;
+        if (noteEl && data.name) noteEl.value = data.name;
+        if (personalityEl && data.personality) personalityEl.value = data.personality;
+        if (backgroundEl && data.description) backgroundEl.value = data.description;
+        
+        checkCreateButton();
+        showToast('角色卡已加载，请确认后保存');
+    }, 300);
 }
 
 // ========== 添加好友页面 ==========
