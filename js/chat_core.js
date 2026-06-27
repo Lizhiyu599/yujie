@@ -579,7 +579,6 @@ if (diaryAuto && diaryChar === contactId && typeof generateDiaryContent === 'fun
     var mental = window.ChatConfig && window.ChatConfig.mental;
     var prevFav = parseInt(localStorage.getItem('diary_last_fav_' + contactId) || mental.favorability);
     var favChange = Math.abs(mental.favorability - prevFav);
-    // 检查今天自动生成了几篇
     var todayKey = new Date().getFullYear() + '年' + (new Date().getMonth() + 1) + '月' + new Date().getDate() + '日';
     var autoCountKey = 'diary_auto_count_' + contactId + '_' + todayKey;
     var autoCount = parseInt(localStorage.getItem(autoCountKey) || 0);
@@ -651,7 +650,6 @@ function appendMessage(role, text) {
         avatar.style.display = 'none';
     }
        }
-    // 用户头像：从面具数据取
     var masks = typeof getMasks === 'function' ? getMasks() : [];
     var contactForMask = getContactById(window.ChatState.currentContactId);
     var activeMaskId = (contactForMask && contactForMask.maskId) ? contactForMask.maskId : localStorage.getItem('active_mask_id') || '';
@@ -669,16 +667,12 @@ function appendMessage(role, text) {
         avatar.textContent = '我';
     }
 } else {
-
-     // 线下模式：只在第一条角色消息显示头像
     if (window.ChatState && window.ChatState.isOfflineMode) {
         var existingBotAvatars = messages.querySelectorAll('.bubble-row.assistant .bot-avatar');
         if (existingBotAvatars.length > 0) {
             avatar.style.display = 'none';
         }
     }
-    
-    // 角色头像：从联系人数据取
     var contact = getContactById(window.ChatState.currentContactId);
     if (contact && contact.avatarData) {
         avatar.style.backgroundImage = 'url(' + contact.avatarData + ')';
@@ -697,7 +691,6 @@ if (window.ChatState && window.ChatState.isOfflineMode) {
 } else {
     bubble.className = 'bubble bubble-' + role;
 }
-// 引用消息气泡
 if (window.ChatState.quotedMsg && (role === 'user' || role === 'assistant')) {
     bubble.className = 'bubble bubble-' + role + ' quote-bubble';
     bubble.innerHTML = `
@@ -815,7 +808,6 @@ function getRecentHistory(contactId, maxCount) {
         result.push({ role: role, content: bubble.textContent });
     }
 
-    // 合并另一模式的聊天记录
     var otherKey = (window.ChatState && window.ChatState.isOfflineMode ? 'chat_history_' : 'chat_history_offline_') + contactId;
     var otherSaved = localStorage.getItem(otherKey);
     if (otherSaved) {
@@ -834,28 +826,7 @@ function getRecentHistory(contactId, maxCount) {
     if (result.length > maxCount * 2) {
         result.splice(0, result.length - maxCount * 2);
     }
-    // 合并群聊记录
-if (contactId) {
-    var groups = JSON.parse(localStorage.getItem('group_chats') || '[]');
-    groups.forEach(function(g) {
-        if (g.members.indexOf(contactId) >= 0) {
-            var groupSaved = localStorage.getItem('chat_history_group_' + g.id);
-            if (groupSaved) {
-                var tempDiv2 = document.createElement('div');
-                tempDiv2.innerHTML = groupSaved;
-                var groupRows = tempDiv2.querySelectorAll('.bubble-row');
-                for (var gj = 0; gj < groupRows.length; gj++) {
-                    var gRow = groupRows[gj];
-                    var gBubble = gRow.querySelector('.bubble');
-                    if (!gBubble) continue;
-                    var gRole = gRow.classList.contains('user') ? 'user' : 'assistant';
-                    var gName = gRow.querySelector('.group-sender-name');
-                    result.push({ role: gRole, content: (gName ? gName.textContent + '：' : '') + gBubble.textContent });
-                }
-            }
-        }
-    });
-}
+
     return result;
 } 
 
@@ -894,7 +865,6 @@ function loadChatHistory(contactId) {
     var storageKey = (window.ChatState && window.ChatState.isOfflineMode ? 'chat_history_offline_' : 'chat_history_') + contactId;
     var saved = localStorage.getItem(storageKey);
     if (saved) {
-        // 清洗乱码数据
         if (saved.indexOf('/v') === 0 || saved.indexOf('http') === 0 || saved.length < 20) {
             localStorage.removeItem(storageKey);
             return;
@@ -968,14 +938,12 @@ async function callTTS(text) {
     }
 }
 
-// ========== 检查是否配置了语音API ==========
 function hasVoiceAPI() {
     const groupId = localStorage.getItem('voice_group_id');
     const apiKey = localStorage.getItem('voice_api_key');
     return !!(groupId && apiKey);
 }
 
-// ========== 角色发语音 ==========
 async function sendBotVoice(text) {
     if (hasVoiceAPI()) {
         const voiceUrl = await callTTS(text);
@@ -1069,12 +1037,10 @@ function saveAutoMsgToHistory(contactId, contactName, rawContent) {
     }
 }
 
-// ========== 未读消息计数 ==========
 function getUnreadCount(contactId) { const raw = localStorage.getItem('unread_' + contactId); return raw ? parseInt(raw) : 0; }
 function addUnreadCount(contactId) { const count = getUnreadCount(contactId) + 1; localStorage.setItem('unread_' + contactId, count); return count; }
 function clearUnreadCount(contactId) { localStorage.removeItem('unread_' + contactId); }
 
-// ========== 通知弹窗 ==========
 function showAutoMsgNotification(contactName, contactId, message) {
     const existing = document.getElementById('autoMsgNotification');
     if (existing) existing.remove();
@@ -1133,72 +1099,31 @@ function getRandomMomentPrompt(contact) {
 function getRelativeTimeForMoment(timestamp) { var d = new Date(timestamp); return (d.getMonth() + 1) + '.' + d.getDate() + ' ' + d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0'); }
 
 // ========== 生成聊天总结 ==========
-function switchToOffline() {
-    toggleAddPanel();
-    var currentId = window.ChatState.currentContactId || (window.ChatConfig && window.ChatConfig.contacts[0] ? window.ChatConfig.contacts[0].id : 'c1');
-    if (typeof saveChatHistory === 'function') saveChatHistory(currentId);
-    
-    // 显示总结弹窗
-    var summaryToast = document.createElement('div');
-    summaryToast.className = 'global-toast';
-    summaryToast.textContent = '正在总结对话…';
-    summaryToast.style.background = 'rgba(0,0,0,0.75)';
-    summaryToast.style.color = '#fff';
-    document.body.appendChild(summaryToast);
-    
-    window.ChatState.isOfflineMode = true;
-    var contactId = window.ChatState.currentContactId || currentId;
-    
-    if (typeof generateSummary === 'function') {
-        generateSummary(currentId).then(function(summary) {
-            if (summary && typeof saveShiyilinSummary === 'function') {
-                var now = new Date();
-                var dateStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日';
-                saveShiyilinSummary(currentId, dateStr, summary);
-            }
-            if (summaryToast) summaryToast.remove();
-            enterChat(contactId);
-        }).catch(function(){
-            if (summaryToast) summaryToast.remove();
-            enterChat(contactId);
-        });
-    } else {
-        if (summaryToast) summaryToast.remove();
-        enterChat(contactId);
+async function generateSummary(contactId) {
+    var historyMessages = getRecentHistory(contactId, 100);
+    if (historyMessages.length === 0) {
+        return null;
     }
-}
 
-function switchToOnline() {
-    toggleAddPanel();
-    var currentId = window.ChatState.currentContactId || (window.ChatConfig && window.ChatConfig.contacts[0] ? window.ChatConfig.contacts[0].id : 'c1');
-    if (typeof saveChatHistory === 'function') saveChatHistory(currentId);
-    
-    var summaryToast = document.createElement('div');
-    summaryToast.className = 'global-toast';
-    summaryToast.textContent = '正在总结对话…';
-    summaryToast.style.background = 'rgba(0,0,0,0.75)';
-    summaryToast.style.color = '#fff';
-    document.body.appendChild(summaryToast);
-    
-    window.ChatState.isOfflineMode = false;
-    var contactId = window.ChatState.currentContactId || currentId;
-    
-    if (typeof generateSummary === 'function') {
-        generateSummary(currentId).then(function(summary) {
-            if (summary && typeof saveShiyilinSummary === 'function') {
-                var now = new Date();
-                var dateStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日';
-                saveShiyilinSummary(currentId, dateStr, summary);
-            }
-            if (summaryToast) summaryToast.remove();
-            enterChat(contactId);
-        }).catch(function(){
-            if (summaryToast) summaryToast.remove();
-            enterChat(contactId);
-        });
-    } else {
-        if (summaryToast) summaryToast.remove();
-        enterChat(contactId);
+    var contact = getContactById(contactId);
+    var contactName = contact ? contact.name : 'AI';
+
+    var chatContent = '';
+    historyMessages.forEach(function(m) {
+        var roleName = m.role === 'user' ? '用户' : contactName;
+        chatContent += roleName + '：' + m.content + '\n';
+    });
+
+    var summaryPrompt = '请根据以下聊天记录，用简练的中文总结今天发生的重要事件、对话要点、情感变化。以旁白口吻写，不超过200字。\n\n' + chatContent;
+
+    try {
+        var reply = await callChatAPI([
+            { role: 'system', content: '你是一个擅长总结对话的助手。用简洁优美的中文总结，不要添加额外评论。' },
+            { role: 'user', content: summaryPrompt }
+        ]);
+        return reply.replace(/\{[^}]*\}/g, '').trim();
+    } catch (e) {
+        return null;
     }
 }
 
@@ -1236,7 +1161,7 @@ async function generateDiaryContent(contactId) {
     
     try {
         var reply = await callChatAPI([
-            { role: 'system', content: systemPrompt + '\n\n你现在要写一篇日记。用自然的口吻写，不要加JSON状态信息，不要加旁白括号。150字以内。' },
+            { role: 'system', content: systemPrompt + '\n\n你现在要写一篇日记。用自然的口吻写，不要加JSON状态信息，不要加旁白括号。' },
             { role: 'user', content: diaryPrompt }
         ]);
         var cleanReply = reply.replace(/\{[^}]*\}/g, '').trim();
