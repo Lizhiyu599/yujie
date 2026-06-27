@@ -945,8 +945,6 @@ function switchToOnline() {
     var summaryToast = document.createElement('div');
     summaryToast.className = 'global-toast';
     summaryToast.textContent = '正在总结对话…';
-    summaryToast.style.background = 'rgba(0,0,0,0.75)';
-    summaryToast.style.color = '#fff';
     document.body.appendChild(summaryToast);
     
     window.ChatState.isOfflineMode = false;
