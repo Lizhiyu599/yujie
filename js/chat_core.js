@@ -278,10 +278,10 @@ function acceptLatestPayment() {
             updatePaymentCardUI(msgId, 'accepted');
             addReceivedCard('assistant', type, amount);
             saveChatHistory(window.ChatState.currentContactId);
-            return true;
+            return amount;
         }
     }
-    return false;
+    return null;
 }
 
 function refundLatestPayment() {
@@ -417,7 +417,11 @@ function processAIReply(rawContent, contactName, contactId) {
     var acceptMatch = cleanContent.match(/[\(\（]([^\)\）]*)(收|接收|拿|领)[^\)\）]*(红包|转账)[^\)\）]*[\)\）]/);
     var accepted = false;
     if (acceptMatch) {
-        accepted = acceptLatestPayment();
+        var acceptedAmount = acceptLatestPayment();
+if (acceptedAmount) {
+    accepted = true;
+    appendMessage('narration', contactName + '已接收，金额' + acceptedAmount + '元');
+}
         cleanContent = cleanContent.replace(acceptMatch[0], '');
     }
 
