@@ -807,7 +807,6 @@ function sendBotPaymentCard(type, amount, note) {
                 <div style="flex:1;min-width:0;">
                     <div style="font-size:13px;color:#8e8e93;margin-bottom:2px;">转账</div>
                     <div style="font-size:18px;font-weight:700;color:#000;">$` + amount.toFixed(2) + `</div>
-                    ${note ? '<div style="font-size:11px;color:#8e8e93;margin-top:2px;">' + note + '</div>' : ''}
                     <div class="payment-status-label" style="font-size:11px;color:#8e8e93;margin-top:4px;display:none;"></div>
                 </div>
             </div>`;
