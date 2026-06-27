@@ -1500,7 +1500,6 @@ function initiateGroupChat() {
                 var data = JSON.parse(result);
                 importCharacterCard(data);
             } catch (err) {
-                // PNG：尝试从base64中提取JSON
                 if (result.indexOf('base64,') > 0) {
                     try {
                         var base64Data = result.split('base64,')[1] || '';
@@ -1515,7 +1514,6 @@ function initiateGroupChat() {
                         }
                     } catch(e2) {}
                 }
-                // 纯文本
                 importTextCharacterCard(result);
             }
         };
@@ -1536,8 +1534,10 @@ function importCharacterCard(data) {
         var personalityEl = document.getElementById('charPersonalityInput');
         var backgroundEl = document.getElementById('charBackgroundInput');
         
-        if (nameEl && data.name) nameEl.value = data.name;
-        if (noteEl && data.name) noteEl.value = data.name;
+        if (data.name) {
+            if (nameEl) nameEl.value = data.name;
+            if (noteEl) noteEl.value = data.name;
+        }
         if (personalityEl && data.personality) personalityEl.value = data.personality;
         if (backgroundEl && data.description) backgroundEl.value = data.description;
         
@@ -1557,8 +1557,10 @@ function importTextCharacterCard(text) {
 
         var nameMatch = text.match(/【姓名】[\/\*\s]*[：:]*\s*(.+)/);
         var name = nameMatch ? nameMatch[1].trim() : '';
-        if (nameEl) nameEl.value = name;
-        if (noteEl) noteEl.value = name;
+        if (name) {
+            if (nameEl) nameEl.value = name;
+            if (noteEl) noteEl.value = name;
+        }
 
         var ageMatch = text.match(/【年龄】[\/\*\s]*[：:]*\s*(.+)/);
         if (ageEl && ageMatch) ageEl.value = ageMatch[1].trim();
