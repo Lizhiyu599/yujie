@@ -849,16 +849,6 @@ function toggleVoiceMode() {
 
 // ========== 发送/回复逻辑 ==========
 function handleSendOrReply() {
-    // 群聊模式
-    if (window.ChatState && window.ChatState.currentGroupId) {
-        var groupInput = document.getElementById('chatInput');
-        if (!groupInput) return;
-        if (groupInput.value.trim()) {
-            sendGroupMessage();
-        }
-        return;
-    }
-
     const input = document.getElementById('chatInput');
     if (!input) return;
 
@@ -1517,9 +1507,7 @@ function togglePlusMenu(e) {
 }
 
 function initiateGroupChat() {
-    var menu = document.getElementById('plusMenuPopup');
-    if (menu) menu.remove();
-    showCreateGroupPage();
+    showToast('群聊功能开发中');
 }
 
 // ========== 添加好友页面 ==========
