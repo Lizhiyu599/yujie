@@ -1489,7 +1489,7 @@ function togglePlusMenu(e) {
 function initiateGroupChat() {
     var input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.json,.png';
+    input.accept = '.json,.png,.txt';
     input.onchange = function(e) {
         var file = e.target.files[0];
         if (!file) return;
@@ -1497,35 +1497,36 @@ function initiateGroupChat() {
         reader.onload = function(ev) {
             var result = ev.target.result;
             try {
-                // 先尝试直接解析 JSON
                 var data = JSON.parse(result);
                 importCharacterCard(data);
             } catch (err) {
-                // JSON 解析失败，尝试从 PNG 中提取
-                if (result.indexOf('tEXt') > 0) {
-                    try {
-                        var base64Data = result.split('base64,')[1] || '';
-                        var raw = atob(base64Data);
-                        var jsonStart = raw.indexOf('{');
-                        var jsonEnd = raw.lastIndexOf('}') + 1;
-                        if (jsonStart >= 0 && jsonEnd > jsonStart) {
-                            var jsonStr = raw.substring(jsonStart, jsonEnd);
-                            var data = JSON.parse(jsonStr);
-                            importCharacterCard(data);
-                            return;
-                        }
-                    } catch(e2) {}
-                }
-                showToast('角色卡格式不支持，请使用 JSON 或 PNG 格式');
+                // 不是JSON，当纯文本角色卡处理
+                importTextCharacterCard(result);
             }
         };
-        if (file.name.endsWith('.png')) {
-            reader.readAsDataURL(file);
-        } else {
-            reader.readAsText(file);
-        }
+        reader.readAsText(file);
     };
     input.click();
+}
+
+function importTextCharacterCard(text) {
+    showCreateCharacterPage();
+    setTimeout(function() {
+        var backgroundEl = document.getElementById('charBackgroundInput');
+        if (backgroundEl) {
+            backgroundEl.value = text;
+        }
+        // 尝试提取名字
+        var nameMatch = text.match(/【姓名】[：:]*\s*(.+)/);
+        if (nameMatch) {
+            var nameEl = document.getElementById('charNameInput');
+            var noteEl = document.getElementById('charNoteInput');
+            if (nameEl) nameEl.value = nameMatch[1].trim();
+            if (noteEl) noteEl.value = nameMatch[1].trim();
+        }
+        checkCreateButton();
+        showToast('角色卡已加载，请确认后保存');
+    }, 300);
 }
 
 // ========== 添加好友页面 ==========
