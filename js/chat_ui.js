@@ -241,34 +241,14 @@ function renderChatList() {
     if (!listView) return;
 
     const contacts = window.ChatConfig.contacts;
-    var groups = JSON.parse(localStorage.getItem('group_chats') || '[]');
-    var activeMaskId = localStorage.getItem('active_mask_id') || '';
-    // 筛选当前面具的群聊
-    var myGroups = groups.filter(function(g) { return g.maskId === activeMaskId || !g.maskId; });
 
-    if (contacts.length === 0 && myGroups.length === 0) {
+    if (contacts.length === 0) {
         listView.innerHTML = '<div style="padding:60px 20px;text-align:center;color:#8e8e93;">暂无联系人<br><br>点击右上角 + 添加好友</div>';
         return;
     }
 
     var html = '';
 
-    // 群聊列表
-    if (myGroups.length > 0) {
-        myGroups.forEach(function(g) {
-            html += `
-                <div class="chat-list-item" onclick="enterGroupChat('${g.id}')">
-                    <div class="chat-avatar" style="${g.avatar ? 'background-image:url(' + g.avatar + ');background-size:cover;background-position:center;' : ''}">${g.avatar ? '&nbsp;' : '群'}</div>
-                    <div class="chat-info">
-                        <div class="chat-name">${g.name}（${g.members.length + 1}）</div>
-                        <div class="chat-preview"></div>
-                    </div>
-                </div>
-            `;
-        });
-    }
-
-    // 联系人列表
     html += contacts.map(c => {
         const unread = getUnreadCount(c.id);
         const badgeHTML = unread > 0 ? '<span class="chat-unread-badge">' + (unread > 99 ? '99+' : unread) + '</span>' : '';
