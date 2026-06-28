@@ -518,6 +518,24 @@ body, html {
     color: #b0b0b5;
 }
 
+.widget-signature2 {
+    display: block;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 11px;
+    color: #999;
+    font-weight: 400;
+    text-align: left;
+    cursor: text;
+    line-height: 1.4;
+    min-height: 16px;
+}
+.widget-signature2:empty::before {
+    content: '🩶✩* iwish..★행복｡◍•)♡';
+    color: #b0b0b5;
+}
+
 /* 小组件编辑模式 */
 .desktop-widget.editing {
     animation: jiggle 0.3s infinite;
