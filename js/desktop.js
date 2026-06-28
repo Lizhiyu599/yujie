@@ -445,6 +445,14 @@ function openHalfPanel() {
     panel.innerHTML =
         '<div class="half-panel-handle"></div>' +
         '<div class="half-panel-content" id="halfPanelContent">' +
+            '<div class="widget-list-item" data-target="wp-1x4"><span>1x4 小组件</span><span class="toggle-arrow">›</span></div>' +
+            '<div id="wp-1x4" class="collapsible-section" style="display:none;">' +
+                '<div class="widget-placeholder">即将推出</div>' +
+            '</div>' +
+            '<div class="widget-list-item" data-target="wp-2x2"><span>2x2 小组件</span><span class="toggle-arrow">›</span></div>' +
+            '<div id="wp-2x2" class="collapsible-section" style="display:none;">' +
+                '<div class="widget-placeholder">即将推出</div>' +
+            '</div>' +
             '<div class="widget-list-item" data-target="wp-2x4"><span>2x4 小组件</span><span class="toggle-arrow">›</span></div>' +
             '<div id="wp-2x4" class="collapsible-section" style="display:none;">' +
                 '<div class="widget-preview-card" onclick="confirmAddWidget(\'clock\')">' +
@@ -462,8 +470,12 @@ function openHalfPanel() {
                     '<div class="widget-preview-label">时钟小组件</div>' +
                 '</div>' +
             '</div>' +
-            '<div class="widget-list-item" data-target="wp-2x2"><span>2x2 小组件</span><span class="toggle-arrow">›</span></div>' +
-            '<div id="wp-2x2" class="collapsible-section" style="display:none;">' +
+            '<div class="widget-list-item" data-target="wp-3x4"><span>3x4 小组件</span><span class="toggle-arrow">›</span></div>' +
+            '<div id="wp-3x4" class="collapsible-section" style="display:none;">' +
+                '<div class="widget-placeholder">即将推出</div>' +
+            '</div>' +
+            '<div class="widget-list-item" data-target="wp-4x4"><span>4x4 小组件</span><span class="toggle-arrow">›</span></div>' +
+            '<div id="wp-4x4" class="collapsible-section" style="display:none;">' +
                 '<div class="widget-placeholder">即将推出</div>' +
             '</div>' +
         '</div>';
@@ -563,11 +575,11 @@ window.addEventListener('DOMContentLoaded', function() {
     setupWidgetAvatarUpload();
 
     // 注册桌面图标
-    addDesktopIcon({ id: 'chat', name: '聊天', icon: '<img src="https://i.ibb.co/3yN7gbxD/1782621034253.png" style="width:56px;height:56px;border-radius:16px;object-fit:cover;">', action: 'openChat' });
-    addDesktopIcon({ id: 'shiyilin', name: '拾忆林', icon: '<img src="https://i.ibb.co/dwNq5VfT/1782621400981.png" style="width:56px;height:56px;border-radius:16px;object-fit:cover;">', action: 'openShiyilin' });
-    addDesktopIcon({ id: 'qianban', name: '牵绊', icon: '<img src="https://i.ibb.co/1f11jCzs/1782623493282.png" style="width:56px;height:56px;border-radius:16px;object-fit:cover;">', action: 'openQianban' });
-    addDesktopIcon({ id: 'gallery', name: '映像馆', icon: '<img src="https://i.ibb.co/Dfcz9js0/1782623882994.png" style="width:56px;height:56px;border-radius:16px;object-fit:cover;">', action: 'openGallery' });
-    addDesktopIcon({ id: 'qawenda', name: '奇问妙答', icon: '<img src="https://i.ibb.co/dwTDLTcc/1782624493861.png" style="width:56px;height:56px;border-radius:16px;object-fit:cover;">', action: 'openQawenda' });
+    addDesktopIcon({ id: 'chat', name: '聊天', icon: '<img src="https://i.ibb.co/3yN7gbxD/1782621034253.png" style="width:100%;height:100%;border-radius:16px;object-fit:cover;">', action: 'openChat' });
+    addDesktopIcon({ id: 'shiyilin', name: '拾忆林', icon: '<img src="https://i.ibb.co/dwNq5VfT/1782621400981.png" style="width:100%;height:100%;border-radius:16px;object-fit:cover;">', action: 'openShiyilin' });
+    addDesktopIcon({ id: 'qianban', name: '牵绊', icon: '<img src="https://i.ibb.co/1f11jCzs/1782623493282.png" style="width:100%;height:100%;border-radius:16px;object-fit:cover;">', action: 'openQianban' });
+    addDesktopIcon({ id: 'gallery', name: '映像馆', icon: '<img src="https://i.ibb.co/Dfcz9js0/1782623882994.png" style="width:100%;height:100%;border-radius:16px;object-fit:cover;">', action: 'openGallery' });
+    addDesktopIcon({ id: 'qawenda', name: '奇问妙答', icon: '<img src="https://i.ibb.co/dwTDLTcc/1782624493861.png" style="width:100%;height:100%;border-radius:16px;object-fit:cover;">', action: 'openQawenda' });
 
     // Dock栏
     var dockBar = document.getElementById('dockBar');
