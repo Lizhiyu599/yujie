@@ -918,8 +918,8 @@ body, html {
     animation: jiggle 0.3s infinite;
 }
 
-.grid-cell[style*="span 2"] {
-    min-height: 220px !important;
+.grid-cell[style*="grid-row: span 2"] {
+    min-height: 170px !important;
 }
 
 .grid-widget {
