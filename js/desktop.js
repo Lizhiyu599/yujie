@@ -685,7 +685,8 @@ window.addEventListener('DOMContentLoaded', function() {
     addDesktopIcon({ id: 'qianban', name: '牵绊', icon: '<img src="https://i.ibb.co/1f11jCzs/1782623493282.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openQianban' });
     addDesktopIcon({ id: 'gallery', name: '映像馆', icon: '<img src="https://i.ibb.co/Dfcz9js0/1782623882994.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openGallery' });
     addDesktopIcon({ id: 'qawenda', name: '奇问妙答', icon: '<img src="https://i.ibb.co/dwTDLTcc/1782624493861.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openQawenda' });
-
+    addDesktopIcon({ id: 'music', name: '网易云音乐', icon: '<img src="https://i.ibb.co/S7mxg9tF/1782660880083.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openMusic' });
+    
     renderDesktopGrid();
     setupDesktopLongPress();
     setupWidgetAvatarUpload();
