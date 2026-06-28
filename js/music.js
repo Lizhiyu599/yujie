@@ -156,9 +156,9 @@ async function musicLogin() {
             } catch(e) {}
         }, 3000);
     } catch(e) {
-        var qrWrap = document.getElementById('musicQrWrap');
-        if (qrWrap) qrWrap.innerHTML = '<div class="music-loading">网络错误，请重试</div>';
-    }
+    var qrWrap = document.getElementById('musicQrWrap');
+    if (qrWrap) qrWrap.innerHTML = '<div class="music-loading">错误：' + e.message + '</div>';
+  }  
 }
 
 function closeMusicLogin() {
