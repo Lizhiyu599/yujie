@@ -780,6 +780,11 @@ settingItem.innerHTML = `
     </div>
     <div class="dock-label">设置</div>
 `;
+settingItem.onclick = () => {
+    openModal('settingsModal');
+    setTimeout(function() { renderDeviceList(); }, 100);
+};
+dockBar.appendChild(settingItem);
 
 // 日记图标
 diaryItem.innerHTML = `
@@ -790,6 +795,8 @@ diaryItem.innerHTML = `
     </div>
     <div class="dock-label">日记</div>
 `;
+diaryItem.onclick = () => { openDiary(); };
+dockBar.appendChild(diaryItem);
 
 // 万象树图标
 worldbookItem.innerHTML = `
@@ -800,6 +807,8 @@ worldbookItem.innerHTML = `
     </div>
     <div class="dock-label">万象树</div>
 `;
+worldbookItem.onclick = () => { openWorldbook(); };
+dockBar.appendChild(worldbookItem);
 
 // 美化图标
 beautifyItem.innerHTML = `
