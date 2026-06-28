@@ -137,21 +137,24 @@ async function musicLogin() {
         if (qrWrap) qrWrap.innerHTML = '<img src="' + qrImg + '" class="music-qr-img">';
         
         window._musicLoginTimer = setInterval(async function() {
-            var checkRes = await fetch(apiBase + '/login/qr/check?key=' + key);
-            var checkData = await checkRes.json();
-            if (checkData.code === 803 || checkData.data.code === 803) {
-                clearInterval(window._musicLoginTimer);
-                var cookie = checkData.cookie || checkData.data.cookie;
-                localStorage.setItem('music_cookie', cookie);
-                closeMusicLogin();
-                showToast('登录成功');
-                switchMusicTab('mine');
-            } else if (checkData.code === 800 || checkData.data.code === 800) {
-                clearInterval(window._musicLoginTimer);
-                closeMusicLogin();
-                showToast('二维码已过期，请重新登录');
-            }
-        }, 2000);
+            try {
+                var checkRes = await fetch(apiBase + '/login/qr/check?key=' + key + '&t=' + Date.now());
+                var checkData = await checkRes.json();
+                var code = checkData.code || (checkData.data && checkData.data.code);
+                if (code === 803) {
+                    clearInterval(window._musicLoginTimer);
+                    var cookie = checkData.cookie || (checkData.data && checkData.data.cookie);
+                    localStorage.setItem('music_cookie', cookie);
+                    closeMusicLogin();
+                    showToast('登录成功');
+                    switchMusicTab('mine');
+                } else if (code === 800) {
+                    clearInterval(window._musicLoginTimer);
+                    closeMusicLogin();
+                    showToast('二维码已过期，请重新登录');
+                }
+            } catch(e) {}
+        }, 3000);
     } catch(e) {
         var qrWrap = document.getElementById('musicQrWrap');
         if (qrWrap) qrWrap.innerHTML = '<div class="music-loading">网络错误，请重试</div>';
