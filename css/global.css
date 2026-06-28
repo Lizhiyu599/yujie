@@ -318,6 +318,8 @@ body, html {
     justify-content: center;
     cursor: pointer;
     z-index: 5;
+    animation: none !important;
+    pointer-events: auto;
 }
 
 /* ===== 添加小组件按钮 ===== */
@@ -943,19 +945,3 @@ body, html {
     min-height: 130px;
 }
 
-.delete-btn {
-    position: absolute;
-    top: -6px !important;
-    right: -6px !important;
-    width: 20px;
-    height: 20px;
-    background: #ff3b30;
-    color: #fff;
-    border-radius: 50%;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 5;
-}
