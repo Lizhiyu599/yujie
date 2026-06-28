@@ -930,3 +930,6 @@ body, html {
     gap: 8px;
     overflow: hidden;
 }
+.grid-cell[style*="span 2"] {
+    min-height: 200px;
+}
