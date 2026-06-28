@@ -81,6 +81,12 @@ function renderDesktopGrid() {
         grid.setAttribute('data-page', pageIndex);
 
         var pageItems = items.filter(function(item) { return (item.page || 0) === pageIndex; });
+        // 小组件排前面，图标排后面
+        pageItems.sort(function(a, b) {
+            if (a.type === 'widget' && b.type !== 'widget') return -1;
+            if (a.type !== 'widget' && b.type === 'widget') return 1;
+            return 0;
+        });
 
         pageItems.forEach(function(item) {
             var cell = document.createElement('div');
@@ -591,7 +597,7 @@ window.addEventListener('DOMContentLoaded', function() {
         item.innerHTML =
             '<div class="dock-icon">' +
                 '<div class="dock-icon-img">' +
-                    '<img src="' + imgSrc + '" style="width:56px;height:56px;border-radius:18px;object-fit:cover;">' +
+                    '<img src="' + imgSrc + '" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">' +
                 '</div>' +
             '</div>' +
             '<div class="dock-label">' + label + '</div>';
