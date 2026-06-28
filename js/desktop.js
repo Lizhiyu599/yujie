@@ -319,18 +319,12 @@ var dragTimer = null;
 
     cell.addEventListener('touchend', function(e) {
         clearTimeout(dragTimer);
-        if (dragStarted) {
-            endDrag(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-        } else if (!dragLongPressed) {
-            // 短点击：不做拖拽，让点击事件正常触发
-            dragTarget = null;
-            return;
-        }
+        if (dragStarted) endDrag(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
         dragStarted = false;
         dragLongPressed = false;
         dragTarget = null;
     });
- } 
+ }
 
 // 点空白退出编辑
 document.addEventListener('touchstart', function(e) {
