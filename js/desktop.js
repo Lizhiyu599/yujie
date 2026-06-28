@@ -334,10 +334,15 @@ function endDrag(clientX, clientY) {
 
     var cells = document.querySelectorAll('.grid-cell');
     var targetCell = null;
+    var minDist = Infinity;
     cells.forEach(function(c) {
         if (c === dragTarget) return;
         var rect = c.getBoundingClientRect();
-        if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
+        var cx = rect.left + rect.width / 2;
+        var cy = rect.top + rect.height / 2;
+        var dist = Math.sqrt((clientX - cx) * (clientX - cx) + (clientY - cy) * (clientY - cy));
+        if (dist < minDist && dist < 100) {
+            minDist = dist;
             targetCell = c;
         }
     });
@@ -351,12 +356,11 @@ function endDrag(clientX, clientY) {
         if (di >= 0 && ti >= 0) {
             var tmp = items[di]; items[di] = items[ti]; items[ti] = tmp;
             saveItems(items);
-            exitEditMode();
-            renderDesktopGrid();
-            dragTarget = null;
-            setTimeout(function() { if (isEditing) enterEditMode(); }, 100);
         }
     }
+    exitEditMode();
+    renderDesktopGrid();
+    dragTarget = null;
 }
 
 // 点空白退出编辑
