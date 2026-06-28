@@ -1,40 +1,8 @@
 /**
- * 玉界 - 桌面管理系统
- * 包含：图标/小组件渲染、长按编辑（抖动+删除）、长按空白出"+"按钮、
- *       半屏小组件选择器（折叠列表+预览卡片）、数据持久化、小组件拖动、头像上传
- *       addDesktopIcon() 供其他模块注册图标
+ * 玉界 - 桌面管理系统 v2.0
+ * 统一网格布局：图标1x1，小组件支持1x2/2x2/2x4/3x4/4x4
+ * 支持拖拽排序、长按编辑、位置持久化
  */
-
-// ========== 默认数据 ==========
-const DEFAULT_ICONS = [];
-
-function getIcons() {
-    const raw = localStorage.getItem('desktop_icons');
-    return raw ? JSON.parse(raw) : DEFAULT_ICONS.slice();
-}
-
-function saveIcons(icons) {
-    localStorage.setItem('desktop_icons', JSON.stringify(icons));
-}
-
-function addDesktopIcon(item) {
-    const icons = getIcons();
-    const existing = icons.findIndex(i => i.id === item.id);
-    const newItem = {
-        id: item.id,
-        type: 'app',
-        name: item.name,
-        icon: item.icon || '',
-        action: item.action || null
-    };
-    if (existing !== -1) {
-        icons[existing] = newItem; // 更新已有的
-    } else {
-        icons.push(newItem); // 新增
-    }
-    saveIcons(icons);
-    renderDesktopIcons();
-}
 
 // ========== 全局状态 ==========
 let isEditing = false;
@@ -44,73 +12,223 @@ let addButton = null;
 let halfPanel = null;
 let touchStartX = 0, touchStartY = 0;
 
-// ========== 渲染桌面图标 ==========
-function renderDesktopIcons() {
-    const container = document.getElementById('appIcons');
-    if (!container) return;
-    container.innerHTML = '';
-    const icons = getIcons();
-    icons.forEach((item, index) => {
-        const el = document.createElement('div');
-        el.className = 'app-icon';
-        el.setAttribute('data-id', item.id);
-        el.setAttribute('data-index', index);
-        el.innerHTML = `
-            <div class="icon-img">${item.icon || ''}</div>
-            <div class="icon-label">${item.name}</div>
-        `;
-        el.addEventListener('click', (e) => {
-            if (isEditing) return;
-            if (item.action && typeof window[item.action] === 'function') {
-                window[item.action]();
+// ========== 统一网格数据 ==========
+// 存储格式：{ id, type: 'app'|'widget', name, icon?, action?, widgetType?, size?, page, x, y }
+// page: 0=第一页, 1=第二页
+// x: 列(0-3), y: 行
+// size: '1x1'|'1x2'|'2x2'|'2x4'|'3x4'|'4x4'
+
+const DEFAULT_GRID = [];
+
+function getGridItems() {
+    var raw = localStorage.getItem('desktop_grid');
+    return raw ? JSON.parse(raw) : DEFAULT_GRID.slice();
+}
+
+function saveGridItems(items) {
+    localStorage.setItem('desktop_grid', JSON.stringify(items));
+}
+
+// 兼容旧数据迁移
+function migrateOldData() {
+    if (localStorage.getItem('desktop_grid')) return;
+    var items = [];
+    // 迁移图标
+    var oldIcons = localStorage.getItem('desktop_icons');
+    if (oldIcons) {
+        try {
+            var icons = JSON.parse(oldIcons);
+            icons.forEach(function(icon, i) {
+                items.push({
+                    id: icon.id,
+                    type: 'app',
+                    name: icon.name,
+                    icon: icon.icon || '',
+                    action: icon.action || null,
+                    size: '1x1',
+                    page: 0,
+                    x: i % 4,
+                    y: Math.floor(i / 4)
+                });
+            });
+        } catch(e) {}
+    }
+    // 迁移小组件
+    var oldWidgets = localStorage.getItem('desktop_widgets');
+    if (oldWidgets) {
+        try {
+            var widgets = JSON.parse(oldWidgets);
+            widgets.forEach(function(w) {
+                var size = w.size || (w.type === 'clock' ? '2x4' : '2x2');
+                items.push({
+                    id: w.id,
+                    type: 'widget',
+                    widgetType: w.type || 'custom',
+                    size: size,
+                    page: w.page || 0,
+                    x: 0,
+                    y: items.filter(function(it) { return it.page === (w.page || 0); }).length,
+                    image: w.image || '',
+                    avatar: w.avatar || '',
+                    signature: w.signature || '',
+                    temp: w.temp || '24°',
+                    weatherDesc: w.weatherDesc || '上海·晴'
+                });
+            });
+        } catch(e) {}
+    }
+    saveGridItems(items);
+}
+
+function addDesktopIcon(item) {
+    var items = getGridItems();
+    var existing = items.findIndex(function(i) { return i.id === item.id; });
+    var newItem = {
+        id: item.id,
+        type: 'app',
+        name: item.name,
+        icon: item.icon || '',
+        action: item.action || null,
+        size: '1x1',
+        page: 0,
+        x: items.length % 4,
+        y: Math.floor(items.length / 4)
+    };
+    if (existing >= 0) {
+        items[existing] = newItem;
+    } else {
+        items.push(newItem);
+    }
+    saveGridItems(items);
+    renderDesktopGrid();
+}
+
+// ========== 渲染统一桌面网格 ==========
+function renderDesktopGrid() {
+    migrateOldData();
+    var items = getGridItems();
+    
+    ['page1', 'page2'].forEach(function(pageId, pageIndex) {
+        var page = document.getElementById(pageId);
+        if (!page) return;
+        
+        // 清空页面
+        page.innerHTML = '';
+        
+        // 创建grid容器
+        var grid = document.createElement('div');
+        grid.className = 'desktop-grid';
+        grid.setAttribute('data-page', pageIndex);
+        
+        var pageItems = items.filter(function(item) { return item.page === pageIndex; });
+        
+        pageItems.forEach(function(item, index) {
+            var cell = document.createElement('div');
+            cell.className = 'grid-cell';
+            cell.setAttribute('data-id', item.id);
+            cell.setAttribute('data-index', index);
+            
+            // 设置占格
+            var sizeParts = (item.size || '1x1').split('x');
+            var colSpan = parseInt(sizeParts[0]) || 1;
+            var rowSpan = parseInt(sizeParts[1]) || 1;
+            cell.style.gridColumn = 'span ' + colSpan;
+            cell.style.gridRow = 'span ' + rowSpan;
+            
+            if (item.type === 'app') {
+                // 图标
+                cell.innerHTML = `
+                    <div class="app-icon">
+                        <div class="icon-img">${item.icon || ''}</div>
+                        <div class="icon-label">${item.name}</div>
+                    </div>
+                `;
+                cell.querySelector('.app-icon').addEventListener('click', function(e) {
+                    if (isEditing) return;
+                    if (item.action && typeof window[item.action] === 'function') {
+                        window[item.action]();
+                    }
+                });
+            } else {
+                // 小组件
+                var widgetHTML = '';
+                if (item.widgetType === 'custom') {
+                    widgetHTML = `
+                        <div class="desktop-widget grid-widget custom-widget" style="padding:0;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;border:none;box-shadow:none;">
+                            <div style="width:100%;height:100%;min-height:${item.size === '2x2' ? '120px' : '160px'};background-image:url(${item.image});background-size:cover;background-position:center;border-radius:18px;"></div>
+                        </div>
+                    `;
+                } else if (item.widgetType === 'clock') {
+                    var avatarSrc = item.avatar || '';
+                    var avatarContent = avatarSrc
+                        ? `<div class="widget-avatar" style="background-image:url(${avatarSrc});"></div>`
+                        : `<div class="widget-avatar">+</div>`;
+                    widgetHTML = `
+                        <div class="desktop-widget grid-widget">
+                            <div class="widget-top-row">
+                                <div class="widget-left">
+                                    ${avatarContent}
+                                    <div class="widget-time-block">
+                                        <span class="widget-time widget-time-display">00:00</span>
+                                        <span class="widget-date widget-date-display">1月1日 星期一</span>
+                                    </div>
+                                </div>
+                                <div class="widget-weather-block">
+                                    <span class="widget-temp">${item.temp}</span>
+                                    <div class="widget-weather-desc">${item.weatherDesc}</div>
+                                </div>
+                            </div>
+                            <div class="widget-divider"></div>
+                            <span class="widget-signature" contenteditable="true" 
+                                  onblur="updateWidgetSignature('${item.id}', this.innerText)"
+                                  onfocus="if(this.innerText==='——  ..おやすみ ..——'){this.innerText=''}">${item.signature}</span>
+                        </div>
+                    `;
+                }
+                cell.innerHTML = widgetHTML;
             }
+            
+            grid.appendChild(cell);
         });
-        el.addEventListener('touchstart', (e) => onIconTouchStart(e));
-        el.addEventListener('touchend', onIconTouchEnd);
-        el.addEventListener('touchmove', onIconTouchMove);
-        el.addEventListener('mousedown', (e) => onIconMouseDown(e));
-        el.addEventListener('mouseup', onIconMouseUp);
-        el.addEventListener('mouseleave', onIconMouseUp);
-        container.appendChild(el);
+        
+        page.appendChild(grid);
+    });
+    
+    updateAllWidgetClocks();
+}
+
+function updateAllWidgetClocks() {
+    var now = new Date();
+    var h = now.getHours().toString().padStart(2, '0');
+    var m = now.getMinutes().toString().padStart(2, '0');
+    var month = now.getMonth() + 1;
+    var day = now.getDate();
+    var days = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+    var dayName = days[now.getDay()];
+
+    document.querySelectorAll('.grid-widget').forEach(function(el) {
+        var timeEl = el.querySelector('.widget-time-display');
+        var dateEl = el.querySelector('.widget-date-display');
+        if (timeEl) timeEl.textContent = h + ':' + m;
+        if (dateEl) dateEl.textContent = month + '月' + day + '日 ' + dayName;
     });
 }
+setInterval(updateAllWidgetClocks, 1000);
 
-// ========== 图标长按处理 ==========
-function onIconTouchStart(e) {
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-    longPressStarted = false;
-    longPressTimer = setTimeout(() => {
-        longPressStarted = true;
-        enterEditMode();
-    }, 500);
-}
-
-function onIconTouchEnd() {
-    clearTimeout(longPressTimer);
-    if (longPressStarted) {
-        longPressStarted = false;
+function updateWidgetSignature(widgetId, value) {
+    var items = getGridItems();
+    var item = items.find(function(i) { return i.id === widgetId; });
+    if (item) {
+        item.signature = value;
+        saveGridItems(items);
     }
 }
 
-function onIconTouchMove(e) {
-    if (!longPressTimer) return;
-    const dx = e.touches[0].clientX - touchStartX;
-    const dy = e.touches[0].clientY - touchStartY;
-    if (Math.abs(dx) > 15 || Math.abs(dy) > 15) {
-        clearTimeout(longPressTimer);
-    }
-}
-
-function onIconMouseDown(e) {
-    longPressTimer = setTimeout(() => {
-        enterEditMode();
-    }, 500);
-}
-
-function onIconMouseUp() {
-    clearTimeout(longPressTimer);
-}
+// 兼容旧函数名
+function renderDesktopIcons() { renderDesktopGrid(); }
+function renderWidgets() { renderDesktopGrid(); }
+function getWidgets() { return getGridItems().filter(function(i) { return i.type === 'widget'; }); }
+function saveWidgets(w) {}
 
 // ========== 编辑模式 ==========
 function enterEditMode() {
@@ -119,65 +237,83 @@ function enterEditMode() {
     clearTimeout(longPressTimer);
     removeAddButton();
 
-    document.querySelectorAll('.app-icon').forEach(el => {
-        el.classList.add('editing');
-        if (!el.querySelector('.delete-btn')) {
-            const delBtn = document.createElement('div');
-            delBtn.className = 'delete-btn';
-            delBtn.innerHTML = 'X';
-            delBtn.onclick = (e) => {
-                e.stopPropagation();
-                deleteIcon(el);
-            };
-            el.appendChild(delBtn);
+    document.querySelectorAll('.grid-cell').forEach(function(cell) {
+        cell.classList.add('editing');
+        var itemId = cell.getAttribute('data-id');
+        var items = getGridItems();
+        var item = items.find(function(i) { return i.id === itemId; });
+        if (item && item.type === 'app') {
+            if (!cell.querySelector('.delete-btn')) {
+                var delBtn = document.createElement('div');
+                delBtn.className = 'delete-btn';
+                delBtn.innerHTML = 'X';
+                delBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    deleteGridItem(itemId);
+                };
+                cell.querySelector('.app-icon').appendChild(delBtn);
+            }
+        }
+        if (item && item.type === 'widget') {
+            if (!cell.querySelector('.widget-delete-btn')) {
+                var delBtn2 = document.createElement('div');
+                delBtn2.className = 'widget-delete-btn';
+                delBtn2.style.cssText = 'display:flex;position:absolute;top:-8px;right:-8px;width:22px;height:22px;background:#ff3b30;color:#fff;border-radius:50%;font-size:12px;align-items:center;justify-content:center;cursor:pointer;z-index:5;font-weight:700;';
+                delBtn2.innerHTML = 'X';
+                delBtn2.onclick = function(e) {
+                    e.stopPropagation();
+                    deleteGridItem(itemId);
+                };
+                cell.querySelector('.desktop-widget').appendChild(delBtn2);
+            }
         }
     });
 }
 
 function exitEditMode() {
     isEditing = false;
-    document.querySelectorAll('.app-icon').forEach(el => {
-        el.classList.remove('editing');
-        const btn = el.querySelector('.delete-btn');
-        if (btn) btn.remove();
+    document.querySelectorAll('.grid-cell').forEach(function(cell) {
+        cell.classList.remove('editing');
+    });
+    document.querySelectorAll('.delete-btn, .widget-delete-btn').forEach(function(btn) {
+        btn.remove();
     });
 }
 
-function deleteIcon(el) {
-    const id = el.getAttribute('data-id');
-    let icons = getIcons();
-    icons = icons.filter(i => i.id !== id);
-    saveIcons(icons);
-    renderDesktopIcons();
-    setTimeout(() => {
+function deleteGridItem(id) {
+    var items = getGridItems();
+    items = items.filter(function(i) { return i.id !== id; });
+    saveGridItems(items);
+    renderDesktopGrid();
+    setTimeout(function() {
         if (isEditing) enterEditMode();
     }, 50);
 }
 
 // ========== 桌面空白处长按 ==========
 function setupDesktopLongPress() {
-    ['page1', 'page2'].forEach(pageId => {
-        const desktopPage = document.getElementById(pageId);
+    ['page1', 'page2'].forEach(function(pageId) {
+        var desktopPage = document.getElementById(pageId);
         if (!desktopPage) return;
 
-        desktopPage.addEventListener('touchstart', (e) => {
-            if (e.target.closest('.app-icon') || e.target.closest('.add-widget-btn') || e.target.closest('.desktop-widget')) return;
+        desktopPage.addEventListener('touchstart', function(e) {
+            if (e.target.closest('.grid-cell') || e.target.closest('.add-widget-btn')) return;
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
-            longPressTimer = setTimeout(() => {
+            longPressTimer = setTimeout(function() {
                 if (isEditing) return;
                 showAddButton();
             }, 500);
         }, { passive: true });
 
-        desktopPage.addEventListener('touchend', () => {
+        desktopPage.addEventListener('touchend', function() {
             clearTimeout(longPressTimer);
         });
 
-        desktopPage.addEventListener('touchmove', (e) => {
+        desktopPage.addEventListener('touchmove', function(e) {
             if (!longPressTimer) return;
-            const dx = e.touches[0].clientX - touchStartX;
-            const dy = e.touches[0].clientY - touchStartY;
+            var dx = e.touches[0].clientX - touchStartX;
+            var dy = e.touches[0].clientY - touchStartY;
             if (Math.abs(dx) > 25 || Math.abs(dy) > 25) {
                 clearTimeout(longPressTimer);
             }
@@ -191,33 +327,25 @@ function showAddButton() {
     addButton = document.createElement('div');
     addButton.className = 'add-widget-btn';
     addButton.innerHTML = '+';
-
-    addButton.addEventListener('touchend', (e) => {
+    addButton.addEventListener('touchend', function(e) {
         e.stopPropagation();
         e.preventDefault();
         openHalfPanel();
         removeAddButton();
     });
-
-    addButton.addEventListener('touchstart', (e) => {
+    addButton.addEventListener('touchstart', function(e) {
         e.stopPropagation();
     });
-
     document.getElementById('desktop').appendChild(addButton);
 }
 
 function removeAddButton() {
-    if (addButton) {
-        addButton.remove();
-        addButton = null;
-    }
+    if (addButton) { addButton.remove(); addButton = null; }
 }
 
-document.addEventListener('touchstart', (e) => {
-    if (addButton && !addButton.contains(e.target)) {
-        removeAddButton();
-    }
-    if (isEditing && !e.target.closest('.app-icon') && !e.target.closest('.add-widget-btn') && !e.target.closest('.delete-btn') && !e.target.closest('.half-panel-overlay')) {
+document.addEventListener('touchstart', function(e) {
+    if (addButton && !addButton.contains(e.target)) removeAddButton();
+    if (isEditing && !e.target.closest('.grid-cell') && !e.target.closest('.add-widget-btn') && !e.target.closest('.delete-btn') && !e.target.closest('.widget-delete-btn') && !e.target.closest('.half-panel-overlay')) {
         exitEditMode();
     }
 });
@@ -226,20 +354,27 @@ document.addEventListener('touchstart', (e) => {
 function openHalfPanel() {
     if (halfPanel) halfPanel.remove();
 
-    const overlay = document.createElement('div');
+    var overlay = document.createElement('div');
     overlay.className = 'half-panel-overlay';
 
-    const panel = document.createElement('div');
+    var panel = document.createElement('div');
     panel.className = 'half-panel';
     panel.innerHTML = `
         <div class="half-panel-handle"></div>
         <div class="half-panel-content" id="halfPanelContent">
+            <div class="widget-list-item" data-target="widget-1x2">
+                <span>1x2 小组件</span>
+                <span class="toggle-arrow">&gt;</span>
+            </div>
+            <div id="widget-1x2" class="collapsible-section" style="display:none;">
+                <div class="widget-placeholder">1x2 占位（即将推出）</div>
+            </div>
             <div class="widget-list-item" data-target="widget-2x2">
                 <span>2x2 小组件</span>
                 <span class="toggle-arrow">&gt;</span>
             </div>
             <div id="widget-2x2" class="collapsible-section" style="display:none;">
-                <div class="widget-placeholder">2x2 占位</div>
+                <div class="widget-placeholder">2x2 占位（即将推出）</div>
             </div>
             <div class="widget-list-item" data-target="widget-2x4">
                 <span>2x4 小组件</span>
@@ -272,14 +407,14 @@ function openHalfPanel() {
                 <span class="toggle-arrow">&gt;</span>
             </div>
             <div id="widget-3x4" class="collapsible-section" style="display:none;">
-                <div class="widget-placeholder">3x4 占位</div>
+                <div class="widget-placeholder">3x4 占位（即将推出）</div>
             </div>
             <div class="widget-list-item" data-target="widget-4x4">
                 <span>4x4 小组件</span>
                 <span class="toggle-arrow">&gt;</span>
             </div>
             <div id="widget-4x4" class="collapsible-section" style="display:none;">
-                <div class="widget-placeholder">4x4 占位</div>
+                <div class="widget-placeholder">4x4 占位（即将推出）</div>
             </div>
         </div>
     `;
@@ -287,488 +422,113 @@ function openHalfPanel() {
     document.body.appendChild(overlay);
 
     overlay.addEventListener('click', function(e) {
-        if (e.target === overlay) {
-            closeHalfPanel();
-        }
+        if (e.target === overlay) closeHalfPanel();
     });
 
     halfPanel = overlay;
 
-    const content = panel.querySelector('.half-panel-content');
+    var content = panel.querySelector('.half-panel-content');
     content.addEventListener('click', function(e) {
-        const item = e.target.closest('.widget-list-item');
+        var item = e.target.closest('.widget-list-item');
         if (!item) return;
         e.stopPropagation();
-        const targetId = item.getAttribute('data-target');
+        var targetId = item.getAttribute('data-target');
         if (!targetId) return;
-        const target = document.getElementById(targetId);
+        var target = document.getElementById(targetId);
         if (!target) return;
-        const isHidden = target.style.display === 'none';
+        var isHidden = target.style.display === 'none';
         target.style.display = isHidden ? 'block' : 'none';
-        const arrow = item.querySelector('.toggle-arrow');
+        var arrow = item.querySelector('.toggle-arrow');
         if (arrow) arrow.textContent = isHidden ? 'v' : '>';
     });
 
-    const handle = panel.querySelector('.half-panel-handle');
-    let startY = 0;
-    handle.addEventListener('touchstart', (e) => {
-        startY = e.touches[0].clientY;
+    var handle = panel.querySelector('.half-panel-handle');
+    var startY = 0;
+    handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
+    handle.addEventListener('touchmove', function(e) {
+        if (e.touches[0].clientY - startY > 50) closeHalfPanel();
     });
-    handle.addEventListener('touchmove', (e) => {
-        if (e.touches[0].clientY - startY > 50) {
-            closeHalfPanel();
-        }
-    });
-    handle.addEventListener('click', (e) => {
+    handle.addEventListener('click', function(e) {
         e.stopPropagation();
         closeHalfPanel();
     });
 }
 
 function closeHalfPanel() {
-    if (halfPanel) {
-        halfPanel.remove();
-        halfPanel = null;
-    }
+    if (halfPanel) { halfPanel.remove(); halfPanel = null; }
 }
 
-// ========== 小组件系统 ==========
-const DEFAULT_WIDGETS = [
-    {
-        id: 'widget-clock-1',
-        type: 'clock',
-        page: 0,
-        avatar: '',
-        signature: '——  ..おやすみ ..——',
-        temp: '24°',
-        weatherDesc: '上海·晴'
-    }
-];
-
-function getWidgets() {
-    const raw = localStorage.getItem('desktop_widgets');
-    return raw ? JSON.parse(raw) : DEFAULT_WIDGETS.slice();
-}
-
-function saveWidgets(widgets) {
-    localStorage.setItem('desktop_widgets', JSON.stringify(widgets));
-}
-
-function renderWidgets() {
-    const widgets = getWidgets();
-    document.querySelectorAll('.desktop-widget').forEach(el => el.remove());
-
-    widgets.forEach(widget => {
-        const page = document.querySelectorAll('.desktop-page')[widget.page];
-        if (!page) return;
-
-        const el = document.createElement('div');
-        el.className = 'desktop-widget';
-        el.setAttribute('data-widget-id', widget.id);
-        el.setAttribute('data-widget-type', widget.type);
-        el.setAttribute('data-widget-page', widget.page);
-
-        if (widget.type === 'custom') {
-            el.style.padding = '0';
-            el.style.overflow = 'visible';
-            el.style.background = 'transparent';
-            el.style.backdropFilter = 'none';
-            el.style.webkitBackdropFilter = 'none';
-            el.style.border = 'none';
-            el.style.boxShadow = 'none';
-            if (widget.size === '2x2') {
-                el.style.maxWidth = 'calc(50% - 10px)';
-                el.style.minHeight = '120px';
-            } else {
-                el.style.maxWidth = '100%';
-                el.style.minHeight = '160px';
-            }
-            el.innerHTML = `
-                <div style="width:100%; height:100%; min-height:${widget.size === '2x2' ? '120px' : '160px'}; background-image:url(${widget.image}); background-size:cover; background-position:center; border-radius:18px;"></div>
-                <div class="widget-delete-btn" onclick="event.stopPropagation(); confirmDeleteWidget('${widget.id}')">×</div>
-            `;
-        } else {
-            const avatarSrc = widget.avatar || '';
-            const avatarContent = avatarSrc
-                ? `<div class="widget-avatar" style="background-image:url(${avatarSrc});" onclick="event.stopPropagation(); document.getElementById('widget-avatar-upload').click()"></div>`
-                : `<div class="widget-avatar" onclick="event.stopPropagation(); document.getElementById('widget-avatar-upload').click()">+</div>`;
-
-            el.innerHTML = `
-                <div class="widget-top-row">
-                    <div class="widget-left">
-                        ${avatarContent}
-                        <div class="widget-time-block">
-                            <span class="widget-time widget-time-display">00:00</span>
-                            <span class="widget-date widget-date-display">1月1日 星期一</span>
-                        </div>
-                    </div>
-                    <div class="widget-weather-block">
-                        <span class="widget-temp">${widget.temp}</span>
-                        <div class="widget-weather-desc">${widget.weatherDesc}</div>
-                    </div>
-                </div>
-                <div class="widget-divider"></div>
-                <span class="widget-signature" contenteditable="true" 
-                      onblur="updateWidgetSignature('${widget.id}', this.innerText)" 
-                      onclick="event.stopPropagation();"
-                      onfocus="if(this.innerText==='——  ..おやすみ ..——'){this.innerText=''}">${widget.signature}</span>
-                <div class="widget-delete-btn" onclick="event.stopPropagation(); confirmDeleteWidget('${widget.id}')">×</div>
-            `;
-        }
-
-        el.addEventListener('touchstart', (e) => onWidgetTouchStart(e, el));
-        el.addEventListener('touchend', onWidgetTouchEnd);
-        el.addEventListener('touchmove', (e) => onWidgetTouchMove(e, el));
-        el.addEventListener('mousedown', (e) => onWidgetMouseDown(e, el));
-        el.addEventListener('mouseup', onWidgetMouseUp);
-        el.addEventListener('mouseleave', onWidgetMouseUp);
-
-        const iconsGrid = page.querySelector('.desktop-icons');
-        if (iconsGrid) {
-            page.insertBefore(el, iconsGrid);
-        } else {
-            page.appendChild(el);
-        }
-    });
-
-    updateAllWidgetClocks();
-}
-
-function updateAllWidgetClocks() {
-    const now = new Date();
-    const h = now.getHours().toString().padStart(2, '0');
-    const m = now.getMinutes().toString().padStart(2, '0');
-    const month = now.getMonth() + 1;
-    const day = now.getDate();
-    const days = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
-    const dayName = days[now.getDay()];
-
-    document.querySelectorAll('.desktop-widget').forEach(el => {
-        const timeEl = el.querySelector('.widget-time-display');
-        const dateEl = el.querySelector('.widget-date-display');
-        if (timeEl) timeEl.textContent = h + ':' + m;
-        if (dateEl) dateEl.textContent = month + '月' + day + '日 ' + dayName;
-    });
-}
-
-setInterval(updateAllWidgetClocks, 1000);
-
-function updateWidgetSignature(widgetId, value) {
-    const widgets = getWidgets();
-    const widget = widgets.find(w => w.id === widgetId);
-    if (widget) {
-        widget.signature = value;
-        saveWidgets(widgets);
-    }
-}
-
-// ========== 小组件长按与拖动 ==========
-let widgetLongPressTimer = null;
-let widgetLongPressStarted = false;
-let widgetDragTarget = null;
-let widgetDragStartX = 0;
-let widgetDragStartY = 0;
-let widgetStartLeft = 0;
-let widgetStartTop = 0;
-let widgetDragStarted = false;
-
-function onWidgetTouchStart(e, el) {
-    if (isEditing) return;
-    widgetDragTarget = el;
-    widgetDragStartX = e.touches[0].clientX;
-    widgetDragStartY = e.touches[0].clientY;
-    const rect = el.getBoundingClientRect();
-    widgetStartLeft = rect.left;
-    widgetStartTop = rect.top;
-    widgetLongPressStarted = false;
-    widgetDragStarted = false;
-
-    widgetLongPressTimer = setTimeout(() => {
-        widgetLongPressStarted = true;
-    }, 500);
-}
-
-function onWidgetTouchEnd(e) {
-    clearTimeout(widgetLongPressTimer);
-
-    if (widgetLongPressStarted && !widgetDragStarted) {
-        enterWidgetEditMode(widgetDragTarget);
-    }
-
-    if (widgetDragStarted) {
-        endWidgetDrag();
-    }
-
-    widgetLongPressStarted = false;
-    widgetDragStarted = false;
-    widgetDragTarget = null;
-}
-
-function onWidgetTouchMove(e, el) {
-    if (!widgetLongPressTimer && !widgetDragStarted) return;
-
-    const dx = e.touches[0].clientX - widgetDragStartX;
-    const dy = e.touches[0].clientY - widgetDragStartY;
-
-    if (widgetLongPressStarted && !widgetDragStarted && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
-        widgetDragStarted = true;
-        startWidgetDrag(el, e.touches[0].clientX, e.touches[0].clientY);
-    }
-
-    if (widgetDragStarted) {
-        moveWidgetDrag(e.touches[0].clientX, e.touches[0].clientY);
-    }
-}
-
-function onWidgetMouseDown(e, el) {
-    if (isEditing) return;
-    widgetDragTarget = el;
-    const rect = el.getBoundingClientRect();
-    widgetDragStartX = e.clientX;
-    widgetDragStartY = e.clientY;
-    widgetStartLeft = rect.left;
-    widgetStartTop = rect.top;
-    widgetLongPressStarted = false;
-    widgetDragStarted = false;
-
-    widgetLongPressTimer = setTimeout(() => {
-        widgetLongPressStarted = true;
-    }, 500);
-}
-
-function onWidgetMouseUp() {
-    clearTimeout(widgetLongPressTimer);
-
-    if (widgetLongPressStarted && !widgetDragStarted && widgetDragTarget) {
-        enterWidgetEditMode(widgetDragTarget);
-    }
-
-    if (widgetDragStarted) {
-        endWidgetDrag();
-    }
-
-    widgetLongPressStarted = false;
-    widgetDragStarted = false;
-    widgetDragTarget = null;
-}
-
-function startWidgetDrag(el, clientX, clientY) {
-    el.classList.add('dragging');
-    el.style.position = 'fixed';
-    el.style.zIndex = '150';
-    el.style.left = widgetStartLeft + 'px';
-    el.style.top = widgetStartTop + 'px';
-    el.style.width = el.offsetWidth + 'px';
-    el.style.margin = '0';
-    el.style.pointerEvents = 'none';
-}
-
-function moveWidgetDrag(clientX, clientY) {
-    if (!widgetDragTarget) return;
-    const dx = clientX - widgetDragStartX;
-    const dy = clientY - widgetDragStartY;
-    widgetDragTarget.style.left = (widgetStartLeft + dx) + 'px';
-    widgetDragTarget.style.top = (widgetStartTop + dy) + 'px';
-
-    const screenWidth = window.innerWidth;
-    const pages = document.getElementById('desktopPages');
-    if (clientX > screenWidth - 30 && pages) {
-        const currentScroll = pages.scrollLeft;
-        const pageWidth = pages.clientWidth;
-        const targetPage = Math.min(Math.floor(currentScroll / pageWidth) + 1, pages.children.length - 1);
-        pages.scrollTo({ left: targetPage * pageWidth, behavior: 'smooth' });
-    } else if (clientX < 30 && pages) {
-        const currentScroll = pages.scrollLeft;
-        const pageWidth = pages.clientWidth;
-        const targetPage = Math.max(Math.floor(currentScroll / pageWidth) - 1, 0);
-        pages.scrollTo({ left: targetPage * pageWidth, behavior: 'smooth' });
-    }
-}
-
-function endWidgetDrag() {
-    if (!widgetDragTarget) return;
-
-    const rect = widgetDragTarget.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const pages = document.getElementById('desktopPages');
-    const pageWidth = pages.clientWidth;
-    const scrollLeft = pages.scrollLeft;
-    const targetPage = Math.round((centerX + scrollLeft) / pageWidth);
-    const clampedPage = Math.max(0, Math.min(targetPage, pages.children.length - 1));
-
-    const widgetId = widgetDragTarget.getAttribute('data-widget-id');
-    const widgets = getWidgets();
-    const widget = widgets.find(w => w.id === widgetId);
-    if (widget) {
-        widget.page = clampedPage;
-        saveWidgets(widgets);
-    }
-
-    widgetDragTarget.classList.remove('dragging');
-    widgetDragTarget.style.position = '';
-    widgetDragTarget.style.zIndex = '';
-    widgetDragTarget.style.left = '';
-    widgetDragTarget.style.top = '';
-    widgetDragTarget.style.width = '';
-    widgetDragTarget.style.margin = '';
-    widgetDragTarget.style.pointerEvents = '';
-
-    renderWidgets();
-}
-
-function enterWidgetEditMode(el) {
-    if (isEditing) return;
-    exitEditMode();
-    el.classList.add('editing');
-}
-
-document.addEventListener('touchstart', (e) => {
-    if (!e.target.closest('.desktop-widget') && !e.target.closest('.confirm-dialog')) {
-        document.querySelectorAll('.desktop-widget.editing').forEach(el => {
-            el.classList.remove('editing');
-        });
-    }
-});
-
-// ========== 确认删除小组件弹窗 ==========
-let pendingDeleteWidgetId = null;
-
-function confirmDeleteWidget(widgetId) {
-    pendingDeleteWidgetId = widgetId;
-
-    const overlay = document.createElement('div');
-    overlay.className = 'confirm-overlay';
-    overlay.id = 'confirmDeleteOverlay';
-    overlay.innerHTML = `
-        <div class="confirm-dialog">
-            <p>确认删除当前小组件？</p>
-            <div class="confirm-buttons">
-                <div class="confirm-btn-cancel" onclick="cancelDeleteWidget()">取消</div>
-                <div class="confirm-btn-delete" onclick="executeDeleteWidget()">确定</div>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(overlay);
-}
-
-function cancelDeleteWidget() {
-    pendingDeleteWidgetId = null;
-    const overlay = document.getElementById('confirmDeleteOverlay');
-    if (overlay) overlay.remove();
-}
-
-function executeDeleteWidget() {
-    if (!pendingDeleteWidgetId) return;
-    let widgets = getWidgets();
-    widgets = widgets.filter(w => w.id !== pendingDeleteWidgetId);
-    saveWidgets(widgets);
-    pendingDeleteWidgetId = null;
-    const overlay = document.getElementById('confirmDeleteOverlay');
-    if (overlay) overlay.remove();
-    renderWidgets();
-}
-
-// ========== 确认添加小组件弹窗 ==========
-let pendingAddWidgetType = null;
-
+// ========== 确认添加时钟小组件 ==========
 function confirmAddWidget(type) {
-    pendingAddWidgetType = type;
-
-    const overlay = document.createElement('div');
-    overlay.className = 'confirm-overlay';
-    overlay.id = 'confirmAddOverlay';
-    overlay.innerHTML = `
-        <div class="confirm-dialog">
-            <p>添加当前小组件？</p>
-            <div class="confirm-buttons">
-                <div class="confirm-btn-cancel" onclick="cancelAddWidget()">取消</div>
-                <div class="confirm-btn-delete" onclick="executeAddWidget()">确定</div>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(overlay);
-}
-
-function cancelAddWidget() {
-    pendingAddWidgetType = null;
-    const overlay = document.getElementById('confirmAddOverlay');
-    if (overlay) overlay.remove();
-}
-
-function executeAddWidget() {
-    if (!pendingAddWidgetType) return;
-
-    if (pendingAddWidgetType === 'clock') {
-        const widgets = getWidgets();
-        if (widgets.find(w => w.type === 'clock')) {
+    if (type === 'clock') {
+        var items = getGridItems();
+        if (items.find(function(i) { return i.widgetType === 'clock'; })) {
             alert('时钟小组件已存在');
-        } else {
-            widgets.push({
-                id: 'widget-clock-' + Date.now(),
-                type: 'clock',
-                page: 0,
-                avatar: '',
-                signature: '——  ..おやすみ ..——',
-                temp: '24°',
-                weatherDesc: '上海·晴'
-            });
-            saveWidgets(widgets);
-            renderWidgets();
+            closeHalfPanel();
+            return;
         }
+        items.push({
+            id: 'widget-clock-' + Date.now(),
+            type: 'widget',
+            widgetType: 'clock',
+            size: '2x4',
+            page: 0,
+            x: 0,
+            y: items.filter(function(i) { return i.page === 0; }).length,
+            avatar: '',
+            signature: '——  ..おやすみ ..——',
+            temp: '24°',
+            weatherDesc: '上海·晴'
+        });
+        saveGridItems(items);
+        renderDesktopGrid();
     }
-
-    pendingAddWidgetType = null;
-    const overlay = document.getElementById('confirmAddOverlay');
-    if (overlay) overlay.remove();
     closeHalfPanel();
 }
 
 // ========== 小组件头像上传 ==========
 function setupWidgetAvatarUpload() {
-    let input = document.getElementById('widget-avatar-upload');
+    var input = document.getElementById('widget-avatar-upload');
     if (!input) {
         input = document.createElement('input');
         input.type = 'file';
         input.id = 'widget-avatar-upload';
         input.accept = 'image/*';
         input.style.display = 'none';
-        input.onchange = handleWidgetAvatarChange;
+        input.onchange = function(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+                var items = getGridItems();
+                var clockItem = items.find(function(i) { return i.widgetType === 'clock'; });
+                if (clockItem) {
+                    clockItem.avatar = ev.target.result;
+                    saveGridItems(items);
+                    renderDesktopGrid();
+                }
+            };
+            reader.readAsDataURL(file);
+        };
         document.body.appendChild(input);
     }
 }
 
-function handleWidgetAvatarChange(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-        const result = ev.target.result;
-        const widgets = getWidgets();
-        const clockWidget = widgets.find(w => w.type === 'clock');
-        if (clockWidget) {
-            clockWidget.avatar = result;
-            saveWidgets(widgets);
-            renderWidgets();
-        }
-    };
-    reader.readAsDataURL(file);
-}
-
 // ========== 初始化 ==========
-window.addEventListener('DOMContentLoaded', () => {
-    renderDesktopIcons();
+window.addEventListener('DOMContentLoaded', function() {
+    migrateOldData();
+    renderDesktopGrid();
     setupDesktopLongPress();
     setupWidgetAvatarUpload();
-    renderWidgets();
 
-    // 注册聊天图标到桌面第一页
-addDesktopIcon({ id: 'chat', name: '聊天', icon: '<img src="https://i.ibb.co/3yN7gbxD/1782621034253.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openChat' });  
-addDesktopIcon({ id: 'shiyilin', name: '拾忆林', icon: '<img src="https://i.ibb.co/dwNq5VfT/1782621400981.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openShiyilin' });
-addDesktopIcon({ id: 'qianban', name: '牵绊', icon: '<img src="https://i.ibb.co/1f11jCzs/1782623493282.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openQianban' });
-addDesktopIcon({ id: 'gallery', name: '映像馆', icon: '<img src="https://i.ibb.co/Dfcz9js0/1782623882994.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openGallery' });
-addDesktopIcon({ id: 'qawenda', name: '奇问妙答', icon: '<img src="https://i.ibb.co/dwTDLTcc/1782624493861.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openQawenda' });
-    
-    const dockBar = document.getElementById('dockBar');
+    // 注册聊天图标
+    addDesktopIcon({ id: 'chat', name: '聊天', icon: '<img src="https://i.ibb.co/3yN7gbxD/1782621034253.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openChat' });  
+    addDesktopIcon({ id: 'shiyilin', name: '拾忆林', icon: '<img src="https://i.ibb.co/dwNq5VfT/1782621400981.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openShiyilin' });
+    addDesktopIcon({ id: 'qianban', name: '牵绊', icon: '<img src="https://i.ibb.co/1f11jCzs/1782623493282.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openQianban' });
+    addDesktopIcon({ id: 'gallery', name: '映像馆', icon: '<img src="https://i.ibb.co/Dfcz9js0/1782623882994.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openGallery' });
+    addDesktopIcon({ id: 'qawenda', name: '奇问妙答', icon: '<img src="https://i.ibb.co/dwTDLTcc/1782624493861.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openQawenda' });
+
+    var dockBar = document.getElementById('dockBar');
     if (!dockBar) return;
 
     var settingItem = document.createElement('div');
@@ -780,63 +540,59 @@ addDesktopIcon({ id: 'qawenda', name: '奇问妙答', icon: '<img src="https://i
     var beautifyItem = document.createElement('div');
     beautifyItem.className = 'dock-item';
 
-    // 设置图标
-settingItem.innerHTML = `
-    <div class="dock-icon">
-        <div class="dock-icon-img">
-            <img src="https://i.ibb.co/HfZrSFgF/1782625018703.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">
+    settingItem.innerHTML = `
+        <div class="dock-icon">
+            <div class="dock-icon-img">
+                <img src="https://i.ibb.co/HfZrSFgF/1782625018703.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">
+            </div>
         </div>
-    </div>
-    <div class="dock-label">设置</div>
-`;
-settingItem.onclick = () => {
-    openModal('settingsModal');
-    setTimeout(function() { renderDeviceList(); }, 100);
-};
-dockBar.appendChild(settingItem);
+        <div class="dock-label">设置</div>
+    `;
+    settingItem.onclick = function() {
+        openModal('settingsModal');
+        setTimeout(function() { renderDeviceList(); }, 100);
+    };
+    dockBar.appendChild(settingItem);
 
-// 日记图标
-diaryItem.innerHTML = `
-    <div class="dock-icon">
-        <div class="dock-icon-img">
-            <img src="https://i.ibb.co/PzCRNBZ0/1782625096270.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">
+    diaryItem.innerHTML = `
+        <div class="dock-icon">
+            <div class="dock-icon-img">
+                <img src="https://i.ibb.co/PzCRNBZ0/1782625096270.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">
+            </div>
         </div>
-    </div>
-    <div class="dock-label">日记</div>
-`;
-diaryItem.onclick = () => { openDiary(); };
-dockBar.appendChild(diaryItem);
+        <div class="dock-label">日记</div>
+    `;
+    diaryItem.onclick = function() { openDiary(); };
+    dockBar.appendChild(diaryItem);
 
-// 万象树图标
-worldbookItem.innerHTML = `
-    <div class="dock-icon">
-        <div class="dock-icon-img">
-            <img src="https://i.ibb.co/GvV3Dc17/1782625167668.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">
+    worldbookItem.innerHTML = `
+        <div class="dock-icon">
+            <div class="dock-icon-img">
+                <img src="https://i.ibb.co/GvV3Dc17/1782625167668.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">
+            </div>
         </div>
-    </div>
-    <div class="dock-label">万象树</div>
-`;
-worldbookItem.onclick = () => { openWorldbook(); };
-dockBar.appendChild(worldbookItem);
+        <div class="dock-label">万象树</div>
+    `;
+    worldbookItem.onclick = function() { openWorldbook(); };
+    dockBar.appendChild(worldbookItem);
 
-// 美化图标
-beautifyItem.innerHTML = `
-    <div class="dock-icon">
-        <div class="dock-icon-img">
-            <img src="https://i.ibb.co/hFszQFvk/1782625229723.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">
+    beautifyItem.innerHTML = `
+        <div class="dock-icon">
+            <div class="dock-icon-img">
+                <img src="https://i.ibb.co/hFszQFvk/1782625229723.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">
+            </div>
         </div>
-    </div>
-    <div class="dock-label">美化</div>
-`;
-beautifyItem.onclick = () => {
-    initBeautify();
-    openModal('beautifyModal');
-    setTimeout(() => { loadCustomWidgetPreviews(); }, 500);
-};
-dockBar.appendChild(beautifyItem);
-    
-// ========== 暴露到全局，供 beautify.js 调用 ==========
-window.getWidgets = getWidgets;
-window.saveWidgets = saveWidgets;
-window.renderWidgets = renderWidgets;
+        <div class="dock-label">美化</div>
+    `;
+    beautifyItem.onclick = function() {
+        initBeautify();
+        openModal('beautifyModal');
+        setTimeout(function() { loadCustomWidgetPreviews(); }, 500);
+    };
+    dockBar.appendChild(beautifyItem);
+
+    // 暴露到全局
+    window.getWidgets = function() { return getGridItems().filter(function(i) { return i.type === 'widget'; }); };
+    window.saveWidgets = function(w) {};
+    window.renderWidgets = renderDesktopGrid;
 });
