@@ -905,7 +905,7 @@ body, html {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 80px;
+    overflow: hidden;
 }
 .grid-cell.editing {
     animation: jiggle 0.3s infinite;
