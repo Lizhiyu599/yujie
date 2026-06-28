@@ -506,6 +506,7 @@ body, html {
     cursor: text;
     line-height: 1.4;
     min-height: 20px;
+    margin-top: auto;
 }
 
 .widget-signature:empty::before {
@@ -914,6 +915,9 @@ body, html {
 
 .grid-cell.editing {
     animation: jiggle 0.3s infinite;
+    outline: 1px dashed rgba(0,0,0,0.15);
+    outline-offset: -4px;
+    border-radius: 12px;
 }
 
 .grid-cell[style*="grid-row: span 2"] {
