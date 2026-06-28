@@ -207,6 +207,7 @@ function setupCellLongPress(cell) {
 function enterEditMode() {
     if (isEditing) return;
     isEditing = true;
+    document.querySelectorAll('.desktop-page').forEach(function(p) { p.classList.add('editing-mode'); });
     removeAddButton();
     document.querySelectorAll('.grid-cell').forEach(function(cell) {
         cell.classList.add('editing');
@@ -225,6 +226,7 @@ function enterEditMode() {
 
 function exitEditMode() {
     isEditing = false;
+    document.querySelectorAll('.desktop-page').forEach(function(p) { p.classList.remove('editing-mode'); });
     document.querySelectorAll('.grid-cell').forEach(function(cell) {
         cell.classList.remove('editing');
         var btn = cell.querySelector('.delete-btn');
