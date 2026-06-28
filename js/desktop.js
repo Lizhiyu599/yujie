@@ -274,6 +274,7 @@ function executeDelete() {
 var dragTarget = null;
 var dragStartX = 0, dragStartY = 0;
 var dragOrigLeft = 0, dragOrigTop = 0;
+var dragOrigWidth = 0, dragOrigHeight = 0;
 var dragStarted = false;
 var dragLongPressed = false;
 var dragTimer = null;
@@ -321,6 +322,46 @@ function setupDrag(cell) {
         dragLongPressed = false;
         dragTarget = null;
     });
+}
+
+function endDrag(clientX, clientY) {
+    if (!dragTarget) return;
+    dragTarget.style.position = '';
+    dragTarget.style.zIndex = '';
+    dragTarget.style.left = '';
+    dragTarget.style.top = '';
+    dragTarget.style.width = '';
+    dragTarget.style.height = '';
+    dragTarget.style.opacity = '';
+    dragTarget.style.pointerEvents = '';
+    dragTarget.style.transform = '';
+    dragTarget.style.margin = '';
+
+    var cells = document.querySelectorAll('.grid-cell');
+    var targetCell = null;
+    cells.forEach(function(c) {
+        if (c === dragTarget) return;
+        var rect = c.getBoundingClientRect();
+        if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
+            targetCell = c;
+        }
+    });
+
+    if (targetCell) {
+        var dragId = dragTarget.getAttribute('data-id');
+        var targetId = targetCell.getAttribute('data-id');
+        var items = getItems();
+        var di = items.findIndex(function(i) { return i.id === dragId; });
+        var ti = items.findIndex(function(i) { return i.id === targetId; });
+        if (di >= 0 && ti >= 0) {
+            var tmp = items[di]; items[di] = items[ti]; items[ti] = tmp;
+            saveItems(items);
+            exitEditMode();
+            renderDesktopGrid();
+            dragTarget = null;
+            setTimeout(function() { if (isEditing) enterEditMode(); }, 100);
+        }
+    }
 }
 
 // 点空白退出编辑
