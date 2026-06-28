@@ -284,6 +284,8 @@ function setupDrag(cell) {
         var rect = cell.getBoundingClientRect();
         dragOrigLeft = rect.left;
         dragOrigTop = rect.top;
+        dragOrigWidth = rect.width;
+        dragOrigHeight = rect.height;
         dragStarted = false;
         dragLongPressed = false;
         dragTimer = setTimeout(function() { dragLongPressed = true; }, 500);
@@ -298,12 +300,10 @@ function setupDrag(cell) {
             cell.style.zIndex = '500';
             cell.style.left = dragOrigLeft + 'px';
             cell.style.top = dragOrigTop + 'px';
-            cell.style.width = cell.offsetWidth + 'px';
-            cell.style.height = cell.offsetHeight + 'px';
-            cell.style.opacity = '0.7';
+            cell.style.width = dragOrigWidth + 'px';
+            cell.style.height = dragOrigHeight + 'px';
+            cell.style.opacity = '0.65';
             cell.style.pointerEvents = 'none';
-            cell.style.transform = 'scale(1.0)';
-            cell.style.margin = '0';
         }
         if (dragStarted) {
             e.preventDefault();
