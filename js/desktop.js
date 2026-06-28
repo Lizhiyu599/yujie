@@ -771,64 +771,41 @@ addDesktopIcon({ id: 'qawenda', name: '奇问妙答', icon: '<img src="https://i
     const dockBar = document.getElementById('dockBar');
     if (!dockBar) return;
 
-    // 日记图标
-const diaryItem = document.createElement('div');
-diaryItem.className = 'dock-item';
+    // 设置图标
+settingItem.innerHTML = `
+    <div class="dock-icon">
+        <div class="dock-icon-img">
+            <img src="https://i.ibb.co/HfZrSFgF/1782625018703.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">
+        </div>
+    </div>
+    <div class="dock-label">设置</div>
+`;
+
+// 日记图标
 diaryItem.innerHTML = `
     <div class="dock-icon">
         <div class="dock-icon-img">
-            <svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M50 26 L78 20 L78 80 L50 74Z"/>
-                <path d="M50 26 L22 20 L22 80 L50 74Z"/>
-                <line x1="22" y1="20" x2="78" y2="20"/>
-                <line x1="30" y1="34" x2="42" y2="34"/>
-                <line x1="30" y1="44" x2="42" y2="44"/>
-                <line x1="30" y1="64" x2="42" y2="64"/>
-                <line x1="30" y1="74" x2="42" y2="74"/>
-                <line x1="58" y1="34" x2="70" y2="34"/>
-                <line x1="58" y1="44" x2="70" y2="44"/>
-                <line x1="58" y1="64" x2="70" y2="64"/>
-                <line x1="58" y1="74" x2="70" y2="74"/>
-            </svg>
+            <img src="https://i.ibb.co/PzCRNBZ0/1782625096270.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">
         </div>
     </div>
     <div class="dock-label">日记</div>
 `;
-diaryItem.onclick = () => { openDiary(); };
-dockBar.appendChild(diaryItem);
-    
+
 // 万象树图标
-const worldbookItem = document.createElement('div');
-worldbookItem.className = 'dock-item';
 worldbookItem.innerHTML = `
     <div class="dock-icon">
         <div class="dock-icon-img">
-            <svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M50 18 L34 42 L66 42Z"/>
-                <path d="M50 36 L30 62 L70 62Z"/>
-                <line x1="50" y1="58" x2="50" y2="78"/>
-            </svg>
+            <img src="https://i.ibb.co/GvV3Dc17/1782625167668.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">
         </div>
     </div>
     <div class="dock-label">万象树</div>
 `;
-worldbookItem.onclick = () => { openWorldbook(); };
-dockBar.appendChild(worldbookItem);
 
 // 美化图标
-const beautifyItem = document.createElement('div');
-beautifyItem.className = 'dock-item';
 beautifyItem.innerHTML = `
     <div class="dock-icon">
         <div class="dock-icon-img">
-            <svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#555" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-                <g transform="rotate(-15 50 50)">
-                    <line x1="50" y1="68" x2="50" y2="86"/>
-                    <polygon points="50,12 56,32 78,34 60,48 66,68 50,56 34,68 40,48 22,34 44,32"/>
-                    <circle cx="76" cy="22" r="1.5"/>
-                    <circle cx="24" cy="20" r="1.5"/>
-                </g>
-            </svg>
+            <img src="https://i.ibb.co/hFszQFvk/1782625229723.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">
         </div>
     </div>
     <div class="dock-label">美化</div>
