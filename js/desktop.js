@@ -94,11 +94,18 @@ function renderDesktopGrid() {
                         '<div class="icon-label">' + (item.name || '') + '</div>' +
                     '</div>';
                 (function(it) {
-                    cell.querySelector('.app-icon').addEventListener('click', function() {
-                        if (isEditing) return;
-                        if (it.action && typeof window[it.action] === 'function') window[it.action]();
-                    });
-                })(item);
+    var iconEl = cell.querySelector('.app-icon');
+    if (iconEl) {
+        iconEl.addEventListener('click', function(e) {
+            if (isEditing) return;
+            if (it.action && typeof window[it.action] === 'function') {
+                e.stopPropagation();
+                window[it.action]();
+            }
+        });
+        iconEl.style.pointerEvents = 'auto';
+    }
+})(item);
             } else if (item.type === 'widget') {
                 cell.innerHTML = buildWidgetHTML(item);
                 var avatar = cell.querySelector('.widget-avatar');
