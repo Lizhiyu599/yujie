@@ -191,16 +191,15 @@ document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 function setupCellLongPress(cell) {
     var startX, startY, timer;
     cell.addEventListener('touchstart', function(e) {
-        e.preventDefault();
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
         timer = setTimeout(function() { enterEditMode(); }, 500);
-    }, { passive: false });
+    }, { passive: true });
     cell.addEventListener('touchmove', function(e) {
         var dx = e.touches[0].clientX - startX;
         var dy = e.touches[0].clientY - startY;
         if (Math.abs(dx) > 15 || Math.abs(dy) > 15) clearTimeout(timer);
-    }, { passive: false });
+    }, { passive: true });
     cell.addEventListener('touchend', function() { clearTimeout(timer); });
     cell.addEventListener('mousedown', function() { timer = setTimeout(function() { enterEditMode(); }, 500); });
     cell.addEventListener('mouseup', function() { clearTimeout(timer); });
