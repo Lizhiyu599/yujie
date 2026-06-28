@@ -899,7 +899,7 @@ body, html {
     grid-template-columns: repeat(4, 1fr);
     gap: 22px;
     padding: 44px 20px 10px;
-    grid-auto-rows: 60px;
+    grid-auto-rows: 70px;
     width: 100%;
     align-items: start;
 }
@@ -917,7 +917,7 @@ body, html {
 }
 
 .grid-cell[style*="grid-row: span 2"] {
-    min-height: 150px !important;
+    min-height: 140px !important;
 }
 
 .grid-widget {
@@ -934,7 +934,7 @@ body, html {
     flex-direction: column;
     gap: 6px;
     overflow: hidden;
-    min-height: 150px;
+    min-height: 140px;
 }
 
 .delete-btn {
