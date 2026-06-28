@@ -896,9 +896,9 @@ body, html {
 .desktop-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
+    gap: 18px;
     padding: 54px 16px 10px;
-    grid-auto-rows: 72px;
+    grid-auto-rows: 76px;
     width: 100%;
     align-items: start;
 }
