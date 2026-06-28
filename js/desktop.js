@@ -501,12 +501,14 @@ function confirmAddWidget(type) {
 // ========== 自定义小组件（美化模块调用） ==========
 function addCustomWidget(imageData, size) {
     var items = getItems();
-    items.unshift({
+    // 确定新组件应该放在哪一页（默认第0页，如果有其他逻辑可以改这里）
+    var targetPage = 0;
+    items.push({
         id: 'widget-custom-' + Date.now(),
         type: 'widget',
         widgetType: 'custom',
         size: size || '2x4',
-        page: 0,
+        page: targetPage,  // 使用正确页面
         image: imageData
     });
     saveItems(items);
