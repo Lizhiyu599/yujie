@@ -117,50 +117,67 @@ async function musicLogin() {
             <div class="music-qr-wrap" id="musicQrWrap">
                 <div class="music-loading">生成二维码中…</div>
             </div>
-            <div class="music-login-hint">请使用网易云音乐APP扫码</div>
+            <div class="music-login-hint" id="musicLoginHint" style="font-weight: 500; transition: 0.3s;">请使用网易云音乐APP扫码</div>
             <button class="music-login-cancel" onclick="closeMusicLogin()">取消</button>
         </div>
     `;
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) closeMusicLogin(); };
 
-    // 建议：如果你打算长期做这个项目，请务必自己本地或者用服务器部署一个 NeteaseCloudMusicApi
     var apiBase = 'https://netease-cloud-music-api-five-ecru.vercel.app';
 
     try {
-        // 1. 尝试主 API 获取 key
-        var keyRes = await fetch(apiBase + '/login/qr/key?t=' + Date.now());
+        // 1. 获取 key (注意参数名必须是 timestamp)
+        var keyRes = await fetch(apiBase + '/login/qr/key?timestamp=' + Date.now());
         var keyData = await keyRes.json();
         var key = keyData.data.unikey;
         
-        // 获取二维码图片
-        var qrRes = await fetch(apiBase + '/login/qr/create?key=' + key + '&qrimg=true&t=' + Date.now());
+        // 2. 获取二维码图片
+        var qrRes = await fetch(apiBase + '/login/qr/create?key=' + key + '&qrimg=true&timestamp=' + Date.now());
         var qrData = await qrRes.json();
         var qrImg = qrData.data.qrimg;
         var qrWrap = document.getElementById('musicQrWrap');
         if (qrWrap) qrWrap.innerHTML = '<img src="' + qrImg + '" class="music-qr-img">';
         
-        // 轮询 (主 API)
+        // 3. 轮询
         window._musicLoginTimer = setInterval(async function() {
             try {
-                // 加上时间戳防止缓存
-                var checkRes = await fetch(apiBase + '/login/qr/check?key=' + key + '&t=' + Date.now());
+                // 【核心修复】：必须使用 timestamp 才能击穿 API 服务端内部的 axios 缓存
+                var checkRes = await fetch(apiBase + '/login/qr/check?key=' + key + '&timestamp=' + Date.now());
                 var checkData = await checkRes.json();
                 
-                // 兼容多层级的数据结构
                 var code = checkData.code || (checkData.data && checkData.data.code);
-                
-                if (code === 803) {
+                var hintEl = document.getElementById('musicLoginHint');
+
+                if (code === 801) {
+                    // 等待扫码，保持默认
+                } else if (code === 802) {
+                    // 用户手机已扫码，但还没点“授权登录”
+                    if(hintEl) {
+                        hintEl.innerText = '已扫码，请在手机上点击确认';
+                        hintEl.style.color = '#007aff'; // 变成蓝色提示
+                    }
+                } else if (code === 803) {
+                    // 授权成功
                     clearInterval(window._musicLoginTimer);
                     var cookie = checkData.cookie || (checkData.data && checkData.data.cookie) || '';
                     localStorage.setItem('music_cookie', cookie);
-                    closeMusicLogin();
-                    if(typeof showToast === 'function') showToast('登录成功');
-                    switchMusicTab('mine');
+                    if(hintEl) {
+                        hintEl.innerText = '登录成功！';
+                        hintEl.style.color = '#34c759'; // 变成绿色提示
+                    }
+                    setTimeout(() => {
+                        closeMusicLogin();
+                        if(typeof showToast === 'function') showToast('登录成功');
+                        switchMusicTab('mine');
+                    }, 500); // 稍微延迟一下，让用户看到成功提示
                 } else if (code === 800) {
+                    // 二维码过期
                     clearInterval(window._musicLoginTimer);
-                    closeMusicLogin();
-                    if(typeof showToast === 'function') showToast('二维码已过期');
+                    if(hintEl) {
+                        hintEl.innerText = '二维码已过期，请重新打开';
+                        hintEl.style.color = '#ff3b30'; // 变成红色提示
+                    }
                 }
             } catch(e) {
                 console.warn("主API轮询检查错误:", e);
@@ -169,61 +186,55 @@ async function musicLogin() {
 
     } catch(e) {
         console.warn("主API失效，尝试备用方案...", e);
-        // 主API不通，换备用代理方案
         try {
-            // 备用获取 Key，加上时间戳
-            var keyUrl = 'https://music.163.com/api/login/qrcode/unikey?type=1&t=' + Date.now();
+            var keyUrl = 'https://music.163.com/api/login/qrcode/unikey?type=1&timestamp=' + Date.now();
             var keyRes2 = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(keyUrl));
             var keyText2 = await keyRes2.text();
             var key2 = JSON.parse(keyText2).unikey;
             
-            // 使用 qrserver 生成二维码图片
             var qrUrl2 = 'https://music.163.com/login?codekey=' + key2;
             var qrWrap2 = document.getElementById('musicQrWrap');
             if (qrWrap2) qrWrap2.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(qrUrl2) + '" class="music-qr-img">';
             
-            // 备用轮询
             window._musicLoginTimer = setInterval(async function() {
                 try {
-                    // 【关键修复】加上 &t=时间戳，防止 allorigins 代理缓存响应！
-                    var checkUrl = 'https://music.163.com/api/login/qrcode/client/login?key=' + key2 + '&type=1&t=' + Date.now();
+                    var checkUrl = 'https://music.163.com/api/login/qrcode/client/login?key=' + key2 + '&type=1&timestamp=' + Date.now();
                     var checkRes2 = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(checkUrl));
                     var checkText2 = await checkRes2.text();
                     var checkData2 = JSON.parse(checkText2);
                     
-                    // 同样做层级兼容
                     var code2 = checkData2.code || (checkData2.data && checkData2.data.code);
+                    var hintEl = document.getElementById('musicLoginHint');
 
-                    if (code2 === 803) {
+                    if (code2 === 802) {
+                        if(hintEl) { hintEl.innerText = '已扫码，请在手机上点击确认'; hintEl.style.color = '#007aff'; }
+                    } else if (code2 === 803) {
                         clearInterval(window._musicLoginTimer);
                         var cookie2 = checkData2.cookie || (checkData2.data && checkData2.data.cookie) || '';
                         localStorage.setItem('music_cookie', cookie2);
-                        closeMusicLogin();
-                        if(typeof showToast === 'function') showToast('登录成功');
-                        switchMusicTab('mine');
+                        if(hintEl) { hintEl.innerText = '登录成功！'; hintEl.style.color = '#34c759'; }
+                        setTimeout(() => {
+                            closeMusicLogin();
+                            if(typeof showToast === 'function') showToast('登录成功');
+                            switchMusicTab('mine');
+                        }, 500);
                     } else if (code2 === 800) {
                         clearInterval(window._musicLoginTimer);
-                        closeMusicLogin();
-                        if(typeof showToast === 'function') showToast('二维码已过期');
+                        if(hintEl) { hintEl.innerText = '二维码已过期，请重新打开'; hintEl.style.color = '#ff3b30'; }
                     }
-                } catch(e2) {
-                    // 轮询单次报错不中断定时器，由用户手动取消或等超时
-                    console.warn("备用轮询状态获取失败:", e2);
-                }
+                } catch(e2) {}
             }, 3000);
         } catch(e2) {
-            console.error("备用方案也失败了:", e2);
             var qrWrap = document.getElementById('musicQrWrap');
             if (qrWrap) qrWrap.innerHTML = '<div class="music-loading" style="color:red;">网络服务已断开<br>请稍后再试或自建API</div>';
         }
     }
 }
 
-// 确保你有关闭弹窗并清理定时器的函数，防止内存泄漏和疯狂请求
+// 确保清理函数存在
 function closeMusicLogin() {
     var overlay = document.getElementById('musicLoginOverlay');
     if (overlay) overlay.remove();
-    // 弹窗关闭时，必须清除轮询定时器
     if (window._musicLoginTimer) {
         clearInterval(window._musicLoginTimer);
         window._musicLoginTimer = null;
