@@ -302,7 +302,7 @@ function setupDesktopLongPress() {
         if (!desktopPage) return;
 
         desktopPage.addEventListener('touchstart', function(e) {
-            if (e.target.closest('.grid-cell') || e.target.closest('.add-widget-btn')) return;
+            if (e.target.closest('.add-widget-btn')) return;
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
             longPressTimer = setTimeout(function() {
