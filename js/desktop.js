@@ -3,7 +3,6 @@
  * 图标与小组件统一网格混排
  * 4列网格，size格式：行x列，如2x4=2行4列占满全宽
  */
-document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
 // ========== 全局状态 ==========
 var isEditing = false;
