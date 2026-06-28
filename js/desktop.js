@@ -147,19 +147,57 @@ function renderDesktopGrid() {
                 }
                 var sig = cell.querySelector('.widget-signature');
                 if (sig) {
-                    (function(it) {
-                        sig.addEventListener('blur', function() { updateWidgetField(it.id, 'signature', sig.innerText); });
-                        sig.addEventListener('focus', function() { if (sig.innerText === '——  ..おやすみ ..——') sig.innerText = ''; });
-                        sig.addEventListener('click', function(e) { e.stopPropagation(); });
-                    })(item);
+                    sig.style.cursor = 'pointer';
+                    (function(it, el) {
+                        el.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            if (isEditing) return;
+                            var overlay = document.createElement('div');
+                            overlay.className = 'caption-modal-overlay';
+                            overlay.id = 'signEditOverlay';
+                            overlay.innerHTML = `
+                                <div class="caption-modal">
+                                    <div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">编辑签名</div>
+                                    <input type="text" class="payment-note" id="signEditInput" placeholder="输入个性签名" value="${it.signature || ''}">
+                                    <div class="caption-buttons">
+                                        <div class="payment-btn-cancel" onclick="closeSignEdit()">取消</div>
+                                        <div class="payment-btn-confirm" onclick="confirmSignEdit('${it.id}')">确定</div>
+                                    </div>
+                                </div>
+                            `;
+                            document.body.appendChild(overlay);
+                            overlay.onclick = function(ev) { if (ev.target === overlay) closeSignEdit(); };
+                            window._signEditItem = it;
+                            window._signEditEl = el;
+                        });
+                    })(item, sig);
                 }
                 var sig2 = cell.querySelector('.widget-signature2');
                 if (sig2) {
-                    (function(it) {
-                        sig2.addEventListener('blur', function() { updateWidgetField(it.id, 'signature2', sig2.innerText); });
-                        sig2.addEventListener('focus', function() { if (sig2.innerText === '🩶✩* iwish..★행복｡◍•)♡') sig2.innerText = ''; });
-                        sig2.addEventListener('click', function(e) { e.stopPropagation(); });
-                    })(item);
+                    sig2.style.cursor = 'pointer';
+                    (function(it, el) {
+                        el.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            if (isEditing) return;
+                            var overlay = document.createElement('div');
+                            overlay.className = 'caption-modal-overlay';
+                            overlay.id = 'sign2EditOverlay';
+                            overlay.innerHTML = `
+                                <div class="caption-modal">
+                                    <div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">编辑签名</div>
+                                    <input type="text" class="payment-note" id="sign2EditInput" placeholder="输入个性签名" value="${it.signature2 || ''}">
+                                    <div class="caption-buttons">
+                                        <div class="payment-btn-cancel" onclick="closeSign2Edit()">取消</div>
+                                        <div class="payment-btn-confirm" onclick="confirmSign2Edit('${it.id}')">确定</div>
+                                    </div>
+                                </div>
+                            `;
+                            document.body.appendChild(overlay);
+                            overlay.onclick = function(ev) { if (ev.target === overlay) closeSign2Edit(); };
+                            window._sign2EditItem = it;
+                            window._sign2EditEl = el;
+                        });
+                    })(item, sig2);
                 }
             }
 
@@ -234,6 +272,33 @@ function confirmWeatherEdit(id) {
     if (newVal) {
         updateWidgetField(id, 'weatherDesc', newVal);
         if (window._weatherEditEl) window._weatherEditEl.textContent = newVal;
+    }
+}
+
+function closeSignEdit() {
+    var o = document.getElementById('signEditOverlay');
+    if (o) o.remove();
+}
+function confirmSignEdit(id) {
+    var input = document.getElementById('signEditInput');
+    var newVal = input ? input.value.trim() : '';
+    closeSignEdit();
+    if (newVal !== '') {
+        updateWidgetField(id, 'signature', newVal);
+        if (window._signEditEl) window._signEditEl.textContent = newVal;
+    }
+}
+function closeSign2Edit() {
+    var o = document.getElementById('sign2EditOverlay');
+    if (o) o.remove();
+}
+function confirmSign2Edit(id) {
+    var input = document.getElementById('sign2EditInput');
+    var newVal = input ? input.value.trim() : '';
+    closeSign2Edit();
+    if (newVal !== '') {
+        updateWidgetField(id, 'signature2', newVal);
+        if (window._sign2EditEl) window._sign2EditEl.textContent = newVal;
     }
 }
 
