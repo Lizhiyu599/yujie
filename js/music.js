@@ -124,7 +124,7 @@ async function musicLogin() {
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) closeMusicLogin(); };
 
-    var apiBase = 'https://netease-cloud-music-api-five-ecru.vercel.app';
+    var apiBase = 'https://netease-api-dun.vercel.app';
 
     try {
         // 1. 获取 key (注意参数名必须是 timestamp)
