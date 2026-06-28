@@ -124,7 +124,7 @@ async function musicLogin() {
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) closeMusicLogin(); };
 
-    var apiBase = 'https://netease-cloud-music-api-umber.vercel.app';
+    var apiBase = 'https://netease-music-api.vercel.app';
 
     try {
         var res = await fetch(apiBase + '/login/qr/key');
@@ -139,13 +139,14 @@ async function musicLogin() {
         window._musicLoginTimer = setInterval(async function() {
             var checkRes = await fetch(apiBase + '/login/qr/check?key=' + key);
             var checkData = await checkRes.json();
-            if (checkData.code === 803) {
+            if (checkData.code === 803 || checkData.data.code === 803) {
                 clearInterval(window._musicLoginTimer);
-                localStorage.setItem('music_cookie', checkData.cookie);
+                var cookie = checkData.cookie || checkData.data.cookie;
+                localStorage.setItem('music_cookie', cookie);
                 closeMusicLogin();
                 showToast('登录成功');
                 switchMusicTab('mine');
-            } else if (checkData.code === 800) {
+            } else if (checkData.code === 800 || checkData.data.code === 800) {
                 clearInterval(window._musicLoginTimer);
                 closeMusicLogin();
                 showToast('二维码已过期，请重新登录');
