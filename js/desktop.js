@@ -33,7 +33,7 @@ function getItems() {
         weatherDesc: displayCity + '·晴'
     }];
 }
-    
+
 function saveItems(items) {
     localStorage.setItem('desktop_items_v3', JSON.stringify(items));
 }
@@ -77,13 +77,11 @@ function renderDesktopGrid() {
 
         var pageItems = items.filter(function(item) { return (item.page || 0) === pageIndex; });
 
-        // 小组件永远排前面
-            pageItems.forEach(function(item) {
+        pageItems.forEach(function(item) {
             var cell = document.createElement('div');
             cell.className = 'grid-cell';
             cell.setAttribute('data-id', item.id);
 
-            // size格式：行x列
             var sizeParts = (item.size || '1x1').split('x');
             var rowSpan = parseInt(sizeParts[0]) || 1;
             var colSpan = parseInt(sizeParts[1]) || 1;
@@ -97,18 +95,18 @@ function renderDesktopGrid() {
                         '<div class="icon-label">' + (item.name || '') + '</div>' +
                     '</div>';
                 (function(it) {
-    var iconEl = cell.querySelector('.app-icon');
-    if (iconEl) {
-        iconEl.addEventListener('click', function(e) {
-            if (isEditing) return;
-            if (it.action && typeof window[it.action] === 'function') {
-                e.stopPropagation();
-                window[it.action]();
-            }
-        });
-        iconEl.style.pointerEvents = 'auto';
-    }
-})(item);
+                    var iconEl = cell.querySelector('.app-icon');
+                    if (iconEl) {
+                        iconEl.addEventListener('click', function(e) {
+                            if (isEditing) return;
+                            if (it.action && typeof window[it.action] === 'function') {
+                                e.stopPropagation();
+                                window[it.action]();
+                            }
+                        });
+                        iconEl.style.pointerEvents = 'auto';
+                    }
+                })(item);
             } else if (item.type === 'widget') {
                 cell.innerHTML = buildWidgetHTML(item);
                 var avatar = cell.querySelector('.widget-avatar');
@@ -121,27 +119,46 @@ function renderDesktopGrid() {
                         });
                     })();
                 }
-                var sig = cell.querySelector('.widget-signature');
                 var weatherEl = cell.querySelector('.widget-weather-desc');
-if (weatherEl) {
-    weatherEl.style.cursor = 'pointer';
-    (function(it) {
-        weatherEl.addEventListener('click', function(e) {
-            e.stopPropagation();
-            var newVal = prompt('输入地点名称：', it.weatherDesc || '');
-            if (newVal !== null && newVal.trim()) {
-                it.weatherDesc = newVal.trim();
-                updateWidgetField(it.id, 'weatherDesc', it.weatherDesc);
-                weatherEl.textContent = it.weatherDesc;
-            }
-        });
-    })(item);
-}
+                if (weatherEl) {
+                    weatherEl.style.cursor = 'pointer';
+                    (function(it, el) {
+                        el.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            var overlay = document.createElement('div');
+                            overlay.className = 'caption-modal-overlay';
+                            overlay.id = 'weatherEditOverlay';
+                            overlay.innerHTML = `
+                                <div class="caption-modal">
+                                    <div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">编辑地点</div>
+                                    <input type="text" class="payment-note" id="weatherEditInput" placeholder="输入地点名称" value="${it.weatherDesc || ''}">
+                                    <div class="caption-buttons">
+                                        <div class="payment-btn-cancel" onclick="closeWeatherEdit()">取消</div>
+                                        <div class="payment-btn-confirm" onclick="confirmWeatherEdit('${it.id}')">确定</div>
+                                    </div>
+                                </div>
+                            `;
+                            document.body.appendChild(overlay);
+                            overlay.onclick = function(ev) { if (ev.target === overlay) closeWeatherEdit(); };
+                            window._weatherEditItem = it;
+                            window._weatherEditEl = el;
+                        });
+                    })(item, weatherEl);
+                }
+                var sig = cell.querySelector('.widget-signature');
                 if (sig) {
                     (function(it) {
                         sig.addEventListener('blur', function() { updateWidgetField(it.id, 'signature', sig.innerText); });
                         sig.addEventListener('focus', function() { if (sig.innerText === '——  ..おやすみ ..——') sig.innerText = ''; });
                         sig.addEventListener('click', function(e) { e.stopPropagation(); });
+                    })(item);
+                }
+                var sig2 = cell.querySelector('.widget-signature2');
+                if (sig2) {
+                    (function(it) {
+                        sig2.addEventListener('blur', function() { updateWidgetField(it.id, 'signature2', sig2.innerText); });
+                        sig2.addEventListener('focus', function() { if (sig2.innerText === '🩶✩* iwish..★행복｡◍•)♡') sig2.innerText = ''; });
+                        sig2.addEventListener('click', function(e) { e.stopPropagation(); });
                     })(item);
                 }
             }
@@ -203,6 +220,21 @@ function updateWidgetField(id, field, value) {
     var items = getItems();
     var item = items.find(function(i) { return i.id === id; });
     if (item) { item[field] = value; saveItems(items); }
+}
+
+function closeWeatherEdit() {
+    var o = document.getElementById('weatherEditOverlay');
+    if (o) o.remove();
+}
+
+function confirmWeatherEdit(id) {
+    var input = document.getElementById('weatherEditInput');
+    var newVal = input ? input.value.trim() : '';
+    closeWeatherEdit();
+    if (newVal) {
+        updateWidgetField(id, 'weatherDesc', newVal);
+        if (window._weatherEditEl) window._weatherEditEl.textContent = newVal;
+    }
 }
 
 // ========== 长按进编辑 ==========
@@ -300,7 +332,7 @@ var dragStarted = false;
 var dragLongPressed = false;
 var dragTimer = null;
 
- function setupDrag(cell) {
+function setupDrag(cell) {
     cell.addEventListener('touchstart', function(e) {
         dragTarget = cell;
         dragStartX = e.touches[0].clientX;
@@ -343,7 +375,51 @@ var dragTimer = null;
         dragLongPressed = false;
         dragTarget = null;
     });
- }
+}
+
+function endDrag(clientX, clientY) {
+    if (!dragTarget) return;
+    dragTarget.style.position = '';
+    dragTarget.style.zIndex = '';
+    dragTarget.style.left = '';
+    dragTarget.style.top = '';
+    dragTarget.style.width = '';
+    dragTarget.style.height = '';
+    dragTarget.style.opacity = '';
+    dragTarget.style.pointerEvents = '';
+    dragTarget.style.transform = '';
+    dragTarget.style.margin = '';
+
+    var cells = document.querySelectorAll('.grid-cell');
+    var targetCell = null;
+    var minDist = Infinity;
+    cells.forEach(function(c) {
+        if (c === dragTarget) return;
+        var rect = c.getBoundingClientRect();
+        var cx = rect.left + rect.width / 2;
+        var cy = rect.top + rect.height / 2;
+        var dist = Math.sqrt((clientX - cx) * (clientX - cx) + (clientY - cy) * (clientY - cy));
+        if (dist < minDist && dist < 100) {
+            minDist = dist;
+            targetCell = c;
+        }
+    });
+
+    if (targetCell) {
+        var dragId = dragTarget.getAttribute('data-id');
+        var targetId = targetCell.getAttribute('data-id');
+        var items = getItems();
+        var di = items.findIndex(function(i) { return i.id === dragId; });
+        var ti = items.findIndex(function(i) { return i.id === targetId; });
+        if (di >= 0 && ti >= 0) {
+            var tmp = items[di]; items[di] = items[ti]; items[ti] = tmp;
+            saveItems(items);
+        }
+    }
+    exitEditMode();
+    renderDesktopGrid();
+    dragTarget = null;
+}
 
 // 点空白退出编辑
 document.addEventListener('touchstart', function(e) {
@@ -481,6 +557,7 @@ function confirmAddWidget(type) {
             page: 0,
             avatar: '',
             signature: '——  ..おやすみ ..——',
+            signature2: '🩶✩* iwish..★행복｡◍•)♡',
             temp: '24°',
             weatherDesc: '上海·晴'
         });
@@ -493,14 +570,13 @@ function confirmAddWidget(type) {
 // ========== 自定义小组件（美化模块调用） ==========
 function addCustomWidget(imageData, size) {
     var items = getItems();
-    // 确定新组件应该放在哪一页（默认第0页，如果有其他逻辑可以改这里）
     var targetPage = 0;
     items.push({
         id: 'widget-custom-' + Date.now(),
         type: 'widget',
         widgetType: 'custom',
         size: size || '2x4',
-        page: targetPage,  // 使用正确页面
+        page: targetPage,
         image: imageData
     });
     saveItems(items);
@@ -539,19 +615,16 @@ function saveWidgets() {}
 
 // ========== 初始化 ==========
 window.addEventListener('DOMContentLoaded', function() {
-    // 注册图标（先存数据，最后统一渲染一次）
     addDesktopIcon({ id: 'chat', name: '聊天', icon: '<img src="https://i.ibb.co/3yN7gbxD/1782621034253.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openChat' });
     addDesktopIcon({ id: 'shiyilin', name: '拾忆林', icon: '<img src="https://i.ibb.co/dwNq5VfT/1782621400981.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openShiyilin' });
     addDesktopIcon({ id: 'qianban', name: '牵绊', icon: '<img src="https://i.ibb.co/1f11jCzs/1782623493282.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openQianban' });
     addDesktopIcon({ id: 'gallery', name: '映像馆', icon: '<img src="https://i.ibb.co/Dfcz9js0/1782623882994.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openGallery' });
     addDesktopIcon({ id: 'qawenda', name: '奇问妙答', icon: '<img src="https://i.ibb.co/dwTDLTcc/1782624493861.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openQawenda' });
 
-    // 统一渲染一次
     renderDesktopGrid();
     setupDesktopLongPress();
     setupWidgetAvatarUpload();
 
-    // Dock栏
     var dockBar = document.getElementById('dockBar');
     if (!dockBar) return;
 
