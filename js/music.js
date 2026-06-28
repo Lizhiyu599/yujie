@@ -9,7 +9,7 @@ function openMusic() {
     if (!appWindow) {
         appWindow = document.createElement('div');
         appWindow.id = 'musicAppWindow';
-        appWindow.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:#1a1a1f;z-index:200;display:none;flex-direction:column;';
+        appWindow.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:#f2f2f7;z-index:200;display:none;flex-direction:column;';
         document.getElementById('desktop').appendChild(appWindow);
     }
     renderMusicApp();
@@ -33,8 +33,7 @@ function renderMusicApp() {
         <div class="music-app">
             <div class="music-top-bar">
                 <span class="music-back-btn" onclick="closeMusic()">‹</span>
-                <span class="music-title">网易云音乐</span>
-                <span class="music-search-btn" onclick="showToast('搜索功能开发中')">🔍</span>
+                <input type="text" class="music-search-box" placeholder="搜索音乐" id="musicSearchInput" oninput="musicSearch(this.value)">
             </div>
             <div class="music-body" id="musicBody">
                 ${renderMusicContent()}
@@ -100,7 +99,7 @@ function renderMinePage() {
         <div class="music-page">
             <div class="music-section-title">我的</div>
             <div class="music-login-btn" onclick="musicLogin()">
-                <div class="music-login-icon">🎵</div>
+                <div class="music-login-icon">&#9835;</div>
                 <span>扫码登录网易云</span>
             </div>
         </div>
@@ -110,4 +109,9 @@ function renderMinePage() {
 // ========== 登录 ==========
 function musicLogin() {
     showToast('登录功能开发中');
+}
+
+// ========== 搜索 ==========
+function musicSearch(query) {
+    // 搜索功能开发中
 }
