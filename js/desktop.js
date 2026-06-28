@@ -258,33 +258,20 @@ function enterEditMode() {
     document.querySelectorAll('.grid-cell').forEach(function(cell) {
         cell.classList.add('editing');
         var itemId = cell.getAttribute('data-id');
-        var items = getGridItems();
-        var item = items.find(function(i) { return i.id === itemId; });
-        if (item && item.type === 'app') {
-            if (!cell.querySelector('.delete-btn')) {
-                var delBtn = document.createElement('div');
-                delBtn.className = 'delete-btn';
-                delBtn.innerHTML = 'X';
-                delBtn.onclick = function(e) {
-                    e.stopPropagation();
-                    deleteGridItem(itemId);
-                };
-                cell.querySelector('.app-icon').appendChild(delBtn);
-            }
-        }
-        if (item && item.type === 'widget') {
-            if (!cell.querySelector('.widget-delete-btn')) {
-                var delBtn2 = document.createElement('div');
-                delBtn2.className = 'widget-delete-btn';
-                delBtn2.style.cssText = 'display:flex;position:absolute;top:-8px;right:-8px;width:22px;height:22px;background:#ff3b30;color:#fff;border-radius:50%;font-size:12px;align-items:center;justify-content:center;cursor:pointer;z-index:5;font-weight:700;';
-                delBtn2.innerHTML = 'X';
-                delBtn2.onclick = function(e) {
-                    e.stopPropagation();
-                    deleteGridItem(itemId);
-                };
-                cell.querySelector('.desktop-widget').appendChild(delBtn2);
-            }
-        }
+        
+        var oldBtn = cell.querySelector('.delete-btn');
+        if (oldBtn) oldBtn.remove();
+        
+        var delBtn = document.createElement('div');
+        delBtn.className = 'delete-btn';
+        delBtn.innerHTML = 'X';
+        delBtn.style.cssText = 'position:absolute;top:-6px;right:-6px;width:20px;height:20px;background:#ff3b30;color:#fff;border-radius:50%;font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:5;';
+        delBtn.onclick = function(e) {
+            e.stopPropagation();
+            deleteGridItem(itemId);
+        };
+        cell.style.position = 'relative';
+        cell.appendChild(delBtn);
     });
 }
 
