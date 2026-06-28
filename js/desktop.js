@@ -282,7 +282,7 @@ var dragStarted = false;
 var dragLongPressed = false;
 var dragTimer = null;
 
-function setupDrag(cell) {
+ function setupDrag(cell) {
     cell.addEventListener('touchstart', function(e) {
         dragTarget = cell;
         dragStartX = e.touches[0].clientX;
@@ -320,56 +320,18 @@ function setupDrag(cell) {
 
     cell.addEventListener('touchend', function(e) {
         clearTimeout(dragTimer);
-        if (dragStarted) endDrag(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+        if (dragStarted) {
+            endDrag(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+        } else if (!dragLongPressed) {
+            // 短点击：不做拖拽，让点击事件正常触发
+            dragTarget = null;
+            return;
+        }
         dragStarted = false;
         dragLongPressed = false;
         dragTarget = null;
     });
-}
-
-function endDrag(clientX, clientY) {
-    if (!dragTarget) return;
-    dragTarget.style.position = '';
-    dragTarget.style.zIndex = '';
-    dragTarget.style.left = '';
-    dragTarget.style.top = '';
-    dragTarget.style.width = '';
-    dragTarget.style.height = '';
-    dragTarget.style.opacity = '';
-    dragTarget.style.pointerEvents = '';
-    dragTarget.style.transform = '';
-    dragTarget.style.margin = '';
-
-    var cells = document.querySelectorAll('.grid-cell');
-    var targetCell = null;
-    var minDist = Infinity;
-    cells.forEach(function(c) {
-        if (c === dragTarget) return;
-        var rect = c.getBoundingClientRect();
-        var cx = rect.left + rect.width / 2;
-        var cy = rect.top + rect.height / 2;
-        var dist = Math.sqrt((clientX - cx) * (clientX - cx) + (clientY - cy) * (clientY - cy));
-        if (dist < minDist && dist < 100) {
-            minDist = dist;
-            targetCell = c;
-        }
-    });
-
-    if (targetCell) {
-        var dragId = dragTarget.getAttribute('data-id');
-        var targetId = targetCell.getAttribute('data-id');
-        var items = getItems();
-        var di = items.findIndex(function(i) { return i.id === dragId; });
-        var ti = items.findIndex(function(i) { return i.id === targetId; });
-        if (di >= 0 && ti >= 0) {
-            var tmp = items[di]; items[di] = items[ti]; items[ti] = tmp;
-            saveItems(items);
-        }
-    }
-    exitEditMode();
-    renderDesktopGrid();
-    dragTarget = null;
-}
+ } 
 
 // 点空白退出编辑
 document.addEventListener('touchstart', function(e) {
