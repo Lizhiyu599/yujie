@@ -961,7 +961,6 @@ body, html {
     background-image: 
         linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px),
         linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px);
-    background-size: calc(25% - 11px) 76px;
+    background-size: calc(25% - 16px) 70px;
     background-position: 20px 44px;
-    background-repeat: repeat;
 }
