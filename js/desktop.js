@@ -29,7 +29,8 @@ function getItems() {
     temp: '24°',
     weatherDesc: '上海·晴'
 }];
-
+}
+    
 function saveItems(items) {
     localStorage.setItem('desktop_items_v3', JSON.stringify(items));
 }
