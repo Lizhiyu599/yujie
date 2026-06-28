@@ -771,6 +771,15 @@ addDesktopIcon({ id: 'qawenda', name: '奇问妙答', icon: '<img src="https://i
     const dockBar = document.getElementById('dockBar');
     if (!dockBar) return;
 
+    var settingItem = document.createElement('div');
+    settingItem.className = 'dock-item';
+    var diaryItem = document.createElement('div');
+    diaryItem.className = 'dock-item';
+    var worldbookItem = document.createElement('div');
+    worldbookItem.className = 'dock-item';
+    var beautifyItem = document.createElement('div');
+    beautifyItem.className = 'dock-item';
+
     // 设置图标
 settingItem.innerHTML = `
     <div class="dock-icon">
