@@ -17,18 +17,21 @@ function getItems() {
     if (raw) {
         try { return JSON.parse(raw); } catch(e) {}
     }
+    var storyCity = localStorage.getItem('weather_story_city') || '';
+    var realCity = localStorage.getItem('weather_city') || '';
+    var displayCity = storyCity || realCity || '上海';
     return [{
-    id: 'widget-clock-default',
-    type: 'widget',
-    widgetType: 'clock',
-    size: '2x4',
-    page: 0,
-    avatar: '',
-    signature: '——  ..おやすみ ..——',
-    signature2: '🩶✩* iwish..★행복｡◍•)♡',
-    temp: '24°',
-    weatherDesc: '上海·晴'
-}];
+        id: 'widget-clock-default',
+        type: 'widget',
+        widgetType: 'clock',
+        size: '2x4',
+        page: 0,
+        avatar: '',
+        signature: '——  ..おやすみ ..——',
+        signature2: '🩶✩* iwish..★행복｡◍•)♡',
+        temp: '24°',
+        weatherDesc: displayCity + '·晴'
+    }];
 }
     
 function saveItems(items) {
@@ -119,6 +122,21 @@ function renderDesktopGrid() {
                     })();
                 }
                 var sig = cell.querySelector('.widget-signature');
+                var weatherEl = cell.querySelector('.widget-weather-desc');
+if (weatherEl) {
+    weatherEl.style.cursor = 'pointer';
+    (function(it) {
+        weatherEl.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var newVal = prompt('输入地点名称：', it.weatherDesc || '');
+            if (newVal !== null && newVal.trim()) {
+                it.weatherDesc = newVal.trim();
+                updateWidgetField(it.id, 'weatherDesc', it.weatherDesc);
+                weatherEl.textContent = it.weatherDesc;
+            }
+        });
+    })(item);
+}
                 if (sig) {
                     (function(it) {
                         sig.addEventListener('blur', function() { updateWidgetField(it.id, 'signature', sig.innerText); });
