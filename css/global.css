@@ -897,12 +897,11 @@ body, html {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 22px;
-    padding: 16px 20px 10px;
+    padding: 8px 20px 10px;
     grid-auto-rows: 76px;
     width: 100%;
     align-items: start;
 }
-
 .grid-cell {
     position: relative;
     display: flex;
