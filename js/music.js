@@ -124,73 +124,109 @@ async function musicLogin() {
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) closeMusicLogin(); };
 
+    // 建议：如果你打算长期做这个项目，请务必自己本地或者用服务器部署一个 NeteaseCloudMusicApi
     var apiBase = 'https://netease-cloud-music-api-five-ecru.vercel.app';
 
     try {
-        // 获取 key
-        var keyRes = await fetch(apiBase + '/login/qr/key');
+        // 1. 尝试主 API 获取 key
+        var keyRes = await fetch(apiBase + '/login/qr/key?t=' + Date.now());
         var keyData = await keyRes.json();
         var key = keyData.data.unikey;
         
         // 获取二维码图片
-        var qrRes = await fetch(apiBase + '/login/qr/create?key=' + key + '&qrimg=true');
+        var qrRes = await fetch(apiBase + '/login/qr/create?key=' + key + '&qrimg=true&t=' + Date.now());
         var qrData = await qrRes.json();
         var qrImg = qrData.data.qrimg;
         var qrWrap = document.getElementById('musicQrWrap');
         if (qrWrap) qrWrap.innerHTML = '<img src="' + qrImg + '" class="music-qr-img">';
         
-        // 轮询
+        // 轮询 (主 API)
         window._musicLoginTimer = setInterval(async function() {
             try {
+                // 加上时间戳防止缓存
                 var checkRes = await fetch(apiBase + '/login/qr/check?key=' + key + '&t=' + Date.now());
                 var checkData = await checkRes.json();
+                
+                // 兼容多层级的数据结构
                 var code = checkData.code || (checkData.data && checkData.data.code);
+                
                 if (code === 803) {
                     clearInterval(window._musicLoginTimer);
-                    var cookie = checkData.cookie || (checkData.data && checkData.data.cookie);
+                    var cookie = checkData.cookie || (checkData.data && checkData.data.cookie) || '';
                     localStorage.setItem('music_cookie', cookie);
                     closeMusicLogin();
-                    showToast('登录成功');
+                    if(typeof showToast === 'function') showToast('登录成功');
                     switchMusicTab('mine');
                 } else if (code === 800) {
                     clearInterval(window._musicLoginTimer);
                     closeMusicLogin();
-                    showToast('二维码已过期');
+                    if(typeof showToast === 'function') showToast('二维码已过期');
                 }
-            } catch(e) {}
+            } catch(e) {
+                console.warn("主API轮询检查错误:", e);
+            }
         }, 3000);
+
     } catch(e) {
-        // 直接API不通，换备用
+        console.warn("主API失效，尝试备用方案...", e);
+        // 主API不通，换备用代理方案
         try {
-            var keyRes2 = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://music.163.com/api/login/qrcode/unikey?type=1'));
+            // 备用获取 Key，加上时间戳
+            var keyUrl = 'https://music.163.com/api/login/qrcode/unikey?type=1&t=' + Date.now();
+            var keyRes2 = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(keyUrl));
             var keyText2 = await keyRes2.text();
             var key2 = JSON.parse(keyText2).unikey;
+            
+            // 使用 qrserver 生成二维码图片
             var qrUrl2 = 'https://music.163.com/login?codekey=' + key2;
             var qrWrap2 = document.getElementById('musicQrWrap');
             if (qrWrap2) qrWrap2.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(qrUrl2) + '" class="music-qr-img">';
             
+            // 备用轮询
             window._musicLoginTimer = setInterval(async function() {
                 try {
-                    var checkRes2 = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://music.163.com/api/login/qrcode/client/login?key=' + key2 + '&type=1'));
+                    // 【关键修复】加上 &t=时间戳，防止 allorigins 代理缓存响应！
+                    var checkUrl = 'https://music.163.com/api/login/qrcode/client/login?key=' + key2 + '&type=1&t=' + Date.now();
+                    var checkRes2 = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(checkUrl));
                     var checkText2 = await checkRes2.text();
                     var checkData2 = JSON.parse(checkText2);
-                    if (checkData2.code === 803) {
+                    
+                    // 同样做层级兼容
+                    var code2 = checkData2.code || (checkData2.data && checkData2.data.code);
+
+                    if (code2 === 803) {
                         clearInterval(window._musicLoginTimer);
-                        localStorage.setItem('music_cookie', checkData2.cookie);
+                        var cookie2 = checkData2.cookie || (checkData2.data && checkData2.data.cookie) || '';
+                        localStorage.setItem('music_cookie', cookie2);
                         closeMusicLogin();
-                        showToast('登录成功');
+                        if(typeof showToast === 'function') showToast('登录成功');
                         switchMusicTab('mine');
-                    } else if (checkData2.code === 800) {
+                    } else if (code2 === 800) {
                         clearInterval(window._musicLoginTimer);
                         closeMusicLogin();
-                        showToast('二维码已过期');
+                        if(typeof showToast === 'function') showToast('二维码已过期');
                     }
-                } catch(e2) {}
+                } catch(e2) {
+                    // 轮询单次报错不中断定时器，由用户手动取消或等超时
+                    console.warn("备用轮询状态获取失败:", e2);
+                }
             }, 3000);
         } catch(e2) {
+            console.error("备用方案也失败了:", e2);
             var qrWrap = document.getElementById('musicQrWrap');
-            if (qrWrap) qrWrap.innerHTML = '<div class="music-loading">网络错误，请重试</div>';
+            if (qrWrap) qrWrap.innerHTML = '<div class="music-loading" style="color:red;">网络服务已断开<br>请稍后再试或自建API</div>';
         }
+    }
+}
+
+// 确保你有关闭弹窗并清理定时器的函数，防止内存泄漏和疯狂请求
+function closeMusicLogin() {
+    var overlay = document.getElementById('musicLoginOverlay');
+    if (overlay) overlay.remove();
+    // 弹窗关闭时，必须清除轮询定时器
+    if (window._musicLoginTimer) {
+        clearInterval(window._musicLoginTimer);
+        window._musicLoginTimer = null;
     }
 }
 
