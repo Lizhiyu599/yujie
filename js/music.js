@@ -107,8 +107,59 @@ function renderMinePage() {
 }
 
 // ========== 登录 ==========
-function musicLogin() {
-    showToast('登录功能开发中');
+async function musicLogin() {
+    var overlay = document.createElement('div');
+    overlay.className = 'music-login-overlay';
+    overlay.id = 'musicLoginOverlay';
+    overlay.innerHTML = `
+        <div class="music-login-modal">
+            <div class="music-login-title">扫码登录</div>
+            <div class="music-qr-wrap" id="musicQrWrap">
+                <div class="music-loading">生成二维码中…</div>
+            </div>
+            <div class="music-login-hint">请使用网易云音乐APP扫码</div>
+            <button class="music-login-cancel" onclick="closeMusicLogin()">取消</button>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeMusicLogin(); };
+
+    try {
+        var res = await fetch('https://music-api.leanapp.cn/login/qr/key');
+        var keyData = await res.json();
+        var key = keyData.data.unikey;
+        var qrRes = await fetch('https://music-api.leanapp.cn/login/qr/create?key=' + key + '&qrimg=true');
+        var qrData = await qrRes.json();
+        var qrImg = qrData.data.qrimg;
+        var qrWrap = document.getElementById('musicQrWrap');
+        if (qrWrap) qrWrap.innerHTML = '<img src="' + qrImg + '" class="music-qr-img">';
+        
+        // 轮询检查登录状态
+        window._musicLoginTimer = setInterval(async function() {
+            var checkRes = await fetch('https://music-api.leanapp.cn/login/qr/check?key=' + key);
+            var checkData = await checkRes.json();
+            if (checkData.code === 803) {
+                clearInterval(window._musicLoginTimer);
+                localStorage.setItem('music_cookie', checkData.cookie);
+                closeMusicLogin();
+                showToast('登录成功');
+                switchMusicTab('mine');
+            } else if (checkData.code === 800) {
+                clearInterval(window._musicLoginTimer);
+                closeMusicLogin();
+                showToast('二维码已过期，请重新登录');
+            }
+        }, 2000);
+    } catch(e) {
+        var qrWrap = document.getElementById('musicQrWrap');
+        if (qrWrap) qrWrap.innerHTML = '<div class="music-loading">网络错误，请重试</div>';
+    }
+}
+
+function closeMusicLogin() {
+    if (window._musicLoginTimer) { clearInterval(window._musicLoginTimer); window._musicLoginTimer = null; }
+    var overlay = document.getElementById('musicLoginOverlay');
+    if (overlay) overlay.remove();
 }
 
 // ========== 搜索 ==========
