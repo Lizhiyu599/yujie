@@ -37,6 +37,7 @@ function saveItems(items) {
 function addDesktopIcon(item) {
     var items = getItems();
     var existing = items.findIndex(function(i) { return i.id === item.id; });
+    var page0Count = items.filter(function(i) { return (i.page || 0) === 0; }).length;
     var newItem = {
         id: item.id,
         type: 'app',
@@ -44,7 +45,7 @@ function addDesktopIcon(item) {
         icon: item.icon || '',
         action: item.action || null,
         size: '1x1',
-        page: 0
+        page: page0Count >= 8 ? 1 : 0
     };
     if (existing >= 0) {
         items[existing] = newItem;
@@ -298,8 +299,11 @@ function setupDrag(cell) {
             cell.style.left = dragOrigLeft + 'px';
             cell.style.top = dragOrigTop + 'px';
             cell.style.width = cell.offsetWidth + 'px';
-            cell.style.opacity = '0.85';
+            cell.style.height = cell.offsetHeight + 'px';
+            cell.style.opacity = '0.7';
             cell.style.pointerEvents = 'none';
+            cell.style.transform = 'scale(1.0)';
+            cell.style.margin = '0';
         }
         if (dragStarted) {
             e.preventDefault();
@@ -315,42 +319,6 @@ function setupDrag(cell) {
         dragLongPressed = false;
         dragTarget = null;
     });
-}
-
-function endDrag(clientX, clientY) {
-    if (!dragTarget) return;
-    dragTarget.style.position = '';
-    dragTarget.style.zIndex = '';
-    dragTarget.style.left = '';
-    dragTarget.style.top = '';
-    dragTarget.style.width = '';
-    dragTarget.style.opacity = '';
-    dragTarget.style.pointerEvents = '';
-
-    var cells = document.querySelectorAll('.grid-cell');
-    var targetCell = null;
-    cells.forEach(function(c) {
-        if (c === dragTarget) return;
-        var rect = c.getBoundingClientRect();
-        if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
-            targetCell = c;
-        }
-    });
-
-    if (targetCell) {
-        var dragId = dragTarget.getAttribute('data-id');
-        var targetId = targetCell.getAttribute('data-id');
-        var items = getItems();
-        var di = items.findIndex(function(i) { return i.id === dragId; });
-        var ti = items.findIndex(function(i) { return i.id === targetId; });
-        if (di >= 0 && ti >= 0) {
-            var tmp = items[di]; items[di] = items[ti]; items[ti] = tmp;
-            saveItems(items);
-            exitEditMode();
-            renderDesktopGrid();
-            setTimeout(function() { if (isEditing) enterEditMode(); }, 50);
-        }
-    }
 }
 
 // 点空白退出编辑
