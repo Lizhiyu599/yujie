@@ -124,19 +124,20 @@ async function musicLogin() {
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) closeMusicLogin(); };
 
+    var apiBase = 'https://netease-cloud-music-api-umber.vercel.app';
+
     try {
-        var res = await fetch('https://music-api.leanapp.cn/login/qr/key');
+        var res = await fetch(apiBase + '/login/qr/key');
         var keyData = await res.json();
         var key = keyData.data.unikey;
-        var qrRes = await fetch('https://music-api.leanapp.cn/login/qr/create?key=' + key + '&qrimg=true');
+        var qrRes = await fetch(apiBase + '/login/qr/create?key=' + key + '&qrimg=true');
         var qrData = await qrRes.json();
         var qrImg = qrData.data.qrimg;
         var qrWrap = document.getElementById('musicQrWrap');
         if (qrWrap) qrWrap.innerHTML = '<img src="' + qrImg + '" class="music-qr-img">';
         
-        // 轮询检查登录状态
         window._musicLoginTimer = setInterval(async function() {
-            var checkRes = await fetch('https://music-api.leanapp.cn/login/qr/check?key=' + key);
+            var checkRes = await fetch(apiBase + '/login/qr/check?key=' + key);
             var checkData = await checkRes.json();
             if (checkData.code === 803) {
                 clearInterval(window._musicLoginTimer);
