@@ -74,13 +74,7 @@ function renderDesktopGrid() {
         var pageItems = items.filter(function(item) { return (item.page || 0) === pageIndex; });
 
         // 小组件永远排前面
-        pageItems.sort(function(a, b) {
-            if (a.type === 'widget' && b.type !== 'widget') return -1;
-            if (a.type !== 'widget' && b.type === 'widget') return 1;
-            return 0;
-        });
-
-        pageItems.forEach(function(item) {
+            pageItems.forEach(function(item) {
             var cell = document.createElement('div');
             cell.className = 'grid-cell';
             cell.setAttribute('data-id', item.id);
