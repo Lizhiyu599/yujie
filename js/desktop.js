@@ -18,17 +18,17 @@ function getItems() {
         try { return JSON.parse(raw); } catch(e) {}
     }
     return [{
-        id: 'widget-clock-default',
-        type: 'widget',
-        widgetType: 'clock',
-        size: '2x4',
-        page: 0,
-        avatar: '',
-        signature: '——  ..おやすみ ..——',
-        temp: '24°',
-        weatherDesc: '上海·晴'
-    }];
-}
+    id: 'widget-clock-default',
+    type: 'widget',
+    widgetType: 'clock',
+    size: '2x4',
+    page: 0,
+    avatar: '',
+    signature: '——  ..おやすみ ..——',
+    signature2: '🩶✩* iwish..★행복｡◍•)♡',
+    temp: '24°',
+    weatherDesc: '上海·晴'
+}];
 
 function saveItems(items) {
     localStorage.setItem('desktop_items_v3', JSON.stringify(items));
@@ -163,6 +163,7 @@ function buildWidgetHTML(item) {
             '</div>' +
         '</div>' +
         '<div class="widget-divider"></div>' +
+        '<span class="widget-signature2" contenteditable="true">' + (item.signature2 || '🩶✩* iwish..★행복｡◍•)♡') + '</span>' +
         '<span class="widget-signature" contenteditable="true">' + (item.signature || '') + '</span>' +
     '</div>';
 }
