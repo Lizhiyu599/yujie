@@ -29,6 +29,11 @@ function buildSystemPrompt(contactId) {
         prompt += '你们正在通过手机发消息聊天，不在同一个空间。你只能通过文字消息和旁白来交流。\n\n';
     }
 
+    prompt += '【红包转账系统指令】当你需要接收红包/转账或退还转账时，在回复的第一行加上系统指令，格式如下：\n';
+prompt += '- 接收红包：@@ACCEPT,金额,红包@@\n';
+prompt += '- 接收转账：@@ACCEPT,金额,转账@@\n';
+prompt += '- 退还转账：@@REFUND,金额,转账@@\n';
+prompt += '金额必须和卡片上显示的一致。没有红包转账操作时不写这行。\n\n';
     prompt += '【最高优先级·状态更新】你的每次回复，必须在最后一行附加一段完整的JSON状态信息，格式严格如下（不要省略任何字段，不要嵌套在其他内容里，必须单独一行）：\n{"mood":"心情(10字内)","favorability":好感度数字(0-100),"action":"动作(20字内)","thought":"内心想法(30字内)"}\n这是强制要求，每次回复都必须包含此JSON，否则系统无法正确运行。\n\n';
 
     if (window.ChatState && window.ChatState.isOfflineMode) {
@@ -376,6 +381,23 @@ async function callChatAPI(messages) {
 // ========== 处理 AI 回复（红包旁白统一渲染） ==========
 function processAIReply(rawContent, contactName, contactId) {
     const titleEl = document.getElementById('chatTitle');
+
+    // 解析红包转账系统指令
+    var paymentMatch = rawContent.match(/@@(ACCEPT|REFUND),([\d.]+),(\S+)@@/);
+    if (paymentMatch) {
+        var paymentAction = paymentMatch[1];
+        var paymentAmount = parseFloat(paymentMatch[2]);
+        var paymentType = paymentMatch[3];
+        if (paymentAction === 'ACCEPT' && paymentAmount > 0) {
+            var acceptedAmt = acceptLatestPayment();
+            if (!acceptedAmt) {
+                appendMessage('narration', contactName + '已接收，金额' + paymentAmount + '元');
+            }
+        } else if (paymentAction === 'REFUND' && paymentAmount > 0) {
+            refundLatestPayment();
+        }
+        rawContent = rawContent.replace(paymentMatch[0], '');
+    }
 
     let jsonMatch = rawContent.match(/\{[^{}]*"mood"[^{}]*\}/);
     if (!jsonMatch) {
