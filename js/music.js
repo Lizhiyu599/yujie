@@ -127,15 +127,19 @@ async function musicLogin() {
     var apiBase = 'https://netease-cloud-music-api-five-ecru.vercel.app';
 
     try {
-        var res = await fetch(apiBase + '/login/qr/key');
-        var keyData = await res.json();
+        // 获取 key
+        var keyRes = await fetch(apiBase + '/login/qr/key');
+        var keyData = await keyRes.json();
         var key = keyData.data.unikey;
+        
+        // 获取二维码图片
         var qrRes = await fetch(apiBase + '/login/qr/create?key=' + key + '&qrimg=true');
         var qrData = await qrRes.json();
         var qrImg = qrData.data.qrimg;
         var qrWrap = document.getElementById('musicQrWrap');
         if (qrWrap) qrWrap.innerHTML = '<img src="' + qrImg + '" class="music-qr-img">';
         
+        // 轮询
         window._musicLoginTimer = setInterval(async function() {
             try {
                 var checkRes = await fetch(apiBase + '/login/qr/check?key=' + key + '&t=' + Date.now());
@@ -151,20 +155,43 @@ async function musicLogin() {
                 } else if (code === 800) {
                     clearInterval(window._musicLoginTimer);
                     closeMusicLogin();
-                    showToast('二维码已过期，请重新登录');
+                    showToast('二维码已过期');
                 }
             } catch(e) {}
         }, 3000);
     } catch(e) {
-    var qrWrap = document.getElementById('musicQrWrap');
-    if (qrWrap) qrWrap.innerHTML = '<div class="music-loading">错误：' + e.message + '</div>';
-  }  
-}
-
-function closeMusicLogin() {
-    if (window._musicLoginTimer) { clearInterval(window._musicLoginTimer); window._musicLoginTimer = null; }
-    var overlay = document.getElementById('musicLoginOverlay');
-    if (overlay) overlay.remove();
+        // 直接API不通，换备用
+        try {
+            var keyRes2 = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://music.163.com/api/login/qrcode/unikey?type=1'));
+            var keyText2 = await keyRes2.text();
+            var key2 = JSON.parse(keyText2).unikey;
+            var qrUrl2 = 'https://music.163.com/login?codekey=' + key2;
+            var qrWrap2 = document.getElementById('musicQrWrap');
+            if (qrWrap2) qrWrap2.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(qrUrl2) + '" class="music-qr-img">';
+            
+            window._musicLoginTimer = setInterval(async function() {
+                try {
+                    var checkRes2 = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://music.163.com/api/login/qrcode/client/login?key=' + key2 + '&type=1'));
+                    var checkText2 = await checkRes2.text();
+                    var checkData2 = JSON.parse(checkText2);
+                    if (checkData2.code === 803) {
+                        clearInterval(window._musicLoginTimer);
+                        localStorage.setItem('music_cookie', checkData2.cookie);
+                        closeMusicLogin();
+                        showToast('登录成功');
+                        switchMusicTab('mine');
+                    } else if (checkData2.code === 800) {
+                        clearInterval(window._musicLoginTimer);
+                        closeMusicLogin();
+                        showToast('二维码已过期');
+                    }
+                } catch(e2) {}
+            }, 3000);
+        } catch(e2) {
+            var qrWrap = document.getElementById('musicQrWrap');
+            if (qrWrap) qrWrap.innerHTML = '<div class="music-loading">网络错误，请重试</div>';
+        }
+    }
 }
 
 // ========== 搜索 ==========
