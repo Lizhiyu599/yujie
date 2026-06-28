@@ -447,12 +447,25 @@ function executeAddCustomWidget(key, size) {
         cancelAddCustomWidget();
         return;
     }
-    var widgets = typeof window.getWidgets === 'function' ? window.getWidgets() : [];
-    widgets.push({ id: 'widget-custom-' + Date.now(), type: 'custom', page: 0, size: size, image: imageSrc });
-    if (typeof window.saveWidgets === 'function') window.saveWidgets(widgets);
+    if (typeof window.addCustomWidget === 'function') {
+        window.addCustomWidget(imageSrc, size);
+    } else {
+        var items = JSON.parse(localStorage.getItem('desktop_items_v3') || '[]');
+        items.unshift({
+            id: 'widget-custom-' + Date.now(),
+            type: 'widget',
+            widgetType: 'custom',
+            size: size || '2x4',
+            page: 0,
+            image: imageSrc
+        });
+        localStorage.setItem('desktop_items_v3', JSON.stringify(items));
+        if (typeof window.renderDesktopGrid === 'function') {
+            window.renderDesktopGrid();
+        }
+    }
     cancelAddCustomWidget();
     showToast('已添加到桌面');
-    if (typeof window.renderWidgets === 'function') window.renderWidgets();
 }
 
 // ===== 删除自定义小组件图片 =====
