@@ -521,6 +521,9 @@ function setupWidgetAvatarUpload() {
 
 // ========== 初始化 ==========
 window.addEventListener('DOMContentLoaded', function() {
+    localStorage.removeItem('desktop_grid');
+localStorage.removeItem('desktop_widgets');
+localStorage.removeItem('desktop_icons');
     migrateOldData();
     renderDesktopGrid();
     setupDesktopLongPress();
