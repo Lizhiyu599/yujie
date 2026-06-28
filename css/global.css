@@ -902,11 +902,13 @@ body, html {
     width: 100%;
     align-items: start;
 }
+
 .grid-cell {
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: visible;
 }
 
 .grid-cell.editing {
