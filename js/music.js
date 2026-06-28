@@ -115,8 +115,7 @@ async function musicLogin() {
         <div class="music-login-modal">
             <div class="music-login-title">扫码登录</div>
             <div class="music-qr-wrap" id="musicQrWrap">
-                <img src="https://music.163.com/api/qrcode/unikey?type=1&key=loading" class="music-qr-img" id="musicQrImg" style="display:none;">
-                <div class="music-loading" id="musicQrLoading">生成二维码中…</div>
+                <div class="music-loading">生成二维码中…</div>
             </div>
             <div class="music-login-hint">请使用网易云音乐APP扫码</div>
             <button class="music-login-cancel" onclick="closeMusicLogin()">取消</button>
@@ -125,40 +124,37 @@ async function musicLogin() {
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) closeMusicLogin(); };
 
+    var apiBase = 'https://netease-cloud-music-api-five-ecru.vercel.app';
+
     try {
-        // 用轻量代理获取二维码
-        var keyRes = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://music.163.com/api/login/qrcode/unikey?type=1'));
-        var keyText = await keyRes.text();
-        var key = JSON.parse(keyText).unikey;
-        var qrUrl = 'https://music.163.com/login?codekey=' + key;
-        
-        // 用API生成二维码图片
-        var qrImgEl = document.getElementById('musicQrImg');
-        var qrLoadEl = document.getElementById('musicQrLoading');
-        qrImgEl.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(qrUrl);
-        qrImgEl.style.display = 'block';
-        if (qrLoadEl) qrLoadEl.style.display = 'none';
+        var res = await fetch(apiBase + '/login/qr/key');
+        var keyData = await res.json();
+        var key = keyData.data.unikey;
+        var qrRes = await fetch(apiBase + '/login/qr/create?key=' + key + '&qrimg=true');
+        var qrData = await qrRes.json();
+        var qrImg = qrData.data.qrimg;
+        var qrWrap = document.getElementById('musicQrWrap');
+        if (qrWrap) qrWrap.innerHTML = '<img src="' + qrImg + '" class="music-qr-img">';
         
         window._musicLoginTimer = setInterval(async function() {
-            var checkRes = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://music.163.com/api/login/qrcode/client/login?key=' + key + '&type=1'));
-            var checkText = await checkRes.text();
-            var checkData = JSON.parse(checkText);
-            if (checkData.code === 803) {
+            var checkRes = await fetch(apiBase + '/login/qr/check?key=' + key);
+            var checkData = await checkRes.json();
+            if (checkData.code === 803 || checkData.data.code === 803) {
                 clearInterval(window._musicLoginTimer);
-                localStorage.setItem('music_cookie', checkData.cookie);
-                localStorage.setItem('music_unikey', key);
+                var cookie = checkData.cookie || checkData.data.cookie;
+                localStorage.setItem('music_cookie', cookie);
                 closeMusicLogin();
                 showToast('登录成功');
                 switchMusicTab('mine');
-            } else if (checkData.code === 800) {
+            } else if (checkData.code === 800 || checkData.data.code === 800) {
                 clearInterval(window._musicLoginTimer);
                 closeMusicLogin();
-                showToast('二维码已过期');
+                showToast('二维码已过期，请重新登录');
             }
-        }, 3000);
+        }, 2000);
     } catch(e) {
-        var qrLoadEl = document.getElementById('musicQrLoading');
-        if (qrLoadEl) qrLoadEl.textContent = '网络错误，请重试';
+        var qrWrap = document.getElementById('musicQrWrap');
+        if (qrWrap) qrWrap.innerHTML = '<div class="music-loading">网络错误，请重试</div>';
     }
 }
 
