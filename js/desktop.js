@@ -29,6 +29,24 @@ function saveGridItems(items) {
     localStorage.setItem('desktop_grid', JSON.stringify(items));
 }
 
+// 兜底：没有任何小组件时创建默认时钟
+var hasWidget = items.some(function(i) { return i.type === 'widget'; });
+if (!hasWidget) {
+    items.push({
+        id: 'widget-clock-1',
+        type: 'widget',
+        widgetType: 'clock',
+        size: '2x4',
+        page: 0,
+        x: 0,
+        y: 0,
+        avatar: '',
+        signature: '——  ..おやすみ ..——',
+        temp: '24°',
+        weatherDesc: '上海·晴'
+    });
+}
+
 // 兼容旧数据迁移
 function migrateOldData() {
     if (localStorage.getItem('desktop_grid')) return;
