@@ -163,8 +163,8 @@ function buildWidgetHTML(item) {
             '</div>' +
         '</div>' +
         '<div class="widget-divider"></div>' +
-        '<span class="widget-signature2" contenteditable="true">' + (item.signature2 || '🩶✩* iwish..★행복｡◍•)♡') + '</span>' +
         '<span class="widget-signature" contenteditable="true">' + (item.signature || '') + '</span>' +
+        '<span class="widget-signature2" contenteditable="true">' + (item.signature2 || '🩶✩* iwish..★행복｡◍•)♡') + '</span>' +
     '</div>';
 }
 
