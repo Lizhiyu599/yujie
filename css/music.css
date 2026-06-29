@@ -427,24 +427,7 @@
     cursor: pointer;
 }
 
-/* CSS 播放/暂停按钮 */
-.music-play-icon {
-    display: block;
-}
-.music-play-icon.play {
-    width: 0;
-    height: 0;
-    border-left: 14px solid #666;
-    border-top: 9px solid transparent;
-    border-bottom: 9px solid transparent;
-    margin-left: 3px;
-}
-.music-play-icon.pause {
-    width: 4px;
-    height: 16px;
-    border-left: 5px solid #666;
-    border-right: 5px solid #666;
-}
+.music-play-icon-img { width: 28px; height: 28px; }
 
 /* ===== 歌曲菜单半屏 ===== */
 .music-menu-overlay {
