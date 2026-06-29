@@ -601,21 +601,23 @@ function queueNextSong() {
     closeSongMenu();
 }
 function editSongArtist() {
-    var playlists = getPlaylists(); var song = null;
-    playlists.forEach(function(p) { var found = p.songs.find(function(s) { return s.id === musicMenuSongId; }); if (found) song = found; });
+    var songId = musicMenuSongId;
+    var playlists = getPlaylists();
+    var song = null;
+    playlists.forEach(function(p) { var found = p.songs.find(function(s) { return s.id === songId; }); if (found) song = found; });
     if (!song) { closeSongMenu(); return; }
     closeSongMenu();
     var overlay = document.createElement('div'); overlay.className = 'caption-modal-overlay'; overlay.id = 'editArtistOverlay';
-    overlay.innerHTML = '<div class="caption-modal"><div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">编辑歌手</div><input type="text" class="payment-note" id="editArtistInput" placeholder="输入歌手名称" value="' + (song.artist || '') + '"><div class="caption-buttons"><div class="payment-btn-cancel" onclick="closeEditArtist()">取消</div><div class="payment-btn-confirm" onclick="confirmEditArtist()">确定</div></div></div>';
+    overlay.innerHTML = '<div class="caption-modal"><div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">编辑歌手</div><input type="text" class="payment-note" id="editArtistInput" placeholder="输入歌手名称" value="' + (song.artist || '') + '"><div class="caption-buttons"><div class="payment-btn-cancel" onclick="closeEditArtist()">取消</div><div class="payment-btn-confirm" onclick="confirmEditArtist(\'' + songId + '\')">确定</div></div></div>';
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) closeEditArtist(); };
 }
 function closeEditArtist() { var o = document.getElementById('editArtistOverlay'); if (o) o.remove(); }
-function confirmEditArtist() {
+function confirmEditArtist(songId) {
     var input = document.getElementById('editArtistInput'); var newArtist = input ? input.value.trim() : ''; closeEditArtist();
-    if (!newArtist || !musicMenuSongId) return;
+    if (!newArtist || !songId) return;
     var playlists = getPlaylists();
-    playlists.forEach(function(p) { var song = p.songs.find(function(s) { return s.id === musicMenuSongId; }); if (song) song.artist = newArtist; });
+    playlists.forEach(function(p) { var song = p.songs.find(function(s) { return s.id === songId; }); if (song) song.artist = newArtist; });
     savePlaylists(playlists); refreshMusicContent();
 }
 function shareSongToChar() {
