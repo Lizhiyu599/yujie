@@ -123,10 +123,10 @@ function renderMusicApp() {
     }
 
     appWindow.innerHTML = ''
-        + '<div class="music-app">'
+        + '<div class="music-app" style="' + bgStyle + '">'
         + '<div class="music-top-bar"><span class="music-back-btn" onclick="closeMusic()">‹</span><div class="music-top-right"><img src="https://i.ibb.co/d4wqnw27/1782720493497.png" class="music-top-icon" onclick="openMusicSettings()"></div></div>'
-        + '<div class="music-body" id="musicBody" style="' + bgStyle + '">'
-        + '<div class="music-profile" onclick="changeMusicBg(event)">'
+        + '<div class="music-body" id="musicBody" style="background:transparent;">'
+        + '<div class="music-profile">'
         + '<div class="music-avatar-wrap" onclick="changeMusicAvatar(event)">' + (user.avatar ? '<div class="music-avatar" style="background-image:url(' + user.avatar + ');"></div>' : '<div class="music-avatar music-avatar-placeholder">+</div>') + '</div>'
         + '<div class="music-username">' + user.name + '</div>'
         + '<div class="music-func-row"><div class="music-func-item" onclick="showToast(\'最近播放\')">最近</div><div class="music-func-item" onclick="importLocalMusic()">本地</div><div class="music-func-item" onclick="importMusicUrl()">导入</div><div class="music-func-item" onclick="showToast(\'歌词收藏\')">歌词</div></div>'
@@ -137,7 +137,7 @@ function renderMusicApp() {
     
     setTimeout(function() { renderMiniPlayer(appWindow); }, 100);
 }
-
+        
 // ========== 全屏歌单 ==========
 function renderPlaylistFullScreen(appWindow) {
     var playlists = getPlaylists();
@@ -675,12 +675,18 @@ function changeMusicBg(e) {
     if (e.target.closest('.music-avatar-wrap') || e.target.closest('.music-func-item')) return;
     var input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*';
     input.onchange = function(ev) {
-        var file = ev.target.files[0]; if (!file) return;
+        var file = e.target.files[0]; if (!file) return;
         var reader = new FileReader();
         reader.onload = function(ev2) {
             compressImage(ev2.target.result, 800, 0.6, function(compressed) {
                 localStorage.setItem('music_bg', compressed);
                 showToast('背景已更新');
+                var appContainer = document.querySelector('.music-app');
+                if (appContainer) {
+                    appContainer.style.backgroundImage = 'url(' + compressed + ')';
+                    appContainer.style.backgroundSize = 'cover';
+                    appContainer.style.backgroundPosition = 'center';
+                }
                 renderMusicApp();
             });
         };
@@ -826,6 +832,12 @@ function handleMusicBg(e) {
             localStorage.setItem('music_bg', compressed);
             var preview = document.getElementById('musicBgPreview');
             if (preview) { preview.style.backgroundImage = 'url(' + compressed + ')'; preview.innerText = ''; }
+            var appContainer = document.querySelector('.music-app');
+            if (appContainer) {
+                appContainer.style.backgroundImage = 'url(' + compressed + ')';
+                appContainer.style.backgroundSize = 'cover';
+                appContainer.style.backgroundPosition = 'center';
+            }
             closeMusicSettings();
             renderMusicApp();
             showToast('全局背景图已保存');
