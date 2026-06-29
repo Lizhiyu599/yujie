@@ -291,6 +291,13 @@
     align-items: center;
     justify-content: center;
 }
+.music-song-cover-img {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+}
 .music-song-info {
     flex: 1;
     min-width: 0;
@@ -539,9 +546,10 @@
 .music-tonearm {
     position: absolute;
     top: 0;
-    right: 10px;
-    width: 70px;
-    height: 110px;
+    right: 5px;
+    width: 60px;
+    height: 100px;
+    background: url('https://i.ibb.co/RTZ2txD5/1782746492279.png') center/contain no-repeat;
     transform-origin: top right;
     transform: rotate(-30deg);
     transition: transform 0.5s ease;
@@ -549,36 +557,8 @@
 .music-tonearm.playing {
     transform: rotate(-10deg);
 }
-.tonearm-base {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 22px;
-    height: 22px;
-    background: #555;
-    border-radius: 50%;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-}
-.tonearm-arm {
-    position: absolute;
-    top: 16px;
-    right: 7px;
-    width: 3px;
-    height: 70px;
-    background: #444;
-    transform: rotate(-5deg);
-    transform-origin: top center;
-    border-radius: 2px;
-}
-.tonearm-head {
-    position: absolute;
-    top: 82px;
-    right: 1px;
-    width: 14px;
-    height: 8px;
-    background: #333;
-    border-radius: 2px 6px 6px 2px;
-    transform: rotate(-5deg);
+.tonearm-base, .tonearm-arm, .tonearm-head {
+    display: none;
 }
 
 .music-song-detail {
@@ -667,7 +647,8 @@
     height: 18px;
     border-left: 5px solid #fff;
     border-right: 5px solid #fff;
-    }
+}
+
 .music-player-menu-info {
     display: flex;
     align-items: center;
@@ -725,4 +706,4 @@
     justify-content: center;
     font-size: 18px;
     color: #8e8e93;
-}
+    }
