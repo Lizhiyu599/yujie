@@ -158,7 +158,7 @@ function renderMiniPlayer(appWindow) {
         + '<div class="music-mini-artist">' + artist + '</div>'
         + '</div>'
         + '<div class="music-mini-controls">'
-        + '<span class="music-mini-btn" onclick="togglePlay()"><span class="music-play-icon ' + (isPlaying ? 'pause' : 'play') + '"></span></span>'
+        + '<span class="music-mini-btn" onclick="togglePlay()"><img src="' + (isPlaying ? 'https://i.ibb.co/gMth6r2K/1782732345219.png' : 'https://i.ibb.co/Zp55DJRb/1782732252446.png') + '" class="music-play-icon-img"></span>'
         + '</div>';
     player.onclick = function(e) { if (!e.target.closest('.music-mini-btn')) showToast(musicCurrentSong.name); };
     appWindow.appendChild(player);
@@ -525,17 +525,21 @@ function shareSongToChar() {
 }
 
 function deleteSongConfirm() {
-    var overlay = document.createElement('div');
-    overlay.className = 'confirm-overlay';
-    overlay.id = 'deleteSongOverlay';
-    overlay.innerHTML = ''
-        + '<div class="confirm-dialog">'
-        + '<p>确认删除当前音乐？</p>'
-        + '<div class="confirm-buttons">'
-        + '<div class="confirm-btn-cancel" onclick="cancelDeleteSong()">取消</div>'
-        + '<div class="confirm-btn-delete" onclick="confirmDeleteSong()">确定</div>'
-        + '</div></div>';
-    document.body.appendChild(overlay);
+    var songId = musicMenuSongId;
+    closeSongMenu();
+    setTimeout(function() {
+        var overlay = document.createElement('div');
+        overlay.className = 'confirm-overlay';
+        overlay.id = 'deleteSongOverlay';
+        overlay.innerHTML = ''
+            + '<div class="confirm-dialog">'
+            + '<p>确认删除当前音乐？</p>'
+            + '<div class="confirm-buttons">'
+            + '<div class="confirm-btn-cancel" onclick="cancelDeleteSong()">取消</div>'
+            + '<div class="confirm-btn-delete" onclick="confirmDeleteSong(\'' + songId + '\')">确定</div>'
+            + '</div></div>';
+        document.body.appendChild(overlay);
+    }, 300);
 }
 
 function cancelDeleteSong() {
@@ -543,11 +547,9 @@ function cancelDeleteSong() {
     if (o) o.remove();
 }
 
-function confirmDeleteSong() {
+function confirmDeleteSong(songId) {
     var o = document.getElementById('deleteSongOverlay');
     if (o) o.remove();
-    var songId = musicMenuSongId;
-    musicMenuSongId = null;
     if (!songId) return;
     var playlists = getPlaylists();
     playlists.forEach(function(p) {
