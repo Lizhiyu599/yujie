@@ -665,3 +665,202 @@
     border-left: 5px solid #fff;
     border-right: 5px solid #fff;
     }
+
+/* ===== 全屏播放页 ===== */
+.music-player-full {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: transparent;
+    overflow-y: auto;
+}
+.music-player-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 48px 16px 12px;
+}
+.music-player-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    cursor: pointer;
+    padding: 8px;
+}
+.music-player-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 24px;
+}
+
+/* ===== 唱片+唱针 ===== */
+.music-vinyl-area {
+    position: relative;
+    width: 240px;
+    height: 260px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.music-vinyl-large {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+.music-vinyl-large.spinning {
+    animation: vinylSpin 2s linear infinite;
+}
+.music-vinyl-disc.large {
+    width: 200px;
+    height: 200px;
+    background: conic-gradient(#1a1a1a 0deg 45deg, #2a2a2a 45deg 90deg, #1a1a1a 90deg 135deg, #2a2a2a 135deg 180deg, #1a1a1a 180deg 225deg, #2a2a2a 225deg 270deg, #1a1a1a 270deg 315deg, #2a2a2a 315deg 360deg);
+}
+.music-vinyl-disc.large::after {
+    width: 40px;
+    height: 40px;
+    background: #f2f2f7;
+    border: 3px solid #ccc;
+}
+
+/* 唱针 */
+.music-tonearm {
+    position: absolute;
+    top: 10px;
+    right: 30px;
+    width: 70px;
+    height: 100px;
+    transform-origin: top right;
+    transform: rotate(-30deg);
+    transition: transform 0.5s ease;
+}
+.music-tonearm.playing {
+    transform: rotate(-10deg);
+}
+.tonearm-base {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 22px;
+    height: 22px;
+    background: #555;
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+.tonearm-arm {
+    position: absolute;
+    top: 16px;
+    right: 7px;
+    width: 3px;
+    height: 70px;
+    background: #444;
+    transform: rotate(-5deg);
+    transform-origin: top center;
+    border-radius: 2px;
+}
+.tonearm-head {
+    position: absolute;
+    top: 82px;
+    right: 1px;
+    width: 14px;
+    height: 8px;
+    background: #333;
+    border-radius: 2px 6px 6px 2px;
+    transform: rotate(-5deg);
+}
+
+/* ===== 歌曲信息 ===== */
+.music-song-detail {
+    width: 100%;
+    margin-bottom: 16px;
+    text-align: left;
+}
+.music-song-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #000;
+}
+.music-song-artist-lg {
+    font-size: 13px;
+    color: rgba(0,0,0,0.5);
+    margin-top: 2px;
+}
+
+/* ===== 进度条 ===== */
+.music-progress-area {
+    width: 100%;
+    margin-bottom: 12px;
+}
+.music-progress-bar {
+    position: relative;
+    height: 4px;
+    background: rgba(0,0,0,0.1);
+    border-radius: 2px;
+    cursor: pointer;
+    margin-bottom: 6px;
+}
+.music-progress-fill {
+    height: 100%;
+    background: #000;
+    border-radius: 2px;
+    transition: width 0.3s;
+}
+.music-progress-thumb {
+    position: absolute;
+    top: 50%;
+    width: 12px;
+    height: 12px;
+    background: #000;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+}
+.music-time-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: rgba(0,0,0,0.4);
+}
+
+/* ===== 控制按钮 ===== */
+.music-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    padding: 16px 0 24px;
+}
+.music-ctrl-btn {
+    font-size: 22px;
+    cursor: pointer;
+    color: #000;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.music-ctrl-play {
+    width: 60px;
+    height: 60px;
+    background: #000;
+    border-radius: 50%;
+}
+.music-ctrl-play-icon.play {
+    width: 0;
+    height: 0;
+    border-left: 18px solid #fff;
+    border-top: 11px solid transparent;
+    border-bottom: 11px solid transparent;
+    margin-left: 4px;
+}
+.music-ctrl-play-icon.pause {
+    width: 4px;
+    height: 18px;
+    border-left: 5px solid #fff;
+    border-right: 5px solid #fff;
+}
