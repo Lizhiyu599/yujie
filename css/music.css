@@ -161,3 +161,97 @@
     padding: 60px 20px;
     font-size: 14px;
 }
+
+/* ===== 歌单列表 ===== */
+.music-section-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #000;
+    margin-bottom: 12px;
+}
+.music-playlist-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 0.5px solid rgba(0,0,0,0.05);
+    cursor: pointer;
+}
+.music-playlist-cover {
+    width: 50px;
+    height: 50px;
+    background: rgba(0,0,0,0.06);
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+.music-playlist-info {
+    flex: 1;
+}
+.music-playlist-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: #000;
+}
+.music-playlist-count {
+    font-size: 12px;
+    color: #8e8e93;
+    margin-top: 2px;
+}
+.music-create-btn {
+    text-align: center;
+    padding: 16px;
+    color: #000;
+    font-size: 15px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+/* ===== 歌曲列表 ===== */
+.music-playlist-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #000;
+    margin-bottom: 12px;
+}
+.music-playlist-header span:first-child {
+    cursor: pointer;
+    color: #8e8e93;
+    font-weight: 400;
+}
+.music-song-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 0.5px solid rgba(0,0,0,0.04);
+}
+.music-song-index {
+    width: 24px;
+    font-size: 13px;
+    color: #8e8e93;
+    text-align: center;
+}
+.music-song-info {
+    flex: 1;
+}
+.music-song-name {
+    font-size: 14px;
+    color: #000;
+}
+
+/* ===== 歌单选择器 ===== */
+.music-playlist-option {
+    padding: 12px;
+    background: rgba(0,0,0,0.03);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #000;
+}
+.music-playlist-option:active {
+    background: rgba(0,0,0,0.08);
+}
