@@ -538,6 +538,15 @@
 .music-vinyl-disc.large::after {
     display: none;
 }
+
+.music-vinyl-disc.spinning,
+.music-vinyl-spin.spinning {
+    animation: vinylSpin 2s linear infinite;
+}
+@keyframes vinylSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
 .music-tonearm {
     position: absolute;
     top: -15px;
