@@ -1,7 +1,8 @@
 /**
  * 玉界 - 音乐
  * 包含：个人主页背景、头像/用户名/听歌时长、最近/本地/导入/歌词、
- *       音乐/漫游/其他 三标签页、歌单系统、全屏歌单详情、胶囊播放器
+ *       音乐/漫游/其他 三标签页、歌单系统、全屏歌单详情、胶囊播放器、
+ *       歌曲菜单（下一首播放/编辑歌手/分享/删除）
  */
 
 var musicCurrentTab = 'music';
@@ -10,6 +11,7 @@ var musicCurrentSong = null;
 var musicAudio = null;
 var musicVinylAngle = 0;
 var musicVinylTimer = null;
+var musicMenuSongId = null;
 
 function getPlaylists() {
     var raw = localStorage.getItem('music_playlists');
@@ -120,7 +122,7 @@ function renderPlaylistFullScreen(appWindow) {
                 + '<div class="music-song-name">' + s.name + '</div>'
                 + '<div class="music-song-artist">' + artist + '</div>'
                 + '</div>'
-                + '<div class="music-song-more" onclick="event.stopPropagation();showToast(\'更多功能开发中\')"><span class="music-dot"></span><span class="music-dot"></span><span class="music-dot"></span></div>'
+                + '<div class="music-song-more" onclick="event.stopPropagation();showSongMenu(\'' + s.id + '\')"><span class="music-dot"></span><span class="music-dot"></span><span class="music-dot"></span></div>'
                 + '</div>';
         });
     }
@@ -259,50 +261,28 @@ function changePlaylistCover(id) {
     input.onchange = function(e) {
         var file = e.target.files[0];
         if (!file) return;
-
         var reader = new FileReader();
         reader.onload = function(ev) {
             var img = new Image();
             img.onload = function() {
-                // ------ 开始前端图片压缩 ------
                 var canvas = document.createElement('canvas');
                 var ctx = canvas.getContext('2d');
-                
-                // 限制最大宽高为 300 像素（做歌单封面足够清晰了）
                 var MAX_WIDTH = 300;
                 var MAX_HEIGHT = 300;
                 var width = img.width;
                 var height = img.height;
-                
                 if (width > height) {
-                    if (width > MAX_WIDTH) {
-                        height *= MAX_WIDTH / width;
-                        width = MAX_WIDTH;
-                    }
+                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
                 } else {
-                    if (height > MAX_HEIGHT) {
-                        width *= MAX_HEIGHT / height;
-                        height = MAX_HEIGHT;
-                    }
+                    if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
                 }
-                
                 canvas.width = width;
                 canvas.height = height;
                 ctx.drawImage(img, 0, 0, width, height);
-                
-                // 压缩成 jpeg 格式，质量为 0.7
                 var compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-                // ------ 压缩结束 ------
-
-                // 1. 保存到本地
                 var playlists = getPlaylists();
                 var pl = playlists.find(function(p) { return p.id === id; });
-                if (pl) { 
-                    pl.cover = compressedBase64; 
-                    savePlaylists(playlists); 
-                }
-                
-                // 2. 精准刷新 DOM
+                if (pl) { pl.cover = compressedBase64; savePlaylists(playlists); }
                 var coverDiv = document.querySelector('.music-detail-cover');
                 if (coverDiv) {
                     coverDiv.style.backgroundImage = 'url(' + compressedBase64 + ')';
@@ -310,14 +290,9 @@ function changePlaylistCover(id) {
                     coverDiv.style.backgroundPosition = 'center';
                     coverDiv.innerHTML = '';
                 }
-                
-                // 3. 刷新整个面板
                 setTimeout(function() {
                     var appWindow = document.getElementById('musicAppWindow');
-                    if (appWindow) {
-                        musicCurrentPlaylist = id;
-                        renderPlaylistFullScreen(appWindow);
-                    }
+                    if (appWindow) { musicCurrentPlaylist = id; renderPlaylistFullScreen(appWindow); }
                 }, 50);
             };
             img.src = ev.target.result;
@@ -410,4 +385,132 @@ function confirmMusicUrl() {
 function refreshMusicContent() {
     if (musicCurrentPlaylist) { var appWindow = document.getElementById('musicAppWindow'); if (appWindow) renderPlaylistFullScreen(appWindow); }
     else { var content = document.getElementById('musicTabContent'); if (content) content.innerHTML = renderMusicTabContent(); }
+}
+
+// ========== 歌曲菜单 ==========
+function showSongMenu(songId) {
+    musicMenuSongId = songId;
+    var overlay = document.createElement('div');
+    overlay.className = 'music-menu-overlay';
+    overlay.id = 'musicMenuOverlay';
+    overlay.innerHTML = ''
+        + '<div class="music-menu-panel" onclick="event.stopPropagation()">'
+        + '<div class="music-menu-handle"></div>'
+        + '<div class="music-menu-item" onclick="queueNextSong()">'
+        + '<img src="https://i.ibb.co/sJH89rWN/1782732005182.png" class="music-menu-icon">'
+        + '<span>下一首播放</span>'
+        + '</div>'
+        + '<div class="music-menu-item" onclick="editSongArtist()">'
+        + '<img src="https://i.ibb.co/sdMqx2R0/1782732122983.png" class="music-menu-icon">'
+        + '<span>歌手：未知歌手</span>'
+        + '</div>'
+        + '<div class="music-menu-item" onclick="shareSongToChar()">'
+        + '<img src="https://i.ibb.co/nMXjFKSx/1782732081584.png" class="music-menu-icon">'
+        + '<span>分享</span>'
+        + '</div>'
+        + '<div class="music-menu-item" onclick="deleteSongConfirm()">'
+        + '<img src="https://i.ibb.co/h1M6LCrj/1782732044417.png" class="music-menu-icon">'
+        + '<span>删除</span>'
+        + '</div>'
+        + '</div>';
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeSongMenu(); };
+    updateSongMenuArtist();
+}
+
+function updateSongMenuArtist() {
+    if (!musicMenuSongId) return;
+    var playlists = getPlaylists();
+    var song = null;
+    playlists.forEach(function(p) {
+        var found = p.songs.find(function(s) { return s.id === musicMenuSongId; });
+        if (found) song = found;
+    });
+    if (song) {
+        var artistEl = document.querySelector('.music-menu-item:nth-child(3) span');
+        if (artistEl) artistEl.textContent = '歌手：' + (song.artist || '未知歌手');
+    }
+}
+
+function closeSongMenu() {
+    var o = document.getElementById('musicMenuOverlay');
+    if (o) o.remove();
+    musicMenuSongId = null;
+}
+
+function queueNextSong() {
+    showToast('下一首播放功能开发中');
+    closeSongMenu();
+}
+
+function editSongArtist() {
+    var playlists = getPlaylists();
+    var song = null;
+    playlists.forEach(function(p) {
+        var found = p.songs.find(function(s) { return s.id === musicMenuSongId; });
+        if (found) song = found;
+    });
+    if (!song) { closeSongMenu(); return; }
+    var newArtist = prompt('编辑歌手名称：', song.artist || '');
+    if (newArtist !== null) {
+        song.artist = newArtist.trim();
+        savePlaylists(playlists);
+        closeSongMenu();
+        refreshMusicContent();
+    }
+}
+
+function shareSongToChar() {
+    if (!musicMenuSongId) return;
+    var playlists = getPlaylists();
+    var song = null;
+    playlists.forEach(function(p) {
+        var found = p.songs.find(function(s) { return s.id === musicMenuSongId; });
+        if (found) song = found;
+    });
+    if (!song) { closeSongMenu(); return; }
+    closeSongMenu();
+    var contactId = window.ChatState && window.ChatState.currentContactId;
+    if (!contactId) {
+        showToast('请先打开一个聊天窗口');
+        return;
+    }
+    var shareText = '（分享了一首歌：' + song.name + ' - ' + (song.artist || '未知歌手') + '）';
+    if (typeof appendMessage === 'function') {
+        appendMessage('narration', shareText);
+    }
+    showToast('已分享给角色');
+}
+
+function deleteSongConfirm() {
+    closeSongMenu();
+    var overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.id = 'deleteSongOverlay';
+    overlay.innerHTML = ''
+        + '<div class="confirm-dialog">'
+        + '<p>确认删除当前音乐？</p>'
+        + '<div class="confirm-buttons">'
+        + '<div class="confirm-btn-cancel" onclick="cancelDeleteSong()">取消</div>'
+        + '<div class="confirm-btn-delete" onclick="confirmDeleteSong()">确定</div>'
+        + '</div></div>';
+    document.body.appendChild(overlay);
+}
+
+function cancelDeleteSong() {
+    var o = document.getElementById('deleteSongOverlay');
+    if (o) o.remove();
+}
+
+function confirmDeleteSong() {
+    var o = document.getElementById('deleteSongOverlay');
+    if (o) o.remove();
+    if (!musicMenuSongId) return;
+    var playlists = getPlaylists();
+    playlists.forEach(function(p) {
+        p.songs = p.songs.filter(function(s) { return s.id !== musicMenuSongId; });
+    });
+    savePlaylists(playlists);
+    showToast('已删除');
+    refreshMusicContent();
 }
