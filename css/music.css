@@ -96,9 +96,10 @@
     margin-bottom: 4px;
     z-index: 2;
 }
-.music-listen-time {
-    font-size: 13px;
-    color: rgba(0,0,0,0.45);
+.music-username {
+    font-size: 18px;
+    font-weight: 600;
+    color: #000;
     margin-bottom: 24px;
     z-index: 2;
 }
