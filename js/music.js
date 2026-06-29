@@ -234,8 +234,10 @@ function renderPlayerFullScreen(appWindow) {
         + '</div>'
         + '<div class="music-player-content">'
         + '<div class="music-vinyl-area" id="musicVinylArea" onclick="showLyrics()">'
-        + '<div class="music-vinyl-large' + (isPlaying ? ' spinning' : '') + '">'
+        + '<div class="music-vinyl-large">'
+        + '<div class="music-vinyl-spin' + (isPlaying ? ' spinning' : '') + '">'
         + '<div class="music-vinyl-disc large"></div>'
+        + '</div>'
         + '</div>'
         + '<div class="music-tonearm' + (isPlaying ? ' playing' : '') + '">'
         + '<div class="tonearm-base"></div>'
@@ -411,7 +413,8 @@ function updatePlayerUIState() {
     var vinyl = document.querySelector('.music-vinyl-large');
     var tonearm = document.querySelector('.music-tonearm');
     var playIcon = document.querySelector('.music-ctrl-play-icon');
-    if (vinyl) { if (isPlaying) vinyl.classList.add('spinning'); else vinyl.classList.remove('spinning'); }
+    var spin = document.querySelector('.music-vinyl-spin');
+    if (spin) { if (isPlaying) spin.classList.add('spinning'); else spin.classList.remove('spinning'); }
     if (tonearm) { if (isPlaying) tonearm.classList.add('playing'); else tonearm.classList.remove('playing'); }
     if (playIcon) { playIcon.className = 'music-ctrl-play-icon ' + (isPlaying ? 'pause' : 'play'); }
 }
