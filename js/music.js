@@ -305,6 +305,22 @@ function seekMusic(e) {
     updatePlayerProgress();
 }
 
+function compressImage(base64, maxWidth, quality, callback) {
+    var img = new Image();
+    img.onload = function() {
+        var canvas = document.createElement('canvas');
+        var width = img.width, height = img.height;
+        if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+        canvas.width = width; canvas.height = height;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        var compressed = canvas.toDataURL('image/jpeg', quality);
+        callback(compressed);
+    };
+    img.onerror = function() { callback(base64); };
+    img.src = base64;
+}
+
 function formatMusicTime(seconds) {
     if (!seconds || isNaN(seconds)) return '00:00';
     var m = Math.floor(seconds / 60);
