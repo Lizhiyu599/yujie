@@ -148,12 +148,10 @@
     min-height: 200px;
     background: transparent;
 }
-
 .music-page {
     padding: 16px;
     background: transparent;
 }
-
 .music-empty {
     text-align: center;
     color: rgba(0,0,0,0.3);
@@ -422,7 +420,6 @@
     justify-content: center;
     cursor: pointer;
 }
-
 .music-play-icon-img {
     width: 32px;
     height: 32px;
@@ -509,194 +506,7 @@
     padding: 0 24px;
 }
 
-/* ===== 唱片+唱针 ===== */
-.music-vinyl-area {
-    position: relative;
-    width: 240px;
-    height: 260px;
-    cursor: pointer;
-    margin-bottom: 20px;
-}
-.music-vinyl-large {
-    position: absolute;
-    left: 40px;
-    top: 10px;
-}
-.music-vinyl-large.spinning {
-    animation: vinylSpin 2s linear infinite;
-}
-.music-vinyl-disc.large {
-    width: 180px;
-    height: 180px;
-}
-.music-vinyl-disc.large::after {
-    width: 36px;
-    height: 36px;
-}
-
-/* 唱针 */
-.music-tonearm {
-    position: absolute;
-    top: 0;
-    right: 10px;
-    width: 80px;
-    height: 120px;
-    transform-origin: top right;
-    transform: rotate(-25deg);
-    transition: transform 0.4s ease;
-}
-.music-tonearm.playing {
-    transform: rotate(-8deg);
-}
-.tonearm-base {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 24px;
-    height: 24px;
-    background: #555;
-    border-radius: 50%;
-}
-.tonearm-arm {
-    position: absolute;
-    top: 18px;
-    right: 8px;
-    width: 4px;
-    height: 80px;
-    background: #444;
-    transform: rotate(-5deg);
-    transform-origin: top center;
-}
-.tonearm-head {
-    position: absolute;
-    top: 92px;
-    right: 2px;
-    width: 16px;
-    height: 10px;
-    background: #333;
-    border-radius: 3px 8px 8px 3px;
-    transform: rotate(-5deg);
-}
-
-/* ===== 歌曲信息 ===== */
-.music-song-detail {
-    width: 100%;
-    margin-bottom: 16px;
-}
-.music-song-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #000;
-}
-.music-song-artist-lg {
-    font-size: 13px;
-    color: rgba(0,0,0,0.5);
-    margin-top: 2px;
-}
-
-/* ===== 进度条 ===== */
-.music-progress-area {
-    width: 100%;
-    margin-bottom: 12px;
-}
-.music-progress-bar {
-    position: relative;
-    height: 4px;
-    background: rgba(0,0,0,0.1);
-    border-radius: 2px;
-    cursor: pointer;
-    margin-bottom: 6px;
-}
-.music-progress-fill {
-    height: 100%;
-    background: #000;
-    border-radius: 2px;
-    transition: width 0.3s;
-}
-.music-progress-thumb {
-    position: absolute;
-    top: 50%;
-    width: 12px;
-    height: 12px;
-    background: #000;
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-}
-.music-time-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 11px;
-    color: rgba(0,0,0,0.4);
-}
-
-/* ===== 控制按钮 ===== */
-.music-controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 32px;
-    padding: 12px 0 20px;
-}
-.music-ctrl-btn {
-    font-size: 24px;
-    cursor: pointer;
-    color: #000;
-}
-.music-ctrl-play {
-    width: 56px;
-    height: 56px;
-    background: #000;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.music-ctrl-play-icon.play {
-    width: 0;
-    height: 0;
-    border-left: 18px solid #fff;
-    border-top: 11px solid transparent;
-    border-bottom: 11px solid transparent;
-    margin-left: 4px;
-}
-.music-ctrl-play-icon.pause {
-    width: 4px;
-    height: 18px;
-    border-left: 5px solid #fff;
-    border-right: 5px solid #fff;
-    }
-
-/* ===== 全屏播放页 ===== */
-.music-player-full {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background: transparent;
-    overflow-y: auto;
-}
-.music-player-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 48px 16px 12px;
-}
-.music-player-menu {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    cursor: pointer;
-    padding: 8px;
-}
-.music-player-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 0 24px;
-}
-
-/* ===== 唱片+唱针 ===== */
+/* 唱片+唱针 */
 .music-vinyl-area {
     position: relative;
     width: 240px;
@@ -728,7 +538,6 @@
     border: 3px solid #ccc;
 }
 
-/* 唱针 */
 .music-tonearm {
     position: absolute;
     top: 10px;
@@ -774,7 +583,7 @@
     transform: rotate(-5deg);
 }
 
-/* ===== 歌曲信息 ===== */
+/* 歌曲信息 */
 .music-song-detail {
     width: 100%;
     margin-bottom: 16px;
@@ -791,7 +600,7 @@
     margin-top: 2px;
 }
 
-/* ===== 进度条 ===== */
+/* 进度条 */
 .music-progress-area {
     width: 100%;
     margin-bottom: 12px;
@@ -826,7 +635,7 @@
     color: rgba(0,0,0,0.4);
 }
 
-/* ===== 控制按钮 ===== */
+/* 控制按钮 */
 .music-controls {
     display: flex;
     justify-content: center;
@@ -863,4 +672,4 @@
     height: 18px;
     border-left: 5px solid #fff;
     border-right: 5px solid #fff;
-}
+    }
