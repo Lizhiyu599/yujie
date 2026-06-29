@@ -1,11 +1,13 @@
 /**
  * 玉界 - 音乐
  * 包含：个人主页背景、头像/用户名/听歌时长、最近/本地/导入/歌词、
- *       音乐/漫游/其他 三标签页、歌单系统、全屏歌单详情
+ *       音乐/漫游/其他 三标签页、歌单系统、全屏歌单详情、播放器
  */
 
 var musicCurrentTab = 'music';
 var musicCurrentPlaylist = null;
+var musicCurrentSong = null; // 当前播放的歌曲
+var musicAudio = null; // Audio 对象
 
 function getPlaylists() {
     var raw = localStorage.getItem('music_playlists');
@@ -42,6 +44,7 @@ function openMusic() {
 }
 
 function closeMusic() {
+    stopMusic();
     var appWindow = document.getElementById('musicAppWindow');
     if (appWindow) appWindow.style.display = 'none';
 }
@@ -74,6 +77,7 @@ function renderMusicApp() {
 
     if (musicCurrentPlaylist) {
         renderPlaylistFullScreen(appWindow);
+        renderMiniPlayer(appWindow);
         return;
     }
 
@@ -90,6 +94,8 @@ function renderMusicApp() {
         + '<div class="music-tab-bar"><span class="music-tab ' + (musicCurrentTab === 'music' ? 'active' : '') + '" onclick="switchMusicTab(\'music\')">音乐</span><span class="music-tab ' + (musicCurrentTab === 'roam' ? 'active' : '') + '" onclick="switchMusicTab(\'roam\')">漫游</span><span class="music-tab ' + (musicCurrentTab === 'other' ? 'active' : '') + '" onclick="switchMusicTab(\'other\')">其他</span></div>'
         + '<div class="music-tab-content" id="musicTabContent">' + renderMusicTabContent() + '</div>'
         + '</div></div>';
+    
+    renderMiniPlayer(appWindow);
 }
 
 function renderPlaylistFullScreen(appWindow) {
@@ -99,6 +105,16 @@ function renderPlaylistFullScreen(appWindow) {
     var user = getMusicUserInfo();
     var cover = pl.cover || '';
 
+    var songsHTML = '';
+    if (pl.songs.length === 0) {
+        songsHTML = '<div class="music-empty">暂无歌曲</div>';
+    } else {
+        pl.songs.forEach(function(s, i) {
+            var isActive = musicCurrentSong && musicCurrentSong.id === s.id;
+            songsHTML += '<div class="music-song-item' + (isActive ? ' active' : '') + '" onclick="playSong(\'' + s.id + '\')"><div class="music-song-index">' + (i + 1) + '</div><div class="music-song-info"><div class="music-song-name">' + s.name + '</div></div></div>';
+        });
+    }
+
     appWindow.innerHTML = ''
         + '<div class="music-app">'
         + '<div class="music-detail-full">'
@@ -107,8 +123,60 @@ function renderPlaylistFullScreen(appWindow) {
         + '<div class="music-detail-cover" onclick="changePlaylistCover(\'' + musicCurrentPlaylist + '\')" style="' + (cover ? 'background-image:url(' + cover + ');' : '') + '">' + (cover ? '' : '封面') + '</div>'
         + '<div class="music-detail-meta"><div class="music-detail-name">' + pl.name + '</div><div class="music-detail-sub">' + user.name + ' · 播放' + (pl.playCount || 0) + '次</div></div>'
         + '</div>'
-        + '<div class="music-detail-songs">' + (pl.songs.length === 0 ? '<div class="music-empty">暂无歌曲</div>' : pl.songs.map(function(s, i) { return '<div class="music-song-item"><div class="music-song-index">' + (i + 1) + '</div><div class="music-song-info"><div class="music-song-name">' + s.name + '</div></div></div>'; }).join('')) + '</div>'
+        + '<div class="music-detail-songs">' + songsHTML + '</div>'
         + '</div></div>';
+    
+    renderMiniPlayer(appWindow);
+}
+
+function renderMiniPlayer(appWindow) {
+    if (!musicCurrentSong) return;
+    var existing = appWindow.querySelector('.music-mini-player');
+    if (existing) existing.remove();
+    
+    var player = document.createElement('div');
+    player.className = 'music-mini-player';
+    player.innerHTML = ''
+        + '<div class="music-mini-info"><div class="music-mini-name">' + musicCurrentSong.name + '</div></div>'
+        + '<div class="music-mini-controls">'
+        + '<span class="music-mini-btn" onclick="togglePlay()">' + (musicAudio && !musicAudio.paused ? '⏸' : '▶') + '</span>'
+        + '</div>';
+    player.onclick = function() { showToast(musicCurrentSong.name); };
+    appWindow.appendChild(player);
+}
+
+function playSong(songId) {
+    var playlists = getPlaylists();
+    var song = null;
+    playlists.forEach(function(p) {
+        var found = p.songs.find(function(s) { return s.id === songId; });
+        if (found) song = found;
+    });
+    if (!song) return;
+    
+    musicCurrentSong = song;
+    if (musicAudio) { musicAudio.pause(); musicAudio = null; }
+    
+    if (song.src && (song.type === 'url' || song.type === 'local')) {
+        musicAudio = new Audio(song.src);
+        musicAudio.play().catch(function() { showToast('播放失败'); });
+        musicAudio.addEventListener('ended', function() { musicCurrentSong = null; refreshMusicContent(); });
+    } else {
+        showToast('无法播放此歌曲');
+    }
+    
+    refreshMusicContent();
+}
+
+function togglePlay() {
+    if (!musicAudio) return;
+    if (musicAudio.paused) { musicAudio.play(); } else { musicAudio.pause(); }
+    refreshMusicContent();
+}
+
+function stopMusic() {
+    if (musicAudio) { musicAudio.pause(); musicAudio = null; }
+    musicCurrentSong = null;
 }
 
 function renderMusicTabContent() {
@@ -221,7 +289,8 @@ function importLocalMusic() {
         var files = e.target.files;
         if (!files || files.length === 0) return;
         for (var i = 0; i < files.length; i++) {
-            addSongToPlaylist('all', { id: 'local_' + Date.now() + '_' + i, name: files[i].name.replace(/\.[^.]+$/, ''), src: '', type: 'local' });
+            var url = URL.createObjectURL(files[i]);
+            addSongToPlaylist('all', { id: 'local_' + Date.now() + '_' + i, name: files[i].name.replace(/\.[^.]+$/, ''), src: url, type: 'local' });
         }
         showToast('已导入 ' + files.length + ' 首歌');
         refreshMusicContent();
@@ -245,30 +314,12 @@ function confirmMusicUrl() {
     var url = input ? input.value.trim() : '';
     closeMusicUrl();
     if (!url) return;
-    showPlaylistPicker(function(playlistId) {
-        var playlists = getPlaylists(); var pl = playlists.find(function(p) { return p.id === playlistId; }); var count = pl ? pl.songs.length + 1 : 1;
-        addSongToPlaylist(playlistId, { id: 'url_' + Date.now(), name: '在线音乐 ' + count, src: url, type: 'url' });
-        showToast('已导入'); refreshMusicContent();
-    });
+    var playlists = getPlaylists(); var pl = playlists.find(function(p) { return p.id === 'all' }); var count = pl ? pl.songs.length + 1 : 1;
+    addSongToPlaylist('all', { id: 'url_' + Date.now(), name: '在线音乐 ' + count, src: url, type: 'url' });
+    showToast('已导入'); refreshMusicContent();
 }
-
-function showPlaylistPicker(callback) {
-    var playlists = getPlaylists();
-    var overlay = document.createElement('div');
-    overlay.className = 'caption-modal-overlay';
-    overlay.id = 'playlistPickerOverlay';
-    var listHTML = playlists.map(function(p) { return '<div class="music-playlist-option" data-pid="' + p.id + '">' + p.name + '</div>'; }).join('');
-    overlay.innerHTML = '<div class="caption-modal"><div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">选择歌单</div>' + listHTML + '<div class="caption-buttons" style="margin-top:12px;"><div class="payment-btn-cancel" onclick="closePlaylistPicker()">取消</div></div></div>';
-    document.body.appendChild(overlay);
-    overlay.onclick = function(e) { if (e.target === overlay) closePlaylistPicker(); };
-    overlay.querySelectorAll('.music-playlist-option').forEach(function(el) {
-        el.addEventListener('click', function() { var pid = this.getAttribute('data-pid'); closePlaylistPicker(); if (callback) callback(pid); });
-    });
-}
-
-function closePlaylistPicker() { var o = document.getElementById('playlistPickerOverlay'); if (o) o.remove(); }
 
 function refreshMusicContent() {
     if (musicCurrentPlaylist) { var appWindow = document.getElementById('musicAppWindow'); if (appWindow) renderPlaylistFullScreen(appWindow); }
     else { var content = document.getElementById('musicTabContent'); if (content) content.innerHTML = renderMusicTabContent(); }
-        }
+}
