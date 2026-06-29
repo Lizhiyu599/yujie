@@ -2,7 +2,8 @@
  * 玉界 - 音乐
  * 包含：个人主页背景、头像/用户名/听歌时长、最近/本地/导入/歌词、
  *       音乐/漫游/其他 三标签页、歌单系统、全屏歌单详情、胶囊播放器、
- *       歌曲菜单（下一首播放/编辑歌手/分享/删除）、播放队列
+ *       歌曲菜单（下一首播放/编辑歌手/分享/删除）、播放队列、
+ *       IndexedDB 本地音乐持久存储
  */
 
 var musicCurrentTab = 'music';
@@ -14,6 +15,47 @@ var musicVinylTimer = null;
 var musicMenuSongId = null;
 var musicQueue = [];
 
+// ========== IndexedDB ==========
+var musicDB = null;
+function openMusicDB(callback) {
+    if (musicDB) { callback(musicDB); return; }
+    var request = indexedDB.open('YujieMusic', 1);
+    request.onupgradeneeded = function(e) {
+        var db = e.target.result;
+        if (!db.objectStoreNames.contains('songs')) {
+            db.createObjectStore('songs', { keyPath: 'id' });
+        }
+    };
+    request.onsuccess = function(e) {
+        musicDB = e.target.result;
+        callback(musicDB);
+    };
+}
+
+function saveSongToDB(song) {
+    openMusicDB(function(db) {
+        var tx = db.transaction('songs', 'readwrite');
+        tx.objectStore('songs').put(song);
+    });
+}
+
+function loadSongFromDB(id, callback) {
+    openMusicDB(function(db) {
+        var tx = db.transaction('songs', 'readonly');
+        var req = tx.objectStore('songs').get(id);
+        req.onsuccess = function() { callback(req.result); };
+        req.onerror = function() { callback(null); };
+    });
+}
+
+function deleteSongFromDB(id) {
+    openMusicDB(function(db) {
+        var tx = db.transaction('songs', 'readwrite');
+        tx.objectStore('songs').delete(id);
+    });
+}
+
+// ========== 歌单数据 ==========
 function getPlaylists() {
     var raw = localStorage.getItem('music_playlists');
     if (raw) return JSON.parse(raw);
@@ -35,6 +77,7 @@ function addSongToPlaylist(playlistId, song) {
     savePlaylists(playlists);
 }
 
+// ========== 打开/关闭 ==========
 function openMusic() {
     var appWindow = document.getElementById('musicAppWindow');
     if (!appWindow) {
@@ -73,6 +116,7 @@ function formatListenTime(seconds) {
     return Math.floor(seconds / 3600) + '小时';
 }
 
+// ========== 渲染主页 ==========
 function renderMusicApp() {
     var appWindow = document.getElementById('musicAppWindow');
     if (!appWindow) return;
@@ -102,6 +146,7 @@ function renderMusicApp() {
     setTimeout(function() { renderMiniPlayer(appWindow); }, 100);
 }
 
+// ========== 全屏歌单 ==========
 function renderPlaylistFullScreen(appWindow) {
     var playlists = getPlaylists();
     var pl = playlists.find(function(p) { return p.id === musicCurrentPlaylist; });
@@ -142,6 +187,7 @@ function renderPlaylistFullScreen(appWindow) {
     setTimeout(function() { renderMiniPlayer(appWindow); }, 100);
 }
 
+// ========== 胶囊播放器 ==========
 function renderMiniPlayer(appWindow) {
     var existing = appWindow.querySelector('.music-mini-player');
     if (existing) existing.remove();
@@ -164,6 +210,7 @@ function renderMiniPlayer(appWindow) {
     appWindow.appendChild(player);
 }
 
+// ========== 唱片旋转 ==========
 function startVinylSpin() {
     if (musicVinylTimer) return;
     musicVinylTimer = setInterval(function() {
@@ -177,6 +224,7 @@ function stopVinylSpin() {
     if (musicVinylTimer) { clearInterval(musicVinylTimer); musicVinylTimer = null; }
 }
 
+// ========== 播放 ==========
 function playSong(songId) {
     var playlists = getPlaylists();
     var song = null;
@@ -190,18 +238,26 @@ function playSong(songId) {
     if (musicAudio) { musicAudio.pause(); musicAudio = null; }
     stopVinylSpin();
     
-    if (song.src) {
+    if (song.type === 'local') {
+        loadSongFromDB(song.id, function(data) {
+            if (data && data.data) {
+                var blob = new Blob([data.data], { type: 'audio/mpeg' });
+                var url = URL.createObjectURL(blob);
+                musicAudio = new Audio(url);
+                musicAudio.play().catch(function() { showToast('播放失败'); });
+                musicAudio.addEventListener('ended', function() {
+                    if (musicQueue.length > 0) { var next = musicQueue.shift(); playSong(next.id); }
+                    else { musicCurrentSong = null; stopVinylSpin(); refreshMusicContent(); }
+                });
+                startVinylSpin();
+            } else { showToast('本地文件丢失，请重新导入'); }
+        });
+    } else if (song.src) {
         musicAudio = new Audio(song.src);
         musicAudio.play().catch(function() { showToast('播放失败'); stopVinylSpin(); });
         musicAudio.addEventListener('ended', function() {
-            if (musicQueue.length > 0) {
-                var next = musicQueue.shift();
-                playSong(next.id);
-            } else {
-                musicCurrentSong = null;
-                stopVinylSpin();
-                refreshMusicContent();
-            }
+            if (musicQueue.length > 0) { var next = musicQueue.shift(); playSong(next.id); }
+            else { musicCurrentSong = null; stopVinylSpin(); refreshMusicContent(); }
         });
         startVinylSpin();
     } else {
@@ -225,6 +281,7 @@ function stopMusic() {
     musicQueue = [];
 }
 
+// ========== 标签内容 ==========
 function renderMusicTabContent() {
     switch (musicCurrentTab) {
         case 'music': return renderPlaylistList();
@@ -244,17 +301,8 @@ function renderPlaylistList() {
     return html;
 }
 
-function openPlaylist(id) {
-    musicCurrentPlaylist = id;
-    var appWindow = document.getElementById('musicAppWindow');
-    if (appWindow) renderPlaylistFullScreen(appWindow);
-}
-
-function backToPlaylistList() {
-    musicCurrentPlaylist = null;
-    renderMusicApp();
-}
-
+function openPlaylist(id) { musicCurrentPlaylist = id; var appWindow = document.getElementById('musicAppWindow'); if (appWindow) renderPlaylistFullScreen(appWindow); }
+function backToPlaylistList() { musicCurrentPlaylist = null; renderMusicApp(); }
 function createPlaylist() {
     var name = prompt('请输入歌单名称：');
     if (!name || !name.trim()) return;
@@ -267,44 +315,27 @@ function createPlaylist() {
 
 function changePlaylistCover(id) {
     var input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
+    input.type = 'file'; input.accept = 'image/*';
     input.onchange = function(e) {
-        var file = e.target.files[0];
-        if (!file) return;
+        var file = e.target.files[0]; if (!file) return;
         var reader = new FileReader();
         reader.onload = function(ev) {
             var img = new Image();
             img.onload = function() {
-                var canvas = document.createElement('canvas');
-                var ctx = canvas.getContext('2d');
-                var MAX_WIDTH = 300;
-                var MAX_HEIGHT = 300;
-                var width = img.width;
-                var height = img.height;
-                if (width > height) {
-                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                } else {
-                    if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-                }
-                canvas.width = width;
-                canvas.height = height;
+                var canvas = document.createElement('canvas'); var ctx = canvas.getContext('2d');
+                var MAX_WIDTH = 300, MAX_HEIGHT = 300;
+                var width = img.width, height = img.height;
+                if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } }
+                else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
+                canvas.width = width; canvas.height = height;
                 ctx.drawImage(img, 0, 0, width, height);
                 var compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
                 var playlists = getPlaylists();
                 var pl = playlists.find(function(p) { return p.id === id; });
                 if (pl) { pl.cover = compressedBase64; savePlaylists(playlists); }
                 var coverDiv = document.querySelector('.music-detail-cover');
-                if (coverDiv) {
-                    coverDiv.style.backgroundImage = 'url(' + compressedBase64 + ')';
-                    coverDiv.style.backgroundSize = 'cover';
-                    coverDiv.style.backgroundPosition = 'center';
-                    coverDiv.innerHTML = '';
-                }
-                setTimeout(function() {
-                    var appWindow = document.getElementById('musicAppWindow');
-                    if (appWindow) { musicCurrentPlaylist = id; renderPlaylistFullScreen(appWindow); }
-                }, 50);
+                if (coverDiv) { coverDiv.style.backgroundImage = 'url(' + compressedBase64 + ')'; coverDiv.style.backgroundSize = 'cover'; coverDiv.style.backgroundPosition = 'center'; coverDiv.innerHTML = ''; }
+                setTimeout(function() { var appWindow = document.getElementById('musicAppWindow'); if (appWindow) { musicCurrentPlaylist = id; renderPlaylistFullScreen(appWindow); } }, 50);
             };
             img.src = ev.target.result;
         };
@@ -314,8 +345,7 @@ function changePlaylistCover(id) {
 }
 
 function switchMusicTab(tab) {
-    musicCurrentTab = tab;
-    musicCurrentPlaylist = null;
+    musicCurrentTab = tab; musicCurrentPlaylist = null;
     var content = document.getElementById('musicTabContent');
     if (content) content.innerHTML = renderMusicTabContent();
     document.querySelectorAll('.music-tab').forEach(function(t) { t.classList.remove('active'); });
@@ -326,12 +356,9 @@ function switchMusicTab(tab) {
 
 function changeMusicAvatar(e) {
     e.stopPropagation();
-    var input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
+    var input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*';
     input.onchange = function(ev) {
-        var file = ev.target.files[0];
-        if (!file) return;
+        var file = ev.target.files[0]; if (!file) return;
         var reader = new FileReader();
         reader.onload = function(ev2) { localStorage.setItem('music_user_avatar', ev2.target.result); renderMusicApp(); };
         reader.readAsDataURL(file);
@@ -341,12 +368,9 @@ function changeMusicAvatar(e) {
 
 function changeMusicBg(e) {
     if (e.target.closest('.music-avatar-wrap') || e.target.closest('.music-func-item')) return;
-    var input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
+    var input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*';
     input.onchange = function(ev) {
-        var file = ev.target.files[0];
-        if (!file) return;
+        var file = ev.target.files[0]; if (!file) return;
         var reader = new FileReader();
         reader.onload = function(ev2) { localStorage.setItem('music_bg', ev2.target.result); renderMusicApp(); };
         reader.readAsDataURL(file);
@@ -354,39 +378,40 @@ function changeMusicBg(e) {
     input.click();
 }
 
+// ========== 导入 ==========
 function importLocalMusic() {
     var input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'audio/*,.mp3,.wav,.ogg,.flac,.m4a';
-    input.multiple = true;
+    input.type = 'file'; input.accept = 'audio/*,.mp3,.wav,.ogg,.flac,.m4a'; input.multiple = true;
     input.onchange = function(e) {
-        var files = e.target.files;
-        if (!files || files.length === 0) return;
+        var files = e.target.files; if (!files || files.length === 0) return;
+        var loaded = 0;
         for (var i = 0; i < files.length; i++) {
-            var url = URL.createObjectURL(files[i]);
-            addSongToPlaylist('all', { id: 'local_' + Date.now() + '_' + i, name: files[i].name.replace(/\.[^.]+$/, ''), src: url, type: 'local', artist: '本地音乐' });
+            (function(file, idx) {
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    var songId = 'local_' + Date.now() + '_' + idx;
+                    saveSongToDB({ id: songId, name: file.name.replace(/\.[^.]+$/, ''), artist: '本地音乐', type: 'local', data: ev.target.result });
+                    addSongToPlaylist('all', { id: songId, name: file.name.replace(/\.[^.]+$/, ''), artist: '本地音乐', type: 'local', src: '' });
+                    loaded++;
+                    if (loaded === files.length) { showToast('已导入 ' + files.length + ' 首歌'); refreshMusicContent(); }
+                };
+                reader.readAsArrayBuffer(file);
+            })(files[i], i);
         }
-        showToast('已导入 ' + files.length + ' 首歌');
-        refreshMusicContent();
     };
     input.click();
 }
 
 function importMusicUrl() {
     var overlay = document.createElement('div');
-    overlay.className = 'caption-modal-overlay';
-    overlay.id = 'musicUrlOverlay';
+    overlay.className = 'caption-modal-overlay'; overlay.id = 'musicUrlOverlay';
     overlay.innerHTML = '<div class="caption-modal"><div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">导入音乐</div><input type="text" class="payment-note" id="musicUrlInput" placeholder="粘贴音乐链接"><div style="font-size:11px;color:#8e8e93;margin:4px 0 12px;">支持 mp3 / wav / ogg 等音频直链</div><div class="caption-buttons"><div class="payment-btn-cancel" onclick="closeMusicUrl()">取消</div><div class="payment-btn-confirm" onclick="confirmMusicUrl()">确定</div></div></div>';
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) closeMusicUrl(); };
 }
-
 function closeMusicUrl() { var o = document.getElementById('musicUrlOverlay'); if (o) o.remove(); }
-
 function confirmMusicUrl() {
-    var input = document.getElementById('musicUrlInput');
-    var url = input ? input.value.trim() : '';
-    closeMusicUrl();
+    var input = document.getElementById('musicUrlInput'); var url = input ? input.value.trim() : ''; closeMusicUrl();
     if (!url) return;
     var playlists = getPlaylists(); var pl = playlists.find(function(p) { return p.id === 'all' }); var count = pl ? pl.songs.length + 1 : 1;
     addSongToPlaylist('all', { id: 'url_' + Date.now(), name: '在线音乐 ' + count, src: url, type: 'url', artist: '在线音乐' });
@@ -401,161 +426,80 @@ function refreshMusicContent() {
 // ========== 歌曲菜单 ==========
 function showSongMenu(songId) {
     musicMenuSongId = songId;
-    var overlay = document.createElement('div');
-    overlay.className = 'music-menu-overlay';
-    overlay.id = 'musicMenuOverlay';
+    var overlay = document.createElement('div'); overlay.className = 'music-menu-overlay'; overlay.id = 'musicMenuOverlay';
     overlay.innerHTML = ''
         + '<div class="music-menu-panel" onclick="event.stopPropagation()">'
         + '<div class="music-menu-handle"></div>'
-        + '<div class="music-menu-item" onclick="queueNextSong()">'
-        + '<img src="https://i.ibb.co/sJH89rWN/1782732005182.png" class="music-menu-icon">'
-        + '<span>下一首播放</span>'
-        + '</div>'
-        + '<div class="music-menu-item" onclick="editSongArtist()">'
-        + '<img src="https://i.ibb.co/sdMqx2R0/1782732122983.png" class="music-menu-icon">'
-        + '<span>歌手：未知歌手</span>'
-        + '</div>'
-        + '<div class="music-menu-item" onclick="shareSongToChar()">'
-        + '<img src="https://i.ibb.co/nMXjFKSx/1782732081584.png" class="music-menu-icon">'
-        + '<span>分享</span>'
-        + '</div>'
-        + '<div class="music-menu-item" onclick="deleteSongConfirm()">'
-        + '<img src="https://i.ibb.co/h1M6LCrj/1782732044417.png" class="music-menu-icon">'
-        + '<span>删除</span>'
-        + '</div>'
+        + '<div class="music-menu-item" onclick="queueNextSong()"><img src="https://i.ibb.co/sJH89rWN/1782732005182.png" class="music-menu-icon"><span>下一首播放</span></div>'
+        + '<div class="music-menu-item" onclick="editSongArtist()"><img src="https://i.ibb.co/sdMqx2R0/1782732122983.png" class="music-menu-icon"><span>歌手：未知歌手</span></div>'
+        + '<div class="music-menu-item" onclick="shareSongToChar()"><img src="https://i.ibb.co/nMXjFKSx/1782732081584.png" class="music-menu-icon"><span>分享</span></div>'
+        + '<div class="music-menu-item" onclick="deleteSongConfirm()"><img src="https://i.ibb.co/h1M6LCrj/1782732044417.png" class="music-menu-icon"><span>删除</span></div>'
         + '</div>';
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) closeSongMenu(); };
     updateSongMenuArtist();
 }
-
 function updateSongMenuArtist() {
     if (!musicMenuSongId) return;
-    var playlists = getPlaylists();
-    var song = null;
-    playlists.forEach(function(p) {
-        var found = p.songs.find(function(s) { return s.id === musicMenuSongId; });
-        if (found) song = found;
-    });
-    if (song) {
-        var artistEl = document.querySelector('.music-menu-item:nth-child(3) span');
-        if (artistEl) artistEl.textContent = '歌手：' + (song.artist || '未知歌手');
-    }
+    var playlists = getPlaylists(); var song = null;
+    playlists.forEach(function(p) { var found = p.songs.find(function(s) { return s.id === musicMenuSongId; }); if (found) song = found; });
+    if (song) { var artistEl = document.querySelector('.music-menu-item:nth-child(3) span'); if (artistEl) artistEl.textContent = '歌手：' + (song.artist || '未知歌手'); }
 }
-
-function closeSongMenu() {
-    var o = document.getElementById('musicMenuOverlay');
-    if (o) o.remove();
-    musicMenuSongId = null;
-}
-
+function closeSongMenu() { var o = document.getElementById('musicMenuOverlay'); if (o) o.remove(); musicMenuSongId = null; }
 function queueNextSong() {
     if (!musicMenuSongId) return;
-    var playlists = getPlaylists();
-    var song = null;
-    playlists.forEach(function(p) {
-        var found = p.songs.find(function(s) { return s.id === musicMenuSongId; });
-        if (found) song = found;
-    });
+    var playlists = getPlaylists(); var song = null;
+    playlists.forEach(function(p) { var found = p.songs.find(function(s) { return s.id === musicMenuSongId; }); if (found) song = found; });
     if (song) { musicQueue.push(song); showToast('已加入下一首播放'); }
     closeSongMenu();
 }
-
 function editSongArtist() {
-    var playlists = getPlaylists();
-    var song = null;
-    playlists.forEach(function(p) {
-        var found = p.songs.find(function(s) { return s.id === musicMenuSongId; });
-        if (found) song = found;
-    });
+    var playlists = getPlaylists(); var song = null;
+    playlists.forEach(function(p) { var found = p.songs.find(function(s) { return s.id === musicMenuSongId; }); if (found) song = found; });
     if (!song) { closeSongMenu(); return; }
-    
     closeSongMenu();
-    var overlay = document.createElement('div');
-    overlay.className = 'caption-modal-overlay';
-    overlay.id = 'editArtistOverlay';
-    overlay.innerHTML = ''
-        + '<div class="caption-modal">'
-        + '<div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">编辑歌手</div>'
-        + '<input type="text" class="payment-note" id="editArtistInput" placeholder="输入歌手名称" value="' + (song.artist || '') + '">'
-        + '<div class="caption-buttons">'
-        + '<div class="payment-btn-cancel" onclick="closeEditArtist()">取消</div>'
-        + '<div class="payment-btn-confirm" onclick="confirmEditArtist()">确定</div>'
-        + '</div></div>';
+    var overlay = document.createElement('div'); overlay.className = 'caption-modal-overlay'; overlay.id = 'editArtistOverlay';
+    overlay.innerHTML = '<div class="caption-modal"><div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">编辑歌手</div><input type="text" class="payment-note" id="editArtistInput" placeholder="输入歌手名称" value="' + (song.artist || '') + '"><div class="caption-buttons"><div class="payment-btn-cancel" onclick="closeEditArtist()">取消</div><div class="payment-btn-confirm" onclick="confirmEditArtist()">确定</div></div></div>';
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) closeEditArtist(); };
 }
-
 function closeEditArtist() { var o = document.getElementById('editArtistOverlay'); if (o) o.remove(); }
-
 function confirmEditArtist() {
-    var input = document.getElementById('editArtistInput');
-    var newArtist = input ? input.value.trim() : '';
-    closeEditArtist();
+    var input = document.getElementById('editArtistInput'); var newArtist = input ? input.value.trim() : ''; closeEditArtist();
     if (!newArtist || !musicMenuSongId) return;
     var playlists = getPlaylists();
-    playlists.forEach(function(p) {
-        var song = p.songs.find(function(s) { return s.id === musicMenuSongId; });
-        if (song) song.artist = newArtist;
-    });
-    savePlaylists(playlists);
-    refreshMusicContent();
+    playlists.forEach(function(p) { var song = p.songs.find(function(s) { return s.id === musicMenuSongId; }); if (song) song.artist = newArtist; });
+    savePlaylists(playlists); refreshMusicContent();
 }
-
 function shareSongToChar() {
     if (!musicMenuSongId) return;
-    var playlists = getPlaylists();
-    var song = null;
-    playlists.forEach(function(p) {
-        var found = p.songs.find(function(s) { return s.id === musicMenuSongId; });
-        if (found) song = found;
-    });
+    var playlists = getPlaylists(); var song = null;
+    playlists.forEach(function(p) { var found = p.songs.find(function(s) { return s.id === musicMenuSongId; }); if (found) song = found; });
     if (!song) { closeSongMenu(); return; }
     closeSongMenu();
     var contactId = window.ChatState && window.ChatState.currentContactId;
-    if (!contactId) {
-        showToast('请先打开一个聊天窗口');
-        return;
-    }
+    if (!contactId) { showToast('请先打开一个聊天窗口'); return; }
     var shareText = '（分享了一首歌：' + song.name + ' - ' + (song.artist || '未知歌手') + '）';
-    if (typeof appendMessage === 'function') {
-        appendMessage('narration', shareText);
-    }
+    if (typeof appendMessage === 'function') { appendMessage('narration', shareText); }
     showToast('已分享给角色');
 }
-
 function deleteSongConfirm() {
     var songId = musicMenuSongId;
     closeSongMenu();
     setTimeout(function() {
-        var overlay = document.createElement('div');
-        overlay.className = 'confirm-overlay';
-        overlay.id = 'deleteSongOverlay';
-        overlay.innerHTML = ''
-            + '<div class="confirm-dialog">'
-            + '<p>确认删除当前音乐？</p>'
-            + '<div class="confirm-buttons">'
-            + '<div class="confirm-btn-cancel" onclick="cancelDeleteSong()">取消</div>'
-            + '<div class="confirm-btn-delete" onclick="confirmDeleteSong(\'' + songId + '\')">确定</div>'
-            + '</div></div>';
+        var overlay = document.createElement('div'); overlay.className = 'confirm-overlay'; overlay.id = 'deleteSongOverlay';
+        overlay.innerHTML = '<div class="confirm-dialog"><p>确认删除当前音乐？</p><div class="confirm-buttons"><div class="confirm-btn-cancel" onclick="cancelDeleteSong()">取消</div><div class="confirm-btn-delete" onclick="confirmDeleteSong(\'' + songId + '\')">确定</div></div></div>';
         document.body.appendChild(overlay);
     }, 300);
 }
-
-function cancelDeleteSong() {
-    var o = document.getElementById('deleteSongOverlay');
-    if (o) o.remove();
-}
-
+function cancelDeleteSong() { var o = document.getElementById('deleteSongOverlay'); if (o) o.remove(); }
 function confirmDeleteSong(songId) {
-    var o = document.getElementById('deleteSongOverlay');
-    if (o) o.remove();
+    var o = document.getElementById('deleteSongOverlay'); if (o) o.remove();
     if (!songId) return;
     var playlists = getPlaylists();
-    playlists.forEach(function(p) {
-        p.songs = p.songs.filter(function(s) { return s.id !== songId; });
-    });
+    playlists.forEach(function(p) { p.songs = p.songs.filter(function(s) { return s.id !== songId; }); });
     savePlaylists(playlists);
+    deleteSongFromDB(songId);
     showToast('已删除');
     refreshMusicContent();
-}
+        }
