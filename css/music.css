@@ -519,7 +519,17 @@
     top: 50%;
     transform: translate(-50%, -50%);
 }
-.music-vinyl-large.spinning {
+.music-vinyl-large {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+.music-vinyl-spin {
+    width: 200px;
+    height: 200px;
+}
+.music-vinyl-spin.spinning {
     animation: vinylSpin 2s linear infinite;
 }
 .music-vinyl-disc.large {
