@@ -158,7 +158,7 @@ function renderMiniPlayer(appWindow) {
         + '<div class="music-mini-artist">' + artist + '</div>'
         + '</div>'
         + '<div class="music-mini-controls">'
-        + '<span class="music-mini-btn" onclick="togglePlay()"><img src="' + (isPlaying ? 'https://i.ibb.co/gMth6r2K/1782732345219.png' : 'https://i.ibb.co/Zp55DJRb/1782732252446.png') + '" class="music-play-icon-img"></span>'
+        + '<span class="music-mini-btn" onclick="togglePlay()"><img src="' + (isPlaying ? 'https://i.ibb.co/Zp55DJRb/1782732252446.png' : 'https://i.ibb.co/gMth6r2K/1782732345219.png') + '" class="music-play-icon-img"></span>'
         + '</div>';
     player.onclick = function(e) { if (!e.target.closest('.music-mini-btn')) showToast(musicCurrentSong.name); };
     appWindow.appendChild(player);
