@@ -6,8 +6,8 @@
 
 var musicCurrentTab = 'music';
 var musicCurrentPlaylist = null;
-var musicCurrentSong = null; // 当前播放的歌曲
-var musicAudio = null; // Audio 对象
+var musicCurrentSong = null;
+var musicAudio = null;
 
 function getPlaylists() {
     var raw = localStorage.getItem('music_playlists');
@@ -111,7 +111,16 @@ function renderPlaylistFullScreen(appWindow) {
     } else {
         pl.songs.forEach(function(s, i) {
             var isActive = musicCurrentSong && musicCurrentSong.id === s.id;
-            songsHTML += '<div class="music-song-item' + (isActive ? ' active' : '') + '" onclick="playSong(\'' + s.id + '\')"><div class="music-song-index">' + (i + 1) + '</div><div class="music-song-info"><div class="music-song-name">' + s.name + '</div></div></div>';
+            var artist = s.artist || '未知歌手';
+            songsHTML += ''
+                + '<div class="music-song-item' + (isActive ? ' active' : '') + '" onclick="playSong(\'' + s.id + '\')">'
+                + '<div class="music-song-cover"><div class="music-vinyl-disc"></div></div>'
+                + '<div class="music-song-info">'
+                + '<div class="music-song-name">' + s.name + '</div>'
+                + '<div class="music-song-artist">' + artist + '</div>'
+                + '</div>'
+                + '<div class="music-song-more" onclick="event.stopPropagation();showToast(\'更多功能开发中\')">…</div>'
+                + '</div>';
         });
     }
 
@@ -120,7 +129,7 @@ function renderPlaylistFullScreen(appWindow) {
         + '<div class="music-detail-full">'
         + '<div class="music-detail-header"><span class="music-detail-back" onclick="backToPlaylistList()">‹</span><span class="music-detail-title">歌单</span></div>'
         + '<div class="music-detail-info">'
-        + '<div class="music-detail-cover" onclick="changePlaylistCover(\'' + musicCurrentPlaylist + '\')" style="' + (cover ? 'background-image:url(' + cover + ');' : '') + '">' + (cover ? '' : '封面') + '</div>'
+        + '<div class="music-detail-cover" onclick="changePlaylistCover(\'' + musicCurrentPlaylist + '\')" style="' + (cover ? 'background-image:url(' + cover + ');' : '') + '">' + (cover ? '' : '<div class="music-vinyl-disc large"></div>') + '</div>'
         + '<div class="music-detail-meta"><div class="music-detail-name">' + pl.name + '</div><div class="music-detail-sub">' + user.name + ' · 播放' + (pl.playCount || 0) + '次</div></div>'
         + '</div>'
         + '<div class="music-detail-songs">' + songsHTML + '</div>'
@@ -130,18 +139,23 @@ function renderPlaylistFullScreen(appWindow) {
 }
 
 function renderMiniPlayer(appWindow) {
-    if (!musicCurrentSong) return;
     var existing = appWindow.querySelector('.music-mini-player');
     if (existing) existing.remove();
+    if (!musicCurrentSong) return;
     
     var player = document.createElement('div');
     player.className = 'music-mini-player';
+    var isPlaying = musicAudio && !musicAudio.paused;
+    var artist = musicCurrentSong.artist || '未知歌手';
     player.innerHTML = ''
-        + '<div class="music-mini-info"><div class="music-mini-name">' + musicCurrentSong.name + '</div></div>'
+        + '<div class="music-mini-cover" onclick="togglePlay()"><div class="music-vinyl-disc small"></div></div>'
+        + '<div class="music-mini-info" onclick="showToast(\'' + musicCurrentSong.name + '\')">'
+        + '<div class="music-mini-name">' + musicCurrentSong.name + '</div>'
+        + '<div class="music-mini-artist">' + artist + '</div>'
+        + '</div>'
         + '<div class="music-mini-controls">'
-        + '<span class="music-mini-btn" onclick="togglePlay()">' + (musicAudio && !musicAudio.paused ? '⏸' : '▶') + '</span>'
+        + '<span class="music-mini-btn" onclick="togglePlay()">' + (isPlaying ? '⏸' : '▶') + '</span>'
         + '</div>';
-    player.onclick = function() { showToast(musicCurrentSong.name); };
     appWindow.appendChild(player);
 }
 
@@ -157,7 +171,7 @@ function playSong(songId) {
     musicCurrentSong = song;
     if (musicAudio) { musicAudio.pause(); musicAudio = null; }
     
-    if (song.src && (song.type === 'url' || song.type === 'local')) {
+    if (song.src) {
         musicAudio = new Audio(song.src);
         musicAudio.play().catch(function() { showToast('播放失败'); });
         musicAudio.addEventListener('ended', function() { musicCurrentSong = null; refreshMusicContent(); });
@@ -192,7 +206,7 @@ function renderPlaylistList() {
     var playlists = getPlaylists();
     var html = '<div class="music-page"><div class="music-section-title">歌单</div>';
     playlists.forEach(function(p) {
-        html += '<div class="music-playlist-item" onclick="openPlaylist(\'' + p.id + '\')"><div class="music-playlist-cover"></div><div class="music-playlist-info"><div class="music-playlist-name">' + p.name + '</div><div class="music-playlist-count">' + p.songs.length + '首</div></div></div>';
+        html += '<div class="music-playlist-item" onclick="openPlaylist(\'' + p.id + '\')"><div class="music-playlist-cover">' + (p.cover ? '<div style="background-image:url(' + p.cover + ');background-size:cover;background-position:center;width:100%;height:100%;border-radius:8px;"></div>' : '<div class="music-vinyl-disc small"></div>') + '</div><div class="music-playlist-info"><div class="music-playlist-name">' + p.name + '</div><div class="music-playlist-count">' + p.songs.length + '首</div></div></div>';
     });
     html += '<div class="music-create-btn" onclick="createPlaylist()">+ 新建歌单</div></div>';
     return html;
@@ -290,7 +304,7 @@ function importLocalMusic() {
         if (!files || files.length === 0) return;
         for (var i = 0; i < files.length; i++) {
             var url = URL.createObjectURL(files[i]);
-            addSongToPlaylist('all', { id: 'local_' + Date.now() + '_' + i, name: files[i].name.replace(/\.[^.]+$/, ''), src: url, type: 'local' });
+            addSongToPlaylist('all', { id: 'local_' + Date.now() + '_' + i, name: files[i].name.replace(/\.[^.]+$/, ''), src: url, type: 'local', artist: '本地音乐' });
         }
         showToast('已导入 ' + files.length + ' 首歌');
         refreshMusicContent();
@@ -315,7 +329,7 @@ function confirmMusicUrl() {
     closeMusicUrl();
     if (!url) return;
     var playlists = getPlaylists(); var pl = playlists.find(function(p) { return p.id === 'all' }); var count = pl ? pl.songs.length + 1 : 1;
-    addSongToPlaylist('all', { id: 'url_' + Date.now(), name: '在线音乐 ' + count, src: url, type: 'url' });
+    addSongToPlaylist('all', { id: 'url_' + Date.now(), name: '在线音乐 ' + count, src: url, type: 'url', artist: '在线音乐' });
     showToast('已导入'); refreshMusicContent();
 }
 
