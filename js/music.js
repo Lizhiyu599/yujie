@@ -155,9 +155,12 @@ function renderPlaylistFullScreen(appWindow) {
         pl.songs.forEach(function(s, i) {
             var isActive = musicCurrentSong && musicCurrentSong.id === s.id;
             var artist = s.artist || '未知歌手';
-            songsHTML += ''
-                + '<div class="music-song-item' + (isActive ? ' active' : '') + '" onclick="playSong(\'' + s.id + '\')">'
-                + '<div class="music-song-cover"><div class="music-vinyl-disc small' + (isActive ? ' spinning' : '') + '"></div></div>'
+            var coverHTML = s.cover 
+    ? '<div class="music-song-cover-img" style="background-image:url(' + s.cover + ');"></div>'
+    : '<div class="music-vinyl-disc small' + (isActive ? ' spinning' : '') + '"></div>';
+songsHTML += ''
+    + '<div class="music-song-item' + (isActive ? ' active' : '') + '" onclick="playSong(\'' + s.id + '\')">'
+    + '<div class="music-song-cover">' + coverHTML + '</div>'
                 + '<div class="music-song-info">'
                 + '<div class="music-song-name">' + s.name + '</div>'
                 + '<div class="music-song-artist">' + artist + '</div>'
