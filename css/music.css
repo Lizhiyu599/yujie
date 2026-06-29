@@ -550,12 +550,12 @@
     height: 160px;
     background: url('https://i.ibb.co/RTZ2txD5/1782746492279.png') center/contain no-repeat;
     transform-origin: top right;
-    transform: rotate(-20deg);
+    transform: rotate(-30deg);
     transition: transform 0.5s ease;
     z-index: 5;
 }
 .music-tonearm.playing {
-    transform: rotate(-30deg);
+    transform: rotate(-20deg);
 }
 .tonearm-base, .tonearm-arm, .tonearm-head {
     display: none;
