@@ -259,35 +259,68 @@ function changePlaylistCover(id) {
     input.onchange = function(e) {
         var file = e.target.files[0];
         if (!file) return;
+
         var reader = new FileReader();
         reader.onload = function(ev) {
-            var base64Data = ev.target.result;
-            
-            // 1. 确实地更新到本地缓存中
-            var playlists = getPlaylists();
-            var pl = playlists.find(function(p) { return p.id === id; });
-            if (pl) { 
-                pl.cover = base64Data; 
-                savePlaylists(playlists); 
-            }
-            
-            // 2. 别急着全部重刷 HTML，直接精准修改当前封面的 DOM 样式，这样最稳！
-            var coverDiv = document.querySelector('.music-detail-cover');
-            if (coverDiv) {
-                coverDiv.style.backgroundImage = 'url(' + base64Data + ')';
-                coverDiv.style.backgroundSize = 'cover';
-                coverDiv.style.backgroundPosition = 'center';
-                coverDiv.innerHTML = ''; // 清空里面的“封面”文字提示
-            }
-            
-            // 3. 延迟一小会儿再去刷新整个面板，给浏览器留出渲染 Base64 的时间
-            setTimeout(function() {
-                var appWindow = document.getElementById('musicAppWindow');
-                if (appWindow) {
-                    musicCurrentPlaylist = id;
-                    renderPlaylistFullScreen(appWindow);
+            var img = new Image();
+            img.onload = function() {
+                // ------ 开始前端图片压缩 ------
+                var canvas = document.createElement('canvas');
+                var ctx = canvas.getContext('2d');
+                
+                // 限制最大宽高为 300 像素（做歌单封面足够清晰了）
+                var MAX_WIDTH = 300;
+                var MAX_HEIGHT = 300;
+                var width = img.width;
+                var height = img.height;
+                
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
                 }
-            }, 50);
+                
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // 压缩成 jpeg 格式，质量为 0.7
+                var compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                // ------ 压缩结束 ------
+
+                // 1. 保存到本地
+                var playlists = getPlaylists();
+                var pl = playlists.find(function(p) { return p.id === id; });
+                if (pl) { 
+                    pl.cover = compressedBase64; 
+                    savePlaylists(playlists); 
+                }
+                
+                // 2. 精准刷新 DOM
+                var coverDiv = document.querySelector('.music-detail-cover');
+                if (coverDiv) {
+                    coverDiv.style.backgroundImage = 'url(' + compressedBase64 + ')';
+                    coverDiv.style.backgroundSize = 'cover';
+                    coverDiv.style.backgroundPosition = 'center';
+                    coverDiv.innerHTML = '';
+                }
+                
+                // 3. 刷新整个面板
+                setTimeout(function() {
+                    var appWindow = document.getElementById('musicAppWindow');
+                    if (appWindow) {
+                        musicCurrentPlaylist = id;
+                        renderPlaylistFullScreen(appWindow);
+                    }
+                }, 50);
+            };
+            img.src = ev.target.result;
         };
         reader.readAsDataURL(file);
     };
