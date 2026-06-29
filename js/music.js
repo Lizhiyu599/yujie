@@ -131,7 +131,7 @@ function renderMusicApp() {
 
     appWindow.innerHTML = ''
         + '<div class="music-app">'
-        + '<div class="music-top-bar"><span class="music-back-btn" onclick="closeMusic()">‹</span><div class="music-top-right"><img src="https://i.ibb.co/d4wqnw27/1782720493497.png" class="music-top-icon" onclick="showToast(\'设置功能开发中\')"></div></div>'
+        + '<div class="music-top-bar"><span class="music-back-btn" onclick="closeMusic()">‹</span><div class="music-top-right"><img src="https://i.ibb.co/d4wqnw27/1782720493497.png" class="music-top-icon" onclick="openMusicSettings()"></div></div>'
         + '<div class="music-body" id="musicBody">'
         + '<div class="music-profile" style="' + bgStyle + '" onclick="changeMusicBg(event)">'
         + '<div class="music-avatar-wrap" onclick="changeMusicAvatar(event)">' + (user.avatar ? '<div class="music-avatar" style="background-image:url(' + user.avatar + ');"></div>' : '<div class="music-avatar music-avatar-placeholder">+</div>') + '</div>'
@@ -502,4 +502,59 @@ function confirmDeleteSong(songId) {
     deleteSongFromDB(songId);
     showToast('已删除');
     refreshMusicContent();
-        }
+}
+
+function openMusicSettings() {
+    var overlay = document.createElement('div');
+    overlay.className = 'sheet-mask show';
+    overlay.id = 'musicSettingsMask';
+    var currentBg = localStorage.getItem('music_bg') || '';
+    overlay.innerHTML = ''
+        + '<div class="half-sheet" onclick="event.stopPropagation()">'
+        + '<div class="sheet-handle"><div class="handle-bar"></div></div>'
+        + '<div class="sheet-scroll">'
+        + '<div class="settings-section-title">全局背景图</div>'
+        + '<div class="settings-hint">提示：半屏背景图也将被更换</div>'
+        + '<div class="glass-card">'
+        + '<div class="bg-preview-2x4" id="musicBgPreview" style="background-image:url(' + currentBg + ');" onclick="document.getElementById(\'musicBgInput\').click()">' + (currentBg ? '' : '点击更换全局背景图') + '</div>'
+        + '<input type="file" id="musicBgInput" accept="image/*" style="display:none;" onchange="handleMusicBg(event)">'
+        + '<button class="black-btn" onclick="clearMusicBg()">清除全局背景图</button>'
+        + '</div>'
+        + '</div></div>';
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeMusicSettings(); };
+
+    var handle = overlay.querySelector('.sheet-handle');
+    var startY = 0;
+    handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
+    handle.addEventListener('touchmove', function(e) { if (e.touches[0].clientY - startY > 60) closeMusicSettings(); });
+    handle.addEventListener('click', function() { closeMusicSettings(); });
+}
+
+function closeMusicSettings() {
+    var o = document.getElementById('musicSettingsMask');
+    if (o) o.remove();
+}
+
+function handleMusicBg(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+        var bg = ev.target.result;
+        localStorage.setItem('music_bg', bg);
+        var preview = document.getElementById('musicBgPreview');
+        if (preview) { preview.style.backgroundImage = 'url(' + bg + ')'; preview.innerText = ''; }
+        renderMusicApp();
+        showToast('全局背景图已保存');
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearMusicBg() {
+    localStorage.removeItem('music_bg');
+    var preview = document.getElementById('musicBgPreview');
+    if (preview) { preview.style.backgroundImage = ''; preview.innerText = '点击更换全局背景图'; }
+    renderMusicApp();
+    showToast('已清除');
+}
