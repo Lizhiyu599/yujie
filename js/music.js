@@ -200,7 +200,7 @@ function renderMiniPlayer(appWindow) {
         + '<div class="music-mini-controls">'
         + '<span class="music-mini-btn" onclick="togglePlay()"><img src="' + (isPlaying ? 'https://i.ibb.co/Zp55DJRb/1782732252446.png' : 'https://i.ibb.co/gMth6r2K/1782732345219.png') + '" class="music-play-icon-img"></span>'
         + '</div>';
-    player.onclick = function(e) { if (!e.target.closest('.music-mini-btn')) showToast(musicCurrentSong.name); };
+    player.onclick = function(e) { if (!e.target.closest('.music-mini-btn')) openPlayerFullScreen(); };
     appWindow.appendChild(player);
 }
 
@@ -553,3 +553,125 @@ function clearMusicBg() {
     renderMusicApp();
     showToast('已清除');
     }
+
+// ========== 全屏播放页 ==========
+function openPlayerFullScreen() {
+    if (!musicCurrentSong) return;
+    var appWindow = document.getElementById('musicAppWindow');
+    if (!appWindow) return;
+    renderPlayerFullScreen(appWindow);
+}
+
+function renderPlayerFullScreen(appWindow) {
+    if (!musicCurrentSong) return;
+    var isPlaying = musicAudio && !musicAudio.paused;
+    var artist = musicCurrentSong.artist || '未知歌手';
+    var currentTime = musicAudio ? formatMusicTime(musicAudio.currentTime) : '00:00';
+    var duration = musicAudio && musicAudio.duration ? formatMusicTime(musicAudio.duration) : '00:00';
+    var progress = musicAudio && musicAudio.duration ? (musicAudio.currentTime / musicAudio.duration * 100) : 0;
+
+    appWindow.innerHTML = ''
+        + '<div class="music-app">'
+        + '<div class="music-player-full">'
+        + '<div class="music-player-header">'
+        + '<span class="music-detail-back" onclick="backToPlaylistFromPlayer()">‹</span>'
+        + '<span class="music-detail-title">正在播放</span>'
+        + '<span class="music-player-menu" onclick="showPlayerMenu()"><span class="music-dot"></span><span class="music-dot"></span><span class="music-dot"></span></span>'
+        + '</div>'
+        + '<div class="music-player-content">'
+        + '<div class="music-vinyl-area" id="musicVinylArea" onclick="showLyrics()">'
+        + '<div class="music-vinyl-large' + (isPlaying ? ' spinning' : '') + '">'
+        + '<div class="music-vinyl-disc large"></div>'
+        + '</div>'
+        + '<div class="music-tonearm' + (isPlaying ? ' playing' : '') + '">'
+        + '<div class="tonearm-base"></div>'
+        + '<div class="tonearm-arm"></div>'
+        + '<div class="tonearm-head"></div>'
+        + '</div>'
+        + '</div>'
+        + '<div class="music-song-detail">'
+        + '<div class="music-song-title">' + musicCurrentSong.name + '</div>'
+        + '<div class="music-song-artist-lg">' + artist + '</div>'
+        + '</div>'
+        + '<div class="music-progress-area">'
+        + '<div class="music-progress-bar" onclick="seekMusic(event)">'
+        + '<div class="music-progress-fill" style="width:' + progress + '%"></div>'
+        + '<div class="music-progress-thumb" style="left:' + progress + '%"></div>'
+        + '</div>'
+        + '<div class="music-time-row">'
+        + '<span class="music-time-current">' + currentTime + '</span>'
+        + '<span class="music-time-duration">' + duration + '</span>'
+        + '</div>'
+        + '</div>'
+        + '<div class="music-controls">'
+        + '<span class="music-ctrl-btn" onclick="playPrevSong()">⏮</span>'
+        + '<span class="music-ctrl-btn music-ctrl-play" onclick="togglePlay()"><span class="music-ctrl-play-icon ' + (isPlaying ? 'pause' : 'play') + '"></span></span>'
+        + '<span class="music-ctrl-btn" onclick="playNextSong()">⏭</span>'
+        + '</div>'
+        + '</div>'
+        + '</div></div>';
+
+    // 进度条定时更新
+    if (window._playerTimer) clearInterval(window._playerTimer);
+    window._playerTimer = setInterval(updatePlayerProgress, 500);
+}
+
+function backToPlaylistFromPlayer() {
+    if (window._playerTimer) { clearInterval(window._playerTimer); window._playerTimer = null; }
+    if (musicCurrentPlaylist) {
+        var appWindow = document.getElementById('musicAppWindow');
+        if (appWindow) renderPlaylistFullScreen(appWindow);
+    } else {
+        renderMusicApp();
+    }
+}
+
+function updatePlayerProgress() {
+    if (!musicAudio || !musicCurrentSong) return;
+    var currentEl = document.querySelector('.music-time-current');
+    var fillEl = document.querySelector('.music-progress-fill');
+    var thumbEl = document.querySelector('.music-progress-thumb');
+    if (currentEl) currentEl.textContent = formatMusicTime(musicAudio.currentTime);
+    if (musicAudio.duration) {
+        var pct = musicAudio.currentTime / musicAudio.duration * 100;
+        if (fillEl) fillEl.style.width = pct + '%';
+        if (thumbEl) thumbEl.style.left = pct + '%';
+    }
+}
+
+function seekMusic(e) {
+    if (!musicAudio || !musicAudio.duration) return;
+    var bar = e.currentTarget;
+    var rect = bar.getBoundingClientRect();
+    var pct = (e.clientX - rect.left) / rect.width;
+    musicAudio.currentTime = pct * musicAudio.duration;
+    updatePlayerProgress();
+}
+
+function formatMusicTime(seconds) {
+    if (!seconds || isNaN(seconds)) return '00:00';
+    var m = Math.floor(seconds / 60);
+    var s = Math.floor(seconds % 60);
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+}
+
+function playPrevSong() {
+    var playlists = getPlaylists();
+    var pl = playlists.find(function(p) { return p.id === (musicCurrentPlaylist || 'all'); });
+    if (!pl) return;
+    var idx = -1;
+    for (var i = 0; i < pl.songs.length; i++) { if (pl.songs[i].id === musicCurrentSong.id) { idx = i; break; } }
+    if (idx > 0) { playSong(pl.songs[idx - 1].id); }
+}
+
+function playNextSong() {
+    var playlists = getPlaylists();
+    var pl = playlists.find(function(p) { return p.id === (musicCurrentPlaylist || 'all'); });
+    if (!pl) return;
+    var idx = -1;
+    for (var i = 0; i < pl.songs.length; i++) { if (pl.songs[i].id === musicCurrentSong.id) { idx = i; break; } }
+    if (idx >= 0 && idx < pl.songs.length - 1) { playSong(pl.songs[idx + 1].id); }
+}
+
+function showLyrics() { showToast('歌词功能开发中'); }
+function showPlayerMenu() { showToast('菜单功能开发中'); }
