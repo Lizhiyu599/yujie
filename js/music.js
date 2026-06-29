@@ -441,7 +441,15 @@ function startVinylSpin() {
 }
 
 function stopVinylSpin() {
-    if (musicVinylTimer) { clearInterval(musicVinylTimer); musicVinylTimer = null; }
+    if (musicVinylTimer) {
+        clearInterval(musicVinylTimer);
+        musicVinylTimer = null;
+    }
+    // 把当前角度固定在唱片上，防止跳回原点
+    var discs = document.querySelectorAll('.music-vinyl-disc.spinning, .music-vinyl-spin.spinning');
+    discs.forEach(function(d) {
+        d.style.transform = 'rotate(' + musicVinylAngle + 'deg)';
+    });
 }
 
 // ========== 播放 ==========
@@ -519,8 +527,16 @@ function afterPlaySongSwitch() {
 
 function togglePlay() {
     if (!musicAudio) return;
-    if (musicAudio.paused) { musicAudio.play(); startVinylSpin(); } 
-    else { musicAudio.pause(); stopVinylSpin(); }
+    if (musicAudio.paused) {
+        musicAudio.play();
+        // 恢复时先移除固定角度，再启动旋转
+        var discs = document.querySelectorAll('.music-vinyl-disc, .music-vinyl-spin');
+        discs.forEach(function(d) { d.style.transform = ''; });
+        startVinylSpin();
+    } else {
+        musicAudio.pause();
+        stopVinylSpin();
+    }
     
     if (document.querySelector('.music-player-full')) {
         updatePlayerUIState();
