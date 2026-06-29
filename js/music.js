@@ -29,11 +29,11 @@ function closeMusic() {
 function getMusicUserInfo() {
     var masks = typeof getMasks === 'function' ? getMasks() : [];
     var name = '用户';
-    var avatar = '';
+    var avatar = localStorage.getItem('music_user_avatar') || '';
     if (masks.length > 0) {
         var firstMask = masks[0];
         name = firstMask.name || '用户';
-        avatar = firstMask.avatar || '';
+        if (!avatar) avatar = firstMask.avatar || '';
     }
     var listenTime = parseInt(localStorage.getItem('music_listen_time') || 0);
     return { name: name, avatar: avatar, listenTime: listenTime };
@@ -76,14 +76,14 @@ function renderMusicApp() {
                         <div class="music-func-item" onclick="showToast('歌词收藏')">歌词</div>
                     </div>
                 </div>
+                <div class="music-tab-bar">
+                    <span class="music-tab ${musicCurrentTab === 'music' ? 'active' : ''}" onclick="switchMusicTab('music')">音乐</span>
+                    <span class="music-tab ${musicCurrentTab === 'roam' ? 'active' : ''}" onclick="switchMusicTab('roam')">漫游</span>
+                    <span class="music-tab ${musicCurrentTab === 'other' ? 'active' : ''}" onclick="switchMusicTab('other')">其他</span>
+                </div>
                 <div class="music-tab-content" id="musicTabContent">
                     ${renderMusicTabContent()}
                 </div>
-            </div>
-            <div class="music-tab-bar">
-                <span class="music-tab ${musicCurrentTab === 'music' ? 'active' : ''}" onclick="switchMusicTab('music')">音乐</span>
-                <span class="music-tab ${musicCurrentTab === 'roam' ? 'active' : ''}" onclick="switchMusicTab('roam')">漫游</span>
-                <span class="music-tab ${musicCurrentTab === 'other' ? 'active' : ''}" onclick="switchMusicTab('other')">其他</span>
             </div>
         </div>
     `;
