@@ -2,7 +2,7 @@
  * 玉界 - 音乐
  * 包含：个人主页背景、头像/用户名/听歌时长、最近/本地/导入/歌词、
  *       音乐/漫游/其他 三标签页、歌单系统、全屏歌单详情、胶囊播放器、
- *       歌曲菜单（下一首播放/编辑歌手/分享/删除）
+ *       歌曲菜单（下一首播放/编辑歌手/分享/删除）、播放队列
  */
 
 var musicCurrentTab = 'music';
@@ -12,6 +12,7 @@ var musicAudio = null;
 var musicVinylAngle = 0;
 var musicVinylTimer = null;
 var musicMenuSongId = null;
+var musicQueue = [];
 
 function getPlaylists() {
     var raw = localStorage.getItem('music_playlists');
@@ -192,7 +193,16 @@ function playSong(songId) {
     if (song.src) {
         musicAudio = new Audio(song.src);
         musicAudio.play().catch(function() { showToast('播放失败'); stopVinylSpin(); });
-        musicAudio.addEventListener('ended', function() { musicCurrentSong = null; stopVinylSpin(); refreshMusicContent(); });
+        musicAudio.addEventListener('ended', function() {
+            if (musicQueue.length > 0) {
+                var next = musicQueue.shift();
+                playSong(next.id);
+            } else {
+                musicCurrentSong = null;
+                stopVinylSpin();
+                refreshMusicContent();
+            }
+        });
         startVinylSpin();
     } else {
         showToast('无法播放此歌曲');
@@ -212,6 +222,7 @@ function stopMusic() {
     if (musicAudio) { musicAudio.pause(); musicAudio = null; }
     stopVinylSpin();
     musicCurrentSong = null;
+    musicQueue = [];
 }
 
 function renderMusicTabContent() {
@@ -439,7 +450,14 @@ function closeSongMenu() {
 }
 
 function queueNextSong() {
-    showToast('下一首播放功能开发中');
+    if (!musicMenuSongId) return;
+    var playlists = getPlaylists();
+    var song = null;
+    playlists.forEach(function(p) {
+        var found = p.songs.find(function(s) { return s.id === musicMenuSongId; });
+        if (found) song = found;
+    });
+    if (song) { musicQueue.push(song); showToast('已加入下一首播放'); }
     closeSongMenu();
 }
 
@@ -451,13 +469,37 @@ function editSongArtist() {
         if (found) song = found;
     });
     if (!song) { closeSongMenu(); return; }
-    var newArtist = prompt('编辑歌手名称：', song.artist || '');
-    if (newArtist !== null) {
-        song.artist = newArtist.trim();
-        savePlaylists(playlists);
-        closeSongMenu();
-        refreshMusicContent();
-    }
+    
+    closeSongMenu();
+    var overlay = document.createElement('div');
+    overlay.className = 'caption-modal-overlay';
+    overlay.id = 'editArtistOverlay';
+    overlay.innerHTML = ''
+        + '<div class="caption-modal">'
+        + '<div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">编辑歌手</div>'
+        + '<input type="text" class="payment-note" id="editArtistInput" placeholder="输入歌手名称" value="' + (song.artist || '') + '">'
+        + '<div class="caption-buttons">'
+        + '<div class="payment-btn-cancel" onclick="closeEditArtist()">取消</div>'
+        + '<div class="payment-btn-confirm" onclick="confirmEditArtist()">确定</div>'
+        + '</div></div>';
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeEditArtist(); };
+}
+
+function closeEditArtist() { var o = document.getElementById('editArtistOverlay'); if (o) o.remove(); }
+
+function confirmEditArtist() {
+    var input = document.getElementById('editArtistInput');
+    var newArtist = input ? input.value.trim() : '';
+    closeEditArtist();
+    if (!newArtist || !musicMenuSongId) return;
+    var playlists = getPlaylists();
+    playlists.forEach(function(p) {
+        var song = p.songs.find(function(s) { return s.id === musicMenuSongId; });
+        if (song) song.artist = newArtist;
+    });
+    savePlaylists(playlists);
+    refreshMusicContent();
 }
 
 function shareSongToChar() {
@@ -483,7 +525,6 @@ function shareSongToChar() {
 }
 
 function deleteSongConfirm() {
-    closeSongMenu();
     var overlay = document.createElement('div');
     overlay.className = 'confirm-overlay';
     overlay.id = 'deleteSongOverlay';
@@ -505,10 +546,12 @@ function cancelDeleteSong() {
 function confirmDeleteSong() {
     var o = document.getElementById('deleteSongOverlay');
     if (o) o.remove();
-    if (!musicMenuSongId) return;
+    var songId = musicMenuSongId;
+    musicMenuSongId = null;
+    if (!songId) return;
     var playlists = getPlaylists();
     playlists.forEach(function(p) {
-        p.songs = p.songs.filter(function(s) { return s.id !== musicMenuSongId; });
+        p.songs = p.songs.filter(function(s) { return s.id !== songId; });
     });
     savePlaylists(playlists);
     showToast('已删除');
