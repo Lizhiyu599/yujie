@@ -6,7 +6,7 @@
 
 // ========== 当前标签 ==========
 var musicCurrentTab = 'music';
-var musicCurrentPlaylist = null; // 当前查看的歌单
+var musicCurrentPlaylist = null;
 
 // ========== 歌单数据 ==========
 function getPlaylists() {
@@ -21,10 +21,8 @@ function savePlaylists(playlists) {
 
 function addSongToPlaylist(playlistId, song) {
     var playlists = getPlaylists();
-    // 加到全部音乐
     var all = playlists.find(function(p) { return p.id === 'all'; });
     if (all) all.songs.push(song);
-    // 加到指定歌单
     if (playlistId !== 'all') {
         var target = playlists.find(function(p) { return p.id === playlistId; });
         if (target) target.songs.push(song);
@@ -65,7 +63,6 @@ function getMusicUserInfo() {
     return { name: name, avatar: avatar, listenTime: listenTime };
 }
 
-// ========== 格式化听歌时长 ==========
 function formatListenTime(seconds) {
     if (seconds < 60) return seconds + '秒';
     if (seconds < 3600) return Math.floor(seconds / 60) + '分钟';
@@ -104,7 +101,7 @@ function renderMusicApp() {
                     </div>
                 </div>
                 <div class="music-tab-bar">
-                    <span class="music-tab ${musicCurrentTab === 'music' ? 'active' : ''}" onclick="switchMusicTab('music')">音乐</span>
+                    <span class="music-tab ${musicCurrentTab === 'music' && !musicCurrentPlaylist ? 'active' : ''}" onclick="switchMusicTab('music')">音乐</span>
                     <span class="music-tab ${musicCurrentTab === 'roam' ? 'active' : ''}" onclick="switchMusicTab('roam')">漫游</span>
                     <span class="music-tab ${musicCurrentTab === 'other' ? 'active' : ''}" onclick="switchMusicTab('other')">其他</span>
                 </div>
@@ -119,17 +116,13 @@ function renderMusicApp() {
 // ========== 渲染标签内容 ==========
 function renderMusicTabContent() {
     if (musicCurrentPlaylist) {
-        return renderPlaylistSongs(musicCurrentPlaylist);
+        return renderPlaylistDetail(musicCurrentPlaylist);
     }
     switch (musicCurrentTab) {
-        case 'music':
-            return renderPlaylistList();
-        case 'roam':
-            return '<div class="music-page"><div class="music-empty">音乐播放器</div></div>';
-        case 'other':
-            return '<div class="music-page"><div class="music-empty">角色歌单</div></div>';
-        default:
-            return '';
+        case 'music': return renderPlaylistList();
+        case 'roam': return '<div class="music-page"><div class="music-empty">音乐播放器</div></div>';
+        case 'other': return '<div class="music-page"><div class="music-empty">角色歌单</div></div>';
+        default: return '';
     }
 }
 
@@ -148,10 +141,62 @@ function renderPlaylistList() {
     return html;
 }
 
+// ========== 歌单详情页 ==========
+function renderPlaylistDetail(id) {
+    var playlists = getPlaylists();
+    var pl = playlists.find(function(p) { return p.id === id; });
+    if (!pl) return '';
+    var user = getMusicUserInfo();
+    var cover = pl.cover || '';
+    var playCount = pl.playCount || 0;
+
+    var html = '<div class="music-playlist-detail">';
+    html += '<div class="music-detail-header">';
+    html += '<span class="music-detail-back" onclick="backToPlaylistList()">‹</span>';
+    html += '</div>';
+    html += '<div class="music-detail-info">';
+    html += '<div class="music-detail-cover" onclick="changePlaylistCover(\'' + id + '\')" style="' + (cover ? 'background-image:url(' + cover + ');' : '') + '">' + (cover ? '' : '封面') + '</div>';
+    html += '<div class="music-detail-meta">';
+    html += '<div class="music-detail-name">' + pl.name + '</div>';
+    html += '<div class="music-detail-sub">' + user.name + ' · 播放' + playCount + '次</div>';
+    html += '</div></div>';
+
+    html += '<div class="music-detail-songs">';
+    if (pl.songs.length === 0) {
+        html += '<div class="music-empty">暂无歌曲</div>';
+    } else {
+        pl.songs.forEach(function(s, i) {
+            html += '<div class="music-song-item"><div class="music-song-index">' + (i + 1) + '</div><div class="music-song-info"><div class="music-song-name">' + s.name + '</div></div></div>';
+        });
+    }
+    html += '</div></div>';
+    return html;
+}
+
+function changePlaylistCover(id) {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+            var playlists = getPlaylists();
+            var pl = playlists.find(function(p) { return p.id === id; });
+            if (pl) { pl.cover = ev.target.result; savePlaylists(playlists); }
+            var content = document.getElementById('musicTabContent');
+            if (content) content.innerHTML = renderPlaylistDetail(id);
+        };
+        reader.readAsDataURL(file);
+    };
+    input.click();
+}
+
 function openPlaylist(id) {
     musicCurrentPlaylist = id;
     var content = document.getElementById('musicTabContent');
-    if (content) content.innerHTML = renderPlaylistSongs(id);
+    if (content) content.innerHTML = renderPlaylistDetail(id);
 }
 
 function backToPlaylistList() {
@@ -160,28 +205,11 @@ function backToPlaylistList() {
     if (content) content.innerHTML = renderPlaylistList();
 }
 
-function renderPlaylistSongs(id) {
-    var playlists = getPlaylists();
-    var pl = playlists.find(function(p) { return p.id === id; });
-    if (!pl) return '';
-    var html = '<div class="music-page"><div class="music-playlist-header"><span onclick="backToPlaylistList()">‹ 返回</span><span>' + pl.name + '</span></div>';
-    if (pl.songs.length === 0) {
-        html += '<div class="music-empty">暂无歌曲</div>';
-    } else {
-        pl.songs.forEach(function(s, i) {
-            html += '<div class="music-song-item"><div class="music-song-index">' + (i + 1) + '</div><div class="music-song-info"><div class="music-song-name">' + s.name + '</div></div></div>';
-        });
-    }
-    html += '</div>';
-    return html;
-}
-
-// ========== 创建歌单 ==========
 function createPlaylist() {
     var name = prompt('请输入歌单名称：');
     if (!name || !name.trim()) return;
     var playlists = getPlaylists();
-    playlists.push({ id: 'pl_' + Date.now(), name: name.trim(), songs: [] });
+    playlists.push({ id: 'pl_' + Date.now(), name: name.trim(), songs: [], playCount: 0, cover: '' });
     savePlaylists(playlists);
     var content = document.getElementById('musicTabContent');
     if (content) content.innerHTML = renderPlaylistList();
@@ -218,7 +246,6 @@ function changeMusicAvatar(e) {
     input.click();
 }
 
-// ========== 更换背景图 ==========
 function changeMusicBg(e) {
     if (e.target.closest('.music-avatar-wrap') || e.target.closest('.music-func-item')) return;
     var input = document.createElement('input');
@@ -248,29 +275,28 @@ function importLocalMusic() {
         if (!files || files.length === 0) return;
         showPlaylistPicker(function(playlistId) {
             for (var i = 0; i < files.length; i++) {
-                (function(file) {
+                (function(file, idx) {
                     var reader = new FileReader();
                     reader.onload = function(ev) {
                         addSongToPlaylist(playlistId, {
-                            id: 'local_' + Date.now() + '_' + i,
+                            id: 'local_' + Date.now() + '_' + idx,
                             name: file.name.replace(/\.[^.]+$/, ''),
                             src: ev.target.result,
                             type: 'local'
                         });
-                        if (i === files.length - 1) {
+                        if (idx === files.length - 1) {
                             showToast('已导入 ' + files.length + ' 首歌');
                             refreshMusicContent();
                         }
                     };
                     reader.readAsDataURL(file);
-                })(files[i]);
+                })(files[i], i);
             }
         });
     };
     input.click();
 }
 
-// ========== 导入音乐URL ==========
 function importMusicUrl() {
     var overlay = document.createElement('div');
     overlay.className = 'caption-modal-overlay';
@@ -290,10 +316,7 @@ function importMusicUrl() {
     overlay.onclick = function(e) { if (e.target === overlay) closeMusicUrl(); };
 }
 
-function closeMusicUrl() {
-    var o = document.getElementById('musicUrlOverlay');
-    if (o) o.remove();
-}
+function closeMusicUrl() { var o = document.getElementById('musicUrlOverlay'); if (o) o.remove(); }
 
 function confirmMusicUrl() {
     var input = document.getElementById('musicUrlInput');
@@ -301,12 +324,10 @@ function confirmMusicUrl() {
     closeMusicUrl();
     if (!url) return;
     showPlaylistPicker(function(playlistId) {
-        addSongToPlaylist(playlistId, {
-            id: 'url_' + Date.now(),
-            name: '在线音乐 ' + (getPlaylists().find(function(p){return p.id===playlistId;}) ? getPlaylists().find(function(p){return p.id===playlistId;}).songs.length + 1 : 1),
-            src: url,
-            type: 'url'
-        });
+        var playlists = getPlaylists();
+        var pl = playlists.find(function(p) { return p.id === playlistId; });
+        var count = pl ? pl.songs.length + 1 : 1;
+        addSongToPlaylist(playlistId, { id: 'url_' + Date.now(), name: '在线音乐 ' + count, src: url, type: 'url' });
         showToast('已导入');
         refreshMusicContent();
     });
@@ -319,7 +340,7 @@ function showPlaylistPicker(callback) {
     overlay.className = 'caption-modal-overlay';
     overlay.id = 'playlistPickerOverlay';
     var listHTML = playlists.map(function(p) {
-        return '<div class="music-playlist-option" onclick="selectPlaylist(\'' + p.id + '\')">' + p.name + '</div>';
+        return '<div class="music-playlist-option" data-pid="' + p.id + '">' + p.name + '</div>';
     }).join('');
     overlay.innerHTML = `
         <div class="caption-modal">
@@ -332,12 +353,16 @@ function showPlaylistPicker(callback) {
     `;
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) closePlaylistPicker(); };
+    
+    // 用事件委托绑定点击
+    overlay.querySelectorAll('.music-playlist-option').forEach(function(el) {
+        el.addEventListener('click', function() {
+            var pid = this.getAttribute('data-pid');
+            closePlaylistPicker();
+            if (callback) callback(pid);
+        });
+    });
     window._playlistCallback = callback;
-}
-
-function selectPlaylist(id) {
-    closePlaylistPicker();
-    if (window._playlistCallback) window._playlistCallback(id);
 }
 
 function closePlaylistPicker() {
@@ -348,5 +373,5 @@ function closePlaylistPicker() {
 
 function refreshMusicContent() {
     var content = document.getElementById('musicTabContent');
-    if (content) content.innerHTML = renderMusicTabContent(); 
+    if (content) content.innerHTML = renderMusicTabContent();
 }
