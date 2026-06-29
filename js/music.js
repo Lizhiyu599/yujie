@@ -1,9 +1,9 @@
 /**
  * 玉界 - 音乐
- * 包含：个人主页背景、头像/用户名/听歌时长、最近/本地/导入/歌词、
+ * 包含：个人主页背景、头像/用户名、最近/本地/导入/歌词、
  *       音乐/漫游/其他 三标签页、歌单系统、全屏歌单详情、胶囊播放器、
  *       歌曲菜单（下一首播放/编辑歌手/分享/删除）、播放队列、
- *       IndexedDB 本地音乐持久存储
+ *       IndexedDB 本地音乐持久存储、全局背景图设置
  */
 
 var musicCurrentTab = 'music';
@@ -106,14 +106,7 @@ function getMusicUserInfo() {
         name = firstMask.name || '用户';
         if (!avatar) avatar = firstMask.avatar || '';
     }
-    var listenTime = parseInt(localStorage.getItem('music_listen_time') || 0);
-    return { name: name, avatar: avatar, listenTime: listenTime };
-}
-
-function formatListenTime(seconds) {
-    if (seconds < 60) return seconds + '秒';
-    if (seconds < 3600) return Math.floor(seconds / 60) + '分钟';
-    return Math.floor(seconds / 3600) + '小时';
+    return { name: name, avatar: avatar };
 }
 
 // ========== 渲染主页 ==========
@@ -136,7 +129,6 @@ function renderMusicApp() {
         + '<div class="music-profile" style="' + bgStyle + '" onclick="changeMusicBg(event)">'
         + '<div class="music-avatar-wrap" onclick="changeMusicAvatar(event)">' + (user.avatar ? '<div class="music-avatar" style="background-image:url(' + user.avatar + ');"></div>' : '<div class="music-avatar music-avatar-placeholder">+</div>') + '</div>'
         + '<div class="music-username">' + user.name + '</div>'
-        + '<div class="music-listen-time">已听 ' + formatListenTime(user.listenTime) + '</div>'
         + '<div class="music-func-row"><div class="music-func-item" onclick="showToast(\'最近播放\')">最近</div><div class="music-func-item" onclick="importLocalMusic()">本地</div><div class="music-func-item" onclick="importMusicUrl()">导入</div><div class="music-func-item" onclick="showToast(\'歌词收藏\')">歌词</div></div>'
         + '</div>'
         + '<div class="music-tab-bar"><span class="music-tab ' + (musicCurrentTab === 'music' ? 'active' : '') + '" onclick="switchMusicTab(\'music\')">音乐</span><span class="music-tab ' + (musicCurrentTab === 'roam' ? 'active' : '') + '" onclick="switchMusicTab(\'roam\')">漫游</span><span class="music-tab ' + (musicCurrentTab === 'other' ? 'active' : '') + '" onclick="switchMusicTab(\'other\')">其他</span></div>'
@@ -153,6 +145,8 @@ function renderPlaylistFullScreen(appWindow) {
     if (!pl) { backToPlaylistList(); return; }
     var user = getMusicUserInfo();
     var cover = pl.cover || '';
+    var bg = localStorage.getItem('music_bg') || localStorage.getItem('global_chat_bg') || '';
+    var bgStyle = bg ? 'background-image:url(' + bg + ');background-size:cover;background-position:center;' : '';
 
     var songsHTML = '';
     if (pl.songs.length === 0) {
@@ -175,7 +169,7 @@ function renderPlaylistFullScreen(appWindow) {
 
     appWindow.innerHTML = ''
         + '<div class="music-app">'
-        + '<div class="music-detail-full">'
+        + '<div class="music-detail-full" style="' + bgStyle + '">'
         + '<div class="music-detail-header"><span class="music-detail-back" onclick="backToPlaylistList()">‹</span><span class="music-detail-title">歌单</span></div>'
         + '<div class="music-detail-info">'
         + '<div class="music-detail-cover" onclick="changePlaylistCover(\'' + musicCurrentPlaylist + '\')" style="' + (cover ? 'background-image:url(' + cover + ');' : '') + '">' + (cover ? '' : '<span style="color:rgba(0,0,0,0.2);font-size:13px;">封面</span>') + '</div>'
@@ -504,6 +498,7 @@ function confirmDeleteSong(songId) {
     refreshMusicContent();
 }
 
+// ========== 设置 ==========
 function openMusicSettings() {
     var overlay = document.createElement('div');
     overlay.className = 'sheet-mask show';
@@ -514,7 +509,7 @@ function openMusicSettings() {
         + '<div class="sheet-handle"><div class="handle-bar"></div></div>'
         + '<div class="sheet-scroll">'
         + '<div class="settings-section-title">全局背景图</div>'
-        + '<div class="settings-hint">提示：半屏背景图也将被更换</div>'
+        + '<div class="settings-hint">提示：音乐软件所有页面都将应用此背景</div>'
         + '<div class="glass-card">'
         + '<div class="bg-preview-2x4" id="musicBgPreview" style="background-image:url(' + currentBg + ');" onclick="document.getElementById(\'musicBgInput\').click()">' + (currentBg ? '' : '点击更换全局背景图') + '</div>'
         + '<input type="file" id="musicBgInput" accept="image/*" style="display:none;" onchange="handleMusicBg(event)">'
@@ -557,4 +552,4 @@ function clearMusicBg() {
     if (preview) { preview.style.backgroundImage = ''; preview.innerText = '点击更换全局背景图'; }
     renderMusicApp();
     showToast('已清除');
-}
+    }
