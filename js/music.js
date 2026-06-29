@@ -52,19 +52,18 @@ function renderMusicApp() {
     if (!appWindow) return;
 
     var user = getMusicUserInfo();
-    var bg = localStorage.getItem('global_chat_bg') || '';
+    var bg = localStorage.getItem('music_bg') || localStorage.getItem('global_chat_bg') || '';
     var bgStyle = bg ? 'background-image:url(' + bg + ');background-size:cover;background-position:center;' : 'background:linear-gradient(180deg, #f2f2f7 0%, #e8e8ed 40%, #dcdce0 100%);';
 
     appWindow.innerHTML = `
         <div class="music-app">
             <div class="music-top-bar">
                 <span class="music-back-btn" onclick="closeMusic()">‹</span>
-                <span class="music-top-title">我的</span>
                 <span class="music-top-settings" onclick="showToast('设置功能开发中')">&#9881;</span>
             </div>
             <div class="music-body" id="musicBody">
-                <div class="music-profile" style="${bgStyle}">
-                    <div class="music-avatar-wrap" onclick="changeMusicAvatar()">
+                <div class="music-profile" style="${bgStyle}" onclick="changeMusicBg(event)">
+                    <div class="music-avatar-wrap" onclick="changeMusicAvatar(event)">
                         ${user.avatar ? '<div class="music-avatar" style="background-image:url(' + user.avatar + ');"></div>' : '<div class="music-avatar music-avatar-placeholder">+</div>'}
                     </div>
                     <div class="music-username">${user.name}</div>
@@ -72,7 +71,7 @@ function renderMusicApp() {
                     <div class="music-func-row">
                         <div class="music-func-item" onclick="showToast('最近播放')">最近</div>
                         <div class="music-func-item" onclick="importLocalMusic()">本地</div>
-                        <div class="music-func-item" onclick="showToast('导入歌单')">导入</div>
+                        <div class="music-func-item" onclick="importMusicUrl()">导入</div>
                         <div class="music-func-item" onclick="showToast('歌词收藏')">歌词</div>
                     </div>
                 </div>
@@ -115,16 +114,36 @@ function switchMusicTab(tab) {
 }
 
 // ========== 更换头像 ==========
-function changeMusicAvatar() {
+function changeMusicAvatar(e) {
+    e.stopPropagation();
     var input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    input.onchange = function(e) {
-        var file = e.target.files[0];
+    input.onchange = function(ev) {
+        var file = ev.target.files[0];
         if (!file) return;
         var reader = new FileReader();
-        reader.onload = function(ev) {
-            localStorage.setItem('music_user_avatar', ev.target.result);
+        reader.onload = function(ev2) {
+            localStorage.setItem('music_user_avatar', ev2.target.result);
+            renderMusicApp();
+        };
+        reader.readAsDataURL(file);
+    };
+    input.click();
+}
+
+// ========== 更换背景图 ==========
+function changeMusicBg(e) {
+    if (e.target.closest('.music-avatar-wrap') || e.target.closest('.music-func-item')) return;
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = function(ev) {
+        var file = ev.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(ev2) {
+            localStorage.setItem('music_bg', ev2.target.result);
             renderMusicApp();
         };
         reader.readAsDataURL(file);
@@ -134,5 +153,73 @@ function changeMusicAvatar() {
 
 // ========== 导入本地音乐 ==========
 function importLocalMusic() {
-    showToast('本地音乐导入功能开发中');
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'audio/*';
+    input.multiple = true;
+    input.onchange = function(e) {
+        var files = e.target.files;
+        if (!files || files.length === 0) return;
+        var localSongs = JSON.parse(localStorage.getItem('music_local_songs') || '[]');
+        for (var i = 0; i < files.length; i++) {
+            (function(file) {
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    localSongs.push({
+                        id: 'local_' + Date.now() + '_' + i,
+                        name: file.name.replace(/\.[^.]+$/, ''),
+                        src: ev.target.result,
+                        type: 'local'
+                    });
+                    localStorage.setItem('music_local_songs', JSON.stringify(localSongs));
+                    if (i === files.length - 1) {
+                        showToast('已导入 ' + files.length + ' 首歌');
+                    }
+                };
+                reader.readAsDataURL(file);
+            })(files[i]);
+        }
+    };
+    input.click();
+}
+
+// ========== 导入音乐URL ==========
+function importMusicUrl() {
+    var overlay = document.createElement('div');
+    overlay.className = 'caption-modal-overlay';
+    overlay.id = 'musicUrlOverlay';
+    overlay.innerHTML = `
+        <div class="caption-modal">
+            <div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">导入音乐</div>
+            <input type="text" class="payment-note" id="musicUrlInput" placeholder="粘贴音乐链接">
+            <div style="font-size:11px;color:#8e8e93;margin:4px 0 12px;">支持 mp3 / wav / ogg 等音频直链</div>
+            <div class="caption-buttons">
+                <div class="payment-btn-cancel" onclick="closeMusicUrl()">取消</div>
+                <div class="payment-btn-confirm" onclick="confirmMusicUrl()">确定</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeMusicUrl(); };
+}
+
+function closeMusicUrl() {
+    var o = document.getElementById('musicUrlOverlay');
+    if (o) o.remove();
+}
+
+function confirmMusicUrl() {
+    var input = document.getElementById('musicUrlInput');
+    var url = input ? input.value.trim() : '';
+    closeMusicUrl();
+    if (!url) return;
+    var urlSongs = JSON.parse(localStorage.getItem('music_url_songs') || '[]');
+    urlSongs.push({
+        id: 'url_' + Date.now(),
+        name: '在线音乐 ' + (urlSongs.length + 1),
+        src: url,
+        type: 'url'
+    });
+    localStorage.setItem('music_url_songs', JSON.stringify(urlSongs));
+    showToast('已导入');
 }
