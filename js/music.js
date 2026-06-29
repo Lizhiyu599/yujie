@@ -156,9 +156,9 @@ function renderPlaylistFullScreen(appWindow) {
             var isActive = musicCurrentSong && musicCurrentSong.id === s.id;
             var artist = s.artist || '未知歌手';
             var coverHTML = s.cover 
-    ? '<div class="music-song-cover-img" style="background-image:url(' + s.cover + ');"></div>'
+    ? '<div class="music-song-cover-img spinning-vinyl" style="background-image:url(' + s.cover + ');' + (isActive ? ' animation: vinylSpin 2s linear infinite;' : '') + '"></div>'
     : '<div class="music-vinyl-disc small' + (isActive ? ' spinning' : '') + '"></div>';
-songsHTML += ''
+     songsHTML += ''
     + '<div class="music-song-item' + (isActive ? ' active' : '') + '" onclick="playSong(\'' + s.id + '\')">'
     + '<div class="music-song-cover">' + coverHTML + '</div>'
                 + '<div class="music-song-info">'
@@ -195,7 +195,7 @@ function renderMiniPlayer(appWindow) {
     var isPlaying = musicAudio && !musicAudio.paused;
     var artist = musicCurrentSong.artist || '未知歌手';
     player.innerHTML = ''
-        + '<div class="music-mini-cover" onclick="togglePlay()"><div class="music-vinyl-disc mini' + (isPlaying ? ' spinning' : '') + '"></div></div>'
+        + '<div class="music-mini-cover" onclick="togglePlay()">' + (musicCurrentSong.cover ? '<div class="music-mini-cover-img' + (isPlaying ? ' spinning' : '') + '" style="background-image:url(' + musicCurrentSong.cover + ');' + (isPlaying ? 'animation:vinylSpin 2s linear infinite;' : '') + '"></div>' : '<div class="music-vinyl-disc mini' + (isPlaying ? ' spinning' : '') + '"></div>') + '</div>'
         + '<div class="music-mini-info">'
         + '<div class="music-mini-name">' + musicCurrentSong.name + '</div>'
         + '<div class="music-mini-artist">' + artist + '</div>'
