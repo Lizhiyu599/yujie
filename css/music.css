@@ -366,10 +366,6 @@
 .music-vinyl-disc.spinning {
     animation: vinylSpin 2s linear infinite;
 }
-@keyframes vinylSpin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
 
 /* ===== 胶囊播放器 ===== */
 .music-mini-player {
