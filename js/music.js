@@ -412,9 +412,9 @@ function playSong(songId) {
 function afterPlaySongSwitch() {
     if (document.querySelector('.music-player-full')) {
         updatePlayerUIState();
-    } else {
-        refreshMusicContent();
+        return;
     }
+    refreshMusicContent();
 }
 
 function togglePlay() {
