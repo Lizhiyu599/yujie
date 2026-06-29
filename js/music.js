@@ -220,18 +220,11 @@ function importLocalMusic() {
     input.onchange = function(e) {
         var files = e.target.files;
         if (!files || files.length === 0) return;
-        showPlaylistPicker(function(playlistId) {
-            for (var i = 0; i < files.length; i++) {
-                (function(file, idx) {
-                    var reader = new FileReader();
-                    reader.onload = function(ev) {
-                        addSongToPlaylist(playlistId, { id: 'local_' + Date.now() + '_' + idx, name: file.name.replace(/\.[^.]+$/, ''), src: ev.target.result, type: 'local' });
-                        if (idx === files.length - 1) { showToast('已导入 ' + files.length + ' 首歌'); refreshMusicContent(); }
-                    };
-                    reader.readAsDataURL(file);
-                })(files[i], i);
-            }
-        });
+        for (var i = 0; i < files.length; i++) {
+            addSongToPlaylist('all', { id: 'local_' + Date.now() + '_' + i, name: files[i].name.replace(/\.[^.]+$/, ''), src: '', type: 'local' });
+        }
+        showToast('已导入 ' + files.length + ' 首歌');
+        refreshMusicContent();
     };
     input.click();
 }
