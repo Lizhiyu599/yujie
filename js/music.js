@@ -1,7 +1,7 @@
 /**
  * 玉界 - 音乐
  * 包含：个人主页背景、头像/用户名/听歌时长、最近/本地/导入/歌词、
- *       音乐/漫游/其他 三标签页
+ *       音乐/漫游/其他 三标签页、音乐搜索
  */
 
 // ========== 当前标签 ==========
@@ -59,7 +59,10 @@ function renderMusicApp() {
         <div class="music-app">
             <div class="music-top-bar">
                 <span class="music-back-btn" onclick="closeMusic()">‹</span>
-                <span class="music-top-settings" onclick="showToast('设置功能开发中')">&#9881;</span>
+                <div class="music-top-right">
+                    <img src="https://i.ibb.co/391kzWCn/1782720565299.png" class="music-top-icon" onclick="openMusicSearch()">
+                    <img src="https://i.ibb.co/d4wqnw27/1782720493497.png" class="music-top-icon" onclick="showToast('设置功能开发中')">
+                </div>
             </div>
             <div class="music-body" id="musicBody">
                 <div class="music-profile" style="${bgStyle}" onclick="changeMusicBg(event)">
@@ -222,4 +225,63 @@ function confirmMusicUrl() {
     });
     localStorage.setItem('music_url_songs', JSON.stringify(urlSongs));
     showToast('已导入');
+}
+
+// ========== 搜索音乐 ==========
+function openMusicSearch() {
+    var overlay = document.createElement('div');
+    overlay.className = 'caption-modal-overlay';
+    overlay.id = 'musicSearchOverlay';
+    overlay.innerHTML = `
+        <div class="caption-modal">
+            <div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">搜索音乐</div>
+            <input type="text" class="payment-note" id="musicSearchInput" placeholder="输入歌名">
+            <div class="search-result" id="musicSearchResult"></div>
+            <div class="caption-buttons" style="margin-top:12px;">
+                <div class="payment-btn-cancel" onclick="closeMusicSearch()">取消</div>
+                <div class="payment-btn-confirm" onclick="doMusicSearch()">搜索</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeMusicSearch(); };
+}
+
+function closeMusicSearch() {
+    var o = document.getElementById('musicSearchOverlay');
+    if (o) o.remove();
+}
+
+async function doMusicSearch() {
+    var input = document.getElementById('musicSearchInput');
+    var result = document.getElementById('musicSearchResult');
+    var query = input ? input.value.trim() : '';
+    if (!query) return;
+    result.innerHTML = '<div style="color:#8e8e93;">搜索中…</div>';
+    try {
+        var res = await fetch('https://api.music.imsyy.top/search?keywords=' + encodeURIComponent(query));
+        var data = await res.json();
+        if (data.result && data.result.songs) {
+            result.innerHTML = data.result.songs.slice(0, 10).map(function(s) {
+                return '<div style="padding:8px 0;border-bottom:0.5px dashed rgba(0,0,0,0.05);cursor:pointer;" onclick="addMusicFromSearch(\'' + s.id + '\',\'' + s.name.replace(/'/g,"\\'") + '\',\'' + (s.artists ? s.artists[0].name : '') + '\')">' + s.name + ' - ' + (s.artists ? s.artists[0].name : '') + '</div>';
+            }).join('');
+        } else {
+            result.innerHTML = '<div style="color:#8e8e93;">未找到结果</div>';
+        }
+    } catch(e) {
+        result.innerHTML = '<div style="color:#ff3b30;">搜索失败</div>';
+    }
+}
+
+function addMusicFromSearch(id, name, artist) {
+    var songs = JSON.parse(localStorage.getItem('music_url_songs') || '[]');
+    songs.push({
+        id: 'api_' + id,
+        name: name + ' - ' + artist,
+        src: '',
+        apiId: id,
+        type: 'api'
+    });
+    localStorage.setItem('music_url_songs', JSON.stringify(songs));
+    showToast('已添加到歌单');
 }
