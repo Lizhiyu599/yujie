@@ -257,20 +257,40 @@ async function doMusicSearch() {
     var result = document.getElementById('musicSearchResult');
     var query = input ? input.value.trim() : '';
     if (!query) return;
+    
     result.innerHTML = '<div style="color:#8e8e93;">搜索中…</div>';
+    
     try {
         var res = await fetch('https://api.music.imsyy.top/search?keywords=' + encodeURIComponent(query) + '&t=' + Date.now());
-        if (!res.ok) throw new Error('HTTP ' + res.status);
+        if (!res.ok) throw new Error('HTTP 状态码 ' + res.status);
         var data = await res.json();
+        
         if (data.result && data.result.songs && data.result.songs.length > 0) {
-            result.innerHTML = data.result.songs.slice(0, 10).map(function(s) {
-                return '<div style="padding:8px 0;border-bottom:0.5px dashed rgba(0,0,0,0.05);cursor:pointer;" onclick="addMusicFromSearch(\'' + s.id + '\',\'' + (s.name || '').replace(/'/g,"\\'") + '\',\'' + (s.artists && s.artists[0] ? s.artists[0].name : '') + '\')">' + s.name + ' - ' + (s.artists && s.artists[0] ? s.artists[0].name : '') + '</div>';
-            }).join('');
+            // 清空原有内容
+            result.innerHTML = '';
+            
+            // 使用标准的 DOM 操作和动态绑定，彻底杜绝字符串拼接引起的 Bug
+            data.result.songs.slice(0, 10).forEach(function(s) {
+                var artistName = s.artists && s.artists[0] ? s.artists[0].name : '未知歌手';
+                var songName = s.name || '未知歌曲';
+                
+                var item = document.createElement('div');
+                item.style.cssText = 'padding:8px 0;border-bottom:0.5px dashed rgba(0,0,0,0.05);cursor:pointer;';
+                item.innerText = songName + ' - ' + artistName;
+                
+                // 动态绑定点击事件
+                item.onclick = function() {
+                    addMusicFromSearch(s.id, songName, artistName);
+                };
+                
+                result.appendChild(item);
+            });
         } else {
             result.innerHTML = '<div style="color:#8e8e93;">未找到结果</div>';
         }
     } catch(e) {
-        result.innerHTML = '<div style="color:#ff3b30;">搜索失败：' + e.message + '</div>';
+        console.error('搜索出错：', e); // 方便在控制台查看具体错误原因
+        result.innerHTML = '<div style="color:#ff3b30;">搜索失败：' + e.message + '<br><small style="color:#8e8e93;">请检查网络或是否被接口拦截</small></div>';
     }
 }
 
