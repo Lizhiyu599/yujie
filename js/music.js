@@ -307,17 +307,29 @@ function seekMusic(e) {
 
 function compressImage(base64, maxWidth, quality, callback) {
     var img = new Image();
+    var done = false;
     img.onload = function() {
+        if (done) return; done = true;
         var canvas = document.createElement('canvas');
         var width = img.width, height = img.height;
         if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
         canvas.width = width; canvas.height = height;
         var ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
-        var compressed = canvas.toDataURL('image/jpeg', quality);
-        callback(compressed);
+        try {
+            var compressed = canvas.toDataURL('image/jpeg', quality);
+            callback(compressed);
+        } catch(e) {
+            callback(base64);
+        }
     };
-    img.onerror = function() { callback(base64); };
+    img.onerror = function() {
+        if (done) return; done = true;
+        callback(base64);
+    };
+    setTimeout(function() {
+        if (!done) { done = true; callback(base64); }
+    }, 5000);
     img.src = base64;
 }
 
