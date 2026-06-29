@@ -12,15 +12,15 @@
 /* ===== 顶部栏 ===== */
 .music-top-bar {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    padding: 48px 16px 8px;
-    background: rgba(242, 242, 247, 0.95);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    padding: 48px 16px 12px;
+    background: transparent;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
     z-index: 50;
-    flex-shrink: 0;
-    border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
-    gap: 10px;
 }
 .music-back-btn {
     color: #000;
@@ -32,21 +32,21 @@
     align-items: center;
     justify-content: center;
     font-weight: 300;
-    flex-shrink: 0;
 }
-.music-search-box {
-    flex: 1;
-    height: 36px;
-    background: rgba(0, 0, 0, 0.06);
-    border: none;
-    border-radius: 18px;
-    padding: 0 14px;
-    font-size: 14px;
-    outline: none;
+.music-top-title {
+    font-size: 17px;
+    font-weight: 600;
     color: #000;
 }
-.music-search-box::placeholder {
-    color: rgba(0, 0, 0, 0.3);
+.music-top-settings {
+    font-size: 20px;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000;
 }
 
 /* ===== 内容区 ===== */
@@ -56,22 +56,82 @@
     -webkit-overflow-scrolling: touch;
 }
 
+/* ===== 个人主页背景区 ===== */
+.music-profile {
+    padding: 100px 20px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+.music-avatar-wrap {
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+.music-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    border: 2px solid rgba(255,255,255,0.8);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+}
+.music-avatar-placeholder {
+    background: rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: rgba(0,0,0,0.2);
+}
+.music-username {
+    font-size: 18px;
+    font-weight: 600;
+    color: #000;
+    margin-bottom: 4px;
+}
+.music-listen-time {
+    font-size: 13px;
+    color: rgba(0,0,0,0.45);
+    margin-bottom: 20px;
+}
+
+/* ===== 功能行 ===== */
+.music-func-row {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    max-width: 320px;
+}
+.music-func-item {
+    font-size: 14px;
+    color: #000;
+    cursor: pointer;
+    padding: 8px 14px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: 0.15s;
+}
+.music-func-item:active {
+    background: rgba(255,255,255,0.7);
+}
+
+/* ===== 标签内容区 ===== */
+.music-tab-content {
+    min-height: 200px;
+}
+
 .music-page {
     padding: 16px;
 }
 
-.music-section-title {
-    font-size: 18px;
-    font-weight: 700;
-    color: #000;
-    margin-bottom: 14px;
-    letter-spacing: 1px;
-}
-
-.music-loading {
+.music-empty {
     text-align: center;
-    color: rgba(0, 0, 0, 0.3);
-    padding: 40px;
+    color: rgba(0,0,0,0.3);
+    padding: 60px 20px;
     font-size: 14px;
 }
 
@@ -99,92 +159,4 @@
     color: #000;
     font-weight: 600;
     background: rgba(0, 0, 0, 0.04);
-}
-
-/* ===== 歌单网格 ===== */
-.music-playlist-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-}
-
-/* ===== 登录按钮 ===== */
-.music-login-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px;
-    margin: 20px 0;
-    background: rgba(0, 0, 0, 0.03);
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    border-radius: 16px;
-    cursor: pointer;
-    transition: 0.2s;
-    color: rgba(0, 0, 0, 0.4);
-    font-size: 15px;
-}
-.music-login-btn:active {
-    background: rgba(0, 0, 0, 0.06);
-}
-.music-login-icon {
-    font-size: 40px;
-    margin-bottom: 10px;
-}
-
-/* ===== 登录弹窗 ===== */
-.music-login-overlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 500;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.music-login-modal {
-    width: 280px;
-    background: rgba(255,255,255,0.85);
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
-    border-radius: 20px;
-    padding: 24px 20px 20px;
-    text-align: center;
-    border: 1px solid rgba(255,255,255,0.6);
-}
-.music-login-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #000;
-    margin-bottom: 16px;
-}
-.music-qr-wrap {
-    width: 200px;
-    height: 200px;
-    margin: 0 auto 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0,0,0,0.03);
-    border-radius: 12px;
-}
-.music-qr-img {
-    width: 100%;
-    height: 100%;
-    border-radius: 8px;
-}
-.music-login-hint {
-    font-size: 12px;
-    color: rgba(0,0,0,0.4);
-    margin-bottom: 16px;
-}
-.music-login-cancel {
-    width: 100%;
-    background: rgba(0,0,0,0.06);
-    border: none;
-    border-radius: 10px;
-    padding: 12px;
-    font-size: 15px;
-    color: #000;
-    cursor: pointer;
 }
