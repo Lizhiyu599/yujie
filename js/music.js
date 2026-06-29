@@ -1,7 +1,11 @@
 /**
- * 玉界 - 网易云音乐
- * 包含：推荐/漫游/我的 三标签、歌单浏览、播放控制
+ * 玉界 - 音乐
+ * 包含：个人主页背景、头像/用户名/听歌时长、最近/本地/导入/歌词、
+ *       音乐/漫游/其他 三标签页
  */
+
+// ========== 当前标签 ==========
+var musicCurrentTab = 'music';
 
 // ========== 打开音乐软件 ==========
 function openMusic() {
@@ -21,41 +25,79 @@ function closeMusic() {
     if (appWindow) appWindow.style.display = 'none';
 }
 
-// ========== 当前标签 ==========
-var musicCurrentTab = 'recommend';
+// ========== 获取用户信息 ==========
+function getMusicUserInfo() {
+    var masks = typeof getMasks === 'function' ? getMasks() : [];
+    var name = '用户';
+    var avatar = '';
+    if (masks.length > 0) {
+        var firstMask = masks[0];
+        name = firstMask.name || '用户';
+        avatar = firstMask.avatar || '';
+    }
+    var listenTime = parseInt(localStorage.getItem('music_listen_time') || 0);
+    return { name: name, avatar: avatar, listenTime: listenTime };
+}
+
+// ========== 格式化听歌时长 ==========
+function formatListenTime(seconds) {
+    if (seconds < 60) return seconds + '秒';
+    if (seconds < 3600) return Math.floor(seconds / 60) + '分钟';
+    return Math.floor(seconds / 3600) + '小时';
+}
 
 // ========== 渲染音乐应用 ==========
 function renderMusicApp() {
     var appWindow = document.getElementById('musicAppWindow');
     if (!appWindow) return;
 
+    var user = getMusicUserInfo();
+    var bg = localStorage.getItem('global_chat_bg') || '';
+    var bgStyle = bg ? 'background-image:url(' + bg + ');background-size:cover;background-position:center;' : 'background:linear-gradient(180deg, #f2f2f7 0%, #e8e8ed 40%, #dcdce0 100%);';
+
     appWindow.innerHTML = `
         <div class="music-app">
             <div class="music-top-bar">
                 <span class="music-back-btn" onclick="closeMusic()">‹</span>
-                <input type="text" class="music-search-box" placeholder="搜索音乐" id="musicSearchInput" oninput="musicSearch(this.value)">
+                <span class="music-top-title">我的</span>
+                <span class="music-top-settings" onclick="showToast('设置功能开发中')">&#9881;</span>
             </div>
             <div class="music-body" id="musicBody">
-                ${renderMusicContent()}
+                <div class="music-profile" style="${bgStyle}">
+                    <div class="music-avatar-wrap" onclick="changeMusicAvatar()">
+                        ${user.avatar ? '<div class="music-avatar" style="background-image:url(' + user.avatar + ');"></div>' : '<div class="music-avatar music-avatar-placeholder">+</div>'}
+                    </div>
+                    <div class="music-username">${user.name}</div>
+                    <div class="music-listen-time">已听 ${formatListenTime(user.listenTime)}</div>
+                    <div class="music-func-row">
+                        <div class="music-func-item" onclick="showToast('最近播放')">最近</div>
+                        <div class="music-func-item" onclick="importLocalMusic()">本地</div>
+                        <div class="music-func-item" onclick="showToast('导入歌单')">导入</div>
+                        <div class="music-func-item" onclick="showToast('歌词收藏')">歌词</div>
+                    </div>
+                </div>
+                <div class="music-tab-content" id="musicTabContent">
+                    ${renderMusicTabContent()}
+                </div>
             </div>
             <div class="music-tab-bar">
-                <span class="music-tab ${musicCurrentTab === 'recommend' ? 'active' : ''}" onclick="switchMusicTab('recommend')">推荐</span>
+                <span class="music-tab ${musicCurrentTab === 'music' ? 'active' : ''}" onclick="switchMusicTab('music')">音乐</span>
                 <span class="music-tab ${musicCurrentTab === 'roam' ? 'active' : ''}" onclick="switchMusicTab('roam')">漫游</span>
-                <span class="music-tab ${musicCurrentTab === 'mine' ? 'active' : ''}" onclick="switchMusicTab('mine')">我的</span>
+                <span class="music-tab ${musicCurrentTab === 'other' ? 'active' : ''}" onclick="switchMusicTab('other')">其他</span>
             </div>
         </div>
     `;
 }
 
-// ========== 渲染内容区 ==========
-function renderMusicContent() {
+// ========== 渲染标签内容 ==========
+function renderMusicTabContent() {
     switch (musicCurrentTab) {
-        case 'recommend':
-            return renderRecommendPage();
+        case 'music':
+            return '<div class="music-page"><div class="music-empty">创建或导入歌单后显示</div></div>';
         case 'roam':
-            return renderRoamPage();
-        case 'mine':
-            return renderMinePage();
+            return '<div class="music-page"><div class="music-empty">音乐播放器</div></div>';
+        case 'other':
+            return '<div class="music-page"><div class="music-empty">角色歌单</div></div>';
         default:
             return '';
     }
@@ -64,184 +106,33 @@ function renderMusicContent() {
 // ========== 切换标签 ==========
 function switchMusicTab(tab) {
     musicCurrentTab = tab;
-    var body = document.getElementById('musicBody');
-    if (body) body.innerHTML = renderMusicContent();
+    var content = document.getElementById('musicTabContent');
+    if (content) content.innerHTML = renderMusicTabContent();
     document.querySelectorAll('.music-tab').forEach(function(t) { t.classList.remove('active'); });
     var tabs = document.querySelectorAll('.music-tab');
-    var idx = tab === 'recommend' ? 0 : tab === 'roam' ? 1 : 2;
+    var idx = tab === 'music' ? 0 : tab === 'roam' ? 1 : 2;
     if (tabs[idx]) tabs[idx].classList.add('active');
 }
 
-// ========== 推荐页面 ==========
-function renderRecommendPage() {
-    return `
-        <div class="music-page">
-            <div class="music-section-title">热门推荐</div>
-            <div class="music-loading">加载中…</div>
-            <div class="music-playlist-grid" id="recommendPlaylistGrid"></div>
-        </div>
-    `;
+// ========== 更换头像 ==========
+function changeMusicAvatar() {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+            localStorage.setItem('music_user_avatar', ev.target.result);
+            renderMusicApp();
+        };
+        reader.readAsDataURL(file);
+    };
+    input.click();
 }
 
-// ========== 漫游页面 ==========
-function renderRoamPage() {
-    return `
-        <div class="music-page">
-            <div class="music-section-title">角色漫游</div>
-            <div class="music-loading">选择角色后生成专属推荐…</div>
-        </div>
-    `;
-}
-
-// ========== 我的页面 ==========
-function renderMinePage() {
-    return `
-        <div class="music-page">
-            <div class="music-section-title">我的</div>
-            <div class="music-login-btn" onclick="musicLogin()">
-                <div class="music-login-icon">&#9835;</div>
-                <span>扫码登录网易云</span>
-            </div>
-        </div>
-    `;
-}
-
-// ========== 登录 ==========
-async function musicLogin() {
-    var overlay = document.createElement('div');
-    overlay.className = 'music-login-overlay';
-    overlay.id = 'musicLoginOverlay';
-    overlay.innerHTML = `
-        <div class="music-login-modal">
-            <div class="music-login-title">扫码登录</div>
-            <div class="music-qr-wrap" id="musicQrWrap">
-                <div class="music-loading">生成二维码中…</div>
-            </div>
-            <div class="music-login-hint" id="musicLoginHint" style="font-weight: 500; transition: 0.3s;">请使用网易云音乐APP扫码</div>
-            <button class="music-login-cancel" onclick="closeMusicLogin()">取消</button>
-        </div>
-    `;
-    document.body.appendChild(overlay);
-    overlay.onclick = function(e) { if (e.target === overlay) closeMusicLogin(); };
-
-    var apiBase = 'https://netease-api-dun.vercel.app';
-
-    try {
-        // 1. 获取 key (注意参数名必须是 timestamp)
-        var keyRes = await fetch(apiBase + '/login/qr/key?timestamp=' + Date.now());
-        var keyData = await keyRes.json();
-        var key = keyData.data.unikey;
-        
-        // 2. 获取二维码图片
-        var qrRes = await fetch(apiBase + '/login/qr/create?key=' + key + '&qrimg=true&timestamp=' + Date.now());
-        var qrData = await qrRes.json();
-        var qrImg = qrData.data.qrimg;
-        var qrWrap = document.getElementById('musicQrWrap');
-        if (qrWrap) qrWrap.innerHTML = '<img src="' + qrImg + '" class="music-qr-img">';
-        
-        // 3. 轮询
-        window._musicLoginTimer = setInterval(async function() {
-            try {
-                // 【核心修复】：必须使用 timestamp 才能击穿 API 服务端内部的 axios 缓存
-                var checkRes = await fetch(apiBase + '/login/qr/check?key=' + key + '&timestamp=' + Date.now());
-                var checkData = await checkRes.json();
-                
-                var code = checkData.code || (checkData.data && checkData.data.code);
-                var hintEl = document.getElementById('musicLoginHint');
-
-                if (code === 801) {
-                    // 等待扫码，保持默认
-                } else if (code === 802) {
-                    // 用户手机已扫码，但还没点“授权登录”
-                    if(hintEl) {
-                        hintEl.innerText = '已扫码，请在手机上点击确认';
-                        hintEl.style.color = '#007aff'; // 变成蓝色提示
-                    }
-                } else if (code === 803) {
-                    // 授权成功
-                    clearInterval(window._musicLoginTimer);
-                    var cookie = checkData.cookie || (checkData.data && checkData.data.cookie) || '';
-                    localStorage.setItem('music_cookie', cookie);
-                    if(hintEl) {
-                        hintEl.innerText = '登录成功！';
-                        hintEl.style.color = '#34c759'; // 变成绿色提示
-                    }
-                    setTimeout(() => {
-                        closeMusicLogin();
-                        if(typeof showToast === 'function') showToast('登录成功');
-                        switchMusicTab('mine');
-                    }, 500); // 稍微延迟一下，让用户看到成功提示
-                } else if (code === 800) {
-                    // 二维码过期
-                    clearInterval(window._musicLoginTimer);
-                    if(hintEl) {
-                        hintEl.innerText = '二维码已过期，请重新打开';
-                        hintEl.style.color = '#ff3b30'; // 变成红色提示
-                    }
-                }
-            } catch(e) {
-                console.warn("主API轮询检查错误:", e);
-            }
-        }, 3000);
-
-    } catch(e) {
-        console.warn("主API失效，尝试备用方案...", e);
-        try {
-            var keyUrl = 'https://music.163.com/api/login/qrcode/unikey?type=1&timestamp=' + Date.now();
-            var keyRes2 = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(keyUrl));
-            var keyText2 = await keyRes2.text();
-            var key2 = JSON.parse(keyText2).unikey;
-            
-            var qrUrl2 = 'https://music.163.com/login?codekey=' + key2;
-            var qrWrap2 = document.getElementById('musicQrWrap');
-            if (qrWrap2) qrWrap2.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(qrUrl2) + '" class="music-qr-img">';
-            
-            window._musicLoginTimer = setInterval(async function() {
-                try {
-                    var checkUrl = 'https://music.163.com/api/login/qrcode/client/login?key=' + key2 + '&type=1&timestamp=' + Date.now();
-                    var checkRes2 = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(checkUrl));
-                    var checkText2 = await checkRes2.text();
-                    var checkData2 = JSON.parse(checkText2);
-                    
-                    var code2 = checkData2.code || (checkData2.data && checkData2.data.code);
-                    var hintEl = document.getElementById('musicLoginHint');
-
-                    if (code2 === 802) {
-                        if(hintEl) { hintEl.innerText = '已扫码，请在手机上点击确认'; hintEl.style.color = '#007aff'; }
-                    } else if (code2 === 803) {
-                        clearInterval(window._musicLoginTimer);
-                        var cookie2 = checkData2.cookie || (checkData2.data && checkData2.data.cookie) || '';
-                        localStorage.setItem('music_cookie', cookie2);
-                        if(hintEl) { hintEl.innerText = '登录成功！'; hintEl.style.color = '#34c759'; }
-                        setTimeout(() => {
-                            closeMusicLogin();
-                            if(typeof showToast === 'function') showToast('登录成功');
-                            switchMusicTab('mine');
-                        }, 500);
-                    } else if (code2 === 800) {
-                        clearInterval(window._musicLoginTimer);
-                        if(hintEl) { hintEl.innerText = '二维码已过期，请重新打开'; hintEl.style.color = '#ff3b30'; }
-                    }
-                } catch(e2) {}
-            }, 3000);
-        } catch(e2) {
-            var qrWrap = document.getElementById('musicQrWrap');
-            if (qrWrap) qrWrap.innerHTML = '<div class="music-loading" style="color:red;">网络服务已断开<br>请稍后再试或自建API</div>';
-        }
-    }
-}
-
-// 确保清理函数存在
-function closeMusicLogin() {
-    var overlay = document.getElementById('musicLoginOverlay');
-    if (overlay) overlay.remove();
-    if (window._musicLoginTimer) {
-        clearInterval(window._musicLoginTimer);
-        window._musicLoginTimer = null;
-    }
-}
-
-// ========== 搜索 ==========
-function musicSearch(query) {
-    // 搜索功能开发中
+// ========== 导入本地音乐 ==========
+function importLocalMusic() {
+    showToast('本地音乐导入功能开发中');
 }
