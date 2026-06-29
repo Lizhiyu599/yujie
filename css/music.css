@@ -445,3 +445,54 @@
     border-left: 5px solid #666;
     border-right: 5px solid #666;
 }
+
+/* ===== 歌曲菜单半屏 ===== */
+.music-menu-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.15);
+    z-index: 400;
+    display: flex;
+    align-items: flex-end;
+}
+.music-menu-panel {
+    width: 100%;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-radius: 20px 20px 0 0;
+    padding: 8px 16px 30px;
+    border: 1px solid rgba(255,255,255,0.6);
+    animation: slideUp 0.3s ease;
+}
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+.music-menu-handle {
+    width: 36px;
+    height: 5px;
+    background: #c6c6c8;
+    border-radius: 3px;
+    margin: 8px auto 16px;
+}
+.music-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 14px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    color: #000;
+}
+.music-menu-item:active {
+    background: rgba(255,255,255,0.8);
+}
+.music-menu-icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+}
