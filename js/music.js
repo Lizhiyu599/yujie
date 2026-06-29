@@ -1,13 +1,15 @@
 /**
  * 玉界 - 音乐
  * 包含：个人主页背景、头像/用户名/听歌时长、最近/本地/导入/歌词、
- *       音乐/漫游/其他 三标签页、歌单系统、全屏歌单详情、播放器
+ *       音乐/漫游/其他 三标签页、歌单系统、全屏歌单详情、胶囊播放器
  */
 
 var musicCurrentTab = 'music';
 var musicCurrentPlaylist = null;
 var musicCurrentSong = null;
 var musicAudio = null;
+var musicVinylAngle = 0;
+var musicVinylTimer = null;
 
 function getPlaylists() {
     var raw = localStorage.getItem('music_playlists');
@@ -77,7 +79,6 @@ function renderMusicApp() {
 
     if (musicCurrentPlaylist) {
         renderPlaylistFullScreen(appWindow);
-        renderMiniPlayer(appWindow);
         return;
     }
 
@@ -95,7 +96,7 @@ function renderMusicApp() {
         + '<div class="music-tab-content" id="musicTabContent">' + renderMusicTabContent() + '</div>'
         + '</div></div>';
     
-    renderMiniPlayer(appWindow);
+    setTimeout(function() { renderMiniPlayer(appWindow); }, 100);
 }
 
 function renderPlaylistFullScreen(appWindow) {
@@ -114,12 +115,12 @@ function renderPlaylistFullScreen(appWindow) {
             var artist = s.artist || '未知歌手';
             songsHTML += ''
                 + '<div class="music-song-item' + (isActive ? ' active' : '') + '" onclick="playSong(\'' + s.id + '\')">'
-                + '<div class="music-song-cover"><div class="music-vinyl-disc"></div></div>'
+                + '<div class="music-song-cover"><div class="music-vinyl-disc small' + (isActive ? ' spinning' : '') + '"></div></div>'
                 + '<div class="music-song-info">'
                 + '<div class="music-song-name">' + s.name + '</div>'
                 + '<div class="music-song-artist">' + artist + '</div>'
                 + '</div>'
-                + '<div class="music-song-more" onclick="event.stopPropagation();showToast(\'更多功能开发中\')">…</div>'
+                + '<div class="music-song-more" onclick="event.stopPropagation();showToast(\'更多功能开发中\')"><span class="music-dot"></span><span class="music-dot"></span><span class="music-dot"></span></div>'
                 + '</div>';
         });
     }
@@ -129,13 +130,13 @@ function renderPlaylistFullScreen(appWindow) {
         + '<div class="music-detail-full">'
         + '<div class="music-detail-header"><span class="music-detail-back" onclick="backToPlaylistList()">‹</span><span class="music-detail-title">歌单</span></div>'
         + '<div class="music-detail-info">'
-        + '<div class="music-detail-cover" onclick="changePlaylistCover(\'' + musicCurrentPlaylist + '\')" style="' + (cover ? 'background-image:url(' + cover + ');' : '') + '">' + (cover ? '' : '<div class="music-vinyl-disc large"></div>') + '</div>'
+        + '<div class="music-detail-cover" onclick="changePlaylistCover(\'' + musicCurrentPlaylist + '\')" style="' + (cover ? 'background-image:url(' + cover + ');' : '') + '">' + (cover ? '' : '<span style="color:rgba(0,0,0,0.2);font-size:13px;">封面</span>') + '</div>'
         + '<div class="music-detail-meta"><div class="music-detail-name">' + pl.name + '</div><div class="music-detail-sub">' + user.name + ' · 播放' + (pl.playCount || 0) + '次</div></div>'
         + '</div>'
         + '<div class="music-detail-songs">' + songsHTML + '</div>'
         + '</div></div>';
     
-    renderMiniPlayer(appWindow);
+    setTimeout(function() { renderMiniPlayer(appWindow); }, 100);
 }
 
 function renderMiniPlayer(appWindow) {
@@ -148,15 +149,29 @@ function renderMiniPlayer(appWindow) {
     var isPlaying = musicAudio && !musicAudio.paused;
     var artist = musicCurrentSong.artist || '未知歌手';
     player.innerHTML = ''
-        + '<div class="music-mini-cover" onclick="togglePlay()"><div class="music-vinyl-disc small"></div></div>'
-        + '<div class="music-mini-info" onclick="showToast(\'' + musicCurrentSong.name + '\')">'
+        + '<div class="music-mini-cover" onclick="togglePlay()"><div class="music-vinyl-disc mini' + (isPlaying ? ' spinning' : '') + '"></div></div>'
+        + '<div class="music-mini-info">'
         + '<div class="music-mini-name">' + musicCurrentSong.name + '</div>'
         + '<div class="music-mini-artist">' + artist + '</div>'
         + '</div>'
         + '<div class="music-mini-controls">'
-        + '<span class="music-mini-btn" onclick="togglePlay()">' + (isPlaying ? '⏸' : '▶') + '</span>'
+        + '<span class="music-mini-btn" onclick="togglePlay()"><span class="music-play-icon ' + (isPlaying ? 'pause' : 'play') + '"></span></span>'
         + '</div>';
+    player.onclick = function(e) { if (!e.target.closest('.music-mini-btn')) showToast(musicCurrentSong.name); };
     appWindow.appendChild(player);
+}
+
+function startVinylSpin() {
+    if (musicVinylTimer) return;
+    musicVinylTimer = setInterval(function() {
+        musicVinylAngle += 2;
+        var discs = document.querySelectorAll('.music-vinyl-disc.spinning');
+        discs.forEach(function(d) { d.style.transform = 'rotate(' + musicVinylAngle + 'deg)'; });
+    }, 30);
+}
+
+function stopVinylSpin() {
+    if (musicVinylTimer) { clearInterval(musicVinylTimer); musicVinylTimer = null; }
 }
 
 function playSong(songId) {
@@ -170,11 +185,13 @@ function playSong(songId) {
     
     musicCurrentSong = song;
     if (musicAudio) { musicAudio.pause(); musicAudio = null; }
+    stopVinylSpin();
     
     if (song.src) {
         musicAudio = new Audio(song.src);
-        musicAudio.play().catch(function() { showToast('播放失败'); });
-        musicAudio.addEventListener('ended', function() { musicCurrentSong = null; refreshMusicContent(); });
+        musicAudio.play().catch(function() { showToast('播放失败'); stopVinylSpin(); });
+        musicAudio.addEventListener('ended', function() { musicCurrentSong = null; stopVinylSpin(); refreshMusicContent(); });
+        startVinylSpin();
     } else {
         showToast('无法播放此歌曲');
     }
@@ -184,12 +201,14 @@ function playSong(songId) {
 
 function togglePlay() {
     if (!musicAudio) return;
-    if (musicAudio.paused) { musicAudio.play(); } else { musicAudio.pause(); }
+    if (musicAudio.paused) { musicAudio.play(); startVinylSpin(); } 
+    else { musicAudio.pause(); stopVinylSpin(); }
     refreshMusicContent();
 }
 
 function stopMusic() {
     if (musicAudio) { musicAudio.pause(); musicAudio = null; }
+    stopVinylSpin();
     musicCurrentSong = null;
 }
 
@@ -206,7 +225,7 @@ function renderPlaylistList() {
     var playlists = getPlaylists();
     var html = '<div class="music-page"><div class="music-section-title">歌单</div>';
     playlists.forEach(function(p) {
-        html += '<div class="music-playlist-item" onclick="openPlaylist(\'' + p.id + '\')"><div class="music-playlist-cover">' + (p.cover ? '<div style="background-image:url(' + p.cover + ');background-size:cover;background-position:center;width:100%;height:100%;border-radius:8px;"></div>' : '<div class="music-vinyl-disc small"></div>') + '</div><div class="music-playlist-info"><div class="music-playlist-name">' + p.name + '</div><div class="music-playlist-count">' + p.songs.length + '首</div></div></div>';
+        html += '<div class="music-playlist-item" onclick="openPlaylist(\'' + p.id + '\')"><div class="music-playlist-cover">' + (p.cover ? '<div style="background-image:url(' + p.cover + ');background-size:cover;background-position:center;width:100%;height:100%;border-radius:8px;"></div>' : '<span style="color:rgba(0,0,0,0.2);font-size:12px;">封面</span>') + '</div><div class="music-playlist-info"><div class="music-playlist-name">' + p.name + '</div><div class="music-playlist-count">' + p.songs.length + '首</div></div></div>';
     });
     html += '<div class="music-create-btn" onclick="createPlaylist()">+ 新建歌单</div></div>';
     return html;
