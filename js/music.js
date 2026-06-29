@@ -650,13 +650,11 @@ function changeMusicBg(e) {
         var file = ev.target.files[0]; if (!file) return;
         var reader = new FileReader();
         reader.onload = function(ev2) {
-            try {
-                localStorage.setItem('music_bg', ev2.target.result);
+            compressImage(ev2.target.result, 800, 0.6, function(compressed) {
+                localStorage.setItem('music_bg', compressed);
                 showToast('背景已更新');
                 renderMusicApp();
-            } catch(e) {
-                showToast('图片太大，请换一张');
-            }
+            });
         };
         reader.onerror = function() { showToast('读取失败'); };
         reader.readAsDataURL(file);
@@ -796,17 +794,14 @@ function handleMusicBg(e) {
     var file = e.target.files[0]; if (!file) return;
     var reader = new FileReader();
     reader.onload = function(ev) {
-        try {
-            var bg = ev.target.result;
-            localStorage.setItem('music_bg', bg);
+        compressImage(ev.target.result, 800, 0.6, function(compressed) {
+            localStorage.setItem('music_bg', compressed);
             var preview = document.getElementById('musicBgPreview');
-            if (preview) { preview.style.backgroundImage = 'url(' + bg + ')'; preview.innerText = ''; }
+            if (preview) { preview.style.backgroundImage = 'url(' + compressed + ')'; preview.innerText = ''; }
             closeMusicSettings();
             renderMusicApp();
             showToast('全局背景图已保存');
-        } catch(e) {
-            showToast('图片太大，请换一张');
-        }
+        });
     };
     reader.onerror = function() { showToast('读取失败'); };
     reader.readAsDataURL(file);
