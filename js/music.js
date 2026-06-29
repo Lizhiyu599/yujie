@@ -265,7 +265,10 @@ function changePlaylistCover(id) {
             var pl = playlists.find(function(p) { return p.id === id; });
             if (pl) { pl.cover = ev.target.result; savePlaylists(playlists); }
             var appWindow = document.getElementById('musicAppWindow');
-            if (appWindow) renderPlaylistFullScreen(appWindow);
+            if (appWindow) {
+                musicCurrentPlaylist = id;
+                renderPlaylistFullScreen(appWindow);
+            }
         };
         reader.readAsDataURL(file);
     };
