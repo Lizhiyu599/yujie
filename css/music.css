@@ -515,8 +515,8 @@
 
 .music-vinyl-area {
     position: relative;
-    width: 320px;
-    height: 320px;
+    width: 340px;
+    height: 340px;
     cursor: pointer;
     margin-bottom: 20px;
 }
@@ -527,15 +527,15 @@
     transform: translate(-50%, -50%);
 }
 .music-vinyl-spin {
-    width: 240px;
-    height: 240px;
+    width: 280px;
+    height: 280px;
 }
 .music-vinyl-spin.spinning {
     animation: vinylSpin 2s linear infinite;
 }
 .music-vinyl-disc.large {
-    width: 240px;
-    height: 240px;
+    width: 280px;
+    height: 280px;
     background: url('https://i.ibb.co/kkcdGvB/1782745422034.png') center/cover no-repeat;
     border-radius: 50%;
 }
@@ -544,18 +544,18 @@
 }
 .music-tonearm {
     position: absolute;
-    top: -20px;
-    right: 20px;
-    width: 200px;
-    height: 200px;
+    top: -15px;
+    right: 15px;
+    width: 160px;
+    height: 160px;
     background: url('https://i.ibb.co/RTZ2txD5/1782746492279.png') center/contain no-repeat;
     transform-origin: top right;
-    transform: rotate(-25deg);
+    transform: rotate(-20deg);
     transition: transform 0.5s ease;
     z-index: 5;
 }
 .music-tonearm.playing {
-    transform: rotate(-5deg);
+    transform: rotate(-30deg);
 }
 .tonearm-base, .tonearm-arm, .tonearm-head {
     display: none;
