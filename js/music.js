@@ -434,9 +434,11 @@ function inviteListenTogether() {
 function startVinylSpin() {
     if (musicVinylTimer) return;
     musicVinylTimer = setInterval(function() {
-        musicVinylAngle += 2;
+        musicVinylAngle = (musicVinylAngle + 2) % 360;
         var discs = document.querySelectorAll('.music-vinyl-disc.spinning, .music-vinyl-spin.spinning');
-        discs.forEach(function(d) { d.style.transform = 'rotate(' + musicVinylAngle + 'deg)'; });
+        discs.forEach(function(d) {
+            d.style.transform = 'rotate(' + musicVinylAngle + 'deg)';
+        });
     }, 30);
 }
 
