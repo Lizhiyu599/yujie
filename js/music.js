@@ -367,7 +367,18 @@ function playSong(songId) {
                 musicAudio.play().catch(function() { showToast('播放失败'); });
                 musicAudio.addEventListener('ended', function() {
                     if (musicQueue.length > 0) { var next = musicQueue.shift(); playSong(next.id); }
-                    else { musicCurrentSong = null; stopVinylSpin(); refreshMusicContent(); }
+                    else if (document.querySelector('.music-player-full')) {
+                        var pl = getPlaylists().find(function(p) { return p.id === (musicCurrentPlaylist || 'all'); });
+                        if (pl && musicCurrentSong) {
+                            var idx = -1;
+                            for (var i = 0; i < pl.songs.length; i++) { if (pl.songs[i].id === musicCurrentSong.id) { idx = i; break; } }
+                            if (idx >= 0 && idx < pl.songs.length - 1) { playSong(pl.songs[idx + 1].id); return; }
+                        }
+                        stopVinylSpin();
+                        updatePlayerUIState();
+                    } else {
+                        musicCurrentSong = null; stopVinylSpin(); refreshMusicContent();
+                    }
                 });
                 startVinylSpin();
                 afterPlaySongSwitch();
@@ -378,7 +389,18 @@ function playSong(songId) {
         musicAudio.play().catch(function() { showToast('播放失败'); stopVinylSpin(); });
         musicAudio.addEventListener('ended', function() {
             if (musicQueue.length > 0) { var next = musicQueue.shift(); playSong(next.id); }
-            else { musicCurrentSong = null; stopVinylSpin(); refreshMusicContent(); }
+            else if (document.querySelector('.music-player-full')) {
+                var pl = getPlaylists().find(function(p) { return p.id === (musicCurrentPlaylist || 'all'); });
+                if (pl && musicCurrentSong) {
+                    var idx = -1;
+                    for (var i = 0; i < pl.songs.length; i++) { if (pl.songs[i].id === musicCurrentSong.id) { idx = i; break; } }
+                    if (idx >= 0 && idx < pl.songs.length - 1) { playSong(pl.songs[idx + 1].id); return; }
+                }
+                stopVinylSpin();
+                updatePlayerUIState();
+            } else {
+                musicCurrentSong = null; stopVinylSpin(); refreshMusicContent();
+            }
         });
         startVinylSpin();
         afterPlaySongSwitch();
@@ -389,8 +411,19 @@ function playSong(songId) {
 
 function afterPlaySongSwitch() {
     if (document.querySelector('.music-player-full')) {
-        var appWindow = document.getElementById('musicAppWindow');
-        if (appWindow) renderPlayerFullScreen(appWindow);
+        updatePlayerUIState();
+    } else {
+        refreshMusicContent();
+    }
+}
+
+function togglePlay() {
+    if (!musicAudio) return;
+    if (musicAudio.paused) { musicAudio.play(); startVinylSpin(); } 
+    else { musicAudio.pause(); stopVinylSpin(); }
+    
+    if (document.querySelector('.music-player-full')) {
+        updatePlayerUIState();
     } else {
         refreshMusicContent();
     }
