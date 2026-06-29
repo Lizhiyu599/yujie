@@ -261,14 +261,33 @@ function changePlaylistCover(id) {
         if (!file) return;
         var reader = new FileReader();
         reader.onload = function(ev) {
+            var base64Data = ev.target.result;
+            
+            // 1. 确实地更新到本地缓存中
             var playlists = getPlaylists();
             var pl = playlists.find(function(p) { return p.id === id; });
-            if (pl) { pl.cover = ev.target.result; savePlaylists(playlists); }
-            var appWindow = document.getElementById('musicAppWindow');
-            if (appWindow) {
-                musicCurrentPlaylist = id;
-                renderPlaylistFullScreen(appWindow);
+            if (pl) { 
+                pl.cover = base64Data; 
+                savePlaylists(playlists); 
             }
+            
+            // 2. 别急着全部重刷 HTML，直接精准修改当前封面的 DOM 样式，这样最稳！
+            var coverDiv = document.querySelector('.music-detail-cover');
+            if (coverDiv) {
+                coverDiv.style.backgroundImage = 'url(' + base64Data + ')';
+                coverDiv.style.backgroundSize = 'cover';
+                coverDiv.style.backgroundPosition = 'center';
+                coverDiv.innerHTML = ''; // 清空里面的“封面”文字提示
+            }
+            
+            // 3. 延迟一小会儿再去刷新整个面板，给浏览器留出渲染 Base64 的时间
+            setTimeout(function() {
+                var appWindow = document.getElementById('musicAppWindow');
+                if (appWindow) {
+                    musicCurrentPlaylist = id;
+                    renderPlaylistFullScreen(appWindow);
+                }
+            }, 50);
         };
         reader.readAsDataURL(file);
     };
