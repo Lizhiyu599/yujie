@@ -259,17 +259,18 @@ async function doMusicSearch() {
     if (!query) return;
     result.innerHTML = '<div style="color:#8e8e93;">搜索中…</div>';
     try {
-        var res = await fetch('https://api.music.imsyy.top/search?keywords=' + encodeURIComponent(query));
+        var res = await fetch('https://api.music.imsyy.top/search?keywords=' + encodeURIComponent(query) + '&t=' + Date.now());
+        if (!res.ok) throw new Error('HTTP ' + res.status);
         var data = await res.json();
-        if (data.result && data.result.songs) {
+        if (data.result && data.result.songs && data.result.songs.length > 0) {
             result.innerHTML = data.result.songs.slice(0, 10).map(function(s) {
-                return '<div style="padding:8px 0;border-bottom:0.5px dashed rgba(0,0,0,0.05);cursor:pointer;" onclick="addMusicFromSearch(\'' + s.id + '\',\'' + s.name.replace(/'/g,"\\'") + '\',\'' + (s.artists ? s.artists[0].name : '') + '\')">' + s.name + ' - ' + (s.artists ? s.artists[0].name : '') + '</div>';
+                return '<div style="padding:8px 0;border-bottom:0.5px dashed rgba(0,0,0,0.05);cursor:pointer;" onclick="addMusicFromSearch(\'' + s.id + '\',\'' + (s.name || '').replace(/'/g,"\\'") + '\',\'' + (s.artists && s.artists[0] ? s.artists[0].name : '') + '\')">' + s.name + ' - ' + (s.artists && s.artists[0] ? s.artists[0].name : '') + '</div>';
             }).join('');
         } else {
             result.innerHTML = '<div style="color:#8e8e93;">未找到结果</div>';
         }
     } catch(e) {
-        result.innerHTML = '<div style="color:#ff3b30;">搜索失败</div>';
+        result.innerHTML = '<div style="color:#ff3b30;">搜索失败：' + e.message + '</div>';
     }
 }
 
