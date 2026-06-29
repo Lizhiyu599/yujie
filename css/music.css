@@ -506,16 +506,12 @@
     padding: 0 24px;
 }
 
-/* 唱片+唱针 */
 .music-vinyl-area {
     position: relative;
-    width: 240px;
-    height: 260px;
+    width: 280px;
+    height: 280px;
     cursor: pointer;
     margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 .music-vinyl-large {
     position: absolute;
@@ -529,21 +525,19 @@
 .music-vinyl-disc.large {
     width: 200px;
     height: 200px;
-    background: conic-gradient(#1a1a1a 0deg 45deg, #2a2a2a 45deg 90deg, #1a1a1a 90deg 135deg, #2a2a2a 135deg 180deg, #1a1a1a 180deg 225deg, #2a2a2a 225deg 270deg, #1a1a1a 270deg 315deg, #2a2a2a 315deg 360deg);
+    background: url('https://i.ibb.co/kkcdGvB/1782745422034.png') center/cover no-repeat;
+    border-radius: 50%;
 }
 .music-vinyl-disc.large::after {
-    width: 40px;
-    height: 40px;
-    background: #f2f2f7;
-    border: 3px solid #ccc;
+    display: none;
 }
 
 .music-tonearm {
     position: absolute;
-    top: 10px;
-    right: 30px;
+    top: 0;
+    right: 10px;
     width: 70px;
-    height: 100px;
+    height: 110px;
     transform-origin: top right;
     transform: rotate(-30deg);
     transition: transform 0.5s ease;
@@ -583,7 +577,6 @@
     transform: rotate(-5deg);
 }
 
-/* 歌曲信息 */
 .music-song-detail {
     width: 100%;
     margin-bottom: 16px;
@@ -600,7 +593,6 @@
     margin-top: 2px;
 }
 
-/* 进度条 */
 .music-progress-area {
     width: 100%;
     margin-bottom: 12px;
@@ -635,7 +627,6 @@
     color: rgba(0,0,0,0.4);
 }
 
-/* 控制按钮 */
 .music-controls {
     display: flex;
     justify-content: center;
