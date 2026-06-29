@@ -93,13 +93,6 @@
     font-size: 18px;
     font-weight: 600;
     color: #000;
-    margin-bottom: 4px;
-    z-index: 2;
-}
-.music-username {
-    font-size: 18px;
-    font-weight: 600;
-    color: #000;
     margin-bottom: 24px;
     z-index: 2;
 }
@@ -153,10 +146,12 @@
 /* ===== 标签内容区 ===== */
 .music-tab-content {
     min-height: 200px;
+    background: transparent;
 }
 
 .music-page {
     padding: 16px;
+    background: transparent;
 }
 
 .music-empty {
@@ -428,7 +423,10 @@
     cursor: pointer;
 }
 
-.music-play-icon-img { width: 32px; height: 32px; }
+.music-play-icon-img {
+    width: 32px;
+    height: 32px;
+}
 
 /* ===== 歌曲菜单半屏 ===== */
 .music-menu-overlay {
