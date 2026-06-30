@@ -493,10 +493,19 @@ function renderListenTogetherUI() {
         + '</div></div>';
     
     // 滚动消息
-    setTimeout(function() {
+        setTimeout(function() {
         var msgAreas = document.querySelectorAll('.lt-msg-area');
         msgAreas.forEach(function(a) { a.scrollTop = a.scrollHeight; });
     }, 100);
+    
+    // 30秒后清除气泡
+    if (window._ltClearTimer) clearTimeout(window._ltClearTimer);
+    window._ltClearTimer = setTimeout(function() {
+        if (listenTogetherData) {
+            listenTogetherData.messages = [];
+            renderListenTogetherUI();
+        }
+    }, 30000);
 }
 
 function getLTMessagesByRole(role) {
@@ -545,6 +554,20 @@ function showLTInput() {
     setTimeout(function() {
         var input = document.getElementById('ltChatInput');
         if (input) input.focus();
+    }, 200);
+}
+
+function showLTInput() {
+    if (!listenTogetherData) return;
+    listenTogetherData.showInput = true;
+    renderListenTogetherUI();
+    setTimeout(function() {
+        var input = document.getElementById('ltChatInput');
+        if (input) {
+            input.focus();
+            // 防止页面滚动
+            input.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
     }, 200);
 }
 
