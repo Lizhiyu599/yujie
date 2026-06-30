@@ -672,10 +672,11 @@ function updatePlayerUIState() {
 function stopMusic() {
     if (musicAudio) {
     musicAudio.pause();
-    musicAudio.src = '';
+    musicAudio.removeAttribute('src');
     musicAudio.load();
+    musicAudio.onended = null;
     musicAudio = null;
-    }
+}
     stopVinylSpin();
     musicCurrentSong = null;
     musicQueue = [];
