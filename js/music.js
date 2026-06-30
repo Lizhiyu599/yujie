@@ -565,7 +565,17 @@ function playSong(songId) {
         var found = p.songs.find(function(s) { return s.id === songId; });
         if (found) song = found;
     });
-    if (!song) return;
+        if (!song) return;
+    
+    // 彻底停掉旧音频
+    if (musicAudio) {
+        musicAudio.onended = null;
+        musicAudio.pause();
+        musicAudio.src = '';
+        musicAudio = null;
+    }
+    stopVinylSpin();
+    if (window._playerTimer) { clearInterval(window._playerTimer); window._playerTimer = null; }
     
     musicCurrentSong = song;
 // 默认测试歌词
