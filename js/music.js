@@ -1063,17 +1063,9 @@ function shareCollectedLyric(index) {
     var collected = getCollectedLyrics();
     var item = collected[index];
     if (!item) return;
-    var contactId = window.ChatState && window.ChatState.currentContactId;
-    if (!contactId) {
-        showToast('请先打开一个聊天窗口');
-        return;
-    }
-    var shareText = '（分享了一句歌词：' + item.text + ' ——来自《' + item.songName + '》）';
-    if (typeof appendMessage === 'function') {
-        appendMessage('narration', shareText);
-    }
     closeCollectedLyrics();
-    showToast('已分享给角色');
+    var shareText = '（分享了一句歌词：' + item.text + ' ——来自《' + item.songName + '》）';
+    openShareContactPanel(shareText);
 }
 
 function closeCollectedLyrics() {
