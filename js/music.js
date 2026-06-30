@@ -387,11 +387,13 @@ var listenTogetherData = null;
 function startListenTogether(contactId, contactName, firstMsg) {
     var user = getMusicUserInfo();
     listenTogetherData = {
-        contactId: contactId,
-        contactName: contactName,
-        contactAvatar: null,
-        messages: []
-    };
+    contactId: contactId,
+    contactName: contactName,
+    contactAvatar: null,
+    messages: [],
+    showInput: false,
+    isTyping: false
+};
     
     // 获取角色头像
     var contact = window.ChatConfig.contacts.find(function(c) { return c.id === contactId; });
