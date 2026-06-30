@@ -129,7 +129,7 @@ function renderMusicApp() {
         + '<div class="music-profile">'
         + '<div class="music-avatar-wrap" onclick="changeMusicAvatar(event)">' + (user.avatar ? '<div class="music-avatar" style="background-image:url(' + user.avatar + ');"></div>' : '<div class="music-avatar music-avatar-placeholder">+</div>') + '</div>'
         + '<div class="music-username">' + user.name + '</div>'
-        + '<div class="music-func-row"><div class="music-func-item" onclick="showToast(\'最近播放\')">最近</div><div class="music-func-item" onclick="importLocalMusic()">本地</div><div class="music-func-item" onclick="importMusicUrl()">导入</div><div class="music-func-item" onclick="showToast(\'歌词收藏\')">歌词</div></div>'
+        + '<div class="music-func-row"><div class="music-func-item" onclick="openRecentPlays()">最近</div><div class="music-func-item" onclick="importLocalMusic()">本地</div><div class="music-func-item" onclick="importMusicUrl()">导入</div><div class="music-func-item" onclick="showToast(\'歌词收藏\')">歌词</div></div>'
         + '</div>'
         + '<div class="music-tab-bar"><span class="music-tab ' + (musicCurrentTab === 'music' ? 'active' : '') + '" onclick="switchMusicTab(\'music\')">音乐</span><span class="music-tab ' + (musicCurrentTab === 'roam' ? 'active' : '') + '" onclick="switchMusicTab(\'roam\')">漫游</span><span class="music-tab ' + (musicCurrentTab === 'other' ? 'active' : '') + '" onclick="switchMusicTab(\'other\')">其他</span></div>'
         + '<div class="music-tab-content" id="musicTabContent">' + renderMusicTabContent() + '</div>'
@@ -737,11 +737,32 @@ if (!musicCurrentSong.lyrics || musicCurrentSong.lyrics.length === 0) {
 }
 
 function afterPlaySongSwitch() {
+    // 记录最近播放
+    if (musicCurrentSong) {
+        var recent = getRecentPlays();
+        recent = recent.filter(function(s) { return s.id !== musicCurrentSong.id; });
+        recent.unshift({
+            id: musicCurrentSong.id,
+            name: musicCurrentSong.name,
+            artist: musicCurrentSong.artist || '未知歌手',
+            cover: musicCurrentSong.cover || '',
+            type: musicCurrentSong.type || 'url',
+            src: musicCurrentSong.src || ''
+        });
+        if (recent.length > 8) recent = recent.slice(0, 8);
+        localStorage.setItem('music_recent_plays', JSON.stringify(recent));
+    }
+    
     if (document.querySelector('.music-player-full')) {
         updatePlayerUIState();
         return;
     }
     refreshMusicContent();
+}
+
+function getRecentPlays() {
+    var raw = localStorage.getItem('music_recent_plays');
+    return raw ? JSON.parse(raw) : [];
 }
 
 function togglePlay() {
@@ -934,6 +955,68 @@ function importMusicUrl() {
     overlay.onclick = function(e) { if (e.target === overlay) closeMusicUrl(); };
 }
 function closeMusicUrl() { var o = document.getElementById('musicUrlOverlay'); if (o) o.remove(); }
+
+function openRecentPlays() {
+    var recent = getRecentPlays();
+    if (recent.length === 0) {
+        showToast('暂无最近播放');
+        return;
+    }
+    
+    var overlay = document.createElement('div');
+    overlay.className = 'sheet-mask show';
+    overlay.id = 'recentPlaysMask';
+    
+    var songsHTML = '';
+    recent.forEach(function(s) {
+        songsHTML += ''
+            + '<div class="music-song-item" onclick="playRecentSong(\'' + s.id + '\')">'
+            + '<div class="music-song-cover">' + (s.cover ? '<div class="music-song-cover-img" style="background-image:url(' + s.cover + ');"></div>' : '<div class="music-vinyl-disc small"></div>') + '</div>'
+            + '<div class="music-song-info">'
+            + '<div class="music-song-name">' + s.name + '</div>'
+            + '<div class="music-song-artist">' + s.artist + '</div>'
+            + '</div>'
+            + '<div class="music-song-more" onclick="event.stopPropagation();removeRecentSong(\'' + s.id + '\')">'
+            + '<span style="font-size:14px;color:#c6c6c8;">x</span>'
+            + '</div>'
+            + '</div>';
+    });
+    
+    overlay.innerHTML = ''
+        + '<div class="half-sheet" onclick="event.stopPropagation()">'
+        + '<div class="sheet-handle"><div class="handle-bar"></div></div>'
+        + '<div class="sheet-scroll">'
+        + '<div class="settings-section-title">最近播放</div>'
+        + '<div class="music-detail-songs" style="padding:0;">' + songsHTML + '</div>'
+        + '</div></div>';
+    
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeRecentPlays(); };
+    
+    var handle = overlay.querySelector('.sheet-handle');
+    var startY = 0;
+    handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
+    handle.addEventListener('touchmove', function(e) { if (e.touches[0].clientY - startY > 60) closeRecentPlays(); });
+}
+
+function closeRecentPlays() {
+    var o = document.getElementById('recentPlaysMask');
+    if (o) o.remove();
+}
+
+function playRecentSong(id) {
+    closeRecentPlays();
+    playSong(id);
+}
+
+function removeRecentSong(id) {
+    var recent = getRecentPlays();
+    recent = recent.filter(function(s) { return s.id !== id; });
+    localStorage.setItem('music_recent_plays', JSON.stringify(recent));
+    closeRecentPlays();
+    openRecentPlays();
+}
+
 function confirmMusicUrl() {
     var input = document.getElementById('musicUrlInput'); var url = input ? input.value.trim() : ''; closeMusicUrl();
     if (!url) return;
