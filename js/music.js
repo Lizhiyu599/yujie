@@ -1035,10 +1035,9 @@ function openCollectedLyrics() {
             + '<div class="music-song-name">' + c.text + '</div>'
             + '<div class="music-song-artist">' + c.songName + ' - ' + c.artist + ' · ' + c.date + '</div>'
             + '</div>'
-            + '<div class="music-song-more" style="display:flex;gap:10px;">'
-            + '<span onclick="event.stopPropagation();shareCollectedLyric(' + i + ')" style="font-size:13px;color:#000;opacity:0.5;">分享</span>'
-            + '<span onclick="event.stopPropagation();deleteCollectedLyric(' + i + ')" style="font-size:14px;color:#c6c6c8;">x</span>'
-            + '</div>'
+            + '<div class="music-song-more" onclick="event.stopPropagation();deleteCollectedLyric(' + i + ')">'
+            + '<span style="font-size:14px;color:#c6c6c8;">x</span>'
+            + '</div>' 
             + '</div>';
     });
     
@@ -1057,15 +1056,6 @@ function openCollectedLyrics() {
     var startY = 0;
     handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
     handle.addEventListener('touchmove', function(e) { if (e.touches[0].clientY - startY > 60) closeCollectedLyrics(); });
-}
-
-function shareCollectedLyric(index) {
-    var collected = getCollectedLyrics();
-    var item = collected[index];
-    if (!item) return;
-    closeCollectedLyrics();
-    var shareText = '（分享了一句歌词：' + item.text + ' ——来自《' + item.songName + '》）';
-    openShareContactPanel(shareText);
 }
 
 function closeCollectedLyrics() {
@@ -1143,7 +1133,6 @@ function showSongMenu(songId) {
         + '<div class="music-menu-panel" onclick="event.stopPropagation()">'
         + '<div class="music-menu-handle"></div>'
         + '<div class="music-menu-item" onclick="queueNextSong()"><img src="https://i.ibb.co/sJH89rWN/1782732005182.png" class="music-menu-icon"><span>下一首播放</span></div>'
-        + '<div class="music-menu-item" onclick="shareSongToChar()"><img src="https://i.ibb.co/nMXjFKSx/1782732081584.png" class="music-menu-icon"><span>分享</span></div>'
         + '<div class="music-menu-item" onclick="deleteSongConfirm()"><img src="https://i.ibb.co/h1M6LCrj/1782732044417.png" class="music-menu-icon"><span>删除</span></div>'
         + '</div>';
     document.body.appendChild(overlay);
@@ -1234,15 +1223,6 @@ function confirmShareToContact(contactId) {
     showToast('已分享');
 }
 
-function shareSongToChar() {
-    if (!musicMenuSongId) return;
-    var playlists = getPlaylists(); var song = null;
-    playlists.forEach(function(p) { var found = p.songs.find(function(s) { return s.id === musicMenuSongId; }); if (found) song = found; });
-    if (!song) { closeSongMenu(); return; }
-    closeSongMenu();
-    var shareText = '（分享了一首歌：' + song.name + ' - ' + (song.artist || '未知歌手') + '）';
-    openShareContactPanel(shareText);
-}
 function deleteSongConfirm() {
     var songId = musicMenuSongId;
     closeSongMenu();
