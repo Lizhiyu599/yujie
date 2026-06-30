@@ -1038,8 +1038,9 @@ function openCollectedLyrics() {
             + '<div class="music-song-name">' + c.text + '</div>'
             + '<div class="music-song-artist">' + c.songName + ' - ' + c.artist + ' · ' + c.date + '</div>'
             + '</div>'
-            + '<div class="music-song-more" onclick="event.stopPropagation();deleteCollectedLyric(' + i + ')">'
-            + '<span style="font-size:14px;color:#c6c6c8;">x</span>'
+            + '<div class="music-song-more" style="display:flex;gap:10px;">'
+            + '<span onclick="event.stopPropagation();shareCollectedLyric(' + i + ')" style="font-size:13px;color:#007aff;">分享</span>'
+            + '<span onclick="event.stopPropagation();deleteCollectedLyric(' + i + ')" style="font-size:14px;color:#c6c6c8;">x</span>'
             + '</div>'
             + '</div>';
     });
@@ -1059,6 +1060,23 @@ function openCollectedLyrics() {
     var startY = 0;
     handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
     handle.addEventListener('touchmove', function(e) { if (e.touches[0].clientY - startY > 60) closeCollectedLyrics(); });
+}
+
+function shareCollectedLyric(index) {
+    var collected = getCollectedLyrics();
+    var item = collected[index];
+    if (!item) return;
+    var contactId = window.ChatState && window.ChatState.currentContactId;
+    if (!contactId) {
+        showToast('请先打开一个聊天窗口');
+        return;
+    }
+    var shareText = '（分享了一句歌词：' + item.text + ' ——来自《' + item.songName + '》）';
+    if (typeof appendMessage === 'function') {
+        appendMessage('narration', shareText);
+    }
+    closeCollectedLyrics();
+    showToast('已分享给角色');
 }
 
 function closeCollectedLyrics() {
