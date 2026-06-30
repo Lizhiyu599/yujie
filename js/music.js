@@ -461,8 +461,12 @@ function showPlayerMenu() {
         + '<div class="music-together-add">+</div>'
         + '</div>'
         + '<span>一起听</span>'
-        + '</div>'
-        + '</div>';
++ '</div>'
++ '<div class="music-menu-item" onclick="editSongLyrics()">'
++ '<img src="https://i.ibb.co/jS0YyTb/1782814385302.png" class="music-menu-icon">'
++ '<span>编辑歌词</span>'
++ '</div>'
++ '</div>';
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) closePlayerMenu(); };
 }
@@ -526,6 +530,92 @@ function updatePlayerFullInfo() {
         if (appWindow) renderMiniPlayer(appWindow);
     }
     refreshMusicContent();
+}
+
+function editSongLyrics() {
+    if (!musicCurrentSong) return;
+    closePlayerMenu();
+    
+    var overlay = document.createElement('div');
+    overlay.className = 'caption-modal-overlay';
+    overlay.id = 'lyricsEditOverlay';
+    
+    var currentLyrics = musicCurrentSong.lyrics || [];
+    var lyricsText = '';
+    currentLyrics.forEach(function(line) {
+        var m = Math.floor(line.time / 60);
+        var s = Math.floor(line.time % 60);
+        var ms = Math.floor((line.time % 1) * 100);
+        lyricsText += '[' + (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s + '.' + (ms < 10 ? '0' : '') + ms + ']' + line.text + '\n';
+    });
+    
+    overlay.innerHTML = ''
+        + '<div class="caption-modal" style="max-height:80%;">'
+        + '<div style="font-size:15px;font-weight:600;margin-bottom:8px;color:#000;">编辑歌词</div>'
+        + '<div style="font-size:11px;color:#8e8e93;margin-bottom:10px;">粘贴LRC格式歌词，每行一条</div>'
+        + '<textarea class="payment-note" id="lyricsEditInput" style="height:200px;resize:none;font-size:13px;line-height:1.6;font-family:monospace;" placeholder="[00:00.00]歌词第一句&#10;[00:05.00]歌词第二句&#10;[00:10.00]歌词第三句"></textarea>'
+        + '<div class="caption-buttons">'
+        + '<div class="payment-btn-cancel" onclick="closeLyricsEdit()">取消</div>'
+        + '<div class="payment-btn-confirm" onclick="confirmLyricsEdit()">确定</div>'
+        + '</div></div>';
+    
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeLyricsEdit(); };
+    
+    var textarea = document.getElementById('lyricsEditInput');
+    if (textarea && lyricsText) {
+        textarea.value = lyricsText;
+    }
+}
+
+function closeLyricsEdit() {
+    var o = document.getElementById('lyricsEditOverlay');
+    if (o) o.remove();
+}
+
+function confirmLyricsEdit() {
+    var input = document.getElementById('lyricsEditInput');
+    var raw = input ? input.value.trim() : '';
+    closeLyricsEdit();
+    
+    if (!raw) {
+        musicCurrentSong.lyrics = [];
+        updateSongInPlaylists(musicCurrentSong.id, 'lyrics', []);
+        showToast('歌词已清除');
+        return;
+    }
+    
+    var lines = raw.split('\n');
+    var lyrics = [];
+    var lrcRegex = /\[(\d{2}):(\d{2})(?:\.(\d{1,3}))?\]\s*(.*)/;
+    
+    lines.forEach(function(line) {
+        var match = line.match(lrcRegex);
+        if (match) {
+            var min = parseInt(match[1]);
+            var sec = parseInt(match[2]);
+            var ms = match[3] ? parseInt(match[3]) : 0;
+            if (ms < 100) ms = ms * 10;
+            var time = min * 60 + sec + ms / 1000;
+            var text = match[4] || '';
+            lyrics.push({ time: time, text: text });
+        }
+    });
+    
+    if (lyrics.length === 0) {
+        showToast('未识别到有效歌词');
+        return;
+    }
+    
+    musicCurrentSong.lyrics = lyrics;
+    updateSongInPlaylists(musicCurrentSong.id, 'lyrics', lyrics);
+    
+    var lyricsArea = document.getElementById('musicLyricsArea');
+    if (lyricsArea && lyricsArea.style.display === 'flex') {
+        renderLyrics();
+    }
+    
+    showToast('歌词已保存 (' + lyrics.length + '句)');
 }
 
 function inviteListenTogether() {
