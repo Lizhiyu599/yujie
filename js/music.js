@@ -401,7 +401,7 @@ function renderLyrics() {
     }
     var html = '<div class="music-lyrics-scroll" id="musicLyricsScroll">';
     lyrics.forEach(function(line, i) {
-        html += '<p class="music-lyric-line" data-time="' + line.time + '" data-index="' + i + '" onclick="seekToLyric(' + line.time + ')">' + line.text + '</p>';
+        html += '<p class="music-lyric-line" data-time="' + line.time + '" data-index="' + i + '" onclick="seekToLyric(' + line.time + ', event)">' + line.text + '</p>';
     });
     html += '</div>';
     lyricsArea.innerHTML = html;
@@ -426,7 +426,8 @@ function updateLyricsHighlight() {
     });
 }
 
-function seekToLyric(time) {
+function seekToLyric(time, event) {
+    if (event) event.stopPropagation();
     if (musicAudio) {
         musicAudio.currentTime = time;
         updateLyricsHighlight();
@@ -669,7 +670,12 @@ function updatePlayerUIState() {
 }
 
 function stopMusic() {
-    if (musicAudio) { musicAudio.pause(); musicAudio = null; }
+    if (musicAudio) {
+    musicAudio.pause();
+    musicAudio.src = '';
+    musicAudio.load();
+    musicAudio = null;
+    }
     stopVinylSpin();
     musicCurrentSong = null;
     musicQueue = [];
