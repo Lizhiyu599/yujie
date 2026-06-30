@@ -382,6 +382,164 @@ function sendListenTogetherInvite(contactId) {
     });
 }
 
+var listenTogetherData = null;
+
+function startListenTogether(contactId, contactName, firstMsg) {
+    var user = getMusicUserInfo();
+    listenTogetherData = {
+        contactId: contactId,
+        contactName: contactName,
+        contactAvatar: null,
+        messages: []
+    };
+    
+    // 获取角色头像
+    var contact = window.ChatConfig.contacts.find(function(c) { return c.id === contactId; });
+    if (contact && contact.avatarData) {
+        listenTogetherData.contactAvatar = contact.avatarData;
+    }
+    
+    if (firstMsg) {
+        listenTogetherData.messages.push({ role: 'assistant', text: firstMsg });
+    }
+    
+    showToast('和 ' + contactName + ' 开始一起听');
+    renderListenTogetherUI();
+}
+
+function renderListenTogetherUI() {
+    if (!listenTogetherData || !musicCurrentSong) return;
+    
+    var appWindow = document.getElementById('musicAppWindow');
+    if (!appWindow) return;
+    
+    var user = getMusicUserInfo();
+    var isPlaying = musicAudio && !musicAudio.paused;
+    var artist = musicCurrentSong.artist || '未知歌手';
+    var currentTime = musicAudio ? formatMusicTime(musicAudio.currentTime) : '00:00';
+    var duration = musicAudio && musicAudio.duration ? formatMusicTime(musicAudio.duration) : '00:00';
+    var progress = musicAudio && musicAudio.duration ? (musicAudio.currentTime / musicAudio.duration * 100) : 0;
+    
+    // 消息HTML
+    var messagesHTML = '';
+    listenTogetherData.messages.forEach(function(m) {
+        if (m.role === 'user') {
+            messagesHTML += '<div class="lt-msg-row right"><div class="lt-msg-bubble user">' + m.text + '</div></div>';
+        } else {
+            messagesHTML += '<div class="lt-msg-row left"><div class="lt-msg-bubble assistant">' + m.text + '</div></div>';
+        }
+    });
+    
+    var userAvatarHTML = user.avatar 
+        ? '<div class="lt-avatar" style="background-image:url(' + user.avatar + ');"></div>'
+        : '<div class="lt-avatar lt-avatar-placeholder">我</div>';
+    var contactAvatarHTML = listenTogetherData.contactAvatar
+        ? '<div class="lt-avatar" style="background-image:url(' + listenTogetherData.contactAvatar + ');"></div>'
+        : '<div class="lt-avatar lt-avatar-placeholder">' + listenTogetherData.contactName.charAt(0) + '</div>';
+    
+    appWindow.innerHTML = ''
+        + '<div class="music-app">'
+        + '<div class="music-player-header" style="padding-top:48px;">'
+        + '<span class="music-detail-back" onclick="exitListenTogether()">‹</span>'
+        + '<span class="music-detail-title">一起听</span>'
+        + '</div>'
+        + '<div class="music-player-content" style="padding-top:8px;">'
+        + '<div class="lt-avatars-row">'
+        + '<div class="lt-user-area">' + userAvatarHTML + '<div class="lt-avatar-label">' + user.name + '</div></div>'
+        + '<div class="lt-together-icon">♪</div>'
+        + '<div class="lt-contact-area">' + contactAvatarHTML + '<div class="lt-avatar-label">' + listenTogetherData.contactName + '</div></div>'
+        + '</div>'
+        + '<div class="lt-messages-area" id="ltMessagesArea">' + messagesHTML + '</div>'
+        + '<div class="music-vinyl-area" id="musicVinylArea" onclick="showLyrics()">'
+        + '<div class="music-vinyl-large">'
+        + '<div class="music-vinyl-spin' + (isPlaying ? ' spinning' : '') + '">'
+        + '<div class="music-vinyl-disc large"></div>'
+        + '</div>'
+        + '</div>'
+        + '<div class="music-tonearm' + (isPlaying ? ' playing' : '') + '"></div>'
+        + '</div>'
+        + '<div class="music-lyrics-area" id="musicLyricsArea" style="display:none;" onclick="showLyrics()">'
+        + '<div class="music-lyrics-scroll" id="musicLyricsScroll"></div>'
+        + '</div>'
+        + '<div class="music-song-detail" style="margin-top:auto;margin-bottom:8px;flex-shrink:0;">'
+        + '<div class="music-song-title">' + musicCurrentSong.name + '</div>'
+        + '<div class="music-song-artist-lg">' + artist + '</div>'
+        + '</div>'
+        + '<div class="music-progress-area" style="margin-top:0;flex-shrink:0;">'
+        + '<div class="music-progress-bar" onclick="seekMusic(event)">'
+        + '<div class="music-progress-fill" style="width:' + progress + '%"></div>'
+        + '<div class="music-progress-thumb" style="left:' + progress + '%"></div>'
+        + '</div>'
+        + '<div class="music-time-row">'
+        + '<span class="music-time-current">' + currentTime + '</span>'
+        + '<span class="music-time-duration">' + duration + '</span>'
+        + '</div>'
+        + '</div>'
+        + '<div class="music-controls" style="flex-shrink:0;">'
+        + '<span class="music-ctrl-btn" onclick="playPrevSong()">⏮</span>'
+        + '<span class="music-ctrl-btn music-ctrl-play" onclick="togglePlay()"><span class="music-ctrl-play-icon ' + (isPlaying ? 'pause' : 'play') + '"></span></span>'
+        + '<span class="music-ctrl-btn" onclick="playNextSong()">⏭</span>'
+        + '</div>'
+        + '</div>'
+        + '<div class="lt-input-bar">'
+        + '<input type="text" class="lt-input" id="ltChatInput" placeholder="说点什么..." onkeypress="if(event.key===\'Enter\')sendLTMessage()">'
+        + '<span class="lt-send-btn" onclick="sendLTMessage()">发送</span>'
+        + '</div>'
+        + '</div></div>';
+    
+    // 滚动消息到底部
+    setTimeout(function() {
+        var msgArea = document.getElementById('ltMessagesArea');
+        if (msgArea) msgArea.scrollTop = msgArea.scrollHeight;
+    }, 100);
+}
+
+function exitListenTogether() {
+    listenTogetherData = null;
+    backToPlaylistFromPlayer();
+}
+
+function sendLTMessage() {
+    var input = document.getElementById('ltChatInput');
+    if (!input || !input.value.trim()) return;
+    if (!listenTogetherData) return;
+    
+    var text = input.value.trim();
+    input.value = '';
+    
+    // 添加用户消息
+    listenTogetherData.messages.push({ role: 'user', text: text });
+    renderListenTogetherUI();
+    
+    // 构建上下文
+    var contactId = listenTogetherData.contactId;
+    var systemPrompt = buildSystemPrompt(contactId);
+    systemPrompt += '\n\n【一起听模式】你和用户正在一起听歌：《' + musicCurrentSong.name + '》 - ' + (musicCurrentSong.artist || '未知歌手') + '。你可以自然地讨论这首歌。';
+    
+    var historyMessages = [];
+    listenTogetherData.messages.forEach(function(m) {
+        historyMessages.push({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text });
+    });
+    
+    window.ChatState = window.ChatState || {};
+    var previousContactId = window.ChatState.currentContactId;
+    window.ChatState.currentContactId = contactId;
+    
+    callChatAPI([
+        { role: 'system', content: systemPrompt },
+        ...historyMessages
+    ]).then(function(reply) {
+        var cleanReply = reply.replace(/\{[^}]*\}/g, '').trim();
+        listenTogetherData.messages.push({ role: 'assistant', text: cleanReply });
+        renderListenTogetherUI();
+        window.ChatState.currentContactId = previousContactId;
+    }).catch(function() {
+        listenTogetherData.messages.push({ role: 'assistant', text: '（消息发送失败）' });
+        renderListenTogetherUI();
+        window.ChatState.currentContactId = previousContactId;
+    });
+}
+
 function formatMusicTime(seconds) {
     if (!seconds || isNaN(seconds)) return '00:00';
     var m = Math.floor(seconds / 60);
