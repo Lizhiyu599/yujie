@@ -559,24 +559,24 @@
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    gap: 8px;
-    padding: 0 12px 8px;
+    gap: 20px;
+    padding: 0 40px 8px;
     flex-shrink: 0;
     width: 100%;
 }
 .lt-user-area {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    flex: 1;
+    align-items: center;
     gap: 4px;
+    min-width: 50px;
 }
 .lt-contact-area {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
-    flex: 1;
+    align-items: center;
     gap: 4px;
+    min-width: 50px;
 }
 .lt-avatar {
     width: 44px;
@@ -597,36 +597,37 @@
 .lt-msg-area {
     display: flex;
     flex-direction: column;
-    gap: 3px;
-    max-height: 80px;
-    overflow-y: auto;
+    gap: 2px;
+    max-height: 44px;
+    overflow: hidden;
     width: 100%;
 }
 .lt-msg-bubble {
-    max-width: 100%;
-    padding: 5px 8px;
-    border-radius: 10px;
-    font-size: 12px;
+    max-width: 120px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 11px;
     line-height: 1.4;
     word-break: break-word;
+    animation: ltMsgIn 0.3s ease;
+}
+@keyframes ltMsgIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 .lt-msg-bubble.assistant {
-    background: rgba(255,255,255,0.6);
-    color: #000;
-    align-self: flex-end;
-    text-align: left;
+    background: rgba(255,255,255,0.55);
+    color: rgba(0,0,0,0.5);
 }
 .lt-msg-bubble.user {
-    background: rgba(0,0,0,0.06);
-    color: #000;
-    align-self: flex-start;
-    text-align: left;
+    background: rgba(0,0,0,0.04);
+    color: rgba(0,0,0,0.5);
 }
 .lt-typing {
     font-size: 14px;
-    color: rgba(0,0,0,0.3);
+    color: rgba(0,0,0,0.25);
     letter-spacing: 2px;
-    padding: 2px 8px;
+    padding: 2px 0;
 }
 .lt-input-bar {
     display: flex;
@@ -652,6 +653,59 @@
     font-weight: 600;
     cursor: pointer;
     padding: 0 8px;
+}
+
+/* ===== 一起听聊天记录弹窗 ===== */
+.lt-history-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.15);
+    z-index: 500;
+    display: flex;
+    align-items: flex-end;
+}
+.lt-history-panel {
+    width: 100%;
+    max-height: 55%;
+    background: rgba(255,255,255,0.75);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-radius: 20px 20px 0 0;
+    padding: 8px 16px 30px;
+    border: 1px solid rgba(255,255,255,0.6);
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.3s ease;
+}
+.lt-history-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #000;
+    text-align: center;
+    padding: 8px 0 12px;
+}
+.lt-history-list {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.lt-history-item {
+    font-size: 13px;
+    color: rgba(0,0,0,0.6);
+    padding: 6px 10px;
+    border-radius: 10px;
+    max-width: 80%;
+}
+.lt-history-item.user {
+    align-self: flex-end;
+    background: rgba(0,0,0,0.04);
+}
+.lt-history-item.assistant {
+    align-self: flex-start;
+    background: rgba(255,255,255,0.5);
 }
 
 /* ===== 全屏播放页 ===== */
