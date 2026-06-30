@@ -367,15 +367,18 @@ function playNextSong() {
 function showLyrics() {
     var vinylArea = document.getElementById('musicVinylArea');
     var lyricsArea = document.getElementById('musicLyricsArea');
+    var songDetail = document.querySelector('.music-song-detail');
     if (!vinylArea || !lyricsArea) return;
     if (lyricsArea.style.display === 'flex') {
-        // 当前显示歌词，切回唱片
+        // 切回唱片
         lyricsArea.style.display = 'none';
         vinylArea.style.display = 'block';
+        if (songDetail) songDetail.style.display = '';
     } else {
-        // 当前显示唱片，切到歌词
+        // 切换到歌词
         vinylArea.style.display = 'none';
         lyricsArea.style.display = 'flex';
+        if (songDetail) songDetail.style.display = 'none';
     }
 }
 
@@ -592,9 +595,16 @@ function updatePlayerUIState() {
     var tonearm = document.querySelector('.music-tonearm');
     var playIcon = document.querySelector('.music-ctrl-play-icon');
     var spin = document.querySelector('.music-vinyl-spin');
+    var titleEl = document.querySelector('.music-song-title');
+    var artistEl = document.querySelector('.music-song-artist-lg');
     if (spin) { if (isPlaying) spin.classList.add('spinning'); else spin.classList.remove('spinning'); }
     if (tonearm) { if (isPlaying) tonearm.classList.add('playing'); else tonearm.classList.remove('playing'); }
     if (playIcon) { playIcon.className = 'music-ctrl-play-icon ' + (isPlaying ? 'pause' : 'play'); }
+    // 切歌时更新歌名歌手
+    if (musicCurrentSong) {
+        if (titleEl) titleEl.textContent = musicCurrentSong.name;
+        if (artistEl) artistEl.textContent = musicCurrentSong.artist || '未知歌手';
+    }
 }
 
 function stopMusic() {
