@@ -1166,6 +1166,9 @@ function openShareContactPanel(shareText) {
         return;
     }
     
+    // 把分享文本存到全局变量，避免 onclick 拼接问题
+    window._musicShareText = shareText;
+    
     var overlay = document.createElement('div');
     overlay.className = 'music-share-overlay';
     overlay.id = 'musicShareOverlay';
@@ -1176,7 +1179,7 @@ function openShareContactPanel(shareText) {
             ? '<div class="music-share-avatar" style="background-image:url(' + c.avatarData + ');"></div>'
             : '<div class="music-share-avatar">' + (c.avatar || c.name.charAt(0)) + '</div>';
         listHTML += ''
-            + '<div class="music-share-item" onclick="confirmShareToContact(\'' + c.id + '\', \'' + shareText.replace(/'/g, '\\\'') + '\')">'
+            + '<div class="music-share-item" data-contact-id="' + c.id + '">'
             + avatarHTML
             + '<span class="music-share-name">' + c.name + '</span>'
             + '</div>';
@@ -1191,6 +1194,15 @@ function openShareContactPanel(shareText) {
     
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) closeShareContactPanel(); };
+    
+    // 用事件委托绑定点击
+    var items = overlay.querySelectorAll('.music-share-item');
+    items.forEach(function(item) {
+        item.addEventListener('click', function() {
+            var contactId = this.getAttribute('data-contact-id');
+            confirmShareToContact(contactId);
+        });
+    });
 }
 
 function closeShareContactPanel() {
@@ -1198,11 +1210,15 @@ function closeShareContactPanel() {
     if (o) o.remove();
 }
 
-function confirmShareToContact(contactId, shareText) {
+function confirmShareToContact(contactId) {
     closeShareContactPanel();
     if (!contactId) return;
     
+    var shareText = window._musicShareText || '';
+    window._musicShareText = null;
+    
     window.ChatState = window.ChatState || {};
+    var previousContactId = window.ChatState.currentContactId;
     window.ChatState.currentContactId = contactId;
     
     if (typeof appendMessage === 'function') {
@@ -1211,6 +1227,10 @@ function confirmShareToContact(contactId, shareText) {
             saveChatHistory(contactId);
         }
     }
+    
+    // 恢复之前的联系人ID
+    window.ChatState.currentContactId = previousContactId;
+    
     showToast('已分享');
 }
 
