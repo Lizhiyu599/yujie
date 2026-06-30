@@ -507,8 +507,16 @@ function sendLTMessage() {
     input.value = '';
     
     // 添加用户消息
-    listenTogetherData.messages.push({ role: 'user', text: text });
-    renderListenTogetherUI();
+    listenTogetherData.messages.push({ role: 'assistant', text: cleanReply });
+// 同步保存到聊天记录
+if (typeof appendMessage === 'function') {
+    appendMessage('user', text);
+    appendMessage('assistant', cleanReply);
+    if (typeof saveChatHistory === 'function') {
+        saveChatHistory(contactId);
+    }
+}
+renderListenTogetherUI();
     
     // 构建上下文
     var contactId = listenTogetherData.contactId;
