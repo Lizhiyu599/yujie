@@ -339,6 +339,49 @@ function compressImage(base64, maxWidth, quality, callback) {
     img.src = base64;
 }
 
+function sendListenTogetherInvite(contactId) {
+    var contact = window.ChatConfig.contacts.find(function(c) { return c.id === contactId; });
+    if (!contact) { showToast('联系人不存在'); return; }
+    
+    var songName = musicCurrentSong.name;
+    var artist = musicCurrentSong.artist || '未知歌手';
+    
+    // 构建邀请提示
+    var systemPrompt = buildSystemPrompt(contactId);
+    var invitePrompt = '用户邀请你一起听歌：《' + songName + '》 - ' + artist + '。\n请根据你的人设决定是否接受邀请。\n如果接受，回复的第一行写 @@ACCEPT@@，然后简短回应。\n如果拒绝，回复的第一行写 @@REFUSE@@，然后简短说明原因（不超过15字）。';
+    
+    window.ChatState = window.ChatState || {};
+    var previousContactId = window.ChatState.currentContactId;
+    window.ChatState.currentContactId = contactId;
+    
+    showToast('正在邀请 ' + contact.name + '...');
+    
+    callChatAPI([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: invitePrompt }
+    ]).then(function(reply) {
+        var cleanReply = reply.replace(/\{[^}]*\}/g, '').trim();
+        if (cleanReply.indexOf('@@ACCEPT@@') >= 0) {
+            var msg = cleanReply.replace('@@ACCEPT@@', '').trim();
+            startListenTogether(contactId, contact.name, msg);
+        } else if (cleanReply.indexOf('@@REFUSE@@') >= 0) {
+            var msg = cleanReply.replace('@@REFUSE@@', '').trim();
+            showToast(contact.name + '拒绝了邀请' + (msg ? '：' + msg : ''));
+        } else {
+            // 没检测到标记，根据内容判断
+            if (cleanReply.indexOf('好') >= 0 || cleanReply.indexOf('听') >= 0 || cleanReply.indexOf('来吧') >= 0) {
+                startListenTogether(contactId, contact.name, cleanReply);
+            } else {
+                showToast(contact.name + '：' + cleanReply.substring(0, 20));
+            }
+        }
+        window.ChatState.currentContactId = previousContactId;
+    }).catch(function() {
+        showToast('邀请失败，请检查API配置');
+        window.ChatState.currentContactId = previousContactId;
+    });
+}
+
 function formatMusicTime(seconds) {
     if (!seconds || isNaN(seconds)) return '00:00';
     var m = Math.floor(seconds / 60);
