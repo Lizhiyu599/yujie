@@ -638,12 +638,9 @@ function confirmLyricsEdit() {
 }
 
 function inviteListenTogether() {
-    var contactId = window.ChatState && window.ChatState.currentContactId;
-    if (!contactId) { showToast('请先打开一个聊天窗口'); return; }
-    var shareText = '（邀请你一起听：' + musicCurrentSong.name + ' - ' + (musicCurrentSong.artist || '未知歌手') + '）';
-    if (typeof appendMessage === 'function') { appendMessage('narration', shareText); }
     closePlayerMenu();
-    showToast('已邀请角色一起听');
+    var shareText = '（邀请你一起听：' + musicCurrentSong.name + ' - ' + (musicCurrentSong.artist || '未知歌手') + '）';
+    openShareContactPanel(shareText);
 }
 
 // ========== 唱片旋转 ==========
@@ -1168,17 +1165,71 @@ function queueNextSong() {
     if (song) { musicQueue.push(song); showToast('已加入下一首播放'); }
     closeSongMenu();
 }
+
+// ========== 通用分享联系人选择面板 ==========
+function openShareContactPanel(shareText) {
+    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
+    if (contacts.length === 0) {
+        showToast('暂无联系人');
+        return;
+    }
+    
+    var overlay = document.createElement('div');
+    overlay.className = 'music-share-overlay';
+    overlay.id = 'musicShareOverlay';
+    
+    var listHTML = '';
+    contacts.forEach(function(c) {
+        var avatarHTML = c.avatarData 
+            ? '<div class="music-share-avatar" style="background-image:url(' + c.avatarData + ');"></div>'
+            : '<div class="music-share-avatar">' + (c.avatar || c.name.charAt(0)) + '</div>';
+        listHTML += ''
+            + '<div class="music-share-item" onclick="confirmShareToContact(\'' + c.id + '\', \'' + shareText.replace(/'/g, '\\\'') + '\')">'
+            + avatarHTML
+            + '<span class="music-share-name">' + c.name + '</span>'
+            + '</div>';
+    });
+    
+    overlay.innerHTML = ''
+        + '<div class="music-share-panel" onclick="event.stopPropagation()">'
+        + '<div class="music-menu-handle"></div>'
+        + '<div class="music-share-title">分享给好友</div>'
+        + '<div class="music-share-list">' + listHTML + '</div>'
+        + '</div>';
+    
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeShareContactPanel(); };
+}
+
+function closeShareContactPanel() {
+    var o = document.getElementById('musicShareOverlay');
+    if (o) o.remove();
+}
+
+function confirmShareToContact(contactId, shareText) {
+    closeShareContactPanel();
+    if (!contactId) return;
+    
+    window.ChatState = window.ChatState || {};
+    window.ChatState.currentContactId = contactId;
+    
+    if (typeof appendMessage === 'function') {
+        appendMessage('narration', shareText);
+        if (typeof saveChatHistory === 'function') {
+            saveChatHistory(contactId);
+        }
+    }
+    showToast('已分享');
+}
+
 function shareSongToChar() {
     if (!musicMenuSongId) return;
     var playlists = getPlaylists(); var song = null;
     playlists.forEach(function(p) { var found = p.songs.find(function(s) { return s.id === musicMenuSongId; }); if (found) song = found; });
     if (!song) { closeSongMenu(); return; }
     closeSongMenu();
-    var contactId = window.ChatState && window.ChatState.currentContactId;
-    if (!contactId) { showToast('请先打开一个聊天窗口'); return; }
     var shareText = '（分享了一首歌：' + song.name + ' - ' + (song.artist || '未知歌手') + '）';
-    if (typeof appendMessage === 'function') { appendMessage('narration', shareText); }
-    showToast('已分享给角色');
+    openShareContactPanel(shareText);
 }
 function deleteSongConfirm() {
     var songId = musicMenuSongId;
