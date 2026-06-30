@@ -562,8 +562,18 @@ function playSong(songId) {
     if (!song) return;
     
     musicCurrentSong = song;
-    if (musicAudio) { musicAudio.pause(); musicAudio = null; }
-    stopVinylSpin();
+// 默认测试歌词
+if (!musicCurrentSong.lyrics || musicCurrentSong.lyrics.length === 0) {
+    var name = musicCurrentSong.name || '歌曲';
+    musicCurrentSong.lyrics = [
+        { time: 0, text: '♪ ' + name + ' ♪' },
+        { time: 5, text: '歌词功能已上线' },
+        { time: 10, text: '点击歌词可跳转' },
+        { time: 15, text: '随播放自动滚动' },
+        { time: 20, text: '长按收藏暂未开放' },
+        { time: 25, text: '敬请期待更多功能' }
+    ];
+}
     
     if (song.type === 'local') {
         loadSongFromDB(song.id, function(data) {
