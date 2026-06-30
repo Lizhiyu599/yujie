@@ -571,6 +571,23 @@ function showLTInput() {
     }, 200);
 }
 
+function splitLTText(text) {
+    // 先按中文标点分句
+    var sentences = text.split(/(?<=[，。！？、；：\n])/);
+    var result = [];
+    sentences.forEach(function(s) {
+        s = s.trim();
+        if (!s) return;
+        // 每句超过15字才截断
+        while (s.length > 15) {
+            result.push(s.substring(0, 15));
+            s = s.substring(15);
+        }
+        if (s.length > 0) result.push(s);
+    });
+    return result.length > 0 ? result : [text];
+}
+
 function sendLTMessage() {
     var input = document.getElementById('ltChatInput');
     if (!input || !input.value.trim()) return;
@@ -604,8 +621,12 @@ function sendLTMessage() {
         ...historyMessages
     ]).then(function(reply) {
         var cleanReply = reply.replace(/\{[^}]*\}/g, '').trim();
-        cleanReply = cleanReply.replace(/[\(\（][^\)\）]*[\)\）]/g, '').trim();
-        cleanReply = cleanReply.replace(/@@\w+@@/g, '').trim();
+        // 去掉所有括号内容（支持跨行、中英文括号）
+cleanReply = cleanReply.replace(/[\(\（][\s\S]*?[\)\）]/g, '').trim();
+// 去掉 @@指令@@
+cleanReply = cleanReply.replace(/@@[\s\S]*?@@/g, '').trim();
+// 再去掉残留的单边括号
+cleanReply = cleanReply.replace(/[\(\（\)\）]/g, '').trim();
         listenTogetherData.isTyping = false;
         listenTogetherData.messages.push({ role: 'assistant', text: cleanReply });
         if (typeof appendMessage === 'function') {
