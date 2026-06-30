@@ -611,8 +611,10 @@
 }
 .music-song-detail {
     width: 100%;
-    margin-bottom: 16px;
+    margin-top: auto;
+    margin-bottom: 8px;
     text-align: left;
+    flex-shrink: 0;
 }
 .music-song-title {
     font-size: 18px;
@@ -624,11 +626,11 @@
     color: rgba(0,0,0,0.5);
     margin-top: 2px;
 }
-
 .music-progress-area {
     width: 100%;
     margin-bottom: 12px;
-    margin-top: auto;
+    margin-top: 0;
+    flex-shrink: 0;
 }
 .music-progress-bar {
     position: relative;
