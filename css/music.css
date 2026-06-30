@@ -494,6 +494,7 @@
     flex-direction: column;
     background: transparent;
     overflow-y: auto;
+    padding-top: 0;
 }
 .music-player-header {
     display: flex;
@@ -544,6 +545,8 @@
     max-height: 340px;
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
+    padding-top: 10px;
+    padding-bottom: 10px;
 }
 .music-lyric-line {
     font-size: 16px;
