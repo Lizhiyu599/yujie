@@ -411,6 +411,7 @@ function updateLyricsHighlight() {
     if (!musicAudio) return;
     var currentTime = musicAudio.currentTime;
     var lines = document.querySelectorAll('.music-lyric-line');
+    var scrollContainer = document.getElementById('musicLyricsScroll');
     var activeIndex = -1;
     lines.forEach(function(line, i) {
         var t = parseFloat(line.getAttribute('data-time'));
@@ -419,18 +420,18 @@ function updateLyricsHighlight() {
     lines.forEach(function(line, i) {
         if (i === activeIndex) {
             line.classList.add('active');
-            var scrollContainer = document.getElementById('musicLyricsScroll');
-if (scrollContainer) {
-    var lineTop = line.offsetTop;
-    var containerHeight = scrollContainer.clientHeight;
-    var targetTop = lineTop - containerHeight / 2 + line.clientHeight / 2;
-    if (targetTop < 0) targetTop = 0;
-    scrollContainer.scrollTop = targetTop;
-}
         } else {
             line.classList.remove('active');
         }
     });
+    if (activeIndex >= 0 && scrollContainer && lines[activeIndex]) {
+        var activeLine = lines[activeIndex];
+        var containerHeight = scrollContainer.clientHeight;
+        var lineTop = activeLine.offsetTop;
+        var targetTop = lineTop - containerHeight / 2;
+        if (targetTop < 0) targetTop = 0;
+        scrollContainer.scrollTop = targetTop;
+    }
 }
 
 function seekToLyric(time, event) {
