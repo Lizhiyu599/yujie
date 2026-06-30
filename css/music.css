@@ -544,9 +544,8 @@
     overflow-y: auto;
     max-height: 340px;
     -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
-    padding-top: 10px;
-    padding-bottom: 10px;
+    padding-top: 40px;
+    padding-bottom: 40px;
 }
 .music-lyric-line {
     font-size: 16px;
