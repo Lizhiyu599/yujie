@@ -384,7 +384,48 @@ function sendListenTogetherInvite(contactId) {
     });
 }
 
-var listenTogetherData = null;
+function confirmExitLT() {
+    var overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.id = 'exitLTOverlay';
+    overlay.innerHTML = ''
+        + '<div class="confirm-dialog">'
+        + '<p>确认退出一起听？</p>'
+        + '<div class="confirm-buttons">'
+        + '<div class="confirm-btn-cancel" onclick="cancelExitLT()">取消</div>'
+        + '<div class="confirm-btn-delete" onclick="exitListenTogether()">确定</div>'
+        + '</div></div>';
+    document.body.appendChild(overlay);
+}
+
+function cancelExitLT() {
+    var o = document.getElementById('exitLTOverlay');
+    if (o) o.remove();
+}
+
+function exitListenTogether() {
+    var o = document.getElementById('exitLTOverlay');
+    if (o) o.remove();
+    
+    // 通知角色
+    if (listenTogetherData && typeof appendMessage === 'function') {
+        var exitMsg = '（一起听已结束）';
+        appendMessage('narration', exitMsg);
+        if (typeof saveChatHistory === 'function') {
+            saveChatHistory(listenTogetherData.contactId);
+        }
+    }
+    
+    listenTogetherData = null;
+    if (window._ltClearTimer) { clearTimeout(window._ltClearTimer); window._ltClearTimer = null; }
+    
+    if (musicCurrentPlaylist) {
+        var appWindow = document.getElementById('musicAppWindow');
+        if (appWindow) { renderPlaylistFullScreen(appWindow); setTimeout(function() { renderMiniPlayer(appWindow); }, 100); }
+    } else {
+        renderMusicApp();
+    }
+}
 
 function startListenTogether(contactId, contactName, firstMsg) {
     var user = getMusicUserInfo();
