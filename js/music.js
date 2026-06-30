@@ -1039,7 +1039,7 @@ function openCollectedLyrics() {
             + '<div class="music-song-artist">' + c.songName + ' - ' + c.artist + ' · ' + c.date + '</div>'
             + '</div>'
             + '<div class="music-song-more" style="display:flex;gap:10px;">'
-            + '<span onclick="event.stopPropagation();shareCollectedLyric(' + i + ')" style="font-size:13px;color:#007aff;">分享</span>'
+            + '<span onclick="event.stopPropagation();shareCollectedLyric(' + i + ')" style="font-size:13px;color:#000;opacity:0.5;">分享</span>'
             + '<span onclick="event.stopPropagation();deleteCollectedLyric(' + i + ')" style="font-size:14px;color:#c6c6c8;">x</span>'
             + '</div>'
             + '</div>';
