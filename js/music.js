@@ -129,7 +129,7 @@ function renderMusicApp() {
         + '<div class="music-profile">'
         + '<div class="music-avatar-wrap" onclick="changeMusicAvatar(event)">' + (user.avatar ? '<div class="music-avatar" style="background-image:url(' + user.avatar + ');"></div>' : '<div class="music-avatar music-avatar-placeholder">+</div>') + '</div>'
         + '<div class="music-username">' + user.name + '</div>'
-        + '<div class="music-func-row"><div class="music-func-item" onclick="openRecentPlays()">最近</div><div class="music-func-item" onclick="importLocalMusic()">本地</div><div class="music-func-item" onclick="importMusicUrl()">导入</div><div class="music-func-item" onclick="showToast(\'歌词收藏\')">歌词</div></div>'
+        + '<div class="music-func-row"><div class="music-func-item" onclick="openRecentPlays()">最近</div><div class="music-func-item" onclick="importLocalMusic()">本地</div><div class="music-func-item" onclick="importMusicUrl()">导入</div><div class="music-func-item" onclick="openCollectedLyrics()">歌词</div></div>'
         + '</div>'
         + '<div class="music-tab-bar"><span class="music-tab ' + (musicCurrentTab === 'music' ? 'active' : '') + '" onclick="switchMusicTab(\'music\')">音乐</span><span class="music-tab ' + (musicCurrentTab === 'roam' ? 'active' : '') + '" onclick="switchMusicTab(\'roam\')">漫游</span><span class="music-tab ' + (musicCurrentTab === 'other' ? 'active' : '') + '" onclick="switchMusicTab(\'other\')">其他</span></div>'
         + '<div class="music-tab-content" id="musicTabContent">' + renderMusicTabContent() + '</div>'
@@ -401,10 +401,25 @@ function renderLyrics() {
     }
     var html = '<div class="music-lyrics-scroll" id="musicLyricsScroll">';
     lyrics.forEach(function(line, i) {
-        html += '<p class="music-lyric-line" data-time="' + line.time + '" data-index="' + i + '" onclick="seekToLyric(' + line.time + ', event)">' + line.text + '</p>';
+        html += '<p class="music-lyric-line" data-time="' + line.time + '" data-index="' + i + '" data-text="' + line.text.replace(/"/g, '&quot;') + '" onclick="seekToLyric(' + line.time + ', event)" oncontextmenu="event.preventDefault();">' + line.text + '</p>';
     });
     html += '</div>';
-    lyricsArea.innerHTML = html;
+        lyricsArea.innerHTML = html;
+    
+    // 长按收藏歌词
+    var lyricLines = lyricsArea.querySelectorAll('.music-lyric-line');
+    lyricLines.forEach(function(lineEl) {
+        var longPressTimer;
+        lineEl.addEventListener('touchstart', function(e) {
+            longPressTimer = setTimeout(function() {
+                var text = lineEl.getAttribute('data-text');
+                var time = parseFloat(lineEl.getAttribute('data-time'));
+                collectLyricLine(text, time);
+            }, 600);
+        });
+        lineEl.addEventListener('touchend', function() { clearTimeout(longPressTimer); });
+        lineEl.addEventListener('touchmove', function() { clearTimeout(longPressTimer); });
+    });
 }
 
 function updateLyricsHighlight() {
@@ -1004,6 +1019,61 @@ function closeRecentPlays() {
     if (o) o.remove();
 }
 
+function openCollectedLyrics() {
+    var collected = getCollectedLyrics();
+    if (collected.length === 0) {
+        showToast('暂无收藏歌词');
+        return;
+    }
+    
+    var overlay = document.createElement('div');
+    overlay.className = 'sheet-mask show';
+    overlay.id = 'collectedLyricsMask';
+    
+    var lyricsHTML = '';
+    collected.forEach(function(c, i) {
+        lyricsHTML += ''
+            + '<div class="music-song-item">'
+            + '<div class="music-song-info">'
+            + '<div class="music-song-name">' + c.text + '</div>'
+            + '<div class="music-song-artist">' + c.songName + ' - ' + c.artist + ' · ' + c.date + '</div>'
+            + '</div>'
+            + '<div class="music-song-more" onclick="event.stopPropagation();deleteCollectedLyric(' + i + ')">'
+            + '<span style="font-size:14px;color:#c6c6c8;">x</span>'
+            + '</div>'
+            + '</div>';
+    });
+    
+    overlay.innerHTML = ''
+        + '<div class="half-sheet" onclick="event.stopPropagation()">'
+        + '<div class="sheet-handle"><div class="handle-bar"></div></div>'
+        + '<div class="sheet-scroll">'
+        + '<div class="settings-section-title">歌词收藏</div>'
+        + '<div class="music-detail-songs" style="padding:0;">' + lyricsHTML + '</div>'
+        + '</div></div>';
+    
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeCollectedLyrics(); };
+    
+    var handle = overlay.querySelector('.sheet-handle');
+    var startY = 0;
+    handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
+    handle.addEventListener('touchmove', function(e) { if (e.touches[0].clientY - startY > 60) closeCollectedLyrics(); });
+}
+
+function closeCollectedLyrics() {
+    var o = document.getElementById('collectedLyricsMask');
+    if (o) o.remove();
+}
+
+function deleteCollectedLyric(index) {
+    var collected = getCollectedLyrics();
+    collected.splice(index, 1);
+    localStorage.setItem('music_collected_lyrics', JSON.stringify(collected));
+    closeCollectedLyrics();
+    openCollectedLyrics();
+}
+
 function playRecentSong(id) {
     closeRecentPlays();
     playSong(id);
@@ -1015,6 +1085,33 @@ function removeRecentSong(id) {
     localStorage.setItem('music_recent_plays', JSON.stringify(recent));
     closeRecentPlays();
     openRecentPlays();
+}
+
+function collectLyricLine(text, time) {
+    if (!text || !musicCurrentSong) return;
+    var collected = getCollectedLyrics();
+    var exists = collected.find(function(c) {
+        return c.songName === musicCurrentSong.name && c.text === text;
+    });
+    if (exists) {
+        showToast('已收藏过这句歌词');
+        return;
+    }
+    collected.unshift({
+        songName: musicCurrentSong.name,
+        artist: musicCurrentSong.artist || '未知歌手',
+        text: text,
+        time: time,
+        date: new Date().toLocaleDateString()
+    });
+    if (collected.length > 50) collected = collected.slice(0, 50);
+    localStorage.setItem('music_collected_lyrics', JSON.stringify(collected));
+    showToast('已收藏歌词');
+}
+
+function getCollectedLyrics() {
+    var raw = localStorage.getItem('music_collected_lyrics');
+    return raw ? JSON.parse(raw) : [];
 }
 
 function confirmMusicUrl() {
