@@ -639,8 +639,12 @@ function confirmLyricsEdit() {
 
 function inviteListenTogether() {
     closePlayerMenu();
-    var shareText = '（邀请你一起听：' + musicCurrentSong.name + ' - ' + (musicCurrentSong.artist || '未知歌手') + '）';
-    openShareContactPanel(shareText);
+    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
+    if (contacts.length === 0) {
+        showToast('暂无联系人');
+        return;
+    }
+    openShareContactPanel('__LISTEN_TOGETHER__');
 }
 
 // ========== 唱片旋转 ==========
@@ -1206,6 +1210,12 @@ function confirmShareToContact(contactId) {
     var shareText = window._musicShareText || '';
     window._musicShareText = null;
     
+    // 检测是否为一起听邀请
+    if (shareText === '__LISTEN_TOGETHER__') {
+        sendListenTogetherInvite(contactId);
+        return;
+    }
+    
     window.ChatState = window.ChatState || {};
     var previousContactId = window.ChatState.currentContactId;
     window.ChatState.currentContactId = contactId;
@@ -1217,7 +1227,6 @@ function confirmShareToContact(contactId) {
         }
     }
     
-    // 恢复之前的联系人ID
     window.ChatState.currentContactId = previousContactId;
     
     showToast('已分享');
