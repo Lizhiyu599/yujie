@@ -423,7 +423,9 @@ function updateLyricsHighlight() {
 if (scrollContainer) {
     var lineTop = line.offsetTop;
     var containerHeight = scrollContainer.clientHeight;
-    scrollContainer.scrollTo({ top: lineTop - containerHeight / 2 + line.clientHeight / 2, behavior: 'smooth' });
+    var targetTop = lineTop - containerHeight / 2 + line.clientHeight / 2;
+    if (targetTop < 0) targetTop = 0;
+    scrollContainer.scrollTop = targetTop;
 }
         } else {
             line.classList.remove('active');
