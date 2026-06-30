@@ -541,8 +541,9 @@
     width: 100%;
     text-align: center;
     overflow-y: auto;
-    max-height: 300px;
+    max-height: 340px;
     -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
 }
 .music-lyric-line {
     font-size: 16px;
