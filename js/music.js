@@ -92,6 +92,8 @@ function openMusic() {
 }
 
 function closeMusic() {
+    // 一起听模式下不关闭音乐
+    if (listenTogetherData) return;
     stopMusic();
     var appWindow = document.getElementById('musicAppWindow');
     if (appWindow) appWindow.style.display = 'none';
@@ -1171,13 +1173,15 @@ function updatePlayerUIState() {
 }
 
 function stopMusic() {
+    // 一起听模式下不停止音乐
+    if (listenTogetherData) return;
     if (musicAudio) {
-    musicAudio.pause();
-    musicAudio.removeAttribute('src');
-    musicAudio.load();
-    musicAudio.onended = null;
-    musicAudio = null;
-}
+        musicAudio.pause();
+        musicAudio.removeAttribute('src');
+        musicAudio.load();
+        musicAudio.onended = null;
+        musicAudio = null;
+    }
     stopVinylSpin();
     musicCurrentSong = null;
     musicQueue = [];
