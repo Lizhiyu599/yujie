@@ -358,7 +358,20 @@ function playNextSong() {
     if (idx >= 0 && idx < pl.songs.length - 1) { playSong(pl.songs[idx + 1].id); }
 }
 
-function showLyrics() { showToast('歌词功能开发中'); }
+function showLyrics() {
+    var vinylArea = document.getElementById('musicVinylArea');
+    var lyricsArea = document.getElementById('musicLyricsArea');
+    if (!vinylArea || !lyricsArea) return;
+    if (lyricsArea.style.display === 'flex') {
+        // 当前显示歌词，切回唱片
+        lyricsArea.style.display = 'none';
+        vinylArea.style.display = 'block';
+    } else {
+        // 当前显示唱片，切到歌词
+        vinylArea.style.display = 'none';
+        lyricsArea.style.display = 'flex';
+    }
+}
 
 // ========== 播放页三点菜单 ==========
 function showPlayerMenu() {
