@@ -533,8 +533,7 @@
     justify-content: flex-start;
     cursor: pointer;
     padding: 20px 24px 0;
-    flex: 0 0 auto;
-    max-height: 260px;
+    min-height: 340px;
     overflow-y: auto;
 }
 .music-lyrics-scroll {
