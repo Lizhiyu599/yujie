@@ -419,7 +419,12 @@ function updateLyricsHighlight() {
     lines.forEach(function(line, i) {
         if (i === activeIndex) {
             line.classList.add('active');
-            line.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            var scrollContainer = document.getElementById('musicLyricsScroll');
+if (scrollContainer) {
+    var lineTop = line.offsetTop;
+    var containerHeight = scrollContainer.clientHeight;
+    scrollContainer.scrollTo({ top: lineTop - containerHeight / 2 + line.clientHeight / 2, behavior: 'smooth' });
+}
         } else {
             line.classList.remove('active');
         }
