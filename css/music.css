@@ -607,6 +607,9 @@
     display: none;
 }
 
+#musicVinylArea + .music-song-detail {
+    margin-top: 20px;
+}
 .music-song-detail {
     width: 100%;
     margin-bottom: 16px;
