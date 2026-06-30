@@ -513,10 +513,9 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     padding: 0 24px;
 }
-
 .music-vinyl-area {
     position: relative;
     width: 340px;
