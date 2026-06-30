@@ -229,6 +229,16 @@
     font-weight: 600;
     color: #000;
 }
+.lt-exit-btn {
+    font-size: 13px;
+    color: rgba(0,0,0,0.4);
+    cursor: pointer;
+    padding: 4px 8px;
+    margin-left: auto;
+}
+.lt-exit-btn:active {
+    color: rgba(0,0,0,0.7);
+}
 .music-detail-info {
     display: flex;
     align-items: center;
