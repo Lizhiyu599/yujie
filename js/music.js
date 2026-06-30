@@ -439,8 +439,8 @@ function renderListenTogetherUI() {
         ? '<div class="lt-avatar" style="background-image:url(' + user.avatar + ');" onclick="showLTInput()"></div>'
         : '<div class="lt-avatar lt-avatar-placeholder" onclick="showLTInput()">我</div>';
     var contactAvatarHTML = listenTogetherData.contactAvatar
-        ? '<div class="lt-avatar" style="background-image:url(' + listenTogetherData.contactAvatar + ');"></div>'
-        : '<div class="lt-avatar lt-avatar-placeholder">' + listenTogetherData.contactName.charAt(0) + '</div>';
+        ? '<div class="lt-avatar" style="background-image:url(' + listenTogetherData.contactAvatar + ');" onclick="showLTHistory()"></div>'
+        : '<div class="lt-avatar lt-avatar-placeholder" onclick="showLTHistory()">' + listenTogetherData.contactName.charAt(0) + '</div>';
     
     // 输入框是否显示
     var inputBarHTML = listenTogetherData.showInput 
@@ -508,6 +508,34 @@ function getLTMessagesByRole(role) {
         }
     });
     return html;
+}
+
+function showLTHistory() {
+    if (!listenTogetherData) return;
+    var overlay = document.createElement('div');
+    overlay.className = 'lt-history-overlay';
+    overlay.id = 'ltHistoryOverlay';
+    
+    var listHTML = '';
+    listenTogetherData.messages.forEach(function(m) {
+        listHTML += '<div class="lt-history-item ' + m.role + '">' + m.text + '</div>';
+    });
+    if (listHTML === '') listHTML = '<div style="text-align:center;color:rgba(0,0,0,0.3);padding:20px;">暂无消息</div>';
+    
+    overlay.innerHTML = ''
+        + '<div class="lt-history-panel" onclick="event.stopPropagation()">'
+        + '<div class="music-menu-handle"></div>'
+        + '<div class="lt-history-title">聊天记录</div>'
+        + '<div class="lt-history-list">' + listHTML + '</div>'
+        + '</div>';
+    
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeLTHistory(); };
+}
+
+function closeLTHistory() {
+    var o = document.getElementById('ltHistoryOverlay');
+    if (o) o.remove();
 }
 
 function showLTInput() {
