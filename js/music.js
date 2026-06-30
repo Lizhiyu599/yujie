@@ -422,22 +422,30 @@ function renderListenTogetherUI() {
     var duration = musicAudio && musicAudio.duration ? formatMusicTime(musicAudio.duration) : '00:00';
     var progress = musicAudio && musicAudio.duration ? (musicAudio.currentTime / musicAudio.duration * 100) : 0;
     
-    // 消息HTML
+    // 消息气泡HTML
     var messagesHTML = '';
     listenTogetherData.messages.forEach(function(m) {
         if (m.role === 'user') {
-            messagesHTML += '<div class="lt-msg-row right"><div class="lt-msg-bubble user">' + m.text + '</div></div>';
+            messagesHTML += '<div class="lt-msg-row user"><div class="lt-msg-bubble user">' + m.text + '</div></div>';
         } else {
-            messagesHTML += '<div class="lt-msg-row left"><div class="lt-msg-bubble assistant">' + m.text + '</div></div>';
+            messagesHTML += '<div class="lt-msg-row assistant"><div class="lt-msg-bubble assistant">' + m.text + '</div></div>';
         }
     });
     
+    // 角色正在输入提示
+    var typingHTML = listenTogetherData.isTyping ? '<div class="lt-typing">...</div>' : '';
+    
     var userAvatarHTML = user.avatar 
-        ? '<div class="lt-avatar" style="background-image:url(' + user.avatar + ');"></div>'
-        : '<div class="lt-avatar lt-avatar-placeholder">我</div>';
+        ? '<div class="lt-avatar" style="background-image:url(' + user.avatar + ');" onclick="showLTInput()"></div>'
+        : '<div class="lt-avatar lt-avatar-placeholder" onclick="showLTInput()">我</div>';
     var contactAvatarHTML = listenTogetherData.contactAvatar
         ? '<div class="lt-avatar" style="background-image:url(' + listenTogetherData.contactAvatar + ');"></div>'
         : '<div class="lt-avatar lt-avatar-placeholder">' + listenTogetherData.contactName.charAt(0) + '</div>';
+    
+    // 输入框是否显示
+    var inputBarHTML = listenTogetherData.showInput 
+        ? '<div class="lt-input-bar"><input type="text" class="lt-input" id="ltChatInput" placeholder="说点什么..." onkeypress="if(event.key===\'Enter\')sendLTMessage()"><span class="lt-send-btn" onclick="sendLTMessage()">发送</span></div>'
+        : '';
     
     appWindow.innerHTML = ''
         + '<div class="music-app">'
@@ -447,10 +455,10 @@ function renderListenTogetherUI() {
         + '</div>'
         + '<div class="music-player-content" style="padding-top:8px;">'
         + '<div class="lt-avatars-row">'
-        + '<div class="lt-user-area">' + userAvatarHTML + '</div>'
-        + '<div class="lt-contact-area">' + contactAvatarHTML + '</div>'
+        + '<div class="lt-user-area">' + userAvatarHTML + '<div class="lt-msg-area">' + getLTMessagesByRole('user') + '</div></div>'
+        + '<div class="lt-contact-area">' + contactAvatarHTML + typingHTML + '<div class="lt-msg-area">' + getLTMessagesByRole('assistant') + '</div></div>'
         + '</div>'
-        + '<div class="lt-messages-area" id="ltMessagesArea">' + messagesHTML + '</div>'
+        + inputBarHTML
         + '<div class="music-vinyl-area" id="musicVinylArea" onclick="showLyrics()">'
         + '<div class="music-vinyl-large">'
         + '<div class="music-vinyl-spin' + (isPlaying ? ' spinning' : '') + '">'
@@ -482,22 +490,34 @@ function renderListenTogetherUI() {
         + '<span class="music-ctrl-btn" onclick="playNextSong()">⏭</span>'
         + '</div>'
         + '</div>'
-        + '<div class="lt-input-bar">'
-        + '<input type="text" class="lt-input" id="ltChatInput" placeholder="说点什么..." onkeypress="if(event.key===\'Enter\')sendLTMessage()">'
-        + '<span class="lt-send-btn" onclick="sendLTMessage()">发送</span>'
-        + '</div>'
         + '</div></div>';
     
-    // 滚动消息到底部
+    // 滚动消息
     setTimeout(function() {
-        var msgArea = document.getElementById('ltMessagesArea');
-        if (msgArea) msgArea.scrollTop = msgArea.scrollHeight;
+        var msgAreas = document.querySelectorAll('.lt-msg-area');
+        msgAreas.forEach(function(a) { a.scrollTop = a.scrollHeight; });
     }, 100);
 }
 
-function exitListenTogether() {
-    listenTogetherData = null;
-    backToPlaylistFromPlayer();
+function getLTMessagesByRole(role) {
+    if (!listenTogetherData) return '';
+    var html = '';
+    listenTogetherData.messages.forEach(function(m) {
+        if (m.role === role) {
+            html += '<div class="lt-msg-bubble ' + role + '">' + m.text + '</div>';
+        }
+    });
+    return html;
+}
+
+function showLTInput() {
+    if (!listenTogetherData) return;
+    listenTogetherData.showInput = true;
+    renderListenTogetherUI();
+    setTimeout(function() {
+        var input = document.getElementById('ltChatInput');
+        if (input) input.focus();
+    }, 200);
 }
 
 function sendLTMessage() {
@@ -508,22 +528,16 @@ function sendLTMessage() {
     var text = input.value.trim();
     input.value = '';
     
-    // 添加用户消息
-    listenTogetherData.messages.push({ role: 'assistant', text: cleanReply });
-// 同步保存到聊天记录
-if (typeof appendMessage === 'function') {
-    appendMessage('user', text);
-    appendMessage('assistant', cleanReply);
-    if (typeof saveChatHistory === 'function') {
-        saveChatHistory(contactId);
-    }
-}
-renderListenTogetherUI();
+    // 隐藏输入框
+    listenTogetherData.showInput = false;
+    listenTogetherData.messages.push({ role: 'user', text: text });
+    listenTogetherData.isTyping = true;
+    renderListenTogetherUI();
     
     // 构建上下文
     var contactId = listenTogetherData.contactId;
     var systemPrompt = buildSystemPrompt(contactId);
-    systemPrompt += '\n\n【一起听模式】你和用户正在一起听歌：《' + musicCurrentSong.name + '》 - ' + (musicCurrentSong.artist || '未知歌手') + '。你可以自然地讨论这首歌。';
+    systemPrompt += '\n\n【一起听模式】你和用户正在一起听歌：《' + musicCurrentSong.name + '》 - ' + (musicCurrentSong.artist || '未知歌手') + '。你可以自然地讨论这首歌。直接说话，不要用旁白括号。';
     
     var historyMessages = [];
     listenTogetherData.messages.forEach(function(m) {
@@ -539,11 +553,20 @@ renderListenTogetherUI();
         ...historyMessages
     ]).then(function(reply) {
         var cleanReply = reply.replace(/\{[^}]*\}/g, '').trim();
+        cleanReply = cleanReply.replace(/[\(\（][^\)\）]*[\)\）]/g, '').trim();
+        cleanReply = cleanReply.replace(/@@\w+@@/g, '').trim();
+        listenTogetherData.isTyping = false;
         listenTogetherData.messages.push({ role: 'assistant', text: cleanReply });
+        if (typeof appendMessage === 'function') {
+            appendMessage('user', text);
+            appendMessage('assistant', cleanReply);
+            if (typeof saveChatHistory === 'function') saveChatHistory(contactId);
+        }
         renderListenTogetherUI();
         window.ChatState.currentContactId = previousContactId;
     }).catch(function() {
-        listenTogetherData.messages.push({ role: 'assistant', text: '（消息发送失败）' });
+        listenTogetherData.isTyping = false;
+        listenTogetherData.messages.push({ role: 'assistant', text: '（回复失败）' });
         renderListenTogetherUI();
         window.ChatState.currentContactId = previousContactId;
     });
