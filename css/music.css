@@ -557,15 +557,26 @@
 /* ===== 一起听UI ===== */
 .lt-avatars-row {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    gap: 2px;
-    padding: 0 0 8px;
+    gap: 8px;
+    padding: 0 12px 8px;
     flex-shrink: 0;
+    width: 100%;
 }
-.lt-user-area, .lt-contact-area {
+.lt-user-area {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1;
+    gap: 4px;
+}
+.lt-contact-area {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex: 1;
+    gap: 4px;
 }
 .lt-avatar {
     width: 44px;
@@ -583,29 +594,18 @@
     font-size: 16px;
     color: rgba(0,0,0,0.3);
 }
-.lt-messages-area {
-    width: 100%;
-    max-height: 100px;
-    overflow-y: auto;
-    padding: 4px 16px;
+.lt-msg-area {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    flex-shrink: 0;
-}
-.lt-msg-row {
-    display: flex;
-}
-.lt-msg-row.left {
-    justify-content: flex-start;
-}
-.lt-msg-row.right {
-    justify-content: flex-end;
+    gap: 3px;
+    max-height: 80px;
+    overflow-y: auto;
+    width: 100%;
 }
 .lt-msg-bubble {
-    max-width: 70%;
-    padding: 6px 10px;
-    border-radius: 12px;
+    max-width: 100%;
+    padding: 5px 8px;
+    border-radius: 10px;
     font-size: 12px;
     line-height: 1.4;
     word-break: break-word;
@@ -613,16 +613,26 @@
 .lt-msg-bubble.assistant {
     background: rgba(255,255,255,0.6);
     color: #000;
+    align-self: flex-end;
+    text-align: left;
 }
 .lt-msg-bubble.user {
-    background: rgba(0,0,0,0.08);
+    background: rgba(0,0,0,0.06);
     color: #000;
+    align-self: flex-start;
+    text-align: left;
+}
+.lt-typing {
+    font-size: 14px;
+    color: rgba(0,0,0,0.3);
+    letter-spacing: 2px;
+    padding: 2px 8px;
 }
 .lt-input-bar {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 16px 20px;
+    padding: 6px 16px;
     flex-shrink: 0;
 }
 .lt-input {
