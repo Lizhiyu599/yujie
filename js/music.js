@@ -364,6 +364,11 @@ function playNextSong() {
     if (idx >= 0 && idx < pl.songs.length - 1) { playSong(pl.songs[idx + 1].id); }
 }
 
+function getCurrentLyrics() {
+    if (!musicCurrentSong || !musicCurrentSong.lyrics) return [];
+    return musicCurrentSong.lyrics;
+}
+
 function showLyrics() {
     var vinylArea = document.getElementById('musicVinylArea');
     var lyricsArea = document.getElementById('musicLyricsArea');
@@ -374,11 +379,57 @@ function showLyrics() {
         lyricsArea.style.display = 'none';
         vinylArea.style.display = 'block';
         if (songDetail) songDetail.style.display = '';
+        if (window._lyricsTimer) { clearInterval(window._lyricsTimer); window._lyricsTimer = null; }
     } else {
         // 切换到歌词
         vinylArea.style.display = 'none';
         lyricsArea.style.display = 'flex';
         if (songDetail) songDetail.style.display = 'none';
+        renderLyrics();
+        if (window._lyricsTimer) clearInterval(window._lyricsTimer);
+        window._lyricsTimer = setInterval(updateLyricsHighlight, 300);
+    }
+}
+
+function renderLyrics() {
+    var lyricsArea = document.getElementById('musicLyricsArea');
+    if (!lyricsArea) return;
+    var lyrics = getCurrentLyrics();
+    if (lyrics.length === 0) {
+        lyricsArea.innerHTML = '<div class="music-lyrics-scroll"><p class="music-lyric-line">暂无歌词</p></div>';
+        return;
+    }
+    var html = '<div class="music-lyrics-scroll" id="musicLyricsScroll">';
+    lyrics.forEach(function(line, i) {
+        html += '<p class="music-lyric-line" data-time="' + line.time + '" data-index="' + i + '" onclick="seekToLyric(' + line.time + ')">' + line.text + '</p>';
+    });
+    html += '</div>';
+    lyricsArea.innerHTML = html;
+}
+
+function updateLyricsHighlight() {
+    if (!musicAudio) return;
+    var currentTime = musicAudio.currentTime;
+    var lines = document.querySelectorAll('.music-lyric-line');
+    var activeIndex = -1;
+    lines.forEach(function(line, i) {
+        var t = parseFloat(line.getAttribute('data-time'));
+        if (t <= currentTime) activeIndex = i;
+    });
+    lines.forEach(function(line, i) {
+        if (i === activeIndex) {
+            line.classList.add('active');
+            line.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            line.classList.remove('active');
+        }
+    });
+}
+
+function seekToLyric(time) {
+    if (musicAudio) {
+        musicAudio.currentTime = time;
+        updateLyricsHighlight();
     }
 }
 
