@@ -554,6 +554,96 @@
     font-weight: 500;
 }
 
+/* ===== 一起听UI ===== */
+.lt-avatars-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 0 0 8px;
+    flex-shrink: 0;
+}
+.lt-user-area, .lt-contact-area {
+    display: flex;
+    align-items: center;
+}
+.lt-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    flex-shrink: 0;
+}
+.lt-avatar-placeholder {
+    background: rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: rgba(0,0,0,0.3);
+}
+.lt-messages-area {
+    width: 100%;
+    max-height: 100px;
+    overflow-y: auto;
+    padding: 4px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.lt-msg-row {
+    display: flex;
+}
+.lt-msg-row.left {
+    justify-content: flex-start;
+}
+.lt-msg-row.right {
+    justify-content: flex-end;
+}
+.lt-msg-bubble {
+    max-width: 70%;
+    padding: 6px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    line-height: 1.4;
+    word-break: break-word;
+}
+.lt-msg-bubble.assistant {
+    background: rgba(255,255,255,0.6);
+    color: #000;
+}
+.lt-msg-bubble.user {
+    background: rgba(0,0,0,0.08);
+    color: #000;
+}
+.lt-input-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px 20px;
+    flex-shrink: 0;
+}
+.lt-input {
+    flex: 1;
+    height: 36px;
+    background: rgba(255,255,255,0.5);
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 18px;
+    padding: 0 14px;
+    font-size: 14px;
+    outline: none;
+    color: #000;
+}
+.lt-send-btn {
+    font-size: 14px;
+    color: #000;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0 8px;
+}
+
 /* ===== 全屏播放页 ===== */
 .music-player-full {
     flex: 1;
