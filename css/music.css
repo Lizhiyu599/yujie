@@ -533,10 +533,9 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
     cursor: pointer;
-    padding: 0 24px;
-    overflow-y: auto;
+    padding: 0;
+    overflow: hidden;
 }
 .music-lyrics-scroll {
     width: 100%;
