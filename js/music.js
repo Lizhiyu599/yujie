@@ -446,17 +446,22 @@ function exitListenTogether() {
             chatLog += speaker + '：' + m.text + '\n';
         });
         
-        var summaryPrompt = '请用简练的中文总结以下一起听歌时的对话要点，以旁白口吻写，不超过100字。\n\n' + chatLog;
+        var summaryPrompt = '请用简练的中文总结以下一起听歌时的对话要点，以旁白口吻写，不超过300字。\n\n' + chatLog;
         
-        callChatAPI([
-            { role: 'system', content: '你是一个擅长总结对话的助手。用简洁优美的中文总结。' },
-            { role: 'user', content: summaryPrompt }
-        ]).then(function(reply) {
-            var summary = reply.replace(/\{[^}]*\}/g, '').trim();
-            if (summary) {
-                saveToShiyilin(contactId, '一起听：《' + songName + '》', summary);
-            }
-        }).catch(function() {});
+        showToast('保存记忆中…');
+
+callChatAPI([
+    { role: 'system', content: '你是一个擅长总结对话的助手。用简洁的中文总结。' },
+    { role: 'user', content: summaryPrompt }
+]).then(function(reply) {
+    var summary = reply.replace(/\{[^}]*\}/g, '').trim();
+    if (summary) {
+        saveToShiyilin(contactId, '一起听：《' + songName + '》', summary);
+    }
+    showToast('记忆已保存');
+}).catch(function() {
+    showToast('记忆保存失败');
+});
         
         // 通知角色
         if (typeof appendMessage === 'function') {
