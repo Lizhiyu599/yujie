@@ -1130,9 +1130,9 @@ function togglePlay() {
         stopVinylSpin();
     }
     
-    // 一起听模式下只更新唱针状态，不刷新页面
+    // 一起听模式下重新渲染，保证按钮状态正确
     if (listenTogetherData) {
-        updatePlayerUIState();
+        renderListenTogetherUI();
         return;
     }
     
