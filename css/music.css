@@ -498,11 +498,11 @@
 }
 
 /* ===== 分享联系人选择面板 ===== */
-.music-share-overlay {
-    position: fixed;
+.music-menu-overlay {
+    position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0,0,0,0.15);
-    z-index: 500;
+    z-index: 999;
     display: flex;
     align-items: flex-end;
 }
