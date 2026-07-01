@@ -387,12 +387,16 @@ function sendListenTogetherInvite(contactId) {
 }
 
 function minimizeListenTogether() {
-    // 一起听最小化，返回播放页面但不退出
-    if (musicCurrentPlaylist) {
-        var appWindow = document.getElementById('musicAppWindow');
-        if (appWindow) { renderPlaylistFullScreen(appWindow); setTimeout(function() { renderMiniPlayer(appWindow); }, 100); }
+    // 一起听模式下最小化，否则正常返回
+    if (listenTogetherData) {
+        if (musicCurrentPlaylist) {
+            var appWindow = document.getElementById('musicAppWindow');
+            if (appWindow) { renderPlaylistFullScreen(appWindow); setTimeout(function() { renderMiniPlayer(appWindow); }, 100); }
+        } else {
+            renderMusicApp();
+        }
     } else {
-        renderMusicApp();
+        backToPlaylistFromPlayer();
     }
 }
 
@@ -495,6 +499,7 @@ function renderListenTogetherUI() {
     + '<div class="music-player-header" style="padding-top:48px;">'
     + '<span class="music-detail-back" onclick="minimizeListenTogether()">‹</span>'
     + '<span class="music-detail-title">一起听</span>'
+    + '<span class="music-player-menu" onclick="showPlayerMenu()"><span class="music-dot"></span><span class="music-dot"></span><span class="music-dot"></span></span>'
     + '</div>'
     + '<div class="lt-top-row" style="padding-top:8px;">'
     + '<div class="lt-user-area">' + userAvatarHTML + '<div class="lt-msg-area">' + getLTMessagesByRole('user') + '</div></div>'
@@ -1150,10 +1155,26 @@ function updatePlayerUIState() {
     var spin = document.querySelector('.music-vinyl-spin');
     var titleEl = document.querySelector('.music-song-title');
     var artistEl = document.querySelector('.music-song-artist-lg');
-    if (spin) { if (isPlaying) spin.classList.add('spinning'); else spin.classList.remove('spinning'); }
-    if (tonearm) { if (isPlaying) tonearm.classList.add('playing'); else tonearm.classList.remove('playing'); }
+    
+    // 唱片旋转
+    if (spin) {
+        if (isPlaying) { spin.classList.add('spinning'); } 
+        else { spin.classList.remove('spinning'); }
+    }
+    // 小唱片
+    var discs = document.querySelectorAll('.music-vinyl-disc.spinning');
+    discs.forEach(function(d) {
+        if (!isPlaying) { d.classList.remove('spinning'); d.style.animation = 'none'; }
+        else { d.classList.add('spinning'); d.style.animation = ''; }
+    });
+    // 唱针
+    if (tonearm) { 
+        if (isPlaying) tonearm.classList.add('playing'); 
+        else tonearm.classList.remove('playing'); 
+    }
+    // 播放按钮
     if (playIcon) { playIcon.className = 'music-ctrl-play-icon ' + (isPlaying ? 'pause' : 'play'); }
-    // 切歌时更新歌名歌手
+    // 歌名歌手
     if (musicCurrentSong) {
         if (titleEl) titleEl.textContent = musicCurrentSong.name;
         if (artistEl) artistEl.textContent = musicCurrentSong.artist || '未知歌手';
