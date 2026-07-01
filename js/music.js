@@ -386,6 +386,16 @@ function sendListenTogetherInvite(contactId) {
     });
 }
 
+function minimizeListenTogether() {
+    // 一起听最小化，返回播放页面但不退出
+    if (musicCurrentPlaylist) {
+        var appWindow = document.getElementById('musicAppWindow');
+        if (appWindow) { renderPlaylistFullScreen(appWindow); setTimeout(function() { renderMiniPlayer(appWindow); }, 100); }
+    } else {
+        renderMusicApp();
+    }
+}
+
 function confirmExitLT() {
     var overlay = document.createElement('div');
     overlay.className = 'confirm-overlay';
@@ -495,7 +505,7 @@ function renderListenTogetherUI() {
     appWindow.innerHTML = ''
     + '<div class="music-app">'
     + '<div class="music-player-header" style="padding-top:48px;">'
-    + '<span class="music-detail-back" onclick="exitListenTogether()">‹</span>'
+    + '<span class="music-detail-back" onclick="minimizeListenTogether()">‹</span>'
     + '<span class="music-detail-title">一起听</span>'
     + '</div>'
     + '<div class="lt-top-row" style="padding-top:8px;">'
