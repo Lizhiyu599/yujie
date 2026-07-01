@@ -570,7 +570,7 @@
     align-items: flex-start;
     justify-content: center;
     gap: 20px;
-    padding: 0 40px 8px;
+    padding: 0 0 8px;
     flex-shrink: 0;
     width: 100%;
 }
