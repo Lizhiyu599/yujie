@@ -477,17 +477,6 @@ function renderListenTogetherUI() {
     var duration = musicAudio && musicAudio.duration ? formatMusicTime(musicAudio.duration) : '00:00';
     var progress = musicAudio && musicAudio.duration ? (musicAudio.currentTime / musicAudio.duration * 100) : 0;
     
-    // 消息气泡HTML
-    var messagesHTML = '';
-    listenTogetherData.messages.forEach(function(m) {
-        if (m.role === 'user') {
-            messagesHTML += '<div class="lt-msg-row user"><div class="lt-msg-bubble user">' + m.text + '</div></div>';
-        } else {
-            messagesHTML += '<div class="lt-msg-row assistant"><div class="lt-msg-bubble assistant">' + m.text + '</div></div>';
-        }
-    });
-    
-    // 角色正在输入提示
     var typingHTML = listenTogetherData.isTyping ? '<div class="lt-typing">...</div>' : '';
     
     var userAvatarHTML = user.avatar 
@@ -497,7 +486,6 @@ function renderListenTogetherUI() {
         ? '<div class="lt-avatar" style="background-image:url(' + listenTogetherData.contactAvatar + ');" onclick="showLTHistory()"></div>'
         : '<div class="lt-avatar lt-avatar-placeholder" onclick="showLTHistory()">' + listenTogetherData.contactName.charAt(0) + '</div>';
     
-    // 输入框是否显示
     var inputBarHTML = listenTogetherData.showInput 
         ? '<div class="lt-input-bar"><input type="text" class="lt-input" id="ltChatInput" placeholder="说点什么..." onkeypress="if(event.key===\'Enter\')sendLTMessage()"><span class="lt-send-btn" onclick="sendLTMessage()">发送</span></div>'
         : '';
@@ -547,18 +535,18 @@ function renderListenTogetherUI() {
     + '</div>'
     + '</div></div>';
     
-    // 滚动消息
-        setTimeout(function() {
+    setTimeout(function() {
         var msgAreas = document.querySelectorAll('.lt-msg-area');
         msgAreas.forEach(function(a) { a.scrollTop = a.scrollHeight; });
     }, 100);
     
     // 气泡30秒后隐藏，但聊天记录保留
-if (window._ltClearTimer) clearTimeout(window._ltClearTimer);
-window._ltClearTimer = setTimeout(function() {
-    var msgAreas = document.querySelectorAll('.lt-msg-area');
-    msgAreas.forEach(function(a) { a.style.display = 'none'; });
-}, 30000);
+    if (window._ltClearTimer) clearTimeout(window._ltClearTimer);
+    window._ltClearTimer = setTimeout(function() {
+        var msgAreas = document.querySelectorAll('.lt-msg-area');
+        msgAreas.forEach(function(a) { a.style.display = 'none'; });
+    }, 30000);
+        }
 
 function getLTMessagesByRole(role) {
     if (!listenTogetherData) return '';
@@ -606,20 +594,6 @@ function showLTInput() {
     setTimeout(function() {
         var input = document.getElementById('ltChatInput');
         if (input) input.focus();
-    }, 200);
-}
-
-function showLTInput() {
-    if (!listenTogetherData) return;
-    listenTogetherData.showInput = true;
-    renderListenTogetherUI();
-    setTimeout(function() {
-        var input = document.getElementById('ltChatInput');
-        if (input) {
-            input.focus();
-            // 防止页面滚动
-            input.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
     }, 200);
 }
 
