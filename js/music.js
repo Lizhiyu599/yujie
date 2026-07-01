@@ -269,7 +269,7 @@ function renderPlayerFullScreen(appWindow) {
         + '</div>'
         + '<div class="music-controls">'
         + '<span class="music-ctrl-btn" onclick="playPrevSong()">⏮</span>'
-        + '<span class="music-ctrl-btn music-ctrl-play" onclick="togglePlay()"><img src="' + (isPlaying ? 'https://i.ibb.co/rRWjMRdn/1782897162608.png' : 'https://i.ibb.co/bRjfnnh0/1782897220434.png') + '" style="width:32px;height:32px;"></span>'
+        + '<span class="music-ctrl-btn music-ctrl-play" onclick="togglePlay()"><span class="music-ctrl-play-icon ' + (isPlaying ? 'pause' : 'play') + '"></span></span>'
         + '<span class="music-ctrl-btn" onclick="playNextSong()">⏭</span>'
         + '</div>'
         + '</div>'
@@ -529,7 +529,7 @@ function renderListenTogetherUI() {
     + '</div>'
     + '<div class="music-controls" style="flex-shrink:0;">'
     + '<span class="music-ctrl-btn" onclick="playPrevSong()">⏮</span>'
-    + '<span class="music-ctrl-btn music-ctrl-play" onclick="togglePlay()"><img src="' + (isPlaying ? 'https://i.ibb.co/rRWjMRdn/1782897162608.png' : 'https://i.ibb.co/bRjfnnh0/1782897220434.png') + '" style="width:32px;height:32px;"></span>'
+    + '<span class="music-ctrl-btn music-ctrl-play" onclick="togglePlay()"><span class="music-ctrl-play-icon ' + (isPlaying ? 'pause' : 'play') + '"></span></span>'
     + '<span class="music-ctrl-btn" onclick="playNextSong()">⏭</span>'
     + '</div>'
     + '</div>'
@@ -800,8 +800,8 @@ function showPlayerMenu() {
     if (!musicCurrentSong) return;
     var overlay = document.createElement('div');
     overlay.className = 'music-menu-overlay';
-overlay.style.zIndex = '600';
-    overlay.id = 'playerMenuOverlay';
+overlay.id = 'playerMenuOverlay';
+overlay.style.zIndex = '9999';
     overlay.innerHTML = ''
         + '<div class="music-menu-panel" onclick="event.stopPropagation()">'
         + '<div class="music-menu-handle"></div>'
@@ -1131,15 +1131,21 @@ function togglePlay() {
         stopVinylSpin();
     }
     
-    // 一起听模式下重新渲染，保证按钮状态正确
+    // 一起听模式下重新渲染
     if (listenTogetherData) {
         renderListenTogetherUI();
         return;
     }
     
-    if (document.querySelector('.music-player-full')) {
-        updatePlayerUIState();
-    } else {
+    // 普通播放页更新按钮
+    var playIcon = document.querySelector('.music-ctrl-play-icon');
+    var isPlaying = !musicAudio.paused;
+    if (playIcon) {
+        playIcon.className = 'music-ctrl-play-icon ' + (isPlaying ? 'pause' : 'play');
+    }
+    updatePlayerUIState();
+    
+    if (!document.querySelector('.music-player-full')) {
         refreshMusicContent();
     }
 }
