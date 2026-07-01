@@ -754,6 +754,9 @@
     gap: 3px;
     cursor: pointer;
     padding: 8px;
+    position: relative;
+    z-index: 100;
+    pointer-events: auto;
 }
 .music-vinyl-area {
     position: relative;
