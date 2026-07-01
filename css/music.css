@@ -448,10 +448,10 @@
 
 /* ===== 歌曲菜单半屏 ===== */
 .music-menu-overlay {
-    position: fixed;
+    position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0,0,0,0.15);
-    z-index: 400;
+    z-index: 999;
     display: flex;
     align-items: flex-end;
 }
@@ -499,10 +499,10 @@
 
 /* ===== 分享联系人选择面板 ===== */
 .music-menu-overlay {
-    position: absolute;
+    position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0,0,0,0.15);
-    z-index: 999;
+    z-index: 400;
     display: flex;
     align-items: flex-end;
 }
