@@ -212,6 +212,11 @@ function openPlayerFullScreen() {
     if (!musicCurrentSong) return;
     var appWindow = document.getElementById('musicAppWindow');
     if (!appWindow) return;
+    // 一起听模式下渲染一起听UI
+    if (listenTogetherData) {
+        renderListenTogetherUI();
+        return;
+    }
     renderPlayerFullScreen(appWindow);
 }
 
