@@ -490,6 +490,9 @@ callChatAPI([
 
 function saveToShiyilin(contactId, title, content) {
     try {
+        var today = new Date();
+        var dateStr = today.getFullYear() + '年' + (today.getMonth() + 1) + '月' + today.getDate() + '日';
+        
         var raw = localStorage.getItem('shiyilin_books');
         var books = raw ? JSON.parse(raw) : [];
         var book = null;
@@ -497,17 +500,11 @@ function saveToShiyilin(contactId, title, content) {
             if (books[i].contactId === contactId) { book = books[i]; break; }
         }
         if (!book) {
-            book = { contactId: contactId, summary: '', entries: [] };
+            book = { contactId: contactId, pages: [] };
             books.push(book);
         }
-        book.entries = book.entries || [];
-        book.entries.push({
-            title: title,
-            content: content,
-            time: new Date().toISOString()
-        });
-        book.summary = (book.summary || '') + '\n' + title + '：' + content;
-        if (book.summary.length > 2000) book.summary = book.summary.slice(-2000);
+        if (!book.pages) book.pages = [];
+        book.pages.push({ date: dateStr, text: title + '：' + content });
         localStorage.setItem('shiyilin_books', JSON.stringify(books));
     } catch(e) {}
 }
