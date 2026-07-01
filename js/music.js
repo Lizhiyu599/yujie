@@ -92,9 +92,6 @@ function openMusic() {
 }
 
 function closeMusic() {
-    // 一起听模式下不关闭音乐
-    if (listenTogetherData) return;
-    stopMusic();
     var appWindow = document.getElementById('musicAppWindow');
     if (appWindow) appWindow.style.display = 'none';
 }
@@ -282,8 +279,6 @@ function renderPlayerFullScreen(appWindow) {
 }
 
 function backToPlaylistFromPlayer() {
-    // 一起听模式下不允许直接返回
-    if (listenTogetherData) return;
     if (window._playerTimer) { clearInterval(window._playerTimer); window._playerTimer = null; }
     if (musicCurrentPlaylist) {
         var appWindow = document.getElementById('musicAppWindow');
@@ -1182,8 +1177,6 @@ function updatePlayerUIState() {
 }
 
 function stopMusic() {
-    // 一起听模式下不停止音乐
-    if (listenTogetherData) return;
     if (musicAudio) {
         musicAudio.pause();
         musicAudio.removeAttribute('src');
