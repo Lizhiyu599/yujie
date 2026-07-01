@@ -502,7 +502,6 @@ function renderListenTogetherUI() {
         + '<div class="lt-avatars-row">'
         + '<div class="lt-user-area">' + userAvatarHTML + '</div>'
         + '<div class="lt-contact-area">' + contactAvatarHTML + '</div>'
-        + '<div class="lt-exit-area"><span class="lt-exit-btn" onclick="confirmExitLT()">退出</span></div>'
         + '</div>'
         + inputBarHTML
         + '<div class="music-vinyl-area" id="musicVinylArea" onclick="showLyrics()">'
@@ -831,6 +830,8 @@ function showPlayerMenu() {
         + '<div class="music-together-add">+</div>'
         + '</div>'
         + '<span>一起听</span>'
++ '</div>'
++ (listenTogetherData ? '<div class="music-menu-item" onclick="confirmExitLT()"><span>退出一起听</span></div>' : '')
 + '</div>'
 + '<div class="music-menu-item" onclick="editSongLyrics()">'
 + '<img src="https://i.ibb.co/jS0YyTb/1782814385302.png" class="music-menu-icon">'
