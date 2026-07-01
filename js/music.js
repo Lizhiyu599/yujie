@@ -432,12 +432,43 @@ function exitListenTogether() {
     var o = document.getElementById('exitLTOverlay');
     if (o) o.remove();
     
-    // 通知角色
-    if (listenTogetherData && typeof appendMessage === 'function') {
-        var exitMsg = '（一起听已结束）';
-        appendMessage('narration', exitMsg);
+    var ltData = listenTogetherData;
+    
+    // 保存一起听记忆到拾忆林
+    if (ltData && ltData.messages.length > 0 && typeof callChatAPI === 'function') {
+        var contactId = ltData.contactId;
+        var contactName = ltData.contactName;
+        var songName = musicCurrentSong ? musicCurrentSong.name : '未知歌曲';
+        
+        var chatLog = '【一起听歌：《' + songName + '》】\n';
+        ltData.messages.forEach(function(m) {
+            var speaker = m.role === 'user' ? '用户' : contactName;
+            chatLog += speaker + '：' + m.text + '\n';
+        });
+        
+        var summaryPrompt = '请用简练的中文总结以下一起听歌时的对话要点，以旁白口吻写，不超过100字。\n\n' + chatLog;
+        
+        callChatAPI([
+            { role: 'system', content: '你是一个擅长总结对话的助手。用简洁优美的中文总结。' },
+            { role: 'user', content: summaryPrompt }
+        ]).then(function(reply) {
+            var summary = reply.replace(/\{[^}]*\}/g, '').trim();
+            if (summary) {
+                saveToShiyilin(contactId, '一起听：《' + songName + '》', summary);
+            }
+        }).catch(function() {});
+        
+        // 通知角色
+        if (typeof appendMessage === 'function') {
+            appendMessage('narration', '（一起听已结束）');
+            if (typeof saveChatHistory === 'function') {
+                saveChatHistory(contactId);
+            }
+        }
+    } else if (ltData && typeof appendMessage === 'function') {
+        appendMessage('narration', '（一起听已结束）');
         if (typeof saveChatHistory === 'function') {
-            saveChatHistory(listenTogetherData.contactId);
+            saveChatHistory(ltData.contactId);
         }
     }
     
@@ -450,6 +481,30 @@ function exitListenTogether() {
     } else {
         renderMusicApp();
     }
+}
+
+function saveToShiyilin(contactId, title, content) {
+    try {
+        var raw = localStorage.getItem('shiyilin_books');
+        var books = raw ? JSON.parse(raw) : [];
+        var book = null;
+        for (var i = 0; i < books.length; i++) {
+            if (books[i].contactId === contactId) { book = books[i]; break; }
+        }
+        if (!book) {
+            book = { contactId: contactId, summary: '', entries: [] };
+            books.push(book);
+        }
+        book.entries = book.entries || [];
+        book.entries.push({
+            title: title,
+            content: content,
+            time: new Date().toISOString()
+        });
+        book.summary = (book.summary || '') + '\n' + title + '：' + content;
+        if (book.summary.length > 2000) book.summary = book.summary.slice(-2000);
+        localStorage.setItem('shiyilin_books', JSON.stringify(books));
+    } catch(e) {}
 }
 
 function startListenTogether(contactId, contactName, firstMsg) {
