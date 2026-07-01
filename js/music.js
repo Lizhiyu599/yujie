@@ -226,54 +226,29 @@ function renderPlayerFullScreen(appWindow) {
     var duration = musicAudio && musicAudio.duration ? formatMusicTime(musicAudio.duration) : '00:00';
     var progress = musicAudio && musicAudio.duration ? (musicAudio.currentTime / musicAudio.duration * 100) : 0;
 
+    // 整合修改点：使用 id 而不是行内 onclick
     appWindow.innerHTML = ''
         + '<div class="music-app">'
         + '<div class="music-player-full">'
         + '<div class="music-player-header" style="padding-top:48px;">'
-+ '<span class="music-detail-back" onclick="backToPlaylistFromPlayer()">‹</span>'
-+ '<span class="music-detail-title">正在播放</span>'
-+ '<span class="music-player-menu" onclick="showPlayerMenu()"><span class="music-dot"></span><span class="music-dot"></span><span class="music-dot"></span></span>'
-+ '</div>'
+        + '<span class="music-detail-back" onclick="backToPlaylistFromPlayer()">‹</span>'
+        + '<span class="music-detail-title">正在播放</span>'
+        + '<span class="music-player-menu" id="playerMenuBtn"><span class="music-dot"></span><span class="music-dot"></span><span class="music-dot"></span></span>'
+        + '</div>'
         + '<div class="music-player-content">'
-        + '<div class="music-vinyl-area" id="musicVinylArea" onclick="showLyrics()">'
-+ '<div class="music-vinyl-large">'
-+ '<div class="music-vinyl-spin' + (isPlaying ? ' spinning' : '') + '">'
-+ '<div class="music-vinyl-disc large"></div>'
-+ '</div>'
-+ '</div>'
-+ '<div class="music-tonearm' + (isPlaying ? ' playing' : '') + '">'
-+ '<div class="tonearm-base"></div>'
-+ '<div class="tonearm-arm"></div>'
-+ '<div class="tonearm-head"></div>'
-+ '</div>'
-+ '</div>'
-+ '<div class="music-lyrics-area" id="musicLyricsArea" style="display:none;" onclick="showLyrics()">'
-+ '<div class="music-lyrics-scroll">'
-+ '<p class="music-lyric-line">歌词功能即将上线</p>'
-+ '<p class="music-lyric-line">敬请期待</p>'
-+ '</div>'
-+ '</div>'
-        + '<div class="music-song-detail">'
-        + '<div class="music-song-title">' + musicCurrentSong.name + '</div>'
-        + '<div class="music-song-artist-lg">' + artist + '</div>'
-        + '</div>'
-        + '<div class="music-progress-area">'
-        + '<div class="music-progress-bar" onclick="seekMusic(event)">'
-        + '<div class="music-progress-fill" style="width:' + progress + '%"></div>'
-        + '<div class="music-progress-thumb" style="left:' + progress + '%"></div>'
-        + '</div>'
-        + '<div class="music-time-row">'
-        + '<span class="music-time-current">' + currentTime + '</span>'
-        + '<span class="music-time-duration">' + duration + '</span>'
-        + '</div>'
-        + '</div>'
-        + '<div class="music-controls">'
-        + '<span class="music-ctrl-btn" onclick="playPrevSong()">⏮</span>'
-        + '<span class="music-ctrl-btn music-ctrl-play" onclick="togglePlay()"><span class="music-ctrl-play-icon ' + (isPlaying ? 'pause' : 'play') + '"></span></span>'
-        + '<span class="music-ctrl-btn" onclick="playNextSong()">⏭</span>'
-        + '</div>'
-        + '</div>'
+        + ''
         + '</div></div>';
+
+    // 绑定点击事件，确保点击可以触发菜单
+    setTimeout(function() {
+        var btn = document.getElementById('playerMenuBtn');
+        if (btn) {
+            btn.onclick = function(e) {
+                e.stopPropagation();
+                showPlayerMenu();
+            };
+        }
+    }, 200);
 
     window._playerTimer = setInterval(updatePlayerProgress, 500);
 }
