@@ -499,9 +499,9 @@ function renderListenTogetherUI() {
         + '<span class="music-detail-title">一起听</span>'
         + '</div>'
         + '<div class="music-player-content" style="padding-top:8px;">'
-        + '<div class="lt-avatars-row">'
-        + '<div class="lt-user-area">' + userAvatarHTML + '</div>'
-        + '<div class="lt-contact-area">' + contactAvatarHTML + '</div>'
+        + '<div class="lt-top-row">'
+        + '<div class="lt-user-area">' + userAvatarHTML + '<div class="lt-msg-area">' + getLTMessagesByRole('user') + '</div></div>'
+        + '<div class="lt-contact-area">' + contactAvatarHTML + typingHTML + '<div class="lt-msg-area">' + getLTMessagesByRole('assistant') + '</div></div>'
         + '</div>'
         + inputBarHTML
         + '<div class="music-vinyl-area" id="musicVinylArea" onclick="showLyrics()">'
@@ -543,15 +543,12 @@ function renderListenTogetherUI() {
         msgAreas.forEach(function(a) { a.scrollTop = a.scrollHeight; });
     }, 100);
     
-    // 30秒后清除气泡
-    if (window._ltClearTimer) clearTimeout(window._ltClearTimer);
-    window._ltClearTimer = setTimeout(function() {
-        if (listenTogetherData) {
-            listenTogetherData.messages = [];
-            renderListenTogetherUI();
-        }
-    }, 30000);
-}
+    // 气泡30秒后隐藏，但聊天记录保留
+if (window._ltClearTimer) clearTimeout(window._ltClearTimer);
+window._ltClearTimer = setTimeout(function() {
+    var msgAreas = document.querySelectorAll('.lt-msg-area');
+    msgAreas.forEach(function(a) { a.style.display = 'none'; });
+}, 30000);
 
 function getLTMessagesByRole(role) {
     if (!listenTogetherData) return '';
@@ -645,6 +642,9 @@ function sendLTMessage() {
     listenTogetherData.showInput = false;
     listenTogetherData.messages.push({ role: 'user', text: text });
     listenTogetherData.isTyping = true;
+    // 恢复气泡显示
+    var msgAreas = document.querySelectorAll('.lt-msg-area');
+    msgAreas.forEach(function(a) { a.style.display = ''; });
     renderListenTogetherUI();
     
     // 构建上下文
@@ -673,7 +673,10 @@ cleanReply = cleanReply.replace(/@@[\s\S]*?@@/g, '').trim();
 // 再去掉残留的单边括号
 cleanReply = cleanReply.replace(/[\(\（\)\）]/g, '').trim();
         listenTogetherData.isTyping = false;
-        listenTogetherData.messages.push({ role: 'assistant', text: cleanReply });
+listenTogetherData.messages.push({ role: 'assistant', text: cleanReply });
+// 恢复气泡显示
+var msgAreas2 = document.querySelectorAll('.lt-msg-area');
+msgAreas2.forEach(function(a) { a.style.display = ''; });
         if (typeof appendMessage === 'function') {
             appendMessage('user', text);
             appendMessage('assistant', cleanReply);
