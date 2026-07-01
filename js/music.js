@@ -1137,7 +1137,6 @@ function getRecentPlays() {
 function togglePlay() {
     if (!musicAudio) return;
     
-    // 1. 执行播放/暂停逻辑
     if (musicAudio.paused) {
         musicAudio.play();
         startVinylSpin();
@@ -1146,27 +1145,27 @@ function togglePlay() {
         stopVinylSpin();
     }
     
-    // 2. 一起听模式处理
+    // 更新胶囊播放器图标
+    var isPlaying = !musicAudio.paused;
+    var miniIcon = document.querySelector('.music-mini-btn img');
+    if (miniIcon) {
+        miniIcon.src = isPlaying ? 'https://i.ibb.co/Zp55DJRb/1782732252446.png' : 'https://i.ibb.co/gMth6r2K/1782732345219.png';
+    }
+    
+    // 一起听模式：重新渲染
     if (listenTogetherData) {
         renderListenTogetherUI();
         return;
     }
     
-    // 3. 更新播放页按钮图标
-    var isPlaying = !musicAudio.paused;
-    var playIcon = document.querySelector('.music-ctrl-play-icon');
-    if (playIcon) {
-        // 确保类名完全替换，只保留基础类和状态类
-        playIcon.className = 'music-ctrl-play-icon ' + (isPlaying ? 'pause' : 'play');
+    // 普通播放页：重新渲染
+    if (document.querySelector('.music-player-full')) {
+        var appWindow = document.getElementById('musicAppWindow');
+        if (appWindow) renderPlayerFullScreen(appWindow);
+        return;
     }
     
-    // 4. 更新胶囊播放器图标
-    var miniIcon = document.querySelector('.music-mini-btn img');
-    if (miniIcon) {
-        miniIcon.src = isPlaying ? 'https://i.ibb.co/Zp55DJRb/1782732252446.png' : 'https://i.ibb.co/gMth6r2K/1782732345219.png';
-    }
-
-    updatePlayerUIState();
+    refreshMusicContent();
 }
 
 function updatePlayerUIState() {
