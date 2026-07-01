@@ -991,9 +991,8 @@ function confirmLyricsEdit() {
 }
 
 function inviteListenTogether() {
-    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
-    showToast('联系人数量：' + contacts.length);
     closePlayerMenu();
+    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
     if (contacts.length === 0) {
         showToast('暂无联系人');
         return;
