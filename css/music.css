@@ -582,6 +582,15 @@
     flex-shrink: 0;
     width: 100%;
 }
+.lt-top-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 40px;
+    padding: 8px 0;
+    flex-shrink: 0;
+    width: 100%;
+}
 .lt-user-area {
     display: flex;
     flex-direction: column;
