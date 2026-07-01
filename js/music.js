@@ -829,7 +829,6 @@ overlay.style.zIndex = '9999';
         + '<span>一起听</span>'
 + '</div>'
 + (listenTogetherData ? '<div class="music-menu-item" onclick="confirmExitLT()"><span>退出一起听</span></div>' : '')
-+ '</div>'
 + '<div class="music-menu-item" onclick="editSongLyrics()">'
 + '<img src="https://i.ibb.co/jS0YyTb/1782814385302.png" class="music-menu-icon">'
 + '<span>编辑歌词</span>'
@@ -1159,12 +1158,11 @@ function togglePlay() {
         return;
     }
     
-    // 普通播放页：重新渲染
-    if (document.querySelector('.music-player-full')) {
-        var appWindow = document.getElementById('musicAppWindow');
-        if (appWindow) renderPlayerFullScreen(appWindow);
-        return;
-    }
+    // 普通播放页：只更新状态，保留过渡动画
+if (document.querySelector('.music-player-full')) {
+    updatePlayerUIState();
+    return;
+}
     
     refreshMusicContent();
 }
