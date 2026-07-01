@@ -749,6 +749,12 @@
     padding: 48px 16px 12px;
 }
 .music-player-menu {
+    z-index: 999; 
+    pointer-events: auto;
+    padding: 10px; 
+    cursor: pointer;
+}
+.music-player-menu {
     display: flex;
     flex-direction: column;
     gap: 3px;
