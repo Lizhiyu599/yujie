@@ -14,6 +14,7 @@ var musicVinylAngle = 0;
 var musicVinylTimer = null;
 var musicMenuSongId = null;
 var musicQueue = [];
+var listenTogetherData = null;
 
 // ========== IndexedDB ==========
 var musicDB = null;
