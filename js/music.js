@@ -834,7 +834,12 @@ overlay.style.zIndex = '9999';
 + '<span>编辑歌词</span>'
 + '</div>'
 + '</div>';
+    var appWindow = document.getElementById('musicAppWindow');
+if (appWindow) {
+    appWindow.appendChild(overlay);
+} else {
     document.body.appendChild(overlay);
+}
     overlay.onclick = function(e) { if (e.target === overlay) closePlayerMenu(); };
 }
 
