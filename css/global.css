@@ -546,9 +546,6 @@ body, html {
     cursor: pointer;
     text-align: center;
     min-height: 130px;
-    aspect-ratio: 1 / 1;
-    max-width: 100%;
-    max-height: 100%;
 }
 .countdown-title {
     font-size: 13px;
@@ -560,11 +557,12 @@ body, html {
     font-weight: 800;
     color: #000;
     line-height: 1;
+    text-align: center;
 }
-.countdown-suffix {
-    font-size: 14px;
-    color: rgba(0,0,0,0.4);
-    font-weight: 500;
+.countdown-date {
+    font-size: 12px;
+    color: rgba(0,0,0,0.35);
+    font-weight: 400;
 }
 
 /* 小组件编辑模式 */
