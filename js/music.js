@@ -1607,7 +1607,7 @@ function renderPlaylistList() {
     playlists.forEach(function(p) {
         html += '<div class="music-playlist-item" onclick="openPlaylist(\'' + p.id + '\')"><div class="music-playlist-cover">' + (p.cover ? '<div style="background-image:url(' + p.cover + ');background-size:cover;background-position:center;width:100%;height:100%;border-radius:8px;"></div>' : '<span style="color:rgba(0,0,0,0.2);font-size:12px;">封面</span>') + '</div><div class="music-playlist-info"><div class="music-playlist-name">' + p.name + '</div><div class="music-playlist-count">' + p.songs.length + '首</div></div></div>';
     });
-    html += '</div>';
+    html += '<div class="music-create-btn" onclick="createPlaylist()">新建歌单</div></div>';
     return html;
 }
 
@@ -1649,7 +1649,7 @@ function confirmCreatePlaylist() {
 function showPlaylistPicker(callback) {
     var playlists = getPlaylists();
     var overlay = document.createElement('div');
-    overlay.className = 'music-share-overlay';
+    overlay.className = 'music-menu-overlay';
     overlay.style.zIndex = '9999';
     overlay.id = 'playlistPickerOverlay';
     
