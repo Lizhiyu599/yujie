@@ -54,7 +54,7 @@ function getCountdowns() {
     if (raw) return JSON.parse(raw);
     return [{
         id: 'default',
-        title: '玉界已经',
+        title: '玉界机',
         date: '2026-06-12',
         bg: ''
     }];
