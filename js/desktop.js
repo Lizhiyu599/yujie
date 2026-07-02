@@ -697,7 +697,16 @@ function openHalfPanel() {
             '<div class="widget-list-item" data-target="wp-1x4"><span>1x4 小组件</span><span class="toggle-arrow">›</span></div>' +
             '<div id="wp-1x4" class="collapsible-section" style="display:none;"><div class="widget-placeholder">即将推出</div></div>' +
             '<div class="widget-list-item" data-target="wp-2x2"><span>2x2 小组件</span><span class="toggle-arrow">›</span></div>' +
-            '<div id="wp-2x2" class="collapsible-section" style="display:none;"><div class="widget-placeholder">即将推出</div></div>' +
+            '<div id="wp-2x2" class="collapsible-section" style="display:none;">' +
+                '<div class="widget-preview-card" onclick="confirmAddCountdownWidget()">' +
+                    '<div class="widget-preview-inner" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 0;">' +
+                        '<div style="font-size:11px;color:rgba(0,0,0,0.5);">玉界已经</div>' +
+                        '<div style="font-size:32px;font-weight:800;color:#000;">365</div>' +
+                        '<div style="font-size:10px;color:rgba(0,0,0,0.35);">2026-06-12</div>' +
+                    '</div>' +
+                    '<div class="widget-preview-label">倒数日小组件</div>' +
+                '</div>' +
+            '</div>' +
             '<div class="widget-list-item" data-target="wp-2x4"><span>2x4 小组件</span><span class="toggle-arrow">›</span></div>' +
             '<div id="wp-2x4" class="collapsible-section" style="display:none;">' +
                 '<div class="widget-preview-card" onclick="confirmAddWidget(\'clock\')">' +
@@ -774,6 +783,35 @@ function confirmAddWidget(type) {
         renderDesktopGrid();
     }
     closeHalfPanel();
+}
+
+function confirmAddCountdownWidget() {
+    var countdowns = getCountdowns();
+    if (countdowns.length === 0) {
+        showToast('没有可添加的倒数日');
+        closeHalfPanel();
+        return;
+    }
+    var items = getItems();
+    var cd = countdowns[0];
+    var exists = items.find(function(i) { return i.widgetType === 'countdown' && i.countdownId === cd.id; });
+    if (exists) {
+        showToast('该倒数日已在桌面');
+        closeHalfPanel();
+        return;
+    }
+    items.push({
+        id: 'widget-countdown-' + cd.id,
+        type: 'widget',
+        widgetType: 'countdown',
+        size: '2x2',
+        page: 0,
+        countdownId: cd.id
+    });
+    saveItems(items);
+    closeHalfPanel();
+    renderDesktopGrid();
+    showToast('倒数日已添加');
 }
 
 // ========== 自定义小组件（美化模块调用） ==========
