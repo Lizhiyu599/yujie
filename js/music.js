@@ -121,6 +121,13 @@ function showMusicFloatingWindow() {
     renderMusicFloat();
 }
 
+if (window._mfLyricsTimer) clearInterval(window._mfLyricsTimer);
+window._mfLyricsTimer = setInterval(function() {
+    if (musicFloatingData.visible && musicFloatingData.showLyrics) {
+        renderMusicFloat();
+    }
+}, 500);
+
 function hideMusicFloatingWindow() {
     musicFloatingData.visible = false;
     var fw = document.getElementById('musicFloatingWindow');
