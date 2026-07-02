@@ -574,7 +574,10 @@
 
 /* ===== 音乐浮窗 ===== */
 .mf-window {
-    width: 220px;
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+    overflow: hidden;
     background: rgba(255,255,255,0.55);
     backdrop-filter: blur(28px);
     -webkit-backdrop-filter: blur(28px);
@@ -647,40 +650,41 @@
     justify-content: center;
 }
 .mf-prev, .mf-next {
-    width: 16px;
-    height: 16px;
+    width: 12px;
+    height: 12px;
     position: relative;
+    flex-shrink: 0;
 }
 .mf-prev::before, .mf-prev::after,
 .mf-next::before, .mf-next::after {
     content: '';
     position: absolute;
-    width: 2px;
-    height: 10px;
+    width: 1.5px;
+    height: 8px;
     background: rgba(0,0,0,0.3);
     border-radius: 1px;
 }
-.mf-prev::before { left: 2px; transform: rotate(-20deg); }
-.mf-prev::after { right: 2px; transform: rotate(20deg); }
-.mf-next::before { left: 2px; transform: rotate(20deg); }
-.mf-next::after { right: 2px; transform: rotate(-20deg); }
+.mf-prev::before { left: 1px; top: 2px; transform: rotate(-20deg); }
+.mf-prev::after { right: 1px; top: 2px; transform: rotate(20deg); }
+.mf-next::before { left: 1px; top: 2px; transform: rotate(20deg); }
+.mf-next::after { right: 1px; top: 2px; transform: rotate(-20deg); }
 
 .mf-play-btn {
-    width: 24px;
-    height: 24px;
     position: relative;
+    flex-shrink: 0;
 }
 .mf-play-btn.play {
-    border-left: 14px solid rgba(0,0,0,0.3);
-    border-top: 8px solid transparent;
-    border-bottom: 8px solid transparent;
-    margin-left: 3px;
+    width: 0;
+    height: 0;
+    border-left: 10px solid rgba(0,0,0,0.3);
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
 }
 .mf-play-btn.pause {
-    border-left: 5px solid rgba(0,0,0,0.3);
-    border-right: 5px solid rgba(0,0,0,0.3);
-    width: 4px;
-    height: 16px;
+    width: 10px;
+    height: 12px;
+    border-left: 3.5px solid rgba(0,0,0,0.3);
+    border-right: 3.5px solid rgba(0,0,0,0.3);
 }
 .mf-lyrics {
     text-align: center;
