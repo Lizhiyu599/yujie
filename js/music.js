@@ -1631,7 +1631,7 @@ function confirmCreatePlaylist() {
 function showPlaylistPicker(callback) {
     var playlists = getPlaylists();
     var overlay = document.createElement('div');
-    overlay.className = 'music-menu-overlay';
+    overlay.className = 'music-share-overlay';
     overlay.style.zIndex = '9999';
     overlay.id = 'playlistPickerOverlay';
     
