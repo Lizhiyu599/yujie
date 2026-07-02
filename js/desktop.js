@@ -20,7 +20,8 @@ function getItems() {
     var storyCity = localStorage.getItem('weather_story_city') || '';
     var realCity = localStorage.getItem('weather_city') || '';
     var displayCity = storyCity || realCity || '上海';
-    return [{
+    var countdowns = getCountdowns();
+    var items = [{
         id: 'widget-clock-default',
         type: 'widget',
         widgetType: 'clock',
@@ -32,6 +33,35 @@ function getItems() {
         temp: '24°',
         weatherDesc: displayCity + '·晴'
     }];
+    
+    // 倒数日小组件
+    countdowns.forEach(function(cd) {
+        items.push({
+            id: 'widget-countdown-' + cd.id,
+            type: 'widget',
+            widgetType: 'countdown',
+            size: '2x2',
+            page: 0,
+            countdownId: cd.id
+        });
+    });
+    
+    return items;
+}
+
+function getCountdowns() {
+    var raw = localStorage.getItem('desktop_countdowns');
+    if (raw) return JSON.parse(raw);
+    return [{
+        id: 'default',
+        title: '玉界已经',
+        date: '2026-06-12',
+        bg: ''
+    }];
+}
+
+function saveCountdowns(countdowns) {
+    localStorage.setItem('desktop_countdowns', JSON.stringify(countdowns));
 }
 
 function saveItems(items) {
