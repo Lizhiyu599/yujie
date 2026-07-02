@@ -574,7 +574,7 @@
 
 /* ===== 音乐浮窗 ===== */
 .mf-window {
-    width: 180px;
+    width: 220px;
     background: rgba(255,255,255,0.55);
     backdrop-filter: blur(28px);
     -webkit-backdrop-filter: blur(28px);
@@ -636,12 +636,51 @@
 .mf-controls {
     display: flex;
     justify-content: center;
-    gap: 16px;
-    font-size: 16px;
+    align-items: center;
+    gap: 20px;
     padding-top: 4px;
 }
 .mf-controls span {
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.mf-prev, .mf-next {
+    width: 16px;
+    height: 16px;
+    position: relative;
+}
+.mf-prev::before, .mf-prev::after,
+.mf-next::before, .mf-next::after {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 10px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 1px;
+}
+.mf-prev::before { left: 2px; transform: rotate(-20deg); }
+.mf-prev::after { right: 2px; transform: rotate(20deg); }
+.mf-next::before { left: 2px; transform: rotate(20deg); }
+.mf-next::after { right: 2px; transform: rotate(-20deg); }
+
+.mf-play-btn {
+    width: 24px;
+    height: 24px;
+    position: relative;
+}
+.mf-play-btn.play {
+    border-left: 14px solid rgba(0,0,0,0.3);
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    margin-left: 3px;
+}
+.mf-play-btn.pause {
+    border-left: 5px solid rgba(0,0,0,0.3);
+    border-right: 5px solid rgba(0,0,0,0.3);
+    width: 4px;
+    height: 16px;
 }
 .mf-lyrics {
     text-align: center;
