@@ -423,7 +423,7 @@ function renderPlayerFullScreen(appWindow) {
         + '<div class="music-vinyl-area" id="musicVinylArea" onclick="showLyrics()">'
         + '<div class="music-vinyl-large">'
         + '<div class="music-vinyl-spin' + (isPlaying ? ' spinning' : '') + '">'
-        + '<div class="music-vinyl-disc large" style="' + (musicCurrentSong.vinylImage ? 'background:url(https://i.ibb.co/XrpvYXTV/1782992004671.png) center/cover;' : '') + '">' + (musicCurrentSong.vinylImage ? '<div style="width:100px;height:100px;border-radius:50%;background-image:url(' + musicCurrentSong.vinylImage + ');background-size:cover;background-position:center;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);"></div>' : '') + '</div>'
+        + '<div class="music-vinyl-disc large" style="' + (musicCurrentSong.vinylImage ? 'background:url(https://i.ibb.co/XrpvYXTV/1782992004671.png) center/cover;' : '') + '">' + (musicCurrentSong.vinylImage ? '<div style="width:120px;height:120px;border-radius:50%;background-image:url(' + musicCurrentSong.vinylImage + ');background-size:cover;background-position:center;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);"></div>' : '') + '</div>'
         + '</div>'
         + '</div>'
         + '<div class="music-tonearm' + (isPlaying ? ' playing' : '') + '">'
@@ -755,7 +755,7 @@ function renderListenTogetherUI() {
 + '<div class="music-vinyl-area" id="musicVinylArea" onclick="showLyrics()">'
 + '<div class="music-vinyl-large">'
 + '<div class="music-vinyl-spin' + (isPlaying ? ' spinning' : '') + '">'
-+ '<div class="music-vinyl-disc large" style="' + (musicCurrentSong.vinylImage ? 'background:url(https://i.ibb.co/XrpvYXTV/1782992004671.png) center/cover;' : '') + '">' + (musicCurrentSong.vinylImage ? '<div style="width:100px;height:100px;border-radius:50%;background-image:url(' + musicCurrentSong.vinylImage + ');background-size:cover;background-position:center;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);"></div>' : '') + '</div>'
++ '<div class="music-vinyl-disc large" style="' + (musicCurrentSong.vinylImage ? 'background:url(https://i.ibb.co/XrpvYXTV/1782992004671.png) center/cover;' : '') + '">' + (musicCurrentSong.vinylImage ? '<div style="width:120px;height:120px;border-radius:50%;background-image:url(' + musicCurrentSong.vinylImage + ');background-size:cover;background-position:center;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);"></div>' : '') + '</div>' 
 + '</div>'
 + '</div>'
 + '<div class="music-tonearm' + (isPlaying ? ' playing' : '') + '"></div>'
@@ -1104,7 +1104,7 @@ function changeVinylImage() {
         + '<div class="caption-modal" style="text-align:center;">'
         + '<div style="font-size:15px;font-weight:600;margin-bottom:12px;color:#000;">更换唱片</div>'
         + '<div style="width:160px;height:160px;border-radius:50%;margin:0 auto 12px;background:url(https://i.ibb.co/XrpvYXTV/1782992004671.png) center/cover;position:relative;overflow:hidden;">'
-        + (currentVinyl ? '<div style="width:70px;height:70px;border-radius:50%;background-image:url(' + currentVinyl + ');background-size:cover;background-position:center;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);"></div>' : '<div style="width:70px;height:70px;border-radius:50%;background:rgba(0,0,0,0.04);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;font-size:11px;color:rgba(0,0,0,0.2);">自定义</div>')
+        + (currentVinyl ? '<div style="width:90px;height:90px;border-radius:50%;background-image:url(' + currentVinyl + ');background-size:cover;background-position:center;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);"></div>' : '<div style="width:90px;height:90px;border-radius:50%;background:rgba(0,0,0,0.04);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;font-size:11px;color:rgba(0,0,0,0.2);">自定义</div>')
         + '</div>'
         + '<div style="font-size:11px;color:#8e8e93;margin-bottom:10px;">图片将显示在唱片中心</div>'
         + '<div class="caption-buttons">'
