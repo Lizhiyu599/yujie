@@ -1628,6 +1628,43 @@ function confirmCreatePlaylist() {
     if (content) content.innerHTML = renderPlaylistList();
 }
 
+function showPlaylistPicker(callback) {
+    var playlists = getPlaylists();
+    var overlay = document.createElement('div');
+    overlay.className = 'music-menu-overlay';
+    overlay.style.zIndex = '9999';
+    overlay.id = 'playlistPickerOverlay';
+    
+    var listHTML = '';
+    playlists.forEach(function(p) {
+        listHTML += '<div class="music-menu-item" onclick="confirmPickPlaylist(\'' + p.id + '\')"><span>' + p.name + '</span><span style="color:#8e8e93;font-size:12px;">' + p.songs.length + '首</span></div>';
+    });
+    
+    overlay.innerHTML = ''
+        + '<div class="music-menu-panel" onclick="event.stopPropagation()">'
+        + '<div class="music-menu-handle"></div>'
+        + '<div style="font-size:15px;font-weight:600;color:#000;text-align:center;padding:8px 0;">添加到歌单</div>'
+        + listHTML
+        + '</div>';
+    
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closePlaylistPicker(); };
+    window._playlistPickerCallback = callback;
+}
+
+function confirmPickPlaylist(playlistId) {
+    closePlaylistPicker();
+    if (window._playlistPickerCallback) {
+        window._playlistPickerCallback(playlistId);
+        window._playlistPickerCallback = null;
+    }
+}
+
+function closePlaylistPicker() {
+    var o = document.getElementById('playlistPickerOverlay');
+    if (o) o.remove();
+}
+
 function changePlaylistCover(id) {
     var input = document.createElement('input');
     input.type = 'file'; input.accept = 'image/*';
@@ -1708,6 +1745,19 @@ function changeMusicBg(e) {
 
 // ========== 导入 ==========
 function importLocalMusic() {
+    var playlists = getPlaylists();
+    if (playlists.length <= 1) {
+        // 只有默认歌单，直接导入
+        doImportLocalMusic('all');
+        return;
+    }
+    // 多个歌单，弹出选择
+    showPlaylistPicker(function(playlistId) {
+        doImportLocalMusic(playlistId);
+    });
+}
+
+function doImportLocalMusic(targetPlaylist) {
     var input = document.createElement('input');
     input.type = 'file'; input.accept = 'audio/*,.mp3,.wav,.ogg,.flac,.m4a'; input.multiple = true;
     input.onchange = function(e) {
@@ -1719,7 +1769,6 @@ function importLocalMusic() {
                 reader.onload = function(ev) {
                     var songId = 'local_' + Date.now() + '_' + idx;
                     saveSongToDB({ id: songId, name: file.name.replace(/\.[^.]+$/, ''), artist: '本地音乐', type: 'local', data: ev.target.result });
-                    var targetPlaylist = musicCurrentPlaylist || 'all';
                     addSongToPlaylist(targetPlaylist, { id: songId, name: file.name.replace(/\.[^.]+$/, ''), artist: '本地音乐', type: 'local', src: '' });
                     loaded++;
                     if (loaded === files.length) { showToast('已导入 ' + files.length + ' 首歌'); refreshMusicContent(); }
@@ -1886,8 +1935,18 @@ function getCollectedLyrics() {
 function confirmMusicUrl() {
     var input = document.getElementById('musicUrlInput'); var url = input ? input.value.trim() : ''; closeMusicUrl();
     if (!url) return;
-    var playlists = getPlaylists(); var pl = playlists.find(function(p) { return p.id === 'all' }); var count = pl ? pl.songs.length + 1 : 1;
-    var targetPlaylist = musicCurrentPlaylist || 'all';
+    var playlists = getPlaylists();
+    if (playlists.length <= 1) {
+        doImportMusicUrl('all', url);
+        return;
+    }
+    showPlaylistPicker(function(playlistId) {
+        doImportMusicUrl(playlistId, url);
+    });
+}
+
+function doImportMusicUrl(targetPlaylist, url) {
+    var playlists = getPlaylists(); var pl = playlists.find(function(p) { return p.id === targetPlaylist; }); var count = pl ? pl.songs.length + 1 : 1;
     addSongToPlaylist(targetPlaylist, { id: 'url_' + Date.now(), name: '在线音乐 ' + count, src: url, type: 'url', artist: '在线音乐' });
     showToast('已导入'); refreshMusicContent();
 }
