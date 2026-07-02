@@ -181,10 +181,10 @@ function renderMusicFloat() {
             + '</div>'
             + '<div class="mf-lyrics">' + (lyricsHTML || '<div class="mf-lyric-line">暂无歌词</div>') + '</div>'
             + '<div class="mf-controls">'
-            + '<span onclick="event.stopPropagation();playPrevSong()">⏮</span>'
-            + '<span onclick="event.stopPropagation();togglePlay()">' + (isPlaying ? '⏸' : '▶') + '</span>'
-            + '<span onclick="event.stopPropagation();playNextSong()">⏭</span>'
-            + '</div>';
+            + '<span class="mf-prev" onclick="event.stopPropagation();playPrevSong()"></span>'
++ '<span onclick="event.stopPropagation();togglePlay()"><span class="mf-play-btn ' + (isPlaying ? 'pause' : 'play') + '"></span></span>'
++ '<span class="mf-next" onclick="event.stopPropagation();playNextSong()"></span>'
++ '</div>'
         fw.onclick = function() {
             musicFloatingData.showLyrics = false;
             renderMusicFloat();
@@ -204,10 +204,10 @@ function renderMusicFloat() {
             + '<span class="mf-close" onclick="event.stopPropagation();hideMusicFloatingWindow()">×</span>'
             + '</div>'
             + '<div class="mf-controls">'
-            + '<span onclick="event.stopPropagation();playPrevSong()">⏮</span>'
-            + '<span onclick="event.stopPropagation();togglePlay()">' + (isPlaying ? '⏸' : '▶') + '</span>'
-            + '<span onclick="event.stopPropagation();playNextSong()">⏭</span>'
-            + '</div>';
++ '<span class="mf-prev" onclick="event.stopPropagation();playPrevSong()"></span>'
++ '<span onclick="event.stopPropagation();togglePlay()"><span class="mf-play-btn ' + (isPlaying ? 'pause' : 'play') + '"></span></span>'
++ '<span class="mf-next" onclick="event.stopPropagation();playNextSong()"></span>'
++ '</div>'
         fw.onclick = function() {
             if (musicCurrentSong && musicCurrentSong.lyrics && musicCurrentSong.lyrics.length > 0) {
                 musicFloatingData.showLyrics = true;
