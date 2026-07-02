@@ -254,13 +254,20 @@ function buildWidgetHTML(item) {
     var now = new Date();
     var diffDays = Math.floor((now - targetDate) / (1000 * 60 * 60 * 24));
     var displayDays = Math.abs(diffDays);
-    var suffix = diffDays >= 0 ? '还有' : '已经';
+   var suffix;
+if (diffDays > 0) {
+    suffix = '还有';
+} else if (diffDays < 0) {
+    suffix = '已经';
+} else {
+    suffix = '今天';
+}
 
 return '<div class="desktop-widget grid-widget countdown-widget" style="' + (cd.bg ? 'background-image:url(' + cd.bg + ');background-size:cover;background-position:center;' : '') + '" onclick="openCountdownEditor(\'' + cd.id + '\')">'
     + '<div class="countdown-title">' + cd.title + suffix + '</div>'
-    + '<div class="countdown-days">' + displayDays + '</div>'
+    + '<div class="countdown-days">' + (suffix === '今天' ? '今天' : displayDays) + '</div>'
     + '<div class="countdown-date">' + cd.date + '</div>'
-    + '</div>';
+    + '</div>'; 
     }
     if (item.widgetType === 'custom') {
         return '<div class="desktop-widget grid-widget" style="padding:0;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;border:none;box-shadow:none;">' +
