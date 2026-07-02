@@ -926,6 +926,24 @@ msgAreas2.forEach(function(a) { a.style.display = ''; });
     });
 }
 
+function startRoamPlay() {
+    var playlists = getPlaylists();
+    var allSongs = [];
+    playlists.forEach(function(p) {
+        p.songs.forEach(function(s) { allSongs.push(s); });
+    });
+    if (allSongs.length === 0) {
+        showToast('没有可播放的歌曲');
+        return;
+    }
+    var randomIndex = Math.floor(Math.random() * allSongs.length);
+    var song = allSongs[randomIndex];
+    playSong(song.id);
+    setTimeout(function() {
+        openPlayerFullScreen();
+    }, 300);
+}
+
 function formatMusicTime(seconds) {
     if (!seconds || isNaN(seconds)) return '00:00';
     var m = Math.floor(seconds / 60);
@@ -1577,7 +1595,7 @@ function stopMusic() {
 function renderMusicTabContent() {
     switch (musicCurrentTab) {
         case 'music': return renderPlaylistList();
-        case 'roam': return '<div class="music-page"><div class="music-empty">音乐播放器</div></div>';
+        case 'roam': return '<div class="music-page"><div class="music-empty" onclick="startRoamPlay()" style="cursor:pointer;">点击开始漫游</div></div>';
         case 'other': return '<div class="music-page"><div class="music-empty">角色歌单</div></div>';
         default: return '';
     }
@@ -1704,6 +1722,9 @@ function switchMusicTab(tab) {
     var tabs = document.querySelectorAll('.music-tab');
     var idx = tab === 'music' ? 0 : tab === 'roam' ? 1 : 2;
     if (tabs[idx]) tabs[idx].classList.add('active');
+}
+if (tab === 'roam') {
+    startRoamPlay();
 }
 
 function changeMusicAvatar(e) {
