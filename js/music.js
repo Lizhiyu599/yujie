@@ -95,6 +95,178 @@ function openMusic() {
 function closeMusic() {
     var appWindow = document.getElementById('musicAppWindow');
     if (appWindow) appWindow.style.display = 'none';
+    // 如果正在播放，显示浮窗
+    if (musicAudio && !musicAudio.paused) {
+        showMusicFloatingWindow();
+    }
+}
+
+var musicFloatingData = {
+    visible: false,
+    minimized: false,
+    showLyrics: false,
+    x: 0,
+    y: 60,
+    dragging: false,
+    dragStartX: 0,
+    dragStartY: 0,
+    startX: 0,
+    startY: 0
+};
+
+function showMusicFloatingWindow() {
+    if (musicFloatingData.visible) return;
+    musicFloatingData.visible = true;
+    musicFloatingData.minimized = false;
+    renderMusicFloat();
+}
+
+function hideMusicFloatingWindow() {
+    musicFloatingData.visible = false;
+    var fw = document.getElementById('musicFloatingWindow');
+    if (fw) fw.remove();
+}
+
+function renderMusicFloat() {
+    var existing = document.getElementById('musicFloatingWindow');
+    if (existing) existing.remove();
+    if (!musicFloatingData.visible || !musicCurrentSong) return;
+    
+    var isPlaying = musicAudio && !musicAudio.paused;
+    var user = getMusicUserInfo();
+    var userAvatarHTML = user.avatar 
+        ? '<div class="mf-avatar" style="background-image:url(' + user.avatar + ');"></div>'
+        : '<div class="mf-avatar mf-avatar-placeholder">我</div>';
+    
+    var contactAvatarHTML = '';
+    var contactName = '';
+    if (listenTogetherData) {
+        contactName = listenTogetherData.contactName;
+        contactAvatarHTML = listenTogetherData.contactAvatar
+            ? '<div class="mf-avatar" style="background-image:url(' + listenTogetherData.contactAvatar + ');"></div>'
+            : '<div class="mf-avatar mf-avatar-placeholder">' + contactName.charAt(0) + '</div>';
+    }
+    
+    var fw = document.createElement('div');
+    fw.id = 'musicFloatingWindow';
+    
+    if (musicFloatingData.minimized) {
+        // 1x1 小唱片
+        fw.className = 'mf-mini';
+        fw.style.cssText = 'position:fixed;z-index:9999;left:' + musicFloatingData.x + 'px;top:' + musicFloatingData.y + 'px;';
+        fw.innerHTML = ''
+            + '<div class="mf-mini-disc' + (isPlaying ? ' spinning' : '') + '" style="background:url(https://i.ibb.co/kkcdGvB/1782745422034.png) center/cover;border-radius:50%;width:50px;height:50px;"></div>';
+        fw.onclick = function() {
+            musicFloatingData.minimized = false;
+            renderMusicFloat();
+        };
+    } else if (musicFloatingData.showLyrics) {
+        // 歌词模式
+        fw.className = 'mf-window lyrics';
+        fw.style.cssText = 'position:fixed;z-index:9999;left:' + musicFloatingData.x + 'px;top:' + musicFloatingData.y + 'px;';
+        var lyrics = musicCurrentSong.lyrics || [];
+        var currentTime = musicAudio ? musicAudio.currentTime : 0;
+        var activeIndex = -1;
+        lyrics.forEach(function(l, i) { if (l.time <= currentTime) activeIndex = i; });
+        var showLyrics = lyrics.slice(Math.max(0, activeIndex - 1), activeIndex + 3);
+        var lyricsHTML = showLyrics.map(function(l, i) {
+            var isActive = (lyrics.indexOf(l) === activeIndex);
+            return '<div class="mf-lyric-line' + (isActive ? ' active' : '') + '">' + l.text + '</div>';
+        }).join('');
+        
+        fw.innerHTML = ''
+            + '<div class="mf-header">'
+            + '<span class="mf-title">' + musicCurrentSong.name + '</span>'
+            + '<span class="mf-close" onclick="event.stopPropagation();hideMusicFloatingWindow()">×</span>'
+            + '</div>'
+            + '<div class="mf-lyrics">' + (lyricsHTML || '<div class="mf-lyric-line">暂无歌词</div>') + '</div>'
+            + '<div class="mf-controls">'
+            + '<span onclick="event.stopPropagation();playPrevSong()">⏮</span>'
+            + '<span onclick="event.stopPropagation();togglePlay()">' + (isPlaying ? '⏸' : '▶') + '</span>'
+            + '<span onclick="event.stopPropagation();playNextSong()">⏭</span>'
+            + '</div>';
+        fw.onclick = function() {
+            musicFloatingData.showLyrics = false;
+            renderMusicFloat();
+        };
+    } else {
+        // 1x4 完整浮窗
+        fw.className = 'mf-window';
+        fw.style.cssText = 'position:fixed;z-index:9999;left:' + musicFloatingData.x + 'px;top:' + musicFloatingData.y + 'px;';
+        var artist = musicCurrentSong.artist || '未知歌手';
+        fw.innerHTML = ''
+            + '<div class="mf-header">'
+            + '<div class="mf-avatars">' + userAvatarHTML + (contactAvatarHTML ? contactAvatarHTML : '') + '</div>'
+            + '<div class="mf-song-info">'
+            + '<div class="mf-song-name">' + musicCurrentSong.name + '</div>'
+            + '<div class="mf-song-artist">' + artist + '</div>'
+            + '</div>'
+            + '<span class="mf-close" onclick="event.stopPropagation();hideMusicFloatingWindow()">×</span>'
+            + '</div>'
+            + '<div class="mf-controls">'
+            + '<span onclick="event.stopPropagation();playPrevSong()">⏮</span>'
+            + '<span onclick="event.stopPropagation();togglePlay()">' + (isPlaying ? '⏸' : '▶') + '</span>'
+            + '<span onclick="event.stopPropagation();playNextSong()">⏭</span>'
+            + '</div>';
+        fw.onclick = function() {
+            if (musicCurrentSong && musicCurrentSong.lyrics && musicCurrentSong.lyrics.length > 0) {
+                musicFloatingData.showLyrics = true;
+                renderMusicFloat();
+            }
+        };
+    }
+    
+    // 长按拖拽
+    setupFloatDrag(fw);
+    
+    document.body.appendChild(fw);
+}
+
+function setupFloatDrag(fw) {
+    var longPressTimer;
+    fw.addEventListener('touchstart', function(e) {
+        var touch = e.touches[0];
+        musicFloatingData.dragStartX = touch.clientX;
+        musicFloatingData.dragStartY = touch.clientY;
+        musicFloatingData.startX = musicFloatingData.x;
+        musicFloatingData.startY = musicFloatingData.y;
+        longPressTimer = setTimeout(function() {
+            musicFloatingData.dragging = true;
+            fw.style.opacity = '0.7';
+        }, 400);
+    });
+    fw.addEventListener('touchmove', function(e) {
+        if (!musicFloatingData.dragging) {
+            var dx = e.touches[0].clientX - musicFloatingData.dragStartX;
+            var dy = e.touches[0].clientY - musicFloatingData.dragStartY;
+            if (Math.abs(dx) > 10 || Math.abs(dy) > 10) clearTimeout(longPressTimer);
+            return;
+        }
+        e.preventDefault();
+        musicFloatingData.x = musicFloatingData.startX + e.touches[0].clientX - musicFloatingData.dragStartX;
+        musicFloatingData.y = musicFloatingData.startY + e.touches[0].clientY - musicFloatingData.dragStartY;
+        fw.style.left = musicFloatingData.x + 'px';
+        fw.style.top = musicFloatingData.y + 'px';
+    });
+    fw.addEventListener('touchend', function() {
+        clearTimeout(longPressTimer);
+        musicFloatingData.dragging = false;
+        fw.style.opacity = '1';
+        // 贴边检测
+        var screenW = window.innerWidth;
+        var screenH = window.innerHeight;
+        if (musicFloatingData.x < 30 || musicFloatingData.x > screenW - 100) {
+            // 贴近边缘，最小化
+            musicFloatingData.minimized = true;
+            renderMusicFloat();
+        }
+    });
+}
+
+function updateMusicFloat() {
+    if (musicFloatingData.visible) {
+        renderMusicFloat();
+    }
 }
 
 function getMusicUserInfo() {
