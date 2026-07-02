@@ -1028,7 +1028,6 @@ function updateLyricsHighlight() {
             block: 'center'
         });
     }
-    updateMusicFloat();
 }
 
 function seekToLyric(time, event) {
