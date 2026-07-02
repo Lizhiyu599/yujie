@@ -254,13 +254,13 @@ function buildWidgetHTML(item) {
     var now = new Date();
     var diffDays = Math.floor((now - targetDate) / (1000 * 60 * 60 * 24));
     var displayDays = Math.abs(diffDays);
-    var suffix = diffDays >= 0 ? '天' : '天后';
-    
-    return '<div class="desktop-widget grid-widget countdown-widget" style="' + (cd.bg ? 'background-image:url(' + cd.bg + ');background-size:cover;background-position:center;' : '') + '" onclick="openCountdownEditor(\'' + cd.id + '\')">'
-        + '<div class="countdown-title">' + cd.title + '</div>'
-        + '<div class="countdown-days">' + displayDays + '</div>'
-        + '<div class="countdown-suffix">' + suffix + '</div>'
-        + '</div>';
+    var suffix = diffDays >= 0 ? '还有' : '已经';
+
+return '<div class="desktop-widget grid-widget countdown-widget" style="' + (cd.bg ? 'background-image:url(' + cd.bg + ');background-size:cover;background-position:center;' : '') + '" onclick="openCountdownEditor(\'' + cd.id + '\')">'
+    + '<div class="countdown-title">' + cd.title + suffix + '</div>'
+    + '<div class="countdown-days">' + displayDays + '</div>'
+    + '<div class="countdown-date">' + cd.date + '</div>'
+    + '</div>';
     }
     if (item.widgetType === 'custom') {
         return '<div class="desktop-widget grid-widget" style="padding:0;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;border:none;box-shadow:none;">' +
@@ -377,7 +377,6 @@ function openCountdownEditor(cdId) {
         + '<div class="bg-preview-2x4" id="cdBgPreview" style="background-image:url(' + (cd.bg || '') + ');" onclick="document.getElementById(\'cdBgInput\').click()">' + (cd.bg ? '' : '点击更换背景图') + '</div>'
         + '<input type="file" id="cdBgInput" accept="image/*" style="display:none;" onchange="handleCDBg(event)">'
         + '<button class="black-btn" onclick="saveCountdown(\'' + cdId + '\')">保存</button>'
-        + '<button class="white-btn" style="border-color:#ff3b30;color:#ff3b30;" onclick="deleteCountdown(\'' + cdId + '\')">删除此倒数日</button>'
         + '</div>'
         + '<div style="height:30px;"></div>'
         + '</div></div>';
