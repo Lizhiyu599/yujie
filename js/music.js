@@ -1074,6 +1074,10 @@ overlay.style.zIndex = '9999';
 + '<img src="https://i.ibb.co/jS0YyTb/1782814385302.png" class="music-menu-icon">'
 + '<span>编辑歌词</span>'
 + '</div>'
++ '<div class="music-menu-item" onclick="changeVinylImage()">'
++ '<img src="https://i.ibb.co/XrpvYXTV/1782992004671.png" class="music-menu-icon">'
++ '<span>更换唱片</span>'
++ '</div>'
 + '</div>';
     var appWindow = document.getElementById('musicAppWindow');
 if (appWindow) {
@@ -1085,6 +1089,77 @@ if (appWindow) {
 }
 
 function closePlayerMenu() { var o = document.getElementById('playerMenuOverlay'); if (o) o.remove(); }
+
+function changeVinylImage() {
+    closePlayerMenu();
+    if (!musicCurrentSong) return;
+    
+    var overlay = document.createElement('div');
+    overlay.className = 'caption-modal-overlay';
+    overlay.id = 'vinylEditOverlay';
+    
+    var currentVinyl = musicCurrentSong.vinylImage || '';
+    
+    overlay.innerHTML = ''
+        + '<div class="caption-modal" style="text-align:center;">'
+        + '<div style="font-size:15px;font-weight:600;margin-bottom:12px;color:#000;">更换唱片</div>'
+        + '<div style="width:160px;height:160px;border-radius:50%;margin:0 auto 12px;background:url(https://i.ibb.co/XrpvYXTV/1782992004671.png) center/cover;position:relative;overflow:hidden;">'
+        + (currentVinyl ? '<div style="width:70px;height:70px;border-radius:50%;background-image:url(' + currentVinyl + ');background-size:cover;background-position:center;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);"></div>' : '<div style="width:70px;height:70px;border-radius:50%;background:rgba(0,0,0,0.04);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;font-size:11px;color:rgba(0,0,0,0.2);">点击上传</div>')
+        + '</div>'
+        + '<div style="font-size:11px;color:#8e8e93;margin-bottom:10px;">图片将显示在唱片中心</div>'
+        + '<div class="caption-buttons">'
+        + '<div class="payment-btn-cancel" onclick="closeVinylEdit()">取消</div>'
+        + '<div class="payment-btn-confirm" onclick="document.getElementById(\'vinylImageInput\').click()">选择图片</div>'
+        + '</div>'
+        + '<input type="file" id="vinylImageInput" accept="image/*" style="display:none;" onchange="confirmVinylImage(event)">'
+        + (currentVinyl ? '<div style="margin-top:8px;"><span style="color:#ff3b30;font-size:13px;cursor:pointer;" onclick="removeVinylImage()">移除自定义唱片</span></div>' : '')
+        + '</div>';
+    
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeVinylEdit(); };
+}
+
+function closeVinylEdit() {
+    var o = document.getElementById('vinylEditOverlay');
+    if (o) o.remove();
+}
+
+function confirmVinylImage(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+        musicCurrentSong.vinylImage = ev.target.result;
+        updateSongInPlaylists(musicCurrentSong.id, 'vinylImage', ev.target.result);
+        closeVinylEdit();
+        showToast('唱片已更新');
+        // 刷新播放页
+        if (document.querySelector('.music-player-full') || listenTogetherData) {
+            if (listenTogetherData) {
+                renderListenTogetherUI();
+            } else {
+                var appWindow = document.getElementById('musicAppWindow');
+                if (appWindow) renderPlayerFullScreen(appWindow);
+            }
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeVinylImage() {
+    musicCurrentSong.vinylImage = '';
+    updateSongInPlaylists(musicCurrentSong.id, 'vinylImage', '');
+    closeVinylEdit();
+    showToast('唱片已恢复默认');
+    if (document.querySelector('.music-player-full') || listenTogetherData) {
+        if (listenTogetherData) {
+            renderListenTogetherUI();
+        } else {
+            var appWindow = document.getElementById('musicAppWindow');
+            if (appWindow) renderPlayerFullScreen(appWindow);
+        }
+    }
+}
 
 function changePlayerSongCover() {
     var input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*';
