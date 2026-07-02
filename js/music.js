@@ -2013,6 +2013,13 @@ function openMusicSettings() {
         + '<div class="bg-preview-2x4" id="musicBgPreview" style="background-image:url(' + currentBg + ');" onclick="document.getElementById(\'musicBgInput\').click()">' + (currentBg ? '' : '点击更换全局背景图') + '</div>'
         + '<input type="file" id="musicBgInput" accept="image/*" style="display:none;" onchange="handleMusicBg(event)">'
         + '<button class="black-btn" onclick="clearMusicBg()">清除全局背景图</button>'
++ '</div>'
++ '<div class="settings-section-title">播放页壁纸</div>'
++ '<div class="settings-hint">提示：所有音乐的播放页都将应用此壁纸</div>'
++ '<div class="glass-card">'
++ '<div class="bg-preview-2x4" id="playerBgPreview" style="background-image:url(' + (localStorage.getItem('music_player_bg') || '') + ');" onclick="document.getElementById(\'playerBgInput\').click()">' + (localStorage.getItem('music_player_bg') ? '' : '点击更换播放页壁纸') + '</div>'
++ '<input type="file" id="playerBgInput" accept="image/*" style="display:none;" onchange="handlePlayerBg(event)">'
++ '<button class="black-btn" onclick="clearPlayerBg()">清除播放页壁纸</button>' 
         + '</div>'
         + '</div></div>';
     document.body.appendChild(overlay);
@@ -2051,4 +2058,24 @@ function clearMusicBg() {
     var preview = document.getElementById('musicBgPreview');
     if (preview) { preview.style.backgroundImage = ''; preview.innerText = '点击更换全局背景图'; }
     renderMusicApp(); showToast('已清除');
+}
+function handlePlayerBg(e) {
+    var file = e.target.files[0]; if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+        compressImage(ev.target.result, 800, 0.6, function(compressed) {
+            localStorage.setItem('music_player_bg', compressed);
+            var preview = document.getElementById('playerBgPreview');
+            if (preview) { preview.style.backgroundImage = 'url(' + compressed + ')'; preview.innerText = ''; }
+            showToast('播放页壁纸已保存');
+        });
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearPlayerBg() {
+    localStorage.removeItem('music_player_bg');
+    var preview = document.getElementById('playerBgPreview');
+    if (preview) { preview.style.backgroundImage = ''; preview.innerText = '点击更换播放页壁纸'; }
+    showToast('已清除');
 }
