@@ -1745,15 +1745,8 @@ function changeMusicBg(e) {
 
 // ========== 导入 ==========
 function importLocalMusic() {
-    var playlists = getPlaylists();
-    if (playlists.length <= 1) {
-        // 只有默认歌单，直接导入
-        doImportLocalMusic('all');
-        return;
-    }
-    // 多个歌单，弹出选择
     showPlaylistPicker(function(playlistId) {
-        doImportLocalMusic(playlistId);
+        doImportLocalMusic(playlistId || 'all');
     });
 }
 
@@ -1935,13 +1928,8 @@ function getCollectedLyrics() {
 function confirmMusicUrl() {
     var input = document.getElementById('musicUrlInput'); var url = input ? input.value.trim() : ''; closeMusicUrl();
     if (!url) return;
-    var playlists = getPlaylists();
-    if (playlists.length <= 1) {
-        doImportMusicUrl('all', url);
-        return;
-    }
     showPlaylistPicker(function(playlistId) {
-        doImportMusicUrl(playlistId, url);
+        doImportMusicUrl(playlistId || 'all', url);
     });
 }
 
