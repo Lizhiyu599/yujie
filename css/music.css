@@ -574,8 +574,7 @@
 
 /* ===== 音乐浮窗 ===== */
 .mf-window {
-    width: calc(100% - 24px);
-    margin: 0 12px;
+    width: 180px;
     background: rgba(255,255,255,0.55);
     backdrop-filter: blur(28px);
     -webkit-backdrop-filter: blur(28px);
@@ -643,8 +642,6 @@
 }
 .mf-controls span {
     cursor: pointer;
-    color: rgba(0,0,0,0.3);
-    font-size: 12px;
 }
 .mf-lyrics {
     text-align: center;
