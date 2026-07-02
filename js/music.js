@@ -348,7 +348,7 @@ function renderPlaylistFullScreen(appWindow) {
         + '<div class="music-detail-header"><span class="music-detail-back" onclick="backToPlaylistList()">‹</span><span class="music-detail-title">歌单</span></div>'
         + '<div class="music-detail-info">'
         + '<div class="music-detail-cover" onclick="changePlaylistCover(\'' + musicCurrentPlaylist + '\')" style="' + (cover ? 'background-image:url(' + cover + ');' : '') + '">' + (cover ? '' : '<span style="color:rgba(0,0,0,0.2);font-size:13px;">封面</span>') + '</div>'
-        + '<div class="music-detail-meta"><div class="music-detail-name">' + pl.name + '</div><div class="music-detail-sub">' + user.name + ' · 播放' + (pl.playCount || 0) + '次</div></div>'
+        + '<div class="music-detail-meta"><div class="music-detail-name">' + pl.name + '</div><div class="music-detail-sub">' + user.name + '</div></div>'
         + '</div>'
         + '<div class="music-detail-songs">' + songsHTML + '</div>'
         + '</div></div>';
@@ -1098,23 +1098,63 @@ function changePlayerSongCover() {
 }
 
 function editPlayerSongName() {
-    var newName = prompt('编辑歌曲名称：', musicCurrentSong.name);
-    if (newName !== null && newName.trim()) {
-        musicCurrentSong.name = newName.trim();
-        updateSongInPlaylists(musicCurrentSong.id, 'name', musicCurrentSong.name);
-        closePlayerMenu();
+    closePlayerMenu();
+    var overlay = document.createElement('div');
+    overlay.className = 'caption-modal-overlay';
+    overlay.id = 'editNameOverlay';
+    overlay.innerHTML = ''
+        + '<div class="caption-modal">'
+        + '<div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">编辑歌曲名称</div>'
+        + '<input type="text" class="payment-note" id="editNameInput" value="' + musicCurrentSong.name + '">'
+        + '<div class="caption-buttons">'
+        + '<div class="payment-btn-cancel" onclick="closeEditName()">取消</div>'
+        + '<div class="payment-btn-confirm" onclick="confirmEditName()">确定</div>'
+        + '</div></div>';
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeEditName(); };
+}
+
+function closeEditName() { var o = document.getElementById('editNameOverlay'); if (o) o.remove(); }
+
+function confirmEditName() {
+    var input = document.getElementById('editNameInput');
+    var newName = input ? input.value.trim() : '';
+    closeEditName();
+    if (newName) {
+        musicCurrentSong.name = newName;
+        updateSongInPlaylists(musicCurrentSong.id, 'name', newName);
         updatePlayerFullInfo();
+        showToast('歌名已更新');
     }
 }
 
 function editPlayerSongArtist() {
-    var newArtist = prompt('编辑歌手名称：', musicCurrentSong.artist || '');
-    if (newArtist !== null) {
-        musicCurrentSong.artist = newArtist.trim();
-        updateSongInPlaylists(musicCurrentSong.id, 'artist', musicCurrentSong.artist);
-        closePlayerMenu();
-        updatePlayerFullInfo();
-    }
+    closePlayerMenu();
+    var overlay = document.createElement('div');
+    overlay.className = 'caption-modal-overlay';
+    overlay.id = 'editArtistOverlay';
+    overlay.innerHTML = ''
+        + '<div class="caption-modal">'
+        + '<div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">编辑歌手名称</div>'
+        + '<input type="text" class="payment-note" id="editArtistInput" value="' + (musicCurrentSong.artist || '') + '">'
+        + '<div class="caption-buttons">'
+        + '<div class="payment-btn-cancel" onclick="closeEditArtist()">取消</div>'
+        + '<div class="payment-btn-confirm" onclick="confirmEditArtist()">确定</div>'
+        + '</div></div>';
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeEditArtist(); };
+}
+
+function closeEditArtist() { var o = document.getElementById('editArtistOverlay'); if (o) o.remove(); }
+
+function confirmEditArtist() {
+    var input = document.getElementById('editArtistInput');
+    var newArtist = input ? input.value.trim() : '';
+    closeEditArtist();
+    musicCurrentSong.artist = newArtist;
+    updateSongInPlaylists(musicCurrentSong.id, 'artist', newArtist);
+    updatePlayerFullInfo();
+    showToast('歌手已更新');
 }
 
 function updateSongInPlaylists(songId, field, value) {
