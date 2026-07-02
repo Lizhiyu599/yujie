@@ -71,7 +71,6 @@ function saveItems(items) {
 function addDesktopIcon(item) {
     var items = getItems();
     var existing = items.findIndex(function(i) { return i.id === item.id; });
-    var page0Count = items.filter(function(i) { return (i.page || 0) === 0; }).length;
     var newItem = {
         id: item.id,
         type: 'app',
@@ -79,7 +78,7 @@ function addDesktopIcon(item) {
         icon: item.icon || '',
         action: item.action || null,
         size: '1x1',
-        page: page0Count >= 8 ? 1 : 0
+        page: 0  // 强制放第1页
     };
     if (existing >= 0) {
         items[existing] = newItem;
