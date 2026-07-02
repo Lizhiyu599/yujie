@@ -546,6 +546,9 @@ body, html {
     cursor: pointer;
     text-align: center;
     min-height: 130px;
+    aspect-ratio: 1 / 1;
+    max-width: 100%;
+    max-height: 100%;
 }
 .countdown-title {
     font-size: 13px;
