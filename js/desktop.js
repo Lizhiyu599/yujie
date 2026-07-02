@@ -252,7 +252,7 @@ function buildWidgetHTML(item) {
     
     var targetDate = new Date(cd.date);
     var now = new Date();
-    var diffDays = Math.floor((now - targetDate) / (1000 * 60 * 60 * 24));
+    var diffDays = Math.floor((targetDate - now) / (1000 * 60 * 60 * 24));
     var displayDays = Math.abs(diffDays);
    var suffix;
 if (diffDays > 0) {
