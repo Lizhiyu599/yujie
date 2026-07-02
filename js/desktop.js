@@ -243,6 +243,26 @@ function renderDesktopGrid() {
 }
 
 function buildWidgetHTML(item) {
+    if (item.widgetType === 'countdown') {
+    var countdowns = getCountdowns();
+    var cd = null;
+    for (var ci = 0; ci < countdowns.length; ci++) {
+        if (countdowns[ci].id === item.countdownId) { cd = countdowns[ci]; break; }
+    }
+    if (!cd) return '<div class="desktop-widget grid-widget" style="display:flex;align-items:center;justify-content:center;color:rgba(0,0,0,0.3);">倒数日已删除</div>';
+    
+    var targetDate = new Date(cd.date);
+    var now = new Date();
+    var diffDays = Math.floor((now - targetDate) / (1000 * 60 * 60 * 24));
+    var displayDays = Math.abs(diffDays);
+    var suffix = diffDays >= 0 ? '天' : '天后';
+    
+    return '<div class="desktop-widget grid-widget countdown-widget" style="' + (cd.bg ? 'background-image:url(' + cd.bg + ');background-size:cover;background-position:center;' : '') + '" onclick="openCountdownEditor(\'' + cd.id + '\')">'
+        + '<div class="countdown-title">' + cd.title + '</div>'
+        + '<div class="countdown-days">' + displayDays + '</div>'
+        + '<div class="countdown-suffix">' + suffix + '</div>'
+        + '</div>';
+    }
     if (item.widgetType === 'custom') {
         return '<div class="desktop-widget grid-widget" style="padding:0;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;border:none;box-shadow:none;">' +
             '<div style="width:100%;height:100%;background-image:url(' + (item.image || '') + ');background-size:cover;background-position:center;border-radius:18px;"></div>' +
@@ -330,6 +350,95 @@ function confirmSign2Edit(id) {
         updateWidgetField(id, 'signature2', newVal);
         if (window._sign2EditEl) window._sign2EditEl.textContent = newVal;
     }
+}
+
+function openCountdownEditor(cdId) {
+    var countdowns = getCountdowns();
+    var cd = null;
+    for (var i = 0; i < countdowns.length; i++) {
+        if (countdowns[i].id === cdId) { cd = countdowns[i]; break; }
+    }
+    if (!cd) return;
+    
+    var overlay = document.createElement('div');
+    overlay.className = 'sheet-mask show';
+    overlay.id = 'countdownEditorMask';
+    
+    overlay.innerHTML = ''
+        + '<div class="half-sheet" onclick="event.stopPropagation()">'
+        + '<div class="sheet-handle"><div class="handle-bar"></div></div>'
+        + '<div class="sheet-scroll">'
+        + '<div class="settings-section-title">倒数日</div>'
+        + '<div class="glass-card">'
+        + '<div style="font-size:13px;color:#8e8e93;margin-bottom:4px;">标题</div>'
+        + '<input type="text" class="search-input" id="cdTitleInput" value="' + cd.title + '" placeholder="例如：玉界已经">'
+        + '<div style="font-size:13px;color:#8e8e93;margin:8px 0 4px;">日期</div>'
+        + '<input type="date" class="search-input" id="cdDateInput" value="' + cd.date + '">'
+        + '<div style="font-size:13px;color:#8e8e93;margin:8px 0 4px;">背景图</div>'
+        + '<div class="bg-preview-2x4" id="cdBgPreview" style="background-image:url(' + (cd.bg || '') + ');" onclick="document.getElementById(\'cdBgInput\').click()">' + (cd.bg ? '' : '点击更换背景图') + '</div>'
+        + '<input type="file" id="cdBgInput" accept="image/*" style="display:none;" onchange="handleCDBg(event)">'
+        + '<button class="black-btn" onclick="saveCountdown(\'' + cdId + '\')">保存</button>'
+        + '<button class="white-btn" style="border-color:#ff3b30;color:#ff3b30;" onclick="deleteCountdown(\'' + cdId + '\')">删除此倒数日</button>'
+        + '</div>'
+        + '<div style="height:30px;"></div>'
+        + '</div></div>';
+    
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeCountdownEditor(); };
+    
+    var handle = overlay.querySelector('.sheet-handle');
+    var startY = 0;
+    handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
+    handle.addEventListener('touchmove', function(e) { if (e.touches[0].clientY - startY > 60) closeCountdownEditor(); });
+    
+    window._cdEditingBg = cd.bg || '';
+}
+
+function closeCountdownEditor() {
+    var o = document.getElementById('countdownEditorMask');
+    if (o) o.remove();
+    window._cdEditingBg = null;
+}
+
+function handleCDBg(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+        window._cdEditingBg = ev.target.result;
+        var preview = document.getElementById('cdBgPreview');
+        if (preview) { preview.style.backgroundImage = 'url(' + ev.target.result + ')'; preview.innerText = ''; }
+    };
+    reader.readAsDataURL(file);
+}
+
+function saveCountdown(cdId) {
+    var title = document.getElementById('cdTitleInput').value.trim() || '倒数日';
+    var date = document.getElementById('cdDateInput').value;
+    if (!date) { showToast('请选择日期'); return; }
+    
+    var countdowns = getCountdowns();
+    for (var i = 0; i < countdowns.length; i++) {
+        if (countdowns[i].id === cdId) {
+            countdowns[i].title = title;
+            countdowns[i].date = date;
+            countdowns[i].bg = window._cdEditingBg || '';
+            break;
+        }
+    }
+    saveCountdowns(countdowns);
+    closeCountdownEditor();
+    renderDesktopGrid();
+    showToast('倒数日已更新');
+}
+
+function deleteCountdown(cdId) {
+    var countdowns = getCountdowns();
+    countdowns = countdowns.filter(function(c) { return c.id !== cdId; });
+    saveCountdowns(countdowns);
+    closeCountdownEditor();
+    renderDesktopGrid();
+    showToast('倒数日已删除');
 }
 
 // ========== 长按进编辑 ==========
