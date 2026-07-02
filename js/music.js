@@ -1722,9 +1722,9 @@ function switchMusicTab(tab) {
     var tabs = document.querySelectorAll('.music-tab');
     var idx = tab === 'music' ? 0 : tab === 'roam' ? 1 : 2;
     if (tabs[idx]) tabs[idx].classList.add('active');
-}
-if (tab === 'roam') {
-    startRoamPlay();
+    if (tab === 'roam') {
+        startRoamPlay();
+    }
 }
 
 function changeMusicAvatar(e) {
