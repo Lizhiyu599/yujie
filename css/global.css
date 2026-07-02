@@ -536,6 +536,34 @@ body, html {
     color: #b0b0b5;
 }
 
+/* ===== 倒数日小组件 ===== */
+.countdown-widget {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    cursor: pointer;
+    text-align: center;
+    min-height: 130px;
+}
+.countdown-title {
+    font-size: 13px;
+    color: rgba(0,0,0,0.5);
+    font-weight: 500;
+}
+.countdown-days {
+    font-size: 40px;
+    font-weight: 800;
+    color: #000;
+    line-height: 1;
+}
+.countdown-suffix {
+    font-size: 14px;
+    color: rgba(0,0,0,0.4);
+    font-weight: 500;
+}
+
 /* 小组件编辑模式 */
 .desktop-widget.editing {
     animation: jiggle 0.3s infinite;
