@@ -1028,6 +1028,7 @@ function updateLyricsHighlight() {
             block: 'center'
         });
     }
+    updateMusicFloat();
 }
 
 function seekToLyric(time, event) {
@@ -1361,6 +1362,7 @@ function afterPlaySongSwitch() {
         return;
     }
     refreshMusicContent();
+    updateMusicFloat();
 }
 
 function getRecentPlays() {
@@ -1399,6 +1401,7 @@ if (document.querySelector('.music-player-full')) {
 }
     
     refreshMusicContent();
+    updateMusicFloat();
 }
 
 function updatePlayerUIState() {
