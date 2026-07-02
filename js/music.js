@@ -413,7 +413,7 @@ function renderPlayerFullScreen(appWindow) {
 
     appWindow.innerHTML = ''
         + '<div class="music-app">'
-        + '<div class="music-player-full">'
+        + '<div class="music-player-full" style="' + (localStorage.getItem('music_player_bg') ? 'background-image:url(' + localStorage.getItem('music_player_bg') + ');background-size:cover;background-position:center;' : '') + '">'
         + '<div class="music-player-header" style="padding-top:48px;">'
         + '<span class="music-detail-back" onclick="backToPlaylistFromPlayer()">‹</span>'
         + '<span class="music-detail-title">正在播放</span>'
@@ -751,7 +751,7 @@ function renderListenTogetherUI() {
 + '<div class="lt-contact-area">' + contactAvatarHTML + typingHTML + '<div class="lt-msg-area">' + getLTMessagesByRole('assistant') + '</div></div>'
 + '</div>'
 + inputBarHTML
-+ '<div class="music-player-content" style="flex:1;overflow-y:auto;padding-top:0;">'
++ '<div class="music-player-content" style="flex:1;overflow-y:auto;padding-top:0;' + (localStorage.getItem('music_player_bg') ? 'background-image:url(' + localStorage.getItem('music_player_bg') + ');background-size:cover;background-position:center;' : '') + '">'
 + '<div class="music-vinyl-area" id="musicVinylArea" onclick="showLyrics()">'
 + '<div class="music-vinyl-large">'
 + '<div class="music-vinyl-spin' + (isPlaying ? ' spinning' : '') + '">'
