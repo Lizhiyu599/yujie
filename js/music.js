@@ -1596,10 +1596,33 @@ function renderPlaylistList() {
 function openPlaylist(id) { musicCurrentPlaylist = id; var appWindow = document.getElementById('musicAppWindow'); if (appWindow) renderPlaylistFullScreen(appWindow); }
 function backToPlaylistList() { musicCurrentPlaylist = null; renderMusicApp(); }
 function createPlaylist() {
-    var name = prompt('请输入歌单名称：');
-    if (!name || !name.trim()) return;
+    var overlay = document.createElement('div');
+    overlay.className = 'caption-modal-overlay';
+    overlay.id = 'createPlaylistOverlay';
+    overlay.innerHTML = ''
+        + '<div class="caption-modal">'
+        + '<div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">新建歌单</div>'
+        + '<input type="text" class="payment-note" id="newPlaylistName" placeholder="请输入歌单名称">'
+        + '<div class="caption-buttons">'
+        + '<div class="payment-btn-cancel" onclick="closeCreatePlaylist()">取消</div>'
+        + '<div class="payment-btn-confirm" onclick="confirmCreatePlaylist()">确定</div>'
+        + '</div></div>';
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeCreatePlaylist(); };
+}
+
+function closeCreatePlaylist() {
+    var o = document.getElementById('createPlaylistOverlay');
+    if (o) o.remove();
+}
+
+function confirmCreatePlaylist() {
+    var input = document.getElementById('newPlaylistName');
+    var name = input ? input.value.trim() : '';
+    closeCreatePlaylist();
+    if (!name) return;
     var playlists = getPlaylists();
-    playlists.push({ id: 'pl_' + Date.now(), name: name.trim(), songs: [], playCount: 0, cover: '' });
+    playlists.push({ id: 'pl_' + Date.now(), name: name, songs: [], playCount: 0, cover: '' });
     savePlaylists(playlists);
     var content = document.getElementById('musicTabContent');
     if (content) content.innerHTML = renderPlaylistList();
@@ -1696,7 +1719,8 @@ function importLocalMusic() {
                 reader.onload = function(ev) {
                     var songId = 'local_' + Date.now() + '_' + idx;
                     saveSongToDB({ id: songId, name: file.name.replace(/\.[^.]+$/, ''), artist: '本地音乐', type: 'local', data: ev.target.result });
-                    addSongToPlaylist('all', { id: songId, name: file.name.replace(/\.[^.]+$/, ''), artist: '本地音乐', type: 'local', src: '' });
+                    var targetPlaylist = musicCurrentPlaylist || 'all';
+                    addSongToPlaylist(targetPlaylist, { id: songId, name: file.name.replace(/\.[^.]+$/, ''), artist: '本地音乐', type: 'local', src: '' });
                     loaded++;
                     if (loaded === files.length) { showToast('已导入 ' + files.length + ' 首歌'); refreshMusicContent(); }
                 };
@@ -1863,7 +1887,8 @@ function confirmMusicUrl() {
     var input = document.getElementById('musicUrlInput'); var url = input ? input.value.trim() : ''; closeMusicUrl();
     if (!url) return;
     var playlists = getPlaylists(); var pl = playlists.find(function(p) { return p.id === 'all' }); var count = pl ? pl.songs.length + 1 : 1;
-    addSongToPlaylist('all', { id: 'url_' + Date.now(), name: '在线音乐 ' + count, src: url, type: 'url', artist: '在线音乐' });
+    var targetPlaylist = musicCurrentPlaylist || 'all';
+    addSongToPlaylist(targetPlaylist, { id: 'url_' + Date.now(), name: '在线音乐 ' + count, src: url, type: 'url', artist: '在线音乐' });
     showToast('已导入'); refreshMusicContent();
 }
 
