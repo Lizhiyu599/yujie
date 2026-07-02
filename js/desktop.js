@@ -260,7 +260,7 @@ if (diffDays > 0) {
 } else if (diffDays < 0) {
     suffix = '已经';
 } else {
-    suffix = '今天';
+    suffix = '在今天';
 }
 
 return '<div class="desktop-widget grid-widget countdown-widget" style="' + (cd.bg ? 'background-image:url(' + cd.bg + ');background-size:cover;background-position:center;' : '') + '" onclick="openCountdownEditor(\'' + cd.id + '\')">'
