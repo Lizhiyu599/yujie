@@ -310,7 +310,7 @@ function renderMusicApp() {
         + '<div class="music-username">' + user.name + '</div>'
         + '<div class="music-func-row"><div class="music-func-item" onclick="openRecentPlays()">最近</div><div class="music-func-item" onclick="importLocalMusic()">本地</div><div class="music-func-item" onclick="importMusicUrl()">导入</div><div class="music-func-item" onclick="openCollectedLyrics()">歌词</div></div>'
         + '</div>'
-        + '<div class="music-tab-bar"><span class="music-tab ' + (musicCurrentTab === 'music' ? 'active' : '') + '" onclick="switchMusicTab(\'music\')">音乐</span><span class="music-tab ' + (musicCurrentTab === 'roam' ? 'active' : '') + '" onclick="switchMusicTab(\'roam\')">漫游</span><span class="music-tab ' + (musicCurrentTab === 'other' ? 'active' : '') + '" onclick="switchMusicTab(\'other\')">其他</span></div>'
+        + '<div class="music-tab-bar"><span class="music-tab ' + (musicCurrentTab === 'music' ? 'active' : '') + '" onclick="switchMusicTab(\'music\')">音乐</span><span class="music-tab ' + (musicCurrentTab === 'roam' ? 'active' : '') + '" onclick="switchMusicTab(\'roam\')">漫游</span></div>'
         + '<div class="music-tab-content" id="musicTabContent">' + renderMusicTabContent() + '</div>'
         + '</div></div>';
     
