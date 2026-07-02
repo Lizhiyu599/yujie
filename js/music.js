@@ -423,7 +423,7 @@ function renderPlayerFullScreen(appWindow) {
         + '<div class="music-vinyl-area" id="musicVinylArea" onclick="showLyrics()">'
         + '<div class="music-vinyl-large">'
         + '<div class="music-vinyl-spin' + (isPlaying ? ' spinning' : '') + '">'
-        + '<div class="music-vinyl-disc large" style="' + (musicCurrentSong.vinylImage ? 'background:url(https://i.ibb.co/XrpvYXTV/1782992004671.png) center/cover;' : '') + '">' + (musicCurrentSong.vinylImage ? '<div style="width:70px;height:70px;border-radius:50%;background-image:url(' + musicCurrentSong.vinylImage + ');background-size:cover;background-position:center;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);"></div>' : '') + '</div>' 
+        + '<div class="music-vinyl-disc large" style="' + (musicCurrentSong.vinylImage ? 'background:url(https://i.ibb.co/XrpvYXTV/1782992004671.png) center/cover;' : '') + '">' + (musicCurrentSong.vinylImage ? '<div style="width:100px;height:100px;border-radius:50%;background-image:url(' + musicCurrentSong.vinylImage + ');background-size:cover;background-position:center;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);"></div>' : '') + '</div>'
         + '</div>'
         + '</div>'
         + '<div class="music-tonearm' + (isPlaying ? ' playing' : '') + '">'
