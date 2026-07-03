@@ -54,6 +54,12 @@ function _acRender() {
         title = contact ? contact.name : '记账';
     }
 
+    var tabBarHTML = _acContactId ? '' : ''
+        + '<div class="ac-tab-bar">'
+        + '<span class="ac-tab ' + (_acTab === 'home' ? 'active' : '') + '" onclick="_acSwitchTab(\'home\')">首页</span>'
+        + '<span class="ac-tab ' + (_acTab === 'book' ? 'active' : '') + '" onclick="_acSwitchTab(\'book\')">记账</span>'
+        + '</div>';
+
     appWindow.innerHTML = ''
         + '<div class="accounting-app">'
         + '<div class="ac-nav">'
@@ -61,11 +67,8 @@ function _acRender() {
         + '<div class="ac-nav-title">' + title + '</div>'
         + '<div class="ac-nav-spacer"></div>'
         + '</div>'
-        + '<div class="ac-body" id="acBody">' + _acRenderBody() + '</div>'
-        + '<div class="ac-tab-bar">'
-        + '<span class="ac-tab ' + (_acTab === 'home' ? 'active' : '') + '" onclick="_acSwitchTab(\'home\')">首页</span>'
-        + '<span class="ac-tab ' + (_acTab === 'book' ? 'active' : '') + '" onclick="_acSwitchTab(\'book\')">记账</span>'
-        + '</div>'
+        + _acRenderBody()
+        + tabBarHTML
         + '</div>';
 }
 
@@ -98,7 +101,7 @@ function _acRenderList() {
     if (contacts.length === 0) {
         return '<div class="ac-empty">暂无角色，请先在聊天软件中添加</div>';
     }
-    var html = '<div class="ac-chat-list">';
+    var html = '<div class="ac-body"><div class="ac-chat-list">';
     contacts.forEach(function(c) {
         var avatarHTML = c.avatarData 
             ? '<div class="ac-chat-avatar" style="background-image:url(' + c.avatarData + ');"></div>'
@@ -115,7 +118,7 @@ function _acRenderList() {
             + '<div class="ac-chat-arrow">›</div>'
             + '</div>';
     });
-    html += '</div>';
+    html += '</div></div>';
     return html;
 }
 
@@ -146,12 +149,14 @@ function _acRenderChat() {
     }
     
     return ''
+        + '<div class="ac-chat-shell">'
         + '<div class="ac-chat-messages" id="acChatMessages">' + msgsHTML + '</div>'
         + '<div class="ac-chat-input-bar">'
         + '<input type="text" class="ac-chat-input" id="acChatInput" placeholder="请输入花销收入…" onkeypress="if(event.key===\'Enter\')_acSendMsg()">'
         + '<span class="ac-send-btn" onclick="_acSendMsg()">'
-        + '<svg width="20" height="20" viewBox="0 0 24 24" fill="#007AFF" stroke="#007AFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>'
+        + '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>'
         + '</span>'
+        + '</div>'
         + '</div>';
 }
 
@@ -167,7 +172,6 @@ function _acSendMsg() {
     _acSaveMsg(_acContactId, 'user', text);
     _acRefreshChat();
     
-    // 模拟AI回复
     _acMockReply(text);
 }
 
@@ -197,7 +201,6 @@ function _acMockReply(userText) {
     
     _acSaveMsg(_acContactId, 'assistant', '嗯，已记录');
     
-    var msgs = _acGetMsgs(_acContactId);
     var billText = '>其他/' + (isIncome ? '+' : '-') + amount + '¥';
     _acSaveMsg(_acContactId, 'bill-link', billText);
     
@@ -237,7 +240,7 @@ function _acOpenBill(contactId, msgIndex) {
         + '</div>'
         + '<div class="ac-bill-page">'
         + '<div class="ac-bill-merchant">' + note + '</div>'
-        + '<div class="ac-bill-amount ' + (isExpense ? 'expense' : 'income') + '">' + (isExpense ? '-' : '+') + '¥' + absAmount + '</div>'
+        + '<div class="ac-bill-amount">' + (isExpense ? '-' : '+') + '¥' + absAmount + '</div>'
         + '<div class="ac-bill-detail-list">'
         + '<div class="ac-bill-row"><span class="ac-bill-label">当前状态</span><span class="ac-bill-value">支付成功</span></div>'
         + '<div class="ac-bill-row"><span class="ac-bill-label">支付时间</span><span class="ac-bill-value">' + timeStr + '</span></div>'
@@ -252,5 +255,5 @@ function _acOpenBill(contactId, msgIndex) {
 
 // ========== 记账标签页 ==========
 function _acRenderBook() {
-    return '<div class="ac-empty">记账功能开发中...</div>';
-}
+    return '<div class="ac-body"><div class="ac-empty">记账功能开发中...</div></div>';
+        }
