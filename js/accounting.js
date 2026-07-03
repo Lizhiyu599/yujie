@@ -26,6 +26,7 @@ function openAccounting() {
     _acTab = 'home';
     _acContactId = null;
     _acPieTab = 'expense';
+    _acLoadFromStorage();
     _acRender();
     appWindow.style.display = 'flex';
 }
@@ -336,6 +337,7 @@ function _acSwitchBook() {
     _acBookCategories = null;
     localStorage.removeItem('ac_book_type');
     localStorage.removeItem('ac_book_cats');
+    _acMessages = {};
     _acRender();
 }
 
@@ -364,6 +366,8 @@ function _acRenderBookSelect() {
 function _acPickBook(type) {
     _acBookType = type;
     _acShowCategoryPicker();
+    _acMessages = {};
+_acLoadFromStorage();
 }
 
 function _acShowCategoryPicker() {
