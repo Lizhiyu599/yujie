@@ -158,7 +158,8 @@ function _acRenderChat() {
     + '</span>'
     + '</div>'
     + '</div>';
-
+}
+    
 // ========== 发送消息 ==========
 function _acSendMsg() {
     var input = document.getElementById('acChatInput');
