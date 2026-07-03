@@ -868,7 +868,7 @@ window.addEventListener('DOMContentLoaded', function() {
     addDesktopIcon({ id: 'gallery', name: '映像馆', icon: '<img src="https://i.ibb.co/Dfcz9js0/1782623882994.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openGallery' });
     addDesktopIcon({ id: 'qawenda', name: '奇问妙答', icon: '<img src="https://i.ibb.co/dwTDLTcc/1782624493861.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openQawenda' });
     addDesktopIcon({ id: 'music', name: '音乐', icon: '<img src="https://i.ibb.co/Vk3LH0p/1782714962959.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openMusic' });
-    addDesktopIcon({ id: 'accounting', name: '记账', icon: '<img src="https://i.ibb.co/Pv2zqg00/1782715064654.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openAccounting' });
+    addDesktopIcon({ id: 'accounting', name: '记账', icon: '<img src="https://i.ibb.co/Pv2zqg00/1782715064654.png" style="width:32px;height:32px;border-radius:8px;object-fit:cover;">', action: 'openAccounting' });
     
     renderDesktopGrid();
     setupDesktopLongPress();
