@@ -41,6 +41,23 @@ function _acGetContacts() {
     return contacts.filter(function(c) { return c.id !== 'c1'; });
 }
 
+function _acGetStorageKey() {
+    return 'ac_messages_' + (_acBookType || 'none');
+}
+
+function _acSaveToStorage() {
+    try {
+        localStorage.setItem(_acGetStorageKey(), JSON.stringify(_acMessages));
+    } catch(e) {}
+}
+
+function _acLoadFromStorage() {
+    try {
+        var raw = localStorage.getItem(_acGetStorageKey());
+        if (raw) _acMessages = JSON.parse(raw);
+    } catch(e) {}
+}
+
 function _acGetMsgs(contactId) {
     if (!_acMessages[contactId]) _acMessages[contactId] = [];
     return _acMessages[contactId];
@@ -49,8 +66,9 @@ function _acGetMsgs(contactId) {
 function _acSaveMsg(contactId, role, text) {
     if (!_acMessages[contactId]) _acMessages[contactId] = [];
     _acMessages[contactId].push({ role: role, text: text, time: Date.now() });
+_acSaveToStorage();
 }
-
+    
 // ========== 主渲染 ==========
 function _acRender() {
     var appWindow = document.getElementById('accountingAppWindow');
