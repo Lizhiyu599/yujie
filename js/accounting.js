@@ -213,7 +213,8 @@ function _acMockReply(userText) {
     var systemPrompt = '【记账助手】你是' + contactName + '。\n';
     if (persona) systemPrompt += '人设：' + persona + '\n';
     if (worldbookPrompt) systemPrompt += '规则：' + worldbookPrompt + '\n';
-    systemPrompt += '用户发来消费或收入，你用人设口吻回应（不超20字，不超3句），然后自动分类格式：>分类/备注 -金额¥（支出）或 >分类/备注 +金额¥（收入）。禁用emoji和旁白括号。分类：餐饮/购物/交通/居家/娱乐/医疗/学习/办公/育儿/人情往来/职业收入/经营收入/保险理财/资金往来/二手买卖/生活费/投股/其他。';
+    systemPrompt += '用户发来消费或收入，你用人设口吻回应（不超20字，不超6句），然后自动分类格式：>分类/备注 -金额¥（支出）或 >分类/备注 +金额¥（收入）。禁用emoji和旁白括号。分类：餐饮/购物/交通/居家/娱乐/医疗/学习/办公/育儿/人情往来/职业收入/经营收入/保险理财/资金往来/二手买卖/生活费/投股/其他。';
+    systemPrompt += '【强制规则】如果连续两轮都在闲聊没有记账，你必须直接回复分类行项。两轮内必须给出>分类/备注 金额¥。';
     
     var msgs = _acGetMsgs(_acContactId);
     var history = [];
@@ -396,10 +397,10 @@ function _acToggleCat(el) {
 }
 
 function _acConfirmCategory() {
-    var selected = document.querySelectorAll('.ac-cat-item.selected');
-    var cats = [];
-    selected.forEach(function(el) { cats.push(el.textContent); });
-    _acBookCategories = cats;
+    var isDaily = _acBookType === 'daily';
+    _acBookCategories = isDaily 
+        ? ['餐饮','购物','交通','租房','娱乐','医疗','学习','办公','其他支出']
+        : ['餐饮','购物','交通','居家','娱乐','医疗','学习','育儿','人情往来','其他支出'];
     localStorage.setItem('ac_book_type', _acBookType);
     localStorage.setItem('ac_book_cats', JSON.stringify(_acBookCategories));
     _acCloseCategoryPicker();
