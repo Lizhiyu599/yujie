@@ -150,6 +150,16 @@ if (qbData2.npcs && qbData2.npcs.length > 0) {
 
 prompt += '\n\n【黑卡·最高优先级】\n当用户赠送你黑卡时，旁白格式为：（赠送了一张黑卡，额度¥XXX）。你必须准确读取这个金额，并在回复中确认收到，说出具体金额。例如："收到一张XXX元的黑卡"。金额必须和旁白里的一致，禁止瞎猜。\n';
 
+    // 检测未读卡包
+var cpNotices = JSON.parse(localStorage.getItem('cp_pending_notices') || '[]');
+var myCpNotices = cpNotices.filter(function(n) { return n.contactId === contactId; });
+if (myCpNotices.length > 0) {
+    prompt += '\n\n【系统通知】用户刚刚赠送了你一张黑卡，额度¥' + myCpNotices[myCpNotices.length - 1].balance.toFixed(2) + '。请确认收到，并准确说出金额。\n';
+    // 清除已读
+    cpNotices = cpNotices.filter(function(n) { return n.contactId !== contactId; });
+    localStorage.setItem('cp_pending_notices', JSON.stringify(cpNotices));
+}
+    
 prompt += '\n\n【红包和转账-最高优先级·强制执行】\n当用户给你发红包或转账时，旁白里明确写了金额。例如（红包：+50元）或（转账：-200元）。你必须准确读取旁白中的金额数字，在回复中确认金额。禁止问"多少钱"。\n用户让你发红包时，格式：（给用户发了一个红包，金额X元）。\n用户让你发转账时，格式：（给用户转账X元）。\n红包金额上限200元，转账金额上限20000元。\n';
     
 prompt += '\n\n【语音消息】你可以给用户发语音消息。发语音时用旁白表示：（发了一条语音消息：内容）。系统会自动生成语音气泡。';
