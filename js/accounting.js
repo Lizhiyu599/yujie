@@ -436,16 +436,21 @@ function _acRenderBookOverview() {
     });
     var balance = totalIncome - totalExpense;
     
-    return '<div class="ac-body"><div style="padding:16px;">'
-        + '<div class="ac-overview-card" onclick="_acOpenMonthDetail()">'
-        + '<div style="font-size:13px;color:#8e8e93;">' + year + '年' + month + '月</div>'
-        + '<div style="display:flex;justify-content:space-between;margin-top:12px;">'
-        + '<div><div style="font-size:11px;color:#8e8e93;">月支出</div><div style="font-size:24px;font-weight:700;color:#000;">' + totalExpense.toFixed(2) + '</div></div>'
-        + '<div><div style="font-size:11px;color:#8e8e93;">月收入</div><div style="font-size:24px;font-weight:700;color:#000;">' + totalIncome.toFixed(2) + '</div></div>'
-        + '<div><div style="font-size:11px;color:#8e8e93;">月结余</div><div style="font-size:24px;font-weight:700;color:#000;">' + balance.toFixed(2) + '</div></div>'
-        + '</div>'
-        + '</div>'
-        + '</div></div>';
+    return '<div class="ac-body">'
+    + '<div style="display:flex;justify-content:flex-end;padding:8px 16px 0;">'
+    + '<img src="https://i.ibb.co/d4wqnw27/1782720493497.png" style="width:24px;height:24px;cursor:pointer;opacity:0.7;" onclick="_acSwitchBook()">'
+    + '</div>'
+    + '<div style="padding:0 16px 16px;">'
+    + '<div class="ac-overview-card" onclick="_acOpenMonthDetail()">'
+    + '<div style="font-size:13px;color:#8e8e93;">' + year + '年' + month + '月</div>'
+    + '<div style="display:flex;justify-content:space-between;margin-top:12px;">'
+    + '<div><div style="font-size:11px;color:#8e8e93;">月支出</div><div style="font-size:24px;font-weight:700;color:#000;">' + totalExpense.toFixed(2) + '</div></div>'
+    + '<div><div style="font-size:11px;color:#8e8e93;">月收入</div><div style="font-size:24px;font-weight:700;color:#000;">' + totalIncome.toFixed(2) + '</div></div>'
+    + '<div><div style="font-size:11px;color:#8e8e93;">月结余</div><div style="font-size:24px;font-weight:700;color:#000;">' + balance.toFixed(2) + '</div></div>'
+    + '</div>'
+    + '</div>'
+    + '</div>'
+    + '</div></div>';
         }
 
 // ========== 月度详情 ==========
