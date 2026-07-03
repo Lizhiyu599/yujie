@@ -296,3 +296,62 @@
 }
 
 .ac-empty { text-align: center; color: #8e8e93; padding: 60px 20px; font-size: 14px; }
+
+/* ===== 月度详情 ===== */
+.ac-summary-card {
+    display: flex;
+    background: rgba(255,255,255,0.5);
+    border-radius: 14px;
+    padding: 14px 12px;
+    justify-content: space-around;
+    border: 1px solid rgba(0,0,0,0.04);
+}
+.ac-summary-item {
+    text-align: center;
+}
+.ac-summary-label {
+    font-size: 11px;
+    color: #8e8e93;
+    margin-bottom: 4px;
+}
+.ac-summary-val {
+    font-size: 16px;
+    font-weight: 700;
+    color: #000;
+}
+.ac-summary-val.expense {
+    color: #000;
+}
+.ac-summary-val.income {
+    color: #000;
+}
+
+/* ===== 分类明细行 ===== */
+.ac-cat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 0.5px solid rgba(0,0,0,0.04);
+    cursor: pointer;
+}
+.ac-cat-row:active { background: rgba(0,0,0,0.02); }
+.ac-cat-row-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.ac-cat-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #000;
+}
+.ac-cat-name { font-size: 14px; color: #000; }
+.ac-cat-row-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.ac-cat-pct { font-size: 12px; color: #8e8e93; }
+.ac-cat-amt { font-size: 14px; color: #000; font-weight: 500; }
+.ac-cat-arrow { color: #c7c7cc; }
