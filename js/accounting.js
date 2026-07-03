@@ -66,8 +66,9 @@ function _acGetMsgs(contactId) {
 
 function _acSaveMsg(contactId, role, text) {
     if (!_acMessages[contactId]) _acMessages[contactId] = [];
-    _acMessages[contactId].push({ role: role, text: text, time: Date.now() });
-_acSaveToStorage();
+    var index = _acMessages[contactId].length;
+    _acMessages[contactId].push({ role: role, text: text, time: Date.now(), index: index });
+    _acSaveToStorage();
 }
     
 // ========== 主渲染 ==========
