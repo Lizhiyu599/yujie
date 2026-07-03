@@ -148,5 +148,15 @@ function _cpConfirmSend(index, contactId, contactName) {
     _cpCards[index].toId = contactId;
     _cpSaveCards();
     _cpRender();
+    
+    var cardMsg = '（赠送了一张黑卡，额度¥' + _cpCards[index].balance.toFixed(2) + '）';
+    if (typeof appendMessage === 'function') {
+        var prevContactId = window.ChatState && window.ChatState.currentContactId;
+        if (window.ChatState) window.ChatState.currentContactId = contactId;
+        appendMessage('narration', cardMsg);
+        if (typeof saveChatHistory === 'function') saveChatHistory(contactId);
+        if (window.ChatState) window.ChatState.currentContactId = prevContactId;
+    }
+    
     showToast('已赠送给 ' + contactName);
 }
