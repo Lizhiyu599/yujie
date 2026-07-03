@@ -6,6 +6,8 @@
 var _acTab = 'home';
 var _acContactId = null;
 var _acMessages = {};
+var _acBookType = localStorage.getItem('ac_book_type') || null;
+var _acBookCategories = JSON.parse(localStorage.getItem('ac_book_cats') || 'null');
 
 // ========== 打开/关闭 ==========
 function openAccounting() {
@@ -18,8 +20,6 @@ function openAccounting() {
     }
     _acTab = 'home';
     _acContactId = null;
-    _acBookType = null;
-    _acBookCategories = null;
     _acRender();
     appWindow.style.display = 'flex';
 }
@@ -67,7 +67,6 @@ function _acRender() {
         + '<div class="ac-nav">'
         + '<div class="ac-nav-back" onclick="_acGoBack()">‹</div>'
         + '<div class="ac-nav-title">' + title + '</div>'
-        + '<div class="ac-nav-spacer"></div>'
         + '</div>'
         + _acRenderBody()
         + tabBarHTML
@@ -92,7 +91,7 @@ function _acSwitchTab(tab) {
 function _acRenderBody() {
     if (_acTab === 'home') {
         if (_acContactId) return _acRenderChat();
-        return '<div class="ac-body"><div class="ac-empty">暂无角色，请先在聊天软件中添加</div></div>';
+        return _acRenderList();
     }
     return _acRenderBook();
 }
@@ -101,7 +100,7 @@ function _acRenderBody() {
 function _acRenderList() {
     var contacts = _acGetContacts();
     if (contacts.length === 0) {
-        return '<div class="ac-empty">暂无角色，请先在聊天软件中添加</div>';
+        return '<div class="ac-body"><div class="ac-empty">暂无角色，请先在聊天软件中添加</div></div>';
     }
     var html = '<div class="ac-body"><div class="ac-chat-list">';
     contacts.forEach(function(c) {
@@ -161,7 +160,7 @@ function _acRenderChat() {
     + '</div>'
     + '</div>';
 }
-    
+
 // ========== 发送消息 ==========
 function _acSendMsg() {
     var input = document.getElementById('acChatInput');
@@ -173,7 +172,6 @@ function _acSendMsg() {
     
     _acSaveMsg(_acContactId, 'user', text);
     _acRefreshChat();
-    
     _acMockReply(text);
 }
 
@@ -197,7 +195,6 @@ function _acRefreshChat() {
 }
 
 function _acMockReply(userText) {
-    // 有API就用API，没API用模拟
     if (typeof callChatAPI !== 'function') {
         _acFallbackReply(userText);
         return;
@@ -205,8 +202,6 @@ function _acMockReply(userText) {
     
     var contact = _acGetContacts().find(function(c) { return c.id === _acContactId; });
     var contactName = contact ? contact.name : '记账助手';
-    
-    // 构建系统提示
     var persona = contact ? (contact.persona || '') : '';
     var worldbookPrompt = typeof getFullSystemPrompt === 'function' ? getFullSystemPrompt() : '';
     var systemPrompt = '【记账助手】你是' + contactName + '。\n';
@@ -306,9 +301,6 @@ function _acOpenBill(contactId, msgIndex) {
 }
 
 // ========== 记账标签页 ==========
-var _acBookType = null;
-var _acBookCategories = null;
-
 function _acRenderBook() {
     if (!_acBookType) {
         return _acRenderBookSelect();
@@ -403,6 +395,8 @@ function _acConfirmCategory() {
     var cats = [];
     selected.forEach(function(el) { cats.push(el.textContent); });
     _acBookCategories = cats;
+    localStorage.setItem('ac_book_type', _acBookType);
+    localStorage.setItem('ac_book_cats', JSON.stringify(_acBookCategories));
     _acCloseCategoryPicker();
     _acRender();
     showToast('账本已设置');
@@ -424,4 +418,4 @@ function _acRenderBookOverview() {
         + '</div>'
         + '</div>'
         + '</div></div>';
-}
+        }
