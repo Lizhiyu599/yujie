@@ -313,6 +313,13 @@ function _acRenderBook() {
     }
     return _acRenderBookOverview();
 }
+function _acSwitchBook() {
+    _acBookType = null;
+    _acBookCategories = null;
+    localStorage.removeItem('ac_book_type');
+    localStorage.removeItem('ac_book_cats');
+    _acRender();
+}
 
 function _acRenderBookSelect() {
     return ''
