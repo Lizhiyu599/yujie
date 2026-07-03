@@ -12,6 +12,7 @@ var _acPieTab = 'expense';
 var _acDetailTab = 'month';
 var _acDetailYear = new Date().getFullYear();
 var _acDetailMonth = new Date().getMonth() + 1;
+var _acDetailDay = new Date().getDate();
 
 // ========== 打开/关闭 ==========
 function openAccounting() {
@@ -437,7 +438,7 @@ function _acRenderBookOverview() {
         + '</div>'
         + '</div>'
         + '</div></div>';
-}
+        }
 
 // ========== 月度详情 ==========
 function _acOpenMonthDetail() {
@@ -449,6 +450,7 @@ function _acOpenMonthDetail() {
     var now = new Date();
     _acDetailYear = now.getFullYear();
     _acDetailMonth = now.getMonth() + 1;
+    _acDetailDay = now.getDate();
     
     _acRenderMonthDetail(appWindow);
 }
@@ -466,11 +468,34 @@ function _acSwitchPie(type, el) {
 }
 
 function _acRenderMonthDetail(appWindow) {
-    var title = _acDetailYear + '年' + _acDetailMonth + '月';
+    var title;
+    if (_acDetailTab === 'day') {
+        title = _acDetailYear + '年' + _acDetailMonth + '月' + _acDetailDay + '日';
+    } else if (_acDetailTab === 'week') {
+        title = _acDetailYear + '年' + _acDetailMonth + '月';
+    } else if (_acDetailTab === 'month') {
+        title = _acDetailYear + '年' + _acDetailMonth + '月';
+    } else {
+        title = _acDetailYear + '年';
+    }
     
     var bills = _acGetAllBills();
     var monthBills = bills.filter(function(b) {
-        return b.year === _acDetailYear && b.month === _acDetailMonth;
+        if (_acDetailTab === 'day') {
+            var d = new Date(b.time);
+            return d.getFullYear() === _acDetailYear && (d.getMonth() + 1) === _acDetailMonth && d.getDate() === _acDetailDay;
+        } else if (_acDetailTab === 'week') {
+            var d = new Date(b.time);
+            var weekStart = new Date(_acDetailYear, _acDetailMonth - 1, _acDetailDay || 1);
+            weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
+            var weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 7);
+            return d >= weekStart && d < weekEnd;
+        } else if (_acDetailTab === 'month') {
+            return b.year === _acDetailYear && b.month === _acDetailMonth;
+        } else {
+            return b.year === _acDetailYear;
+        }
     });
     
     var totalExpense = 0;
@@ -537,13 +562,14 @@ function _acRenderMonthDetail(appWindow) {
         + '<div class="ac-nav-back" onclick="_acRender()">‹</div>'
         + '<div class="ac-nav-title" style="display:flex;align-items:center;gap:12px;">'
         + '<span onclick="_acPrevMonth()" style="cursor:pointer;">‹</span>'
-        + '<span>' + title + '</span>'
+        + '<span onclick="' + (_acDetailTab === 'day' ? '_acShowDayPicker()' : '') + '" style="' + (_acDetailTab === 'day' ? 'cursor:pointer;' : '') + '">' + title + '</span>'
         + '<span onclick="_acNextMonth()" style="cursor:pointer;">›</span>'
         + '</div>'
         + '</div>'
         + '<div class="ac-body">'
         + '<div style="padding:12px 16px;">'
         + '<div class="ac-segment" style="margin-bottom:14px;">'
+        + '<span class="ac-seg-btn ' + (_acDetailTab === 'day' ? 'active' : '') + '" onclick="_acSwitchDetailTab(\'day\')">日</span>'
         + '<span class="ac-seg-btn ' + (_acDetailTab === 'week' ? 'active' : '') + '" onclick="_acSwitchDetailTab(\'week\')">周</span>'
         + '<span class="ac-seg-btn ' + (_acDetailTab === 'month' ? 'active' : '') + '" onclick="_acSwitchDetailTab(\'month\')">月</span>'
         + '<span class="ac-seg-btn ' + (_acDetailTab === 'year' ? 'active' : '') + '" onclick="_acSwitchDetailTab(\'year\')">年</span>'
@@ -578,17 +604,96 @@ function _acSwitchDetailTab(tab) {
 }
 
 function _acPrevMonth() {
-    if (_acDetailMonth === 1) { _acDetailMonth = 12; _acDetailYear--; }
-    else { _acDetailMonth--; }
+    if (_acDetailTab === 'day') {
+        var d = new Date(_acDetailYear, _acDetailMonth - 1, _acDetailDay);
+        d.setDate(d.getDate() - 1);
+        _acDetailYear = d.getFullYear();
+        _acDetailMonth = d.getMonth() + 1;
+        _acDetailDay = d.getDate();
+    } else if (_acDetailTab === 'week') {
+        var d = new Date(_acDetailYear, _acDetailMonth - 1, _acDetailDay || 1);
+        d.setDate(d.getDate() - 7);
+        _acDetailYear = d.getFullYear();
+        _acDetailMonth = d.getMonth() + 1;
+        _acDetailDay = d.getDate();
+    } else if (_acDetailTab === 'month') {
+        if (_acDetailMonth === 1) { _acDetailMonth = 12; _acDetailYear--; }
+        else { _acDetailMonth--; }
+    } else {
+        _acDetailYear--;
+    }
     var appWindow = document.getElementById('accountingAppWindow');
     if (appWindow) _acRenderMonthDetail(appWindow);
 }
 
 function _acNextMonth() {
-    if (_acDetailMonth === 12) { _acDetailMonth = 1; _acDetailYear++; }
-    else { _acDetailMonth++; }
+    if (_acDetailTab === 'day') {
+        var d = new Date(_acDetailYear, _acDetailMonth - 1, _acDetailDay);
+        d.setDate(d.getDate() + 1);
+        _acDetailYear = d.getFullYear();
+        _acDetailMonth = d.getMonth() + 1;
+        _acDetailDay = d.getDate();
+    } else if (_acDetailTab === 'week') {
+        var d = new Date(_acDetailYear, _acDetailMonth - 1, _acDetailDay || 1);
+        d.setDate(d.getDate() + 7);
+        _acDetailYear = d.getFullYear();
+        _acDetailMonth = d.getMonth() + 1;
+        _acDetailDay = d.getDate();
+    } else if (_acDetailTab === 'month') {
+        if (_acDetailMonth === 12) { _acDetailMonth = 1; _acDetailYear++; }
+        else { _acDetailMonth++; }
+    } else {
+        _acDetailYear++;
+    }
     var appWindow = document.getElementById('accountingAppWindow');
     if (appWindow) _acRenderMonthDetail(appWindow);
+}
+
+// ========== 日历选择器 ==========
+function _acShowDayPicker() {
+    var overlay = document.createElement('div');
+    overlay.className = 'sheet-mask show';
+    overlay.id = 'acDayPicker';
+    
+    var daysInMonth = new Date(_acDetailYear, _acDetailMonth, 0).getDate();
+    var firstDay = new Date(_acDetailYear, _acDetailMonth - 1, 1).getDay();
+    var bills = _acGetAllBills();
+    var hasBillDays = {};
+    bills.forEach(function(b) {
+        if (b.year === _acDetailYear && b.month === _acDetailMonth) {
+            hasBillDays[new Date(b.time).getDate()] = true;
+        }
+    });
+    
+    var gridHTML = '';
+    for (var i = 0; i < firstDay; i++) gridHTML += '<div></div>';
+    for (var d = 1; d <= daysInMonth; d++) {
+        var hasDot = hasBillDays[d] ? '<div class="ac-day-dot"></div>' : '';
+        var isToday = d === _acDetailDay ? ' ac-day-today' : '';
+        gridHTML += '<div class="ac-day-cell' + isToday + '" onclick="_acPickDay(' + d + ')">' + d + hasDot + '</div>';
+    }
+    
+    overlay.innerHTML = ''
+        + '<div class="half-sheet" onclick="event.stopPropagation()">'
+        + '<div class="sheet-handle"><div class="handle-bar"></div></div>'
+        + '<div style="font-size:16px;font-weight:600;color:#000;text-align:center;padding:8px 0;">' + _acDetailYear + '年' + _acDetailMonth + '月</div>'
+        + '<div class="ac-calendar-grid">' + gridHTML + '</div>'
+        + '</div>';
+    
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) _acCloseDayPicker(); };
+}
+
+function _acPickDay(d) {
+    _acDetailDay = d;
+    _acCloseDayPicker();
+    var appWindow = document.getElementById('accountingAppWindow');
+    if (appWindow) _acRenderMonthDetail(appWindow);
+}
+
+function _acCloseDayPicker() {
+    var o = document.getElementById('acDayPicker');
+    if (o) o.remove();
 }
 
 // ========== 从聊天记录提取账单 ==========
@@ -662,4 +767,4 @@ function _acOpenCategoryBills(category) {
 function _acBackToDetail() {
     var appWindow = document.getElementById('accountingAppWindow');
     if (appWindow) _acRenderMonthDetail(appWindow);
-}
+    }
