@@ -280,15 +280,12 @@ function _acFallbackReply(userText) {
     _acRefreshChat();
 }
 
-// ========== 账单详情 ==========
+// ========== 账单详情（浮层小票） ==========
 function _acOpenBill(contactId, msgIndex) {
     var msgs = _acGetMsgs(contactId);
     if (!msgs[msgIndex]) return;
     
     var billText = msgs[msgIndex].text;
-    var contact = _acGetContacts().find(function(c) { return c.id === contactId; });
-    var contactName = contact ? contact.name : '记账助手';
-    
     var parts = billText.replace('>', '').split('/');
     var category = parts[0] || '其他';
     var rest = parts[1] || '';
@@ -299,29 +296,45 @@ function _acOpenBill(contactId, msgIndex) {
     var note = rest.replace(amount, '').replace(/[¥\-\+]/g, '').trim() || category;
     
     var d = new Date(msgs[msgIndex].time || Date.now());
-    var dateStr = d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate();
+    var dateStr = d.getFullYear() + '-' + (d.getMonth() + 1).toString().padStart(2, '0') + '-' + d.getDate().toString().padStart(2, '0');
     var timeStr = d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+    var receiptNo = msgs[msgIndex].receiptNo || '';
     
-    var appWindow = document.getElementById('accountingAppWindow');
-    if (!appWindow) return;
+    var overlay = document.createElement('div');
+    overlay.className = 'ac-receipt-overlay';
+    overlay.id = 'acReceiptOverlay';
     
-    appWindow.innerHTML = ''
-        + '<div class="accounting-app" style="background:#fff;display:flex;align-items:center;justify-content:center;">'
-        + '<div class="ac-nav-back" onclick="_acRender()" style="position:absolute;top:48px;left:16px;z-index:10;font-size:16px;font-weight:500;color:#000;cursor:pointer;">‹</div>'
-        + '<div style="position:relative;width:320px;height:520px;background:url(https://i.ibb.co/MXm2R1Y/1783099770505.png) center/contain no-repeat;">'
-        + '<div style="position:absolute;top:68px;left:40px;right:40px;font-size:10px;color:#2c2c2c;font-family:monospace;">'
-        + '<div style="display:flex;justify-content:space-between;"><span>日期:</span><span>' + dateStr + '</span></div>'
-        + '<div style="display:flex;justify-content:space-between;"><span>时间:</span><span>' + timeStr + '</span></div>'
-        + '<div style="display:flex;justify-content:space-between;"><span>项目:</span><span>' + category + '</span></div>'
+    overlay.innerHTML = ''
+        + '<div style="position:relative;width:300px;height:auto;margin:auto;background:#fff;border-radius:2px;padding:24px 20px 20px;box-shadow:0 8px 32px rgba(0,0,0,0.2);font-family:\'Courier New\',monospace;font-size:12px;color:#1a1a1a;line-height:1.6;">'
+        + '<div style="text-align:center;font-size:16px;font-weight:700;letter-spacing:2px;margin-bottom:2px;">' + note + '</div>'
+        + '<div style="text-align:center;font-size:11px;color:#555;margin-bottom:10px;">THANK YOU</div>'
+        + '<div style="border-top:1px dashed #ccc;padding-top:8px;">'
+        + '<div>' + dateStr + '</div>'
+        + '<div>' + timeStr + '</div>'
+        + (receiptNo ? '<div>' + receiptNo + '</div>' : '')
         + '</div>'
-        + '<div style="position:absolute;top:175px;left:40px;right:40px;font-size:11px;color:#2c2c2c;font-family:monospace;">'
-        + '<div style="display:flex;justify-content:space-between;"><span>' + note + '</span><span>' + (isExpense ? '-' : '+') + '¥' + absAmount + '</span></div>'
+        + '<div style="border-top:1px dashed #ccc;margin-top:8px;padding-top:6px;display:flex;justify-content:space-between;">'
+        + '<span>ITEM</span><span>AMOUNT</span>'
         + '</div>'
-        + '<div style="position:absolute;bottom:155px;left:40px;right:40px;font-size:12px;font-weight:700;color:#2c2c2c;font-family:monospace;display:flex;justify-content:space-between;">'
-        + '<span>总计:</span><span>' + (isExpense ? '-' : '+') + '¥' + absAmount + '</span>'
+        + '<div style="border-top:1px solid #1a1a1a;margin-top:4px;padding-top:8px;display:flex;justify-content:space-between;">'
+        + '<span>' + note + '</span><span>' + (isExpense ? '-' : '+') + '¥' + absAmount + '</span>'
         + '</div>'
+        + '<div style="border-top:1px solid #1a1a1a;margin-top:12px;padding-top:8px;display:flex;justify-content:space-between;font-size:14px;font-weight:700;">'
+        + '<span>TOTAL</span><span>' + (isExpense ? '-' : '+') + '¥' + absAmount + '</span>'
         + '</div>'
+        + '<div style="text-align:center;margin-top:16px;font-size:11px;color:#555;">THANK YOU FOR SHOPPING!</div>'
+        + '<div style="text-align:center;margin-top:10px;font-family:\'Courier New\',monospace;font-size:8px;letter-spacing:3px;color:#1a1a1a;">|| ||| |||| || ||||| ||| ||||</div>'
         + '</div>';
+    
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) {
+        if (e.target === overlay) _acCloseReceipt();
+    };
+}
+
+function _acCloseReceipt() {
+    var o = document.getElementById('acReceiptOverlay');
+    if (o) o.remove();
 }
 
 // ========== 记账标签页 ==========
