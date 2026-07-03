@@ -90,7 +90,7 @@ function _acSwitchTab(tab) {
 function _acRenderBody() {
     if (_acTab === 'home') {
         if (_acContactId) return _acRenderChat();
-        return _acRenderList();
+        return '<div class="ac-body"><div class="ac-empty">暂无角色，请先在聊天软件中添加</div></div>';
     }
     return _acRenderBook();
 }
