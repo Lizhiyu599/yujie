@@ -38,8 +38,7 @@ function closeAccounting() {
 
 // ========== 获取联系人 ==========
 function _acGetContacts() {
-    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
-    return contacts.filter(function(c) { return c.id !== 'c1'; });
+    return window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
 }
 
 function _acGetStorageKey() {
