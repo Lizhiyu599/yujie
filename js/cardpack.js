@@ -146,6 +146,17 @@ function _cpConfirmSend(index, contactId, contactName) {
     _cpCards[index].toName = contactName;
     _cpCards[index].toId = contactId;
     _cpSaveCards();
+
+// 存未读卡包通知
+var notices = JSON.parse(localStorage.getItem('cp_pending_notices') || '[]');
+notices.push({
+    contactId: contactId,
+    contactName: contactName,
+    balance: _cpCards[index].balance,
+    time: Date.now()
+});
+localStorage.setItem('cp_pending_notices', JSON.stringify(notices));
+    
     _cpRender();
     
     var cardMsg = '（赠送了一张黑卡，额度¥' + _cpCards[index].balance.toFixed(2) + '）';
