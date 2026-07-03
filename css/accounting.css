@@ -467,3 +467,36 @@
     align-items: center;
     justify-content: center;
 }
+.ac-receipt-overlay > div {
+    position: relative;
+}
+.ac-receipt-overlay > div::before,
+.ac-receipt-overlay > div::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: 
+        radial-gradient(circle at 8px 50%, transparent 4px, #fff 4px) 0 0,
+        radial-gradient(circle at 24px 50%, transparent 4px, #fff 4px) 16px 0,
+        radial-gradient(circle at 40px 50%, transparent 4px, #fff 4px) 32px 0,
+        radial-gradient(circle at 56px 50%, transparent 4px, #fff 4px) 48px 0,
+        radial-gradient(circle at 72px 50%, transparent 4px, #fff 4px) 64px 0,
+        radial-gradient(circle at 88px 50%, transparent 4px, #fff 4px) 80px 0,
+        radial-gradient(circle at 104px 50%, transparent 4px, #fff 4px) 96px 0,
+        radial-gradient(circle at 120px 50%, transparent 4px, #fff 4px) 112px 0,
+        radial-gradient(circle at 136px 50%, transparent 4px, #fff 4px) 128px 0,
+        radial-gradient(circle at 152px 50%, transparent 4px, #fff 4px) 144px 0,
+        radial-gradient(circle at 168px 50%, transparent 4px, #fff 4px) 160px 0,
+        radial-gradient(circle at 184px 50%, transparent 4px, #fff 4px) 176px 0,
+        radial-gradient(circle at 200px 50%, transparent 4px, #fff 4px) 192px 0,
+        radial-gradient(circle at 216px 50%, transparent 4px, #fff 4px) 208px 0,
+        radial-gradient(circle at 232px 50%, transparent 4px, #fff 4px) 224px 0,
+        radial-gradient(circle at 248px 50%, transparent 4px, #fff 4px) 240px 0,
+        radial-gradient(circle at 264px 50%, transparent 4px, #fff 4px) 256px 0,
+        radial-gradient(circle at 280px 50%, transparent 4px, #fff 4px) 272px 0,
+        radial-gradient(circle at 296px 50%, transparent 4px, #fff 4px) 288px 0;
+}
+.ac-receipt-overlay > div::before { top: -8px; }
+.ac-receipt-overlay > div::after { bottom: -8px; }
