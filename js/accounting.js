@@ -298,28 +298,27 @@ function _acOpenBill(contactId, msgIndex) {
     var absAmount = amount.replace(/[\-\+]/g, '');
     var note = rest.replace(amount, '').replace(/[¥\-\+]/g, '').trim() || category;
     
-    var now = new Date();
-    var timeStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日 ' + now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+    var d = new Date(msgs[msgIndex].time || Date.now());
+    var dateStr = d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate();
+    var timeStr = d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
     
     var appWindow = document.getElementById('accountingAppWindow');
     if (!appWindow) return;
     
     appWindow.innerHTML = ''
-        + '<div class="accounting-app">'
-        + '<div class="ac-bill-header">'
-        + '<div class="ac-nav-back" onclick="_acRender()">‹</div>'
-        + '<div style="font-size:17px;font-weight:600;color:#000;">账单详情</div>'
+        + '<div class="accounting-app" style="background:#fff;display:flex;align-items:center;justify-content:center;">'
+        + '<div class="ac-nav-back" onclick="_acRender()" style="position:absolute;top:48px;left:16px;z-index:10;font-size:16px;font-weight:500;color:#000;cursor:pointer;">‹</div>'
+        + '<div style="position:relative;width:320px;height:520px;background:url(https://i.ibb.co/MXm2R1Y/1783099770505.png) center/contain no-repeat;">'
+        + '<div style="position:absolute;top:68px;left:40px;right:40px;font-size:10px;color:#2c2c2c;font-family:monospace;">'
+        + '<div style="display:flex;justify-content:space-between;"><span>日期:</span><span>' + dateStr + '</span></div>'
+        + '<div style="display:flex;justify-content:space-between;"><span>时间:</span><span>' + timeStr + '</span></div>'
+        + '<div style="display:flex;justify-content:space-between;"><span>项目:</span><span>' + category + '</span></div>'
         + '</div>'
-        + '<div class="ac-bill-page">'
-        + '<div class="ac-bill-merchant">' + note + '</div>'
-        + '<div class="ac-bill-amount">' + (isExpense ? '-' : '+') + '¥' + absAmount + '</div>'
-        + '<div class="ac-bill-detail-list">'
-        + '<div class="ac-bill-row"><span class="ac-bill-label">当前状态</span><span class="ac-bill-value">支付成功</span></div>'
-        + '<div class="ac-bill-row"><span class="ac-bill-label">支付时间</span><span class="ac-bill-value">' + timeStr + '</span></div>'
-        + '<div class="ac-bill-row"><span class="ac-bill-label">商品/备注</span><span class="ac-bill-value">' + note + '</span></div>'
-        + '<div class="ac-bill-row"><span class="ac-bill-label">收单机构</span><span class="ac-bill-value">' + contactName + '</span></div>'
-        + '<div class="ac-bill-row"><span class="ac-bill-label">支付方式</span><span class="ac-bill-value">零钱</span></div>'
-        + '<div class="ac-bill-row"><span class="ac-bill-label">交易分类</span><span class="ac-bill-value">' + category + '</span></div>'
+        + '<div style="position:absolute;top:175px;left:40px;right:40px;font-size:11px;color:#2c2c2c;font-family:monospace;">'
+        + '<div style="display:flex;justify-content:space-between;"><span>' + note + '</span><span>' + (isExpense ? '-' : '+') + '¥' + absAmount + '</span></div>'
+        + '</div>'
+        + '<div style="position:absolute;bottom:155px;left:40px;right:40px;font-size:12px;font-weight:700;color:#2c2c2c;font-family:monospace;display:flex;justify-content:space-between;">'
+        + '<span>总计:</span><span>' + (isExpense ? '-' : '+') + '¥' + absAmount + '</span>'
         + '</div>'
         + '</div>'
         + '</div>';
