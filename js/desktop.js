@@ -698,7 +698,7 @@ function openHalfPanel() {
             '<div id="wp-1x4" class="collapsible-section" style="display:none;"><div class="widget-placeholder">即将推出</div></div>' +
             '<div class="widget-list-item" data-target="wp-2x2"><span>2x2 小组件</span><span class="toggle-arrow">›</span></div>' +
             '<div id="wp-2x2" class="collapsible-section" style="display:none;">' +
-                '<div class="widget-preview-card" onclick="confirmAddCountdownWidget()" style="max-width:50%;margin:8px auto;">'
+                '<div class="widget-preview-card" onclick="confirmAddCountdownWidget()" style="max-width:50%;margin:8px auto;">' +
                     '<div class="widget-preview-inner" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 0;">' +
                         '<div style="font-size:11px;color:rgba(0,0,0,0.5);">玉界已经</div>' +
                         '<div style="font-size:32px;font-weight:800;color:#000;">365</div>' +
