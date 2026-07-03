@@ -195,15 +195,65 @@ function _acRefreshChat() {
 }
 
 function _acMockReply(userText) {
+    // 有API就用API，没API用模拟
+    if (typeof callChatAPI !== 'function') {
+        _acFallbackReply(userText);
+        return;
+    }
+    
+    var contact = _acGetContacts().find(function(c) { return c.id === _acContactId; });
+    var contactName = contact ? contact.name : '记账助手';
+    
+    // 构建系统提示
+    var persona = contact ? (contact.persona || '') : '';
+    var worldbookPrompt = typeof getFullSystemPrompt === 'function' ? getFullSystemPrompt() : '';
+    var systemPrompt = '【记账助手】你是' + contactName + '。\n';
+    if (persona) systemPrompt += '人设：' + persona + '\n';
+    if (worldbookPrompt) systemPrompt += '规则：' + worldbookPrompt + '\n';
+    systemPrompt += '用户发来消费或收入，你用人设口吻回应（不超20字，不超3句），然后自动分类格式：>分类/备注 -金额¥（支出）或 >分类/备注 +金额¥（收入）。禁用emoji和旁白括号。分类：餐饮/购物/交通/居家/娱乐/医疗/学习/办公/育儿/人情往来/职业收入/经营收入/保险理财/资金往来/二手买卖/生活费/投股/其他。';
+    
+    var msgs = _acGetMsgs(_acContactId);
+    var history = [];
+    for (var i = Math.max(0, msgs.length - 10); i < msgs.length - 1; i++) {
+        var m = msgs[i];
+        if (m.role !== 'bill-link') {
+            history.push({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text });
+        }
+    }
+    
+    callChatAPI([
+        { role: 'system', content: systemPrompt },
+        ...history,
+        { role: 'user', content: userText }
+    ]).then(function(reply) {
+        var clean = reply.replace(/\{[^}]*\}/g, '').replace(/[\(\（][^\)\）]*[\)\）]/g, '').trim();
+        var lines = clean.split('\n');
+        var chatLines = [];
+        var billLine = '';
+        lines.forEach(function(l) {
+            l = l.trim();
+            if (!l) return;
+            if (l.indexOf('>') === 0 || l.match(/^[>\-\+]/)) billLine = l;
+            else chatLines.push(l);
+        });
+        chatLines = chatLines.slice(0, 3);
+        chatLines.forEach(function(l) {
+            if (l.length > 20) l = l.substring(0, 20);
+            _acSaveMsg(_acContactId, 'assistant', l);
+        });
+        if (billLine) _acSaveMsg(_acContactId, 'bill-link', billLine);
+        _acRefreshChat();
+    }).catch(function() {
+        _acFallbackReply(userText);
+    });
+}
+
+function _acFallbackReply(userText) {
     var amountMatch = userText.match(/(\d+\.?\d*)/);
     var amount = amountMatch ? amountMatch[1] : '?';
     var isIncome = userText.indexOf('收入') >= 0 || userText.indexOf('工资') >= 0 || userText.indexOf('收到') >= 0;
-    
     _acSaveMsg(_acContactId, 'assistant', '嗯，已记录');
-    
-    var billText = '>其他/' + (isIncome ? '+' : '-') + amount + '¥';
-    _acSaveMsg(_acContactId, 'bill-link', billText);
-    
+    _acSaveMsg(_acContactId, 'bill-link', '>其他/' + (isIncome ? '+' : '-') + amount + '¥');
     _acRefreshChat();
 }
 
