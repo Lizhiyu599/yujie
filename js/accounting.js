@@ -427,9 +427,9 @@ function _acRenderBookOverview() {
         + '<div class="ac-overview-card" onclick="_acOpenMonthDetail()">'
         + '<div style="font-size:13px;color:#8e8e93;">' + year + '年' + month + '月</div>'
         + '<div style="display:flex;justify-content:space-between;margin-top:12px;">'
-        + '<div><div style="font-size:11px;color:#8e8e93;">月支出</div><div style="font-size:24px;font-weight:700;color:#000;">¥' + totalExpense.toFixed(2) + '</div></div>'
-        + '<div><div style="font-size:11px;color:#8e8e93;">月收入</div><div style="font-size:24px;font-weight:700;color:#000;">¥' + totalIncome.toFixed(2) + '</div></div>'
-        + '<div><div style="font-size:11px;color:#8e8e93;">月结余</div><div style="font-size:24px;font-weight:700;color:#000;">¥' + balance.toFixed(2) + '</div></div>'
+        + '<div><div style="font-size:11px;color:#8e8e93;">月支出</div><div style="font-size:24px;font-weight:700;color:#000;">' + totalExpense.toFixed(2) + '</div></div>'
+        + '<div><div style="font-size:11px;color:#8e8e93;">月收入</div><div style="font-size:24px;font-weight:700;color:#000;">' + totalIncome.toFixed(2) + '</div></div>'
+        + '<div><div style="font-size:11px;color:#8e8e93;">月结余</div><div style="font-size:24px;font-weight:700;color:#000;">' + balance.toFixed(2) + '</div></div>'
         + '</div>'
         + '</div>'
         + '</div></div>';
