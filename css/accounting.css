@@ -58,8 +58,8 @@
 }
 .ac-tab.active {
     color: #000;
-    font-weight: 700;
-    background: rgba(0,0,0,0.05);
+    font-weight: 600;
+    background: transparent;
 }
 
 /* ===== 内容区 ===== */
