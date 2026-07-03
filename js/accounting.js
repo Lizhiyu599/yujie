@@ -409,7 +409,7 @@ function _acCloseCategoryPicker() {
 
 function _acRenderBookOverview() {
     return '<div class="ac-body"><div style="padding:16px;">'
-        + '<div class="ac-overview-card">'
+        + '<div class="ac-overview-card" onclick="_acOpenMonthDetail()">'
         + '<div style="font-size:13px;color:#8e8e93;">2026年6月</div>'
         + '<div style="display:flex;justify-content:space-between;margin-top:12px;">'
         + '<div><div style="font-size:11px;color:#8e8e93;">月支出</div><div style="font-size:24px;font-weight:700;color:#000;">¥0</div></div>'
@@ -418,4 +418,190 @@ function _acRenderBookOverview() {
         + '</div>'
         + '</div>'
         + '</div></div>';
+        }
+
+var _acDetailTab = 'month';
+var _acDetailYear = new Date().getFullYear();
+var _acDetailMonth = new Date().getMonth() + 1;
+
+function _acOpenMonthDetail() {
+    var appWindow = document.getElementById('accountingAppWindow');
+    if (!appWindow) return;
+    
+    _acDetailTab = 'month';
+    var now = new Date();
+    _acDetailYear = now.getFullYear();
+    _acDetailMonth = now.getMonth() + 1;
+    
+    _acRenderMonthDetail(appWindow);
+}
+
+function _acRenderMonthDetail(appWindow) {
+    var monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    var title = _acDetailYear + '年' + _acDetailMonth + '月';
+    
+    // 从聊天记录汇总账单
+    var bills = _acGetAllBills();
+    var monthBills = bills.filter(function(b) {
+        return b.year === _acDetailYear && b.month === _acDetailMonth;
+    });
+    
+    var totalExpense = 0;
+    var totalIncome = 0;
+    var categoryMap = {};
+    monthBills.forEach(function(b) {
+        if (b.isExpense) {
+            totalExpense += b.amount;
+            categoryMap[b.category] = (categoryMap[b.category] || 0) + b.amount;
+        } else {
+            totalIncome += b.amount;
+        }
+    });
+    var balance = totalIncome - totalExpense;
+    
+    // 分类列表
+    var categoryListHTML = '';
+    var categories = Object.keys(categoryMap).sort(function(a, b) { return categoryMap[b] - categoryMap[a]; });
+    var grandTotal = totalExpense + totalIncome || 1;
+    categories.forEach(function(cat) {
+        var amt = categoryMap[cat];
+        var pct = ((amt / grandTotal) * 100).toFixed(1);
+        categoryListHTML += ''
+            + '<div class="ac-cat-row" onclick="_acOpenCategoryBills(\'' + cat + '\')">'
+            + '<div class="ac-cat-row-left">'
+            + '<div class="ac-cat-dot"></div>'
+            + '<div class="ac-cat-name">' + cat + '</div>'
+            + '</div>'
+            + '<div class="ac-cat-row-right">'
+            + '<div class="ac-cat-pct">' + pct + '%</div>'
+            + '<div class="ac-cat-amt">¥' + amt.toFixed(2) + '</div>'
+            + '<div class="ac-cat-arrow">›</div>'
+            + '</div>'
+            + '</div>';
+    });
+    
+    if (!categoryListHTML) {
+        categoryListHTML = '<div class="ac-empty">暂无账单记录</div>';
+    }
+    
+    appWindow.innerHTML = ''
+        + '<div class="accounting-app">'
+        + '<div class="ac-nav">'
+        + '<div class="ac-nav-back" onclick="_acRender()">‹</div>'
+        + '<div class="ac-nav-title" style="display:flex;align-items:center;gap:12px;">'
+        + '<span onclick="_acPrevMonth()" style="cursor:pointer;">‹</span>'
+        + '<span>' + title + '</span>'
+        + '<span onclick="_acNextMonth()" style="cursor:pointer;">›</span>'
+        + '</div>'
+        + '</div>'
+        + '<div class="ac-body">'
+        + '<div style="padding:12px 16px;">'
+        + '<div class="ac-segment" style="margin-bottom:14px;">'
+        + '<span class="ac-seg-btn ' + (_acDetailTab === 'week' ? 'active' : '') + '" onclick="_acSwitchDetailTab(\'week\')">周</span>'
+        + '<span class="ac-seg-btn ' + (_acDetailTab === 'month' ? 'active' : '') + '" onclick="_acSwitchDetailTab(\'month\')">月</span>'
+        + '<span class="ac-seg-btn ' + (_acDetailTab === 'year' ? 'active' : '') + '" onclick="_acSwitchDetailTab(\'year\')">年</span>'
+        + '</div>'
+        + '<div class="ac-summary-card">'
+        + '<div class="ac-summary-item"><div class="ac-summary-label">支出</div><div class="ac-summary-val expense">-¥' + totalExpense.toFixed(2) + '</div></div>'
+        + '<div class="ac-summary-item"><div class="ac-summary-label">收入</div><div class="ac-summary-val income">¥' + totalIncome.toFixed(2) + '</div></div>'
+        + '<div class="ac-summary-item"><div class="ac-summary-label">结余</div><div class="ac-summary-val">¥' + balance.toFixed(2) + '</div></div>'
+        + '</div>'
+        + '<div style="font-size:14px;font-weight:600;color:#000;margin:16px 0 8px;">分类明细</div>'
+        + categoryListHTML
+        + '</div>'
+        + '</div>'
+        + '</div>';
+}
+
+function _acSwitchDetailTab(tab) {
+    _acDetailTab = tab;
+    var appWindow = document.getElementById('accountingAppWindow');
+    if (appWindow) _acRenderMonthDetail(appWindow);
+}
+
+function _acPrevMonth() {
+    if (_acDetailMonth === 1) { _acDetailMonth = 12; _acDetailYear--; }
+    else { _acDetailMonth--; }
+    var appWindow = document.getElementById('accountingAppWindow');
+    if (appWindow) _acRenderMonthDetail(appWindow);
+}
+
+function _acNextMonth() {
+    if (_acDetailMonth === 12) { _acDetailMonth = 1; _acDetailYear++; }
+    else { _acDetailMonth++; }
+    var appWindow = document.getElementById('accountingAppWindow');
+    if (appWindow) _acRenderMonthDetail(appWindow);
+}
+
+// ========== 从聊天记录提取账单 ==========
+function _acGetAllBills() {
+    var bills = [];
+    for (var contactId in _acMessages) {
+        var msgs = _acMessages[contactId];
+        msgs.forEach(function(m) {
+            if (m.role === 'bill-link') {
+                var text = m.text.replace('>', '');
+                var parts = text.split('/');
+                var category = parts[0] || '其他';
+                var rest = parts[1] || '';
+                var amtMatch = rest.match(/([\-\+]?\d+\.?\d*)/);
+                var amount = amtMatch ? parseFloat(amtMatch[1].replace(/[\-\+]/g, '')) : 0;
+                var isExpense = text.indexOf('-') >= 0;
+                var d = new Date(m.time);
+                bills.push({
+                    category: category,
+                    amount: amount,
+                    isExpense: isExpense,
+                    year: d.getFullYear(),
+                    month: d.getMonth() + 1,
+                    time: m.time,
+                    contactId: contactId,
+                    text: text
+                });
+            }
+        });
+    }
+    return bills;
+}
+
+// ========== 分类账单列表 ==========
+function _acOpenCategoryBills(category) {
+    var bills = _acGetAllBills();
+    var catBills = bills.filter(function(b) {
+        return b.category === category && b.year === _acDetailYear && b.month === _acDetailMonth;
+    });
+    
+    var appWindow = document.getElementById('accountingAppWindow');
+    if (!appWindow) return;
+    
+    var listHTML = '';
+    if (catBills.length === 0) {
+        listHTML = '<div class="ac-empty">暂无' + category + '账单</div>';
+    } else {
+        catBills.forEach(function(b) {
+            var d = new Date(b.time);
+            var dateStr = (d.getMonth() + 1) + '/' + d.getDate();
+            listHTML += ''
+                + '<div class="ac-bill-row">'
+                + '<div><div style="font-size:14px;color:#000;">' + b.text.replace(b.category + '/', '').replace(/[\-\+]?\d+\.?\d*¥?/g, '').replace(/[¥\-\+]/g, '').trim() + '</div><div style="font-size:11px;color:#8e8e93;">' + dateStr + '</div></div>'
+                + '<div style="font-size:15px;font-weight:600;color:' + (b.isExpense ? '#000' : '#000') + ';">' + (b.isExpense ? '-' : '+') + '¥' + b.amount.toFixed(2) + '</div>'
+                + '</div>';
+        });
+    }
+    
+    appWindow.innerHTML = ''
+        + '<div class="accounting-app">'
+        + '<div class="ac-nav">'
+        + '<div class="ac-nav-back" onclick="_acBackToDetail()">‹</div>'
+        + '<div class="ac-nav-title">' + category + '</div>'
+        + '</div>'
+        + '<div class="ac-body">'
+        + '<div style="padding:0 16px;">' + listHTML + '</div>'
+        + '</div>'
+        + '</div>';
+}
+
+function _acBackToDetail() {
+    var appWindow = document.getElementById('accountingAppWindow');
+    if (appWindow) _acRenderMonthDetail(appWindow);
         }
