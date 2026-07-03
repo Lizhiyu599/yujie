@@ -69,3 +69,71 @@
     -webkit-overflow-scrolling: touch;
     padding: 0 16px;
 }
+
+/* ===== iMessage 聊天 ===== */
+.ac-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 12px 0 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.ac-msg-row {
+    display: flex;
+    padding: 0 16px;
+}
+.ac-msg-row.user {
+    justify-content: flex-end;
+}
+.ac-msg-row.assistant {
+    justify-content: flex-start;
+}
+.ac-bubble {
+    max-width: 75%;
+    padding: 10px 14px;
+    border-radius: 20px;
+    font-size: 15px;
+    line-height: 1.4;
+    word-break: break-word;
+}
+.ac-bubble.user {
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    color: #000;
+    border: 1px solid rgba(0,0,0,0.06);
+}
+.ac-bubble.assistant {
+    background: #1c1c1e;
+    color: #fff;
+}
+.ac-chat-input-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px 20px;
+    border-top: 0.5px solid rgba(0,0,0,0.06);
+    flex-shrink: 0;
+}
+.ac-chat-input {
+    flex: 1;
+    height: 36px;
+    background: rgba(255,255,255,0.5);
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 18px;
+    padding: 0 14px;
+    font-size: 15px;
+    outline: none;
+    color: #000;
+}
+.ac-send-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+}
