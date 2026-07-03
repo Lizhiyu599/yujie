@@ -280,9 +280,11 @@
     transition: 0.15s;
 }
 .ac-cat-item.selected {
-    background: #000;
-    color: #fff;
-    border-color: #000;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    color: #000;
+    border-color: rgba(0,0,0,0.2);
 }
 
 /* ===== 月度概览卡片 ===== */
