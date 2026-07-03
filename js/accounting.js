@@ -408,21 +408,32 @@ function _acCloseCategoryPicker() {
 }
 
 function _acRenderBookOverview() {
+    var bills = _acGetAllBills();
+    var now = new Date();
+    var year = now.getFullYear();
+    var month = now.getMonth() + 1;
+    
+    var totalExpense = 0;
+    var totalIncome = 0;
+    bills.forEach(function(b) {
+        if (b.year === year && b.month === month) {
+            if (b.isExpense) totalExpense += b.amount;
+            else totalIncome += b.amount;
+        }
+    });
+    var balance = totalIncome - totalExpense;
+    
     return '<div class="ac-body"><div style="padding:16px;">'
         + '<div class="ac-overview-card" onclick="_acOpenMonthDetail()">'
-        + '<div style="font-size:13px;color:#8e8e93;">2026年6月</div>'
+        + '<div style="font-size:13px;color:#8e8e93;">' + year + '年' + month + '月</div>'
         + '<div style="display:flex;justify-content:space-between;margin-top:12px;">'
-        + '<div><div style="font-size:11px;color:#8e8e93;">月支出</div><div style="font-size:24px;font-weight:700;color:#000;">¥0</div></div>'
-        + '<div><div style="font-size:11px;color:#8e8e93;">月收入</div><div style="font-size:24px;font-weight:700;color:#000;">¥0</div></div>'
-        + '<div><div style="font-size:11px;color:#8e8e93;">月结余</div><div style="font-size:24px;font-weight:700;color:#000;">¥0</div></div>'
+        + '<div><div style="font-size:11px;color:#8e8e93;">月支出</div><div style="font-size:24px;font-weight:700;color:#000;">¥' + totalExpense.toFixed(2) + '</div></div>'
+        + '<div><div style="font-size:11px;color:#8e8e93;">月收入</div><div style="font-size:24px;font-weight:700;color:#000;">¥' + totalIncome.toFixed(2) + '</div></div>'
+        + '<div><div style="font-size:11px;color:#8e8e93;">月结余</div><div style="font-size:24px;font-weight:700;color:#000;">¥' + balance.toFixed(2) + '</div></div>'
         + '</div>'
         + '</div>'
         + '</div></div>';
-        }
-
-var _acDetailTab = 'month';
-var _acDetailYear = new Date().getFullYear();
-var _acDetailMonth = new Date().getMonth() + 1;
+}
 
 function _acOpenMonthDetail() {
     var appWindow = document.getElementById('accountingAppWindow');
