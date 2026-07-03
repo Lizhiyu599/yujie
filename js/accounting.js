@@ -407,6 +407,42 @@ function _acCloseCategoryPicker() {
     if (o) o.remove();
 }
 
+var _acPieTab = 'expense';
+
+function _acSwitchPie(type, el) {
+    _acPieTab = type;
+    var appWindow = document.getElementById('accountingAppWindow');
+    if (!appWindow) return;
+    
+    // 更新按钮高亮
+    var switches = document.querySelectorAll('.ac-pie-switch');
+    switches.forEach(function(s) { s.classList.remove('active'); });
+    if (el) el.classList.add('active');
+    
+    // 重新渲染饼图
+    var bills = _acGetAllBills();
+    var totalExpense = 0, totalIncome = 0;
+    bills.forEach(function(b) {
+        if (b.year === _acDetailYear && b.month === _acDetailMonth) {
+            if (b.isExpense) totalExpense += b.amount;
+            else totalIncome += b.amount;
+        }
+    });
+    
+    var pieValue, pieTotal;
+    if (type === 'expense') { pieValue = totalExpense; pieTotal = totalExpense + totalIncome; }
+    else if (type === 'income') { pieValue = totalIncome; pieTotal = totalExpense + totalIncome; }
+    else { pieValue = totalIncome - totalExpense; pieTotal = Math.max(totalExpense, totalIncome) * 2 || 1; }
+    
+    var pct = pieTotal > 0 ? Math.round((Math.abs(pieValue) / pieTotal) * 100) : 0;
+    var deg = pieTotal > 0 ? (Math.abs(pieValue) / pieTotal) * 360 : 0;
+    
+    var ring = document.querySelector('.ac-pie-ring');
+    var center = document.querySelector('.ac-pie-center');
+    if (ring) ring.style.setProperty('--pie-deg', deg + 'deg');
+    if (center) center.textContent = pct + '%';
+}
+
 function _acRenderBookOverview() {
     var bills = _acGetAllBills();
     var now = new Date();
