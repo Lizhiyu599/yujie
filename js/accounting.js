@@ -478,17 +478,18 @@ function _acRenderMonthDetail(appWindow) {
         var amt = categoryMap[cat];
         var pct = ((amt / grandTotal) * 100).toFixed(1);
         categoryListHTML += ''
-            + '<div class="ac-cat-row" onclick="_acOpenCategoryBills(\'' + cat + '\')">'
-            + '<div class="ac-cat-row-left">'
-            + '<div class="ac-cat-dot"></div>'
-            + '<div class="ac-cat-name">' + cat + '</div>'
-            + '</div>'
-            + '<div class="ac-cat-row-right">'
-            + '<div class="ac-cat-pct">' + pct + '%</div>'
-            + '<div class="ac-cat-amt">¥' + amt.toFixed(2) + '</div>'
-            + '<div class="ac-cat-arrow">›</div>'
-            + '</div>'
-            + '</div>';
+    + '<div class="ac-cat-row" onclick="_acOpenCategoryBills(\'' + cat + '\')">'
+    + '<div class="ac-cat-row-top">'
+    + '<div class="ac-cat-dot"></div>'
+    + '<div class="ac-cat-name">' + cat + '</div>'
+    + '<div class="ac-cat-right">'
+    + '<span class="ac-cat-pct">' + pct + '%</span>'
+    + '<span class="ac-cat-amt">¥' + amt.toFixed(2) + '</span>'
+    + '<span class="ac-cat-arrow">›</span>'
+    + '</div>'
+    + '</div>'
+    + '<div class="ac-cat-bar"><div class="ac-cat-bar-fill" style="width:' + Math.min(100, parseFloat(pct)) + '%;"></div><div class="ac-cat-bar-dot"></div></div>'
+    + '</div>';
     });
     
     if (!categoryListHTML) {
