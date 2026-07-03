@@ -10,36 +10,32 @@
     position: relative;
 }
 
-/* ===== 顶部导航栏 ===== */
+/* ===== 顶部导航栏 - 对齐聊天软件 ===== */
 .ac-nav {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     padding: 48px 16px 12px;
     background: rgba(242,242,247,0.9);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     flex-shrink: 0;
     border-bottom: 0.5px solid rgba(0,0,0,0.08);
+    position: relative;
 }
 .ac-nav-back {
     color: #000;
-    font-size: 24px;
+    font-size: 16px;
+    font-weight: 500;
     cursor: pointer;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 300;
+    padding: 0 8px;
 }
 .ac-nav-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     font-size: 17px;
     font-weight: 600;
     color: #000;
-}
-.ac-nav-spacer {
-    width: 36px;
 }
 
 /* ===== 底部标签栏 ===== */
@@ -64,14 +60,12 @@
     font-weight: 600;
 }
 
-/* ===== 内容区 ===== */
+/* ===== 对话列表 ===== */
 .ac-body {
     flex: 1;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
 }
-
-/* ===== 首页 - 对话列表 ===== */
 .ac-chat-list {
     padding: 0;
 }
@@ -82,14 +76,10 @@
     padding: 14px 16px;
     cursor: pointer;
     border-bottom: 0.5px solid rgba(0,0,0,0.04);
-    transition: background 0.15s;
 }
-.ac-chat-item:active {
-    background: rgba(0,0,0,0.03);
-}
+.ac-chat-item:active { background: rgba(0,0,0,0.03); }
 .ac-chat-avatar {
-    width: 48px;
-    height: 48px;
+    width: 48px; height: 48px;
     border-radius: 50%;
     background: #1c1c1e;
     color: #fff;
@@ -102,37 +92,18 @@
     background-size: cover;
     background-position: center;
 }
-.ac-chat-info {
-    flex: 1;
-    min-width: 0;
-}
-.ac-chat-name {
-    font-size: 16px;
-    font-weight: 500;
-    color: #000;
-    margin-bottom: 2px;
-}
-.ac-chat-preview {
-    font-size: 13px;
-    color: #8e8e93;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.ac-chat-arrow {
-    color: #c7c7cc;
-    font-size: 16px;
-}
+.ac-chat-info { flex: 1; min-width: 0; }
+.ac-chat-name { font-size: 16px; font-weight: 500; color: #000; margin-bottom: 2px; }
+.ac-chat-preview { font-size: 13px; color: #8e8e93; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ac-chat-arrow { color: #c7c7cc; font-size: 16px; }
 
-/* ===== 聊天窗口容器 ===== */
+/* ===== 聊天窗口 ===== */
 .ac-chat-shell {
     flex: 1;
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
-
-/* ===== iMessage 聊天消息区 ===== */
 .ac-chat-messages {
     flex: 1;
     overflow-y: auto;
@@ -140,56 +111,55 @@
     padding: 12px 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
 }
 .ac-msg-row {
     display: flex;
-    padding: 2px 12px;
+    padding: 1px 12px;
 }
-.ac-msg-row.user {
-    justify-content: flex-end;
-}
-.ac-msg-row.assistant {
-    justify-content: flex-start;
-}
+.ac-msg-row.user { justify-content: flex-end; }
+.ac-msg-row.assistant { justify-content: flex-start; }
 .ac-bubble {
-    max-width: 75%;
-    padding: 10px 14px;
-    border-radius: 20px;
-    font-size: 15px;
+    max-width: 70%;
+    padding: 8px 12px;
+    border-radius: 18px;
+    font-size: 14px;
     line-height: 1.4;
     word-break: break-word;
 }
 .ac-bubble.user {
-    background: rgba(255,255,255,0.7);
+    background: rgba(255,255,255,0.6);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
     color: #000;
-    border: 1px solid rgba(0,0,0,0.06);
+    border: 1px solid rgba(255,255,255,0.5);
 }
 .ac-bubble.assistant {
     background: #1c1c1e;
     color: #fff;
 }
 
-/* ===== 行项导航 ===== */
-.ac-row-nav {
+/* ===== 账单行项（液态玻璃小条） ===== */
+.ac-bill-row-nav {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 8px 12px;
     margin: 2px 12px;
-    background: rgba(255,255,255,0.6);
+    background: rgba(255,255,255,0.55);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255,255,255,0.5);
     border-radius: 10px;
     cursor: pointer;
     font-size: 13px;
     color: #000;
+    max-width: 70%;
+    align-self: flex-start;
 }
-.ac-row-nav:active {
-    background: rgba(0,0,0,0.06);
-}
+.ac-bill-row-nav:active { background: rgba(255,255,255,0.8); }
 
-/* ===== 输入栏（在底部） ===== */
+/* ===== 输入栏 ===== */
 .ac-chat-input-bar {
     display: flex;
     align-items: center;
@@ -202,25 +172,26 @@
 .ac-chat-input {
     flex: 1;
     height: 36px;
-    background: rgba(255,255,255,0.5);
-    border: 1px solid rgba(0,0,0,0.1);
+    background: rgba(255,255,255,0.45);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.5);
     border-radius: 18px;
     padding: 0 14px;
     font-size: 15px;
     outline: none;
     color: #000;
 }
-.ac-chat-input::placeholder {
-    color: #c7c7cc;
-}
+.ac-chat-input::placeholder { color: #c7c7cc; }
 .ac-send-btn {
-    width: 36px;
-    height: 36px;
+    width: 36px; height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     flex-shrink: 0;
+    background: #1c1c1e;
+    border-radius: 50%;
 }
 
 /* ===== 账单详情页 ===== */
@@ -235,46 +206,15 @@
     align-items: center;
     justify-content: space-between;
     padding: 48px 16px 12px;
-    flex-shrink: 0;
 }
-.ac-bill-merchant {
-    text-align: center;
-    padding: 8px 0 4px;
-    font-size: 15px;
-    color: #8e8e93;
-}
-.ac-bill-amount {
-    text-align: center;
-    font-size: 36px;
-    font-weight: 700;
-    padding: 4px 0 16px;
-    color: #000;
-}
-.ac-bill-detail-list {
-    border-top: 8px solid #f2f2f7;
-    padding: 0 16px;
-}
+.ac-bill-merchant { text-align: center; padding: 8px 0 4px; font-size: 15px; color: #8e8e93; }
+.ac-bill-amount { text-align: center; font-size: 36px; font-weight: 700; padding: 4px 0 16px; color: #000; }
+.ac-bill-detail-list { border-top: 8px solid #f2f2f7; padding: 0 16px; }
 .ac-bill-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 14px 0;
-    border-bottom: 0.5px solid rgba(0,0,0,0.06);
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 0; border-bottom: 0.5px solid rgba(0,0,0,0.06);
     font-size: 14px;
 }
-.ac-bill-label {
-    color: #8e8e93;
-}
-.ac-bill-value {
-    color: #000;
-    text-align: right;
-    max-width: 60%;
-}
-
-/* ===== 暂无数据 ===== */
-.ac-empty {
-    text-align: center;
-    color: #8e8e93;
-    padding: 60px 20px;
-    font-size: 14px;
-}
+.ac-bill-label { color: #8e8e93; }
+.ac-bill-value { color: #000; text-align: right; max-width: 60%; }
+.ac-empty { text-align: center; color: #8e8e93; padding: 60px 20px; font-size: 14px; }
