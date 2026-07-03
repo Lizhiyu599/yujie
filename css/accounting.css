@@ -23,7 +23,7 @@
     border-bottom: 0.5px solid rgba(0,0,0,0.08);
 }
 .ac-nav-back {
-    color: #007AFF;
+    color: #000;
     font-size: 24px;
     cursor: pointer;
     width: 36px;
@@ -60,7 +60,7 @@
     transition: 0.2s;
 }
 .ac-tab.active {
-    color: #007AFF;
+    color: #000;
     font-weight: 600;
 }
 
@@ -91,7 +91,7 @@
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    background: #007AFF;
+    background: #1c1c1e;
     color: #fff;
     display: flex;
     align-items: center;
@@ -124,7 +124,15 @@
     font-size: 16px;
 }
 
-/* ===== 聊天窗口 ===== */
+/* ===== 聊天窗口容器 ===== */
+.ac-chat-shell {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ===== iMessage 聊天消息区 ===== */
 .ac-chat-messages {
     flex: 1;
     overflow-y: auto;
@@ -153,12 +161,15 @@
     word-break: break-word;
 }
 .ac-bubble.user {
-    background: #007AFF;
-    color: #fff;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    color: #000;
+    border: 1px solid rgba(0,0,0,0.06);
 }
 .ac-bubble.assistant {
-    background: #e9e9ef;
-    color: #000;
+    background: #1c1c1e;
+    color: #fff;
 }
 
 /* ===== 行项导航 ===== */
@@ -172,13 +183,13 @@
     border-radius: 10px;
     cursor: pointer;
     font-size: 13px;
-    color: #007AFF;
+    color: #000;
 }
 .ac-row-nav:active {
-    background: rgba(0,122,255,0.08);
+    background: rgba(0,0,0,0.06);
 }
 
-/* ===== 输入栏 ===== */
+/* ===== 输入栏（在底部） ===== */
 .ac-chat-input-bar {
     display: flex;
     align-items: center;
@@ -191,8 +202,8 @@
 .ac-chat-input {
     flex: 1;
     height: 36px;
-    background: #fff;
-    border: 1px solid rgba(0,0,0,0.12);
+    background: rgba(255,255,255,0.5);
+    border: 1px solid rgba(0,0,0,0.1);
     border-radius: 18px;
     padding: 0 14px;
     font-size: 15px;
@@ -210,7 +221,6 @@
     justify-content: center;
     cursor: pointer;
     flex-shrink: 0;
-    color: #007AFF;
 }
 
 /* ===== 账单详情页 ===== */
@@ -238,11 +248,6 @@
     font-size: 36px;
     font-weight: 700;
     padding: 4px 0 16px;
-}
-.ac-bill-amount.expense {
-    color: #000;
-}
-.ac-bill-amount.income {
     color: #000;
 }
 .ac-bill-detail-list {
