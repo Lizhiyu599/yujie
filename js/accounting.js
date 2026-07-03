@@ -149,16 +149,15 @@ function _acRenderChat() {
     }
     
     return ''
-        + '<div class="ac-chat-shell">'
-        + '<div class="ac-chat-messages" id="acChatMessages">' + msgsHTML + '</div>'
-        + '<div class="ac-chat-input-bar">'
-        + '<input type="text" class="ac-chat-input" id="acChatInput" placeholder="请输入花销收入…" onkeypress="if(event.key===\'Enter\')_acSendMsg()">'
-        + '<span class="ac-send-btn" onclick="_acSendMsg()">'
-        + '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>'
-        + '</span>'
-        + '</div>'
-        + '</div>';
-}
+    + '<div class="ac-chat-shell">'
+    + '<div class="ac-chat-messages" id="acChatMessages">' + msgsHTML + '</div>'
+    + '<div class="ac-chat-input-bar">'
+    + '<input type="text" class="ac-chat-input" id="acChatInput" placeholder="请输入花销收入…" onkeypress="if(event.key===\'Enter\')_acSendMsg()">'
+    + '<span class="ac-send-btn" onclick="_acSendMsg()" style="width:28px;height:28px;background:#1c1c1e;border-radius:50%;display:flex;align-items:center;justify-content:center;">'
+    + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>'
+    + '</span>'
+    + '</div>'
+    + '</div>';
 
 // ========== 发送消息 ==========
 function _acSendMsg() {
