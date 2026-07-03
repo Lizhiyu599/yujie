@@ -8,6 +8,10 @@ var _acContactId = null;
 var _acMessages = {};
 var _acBookType = localStorage.getItem('ac_book_type') || null;
 var _acBookCategories = JSON.parse(localStorage.getItem('ac_book_cats') || 'null');
+var _acPieTab = 'expense';
+var _acDetailTab = 'month';
+var _acDetailYear = new Date().getFullYear();
+var _acDetailMonth = new Date().getMonth() + 1;
 
 // ========== 打开/关闭 ==========
 function openAccounting() {
@@ -20,6 +24,7 @@ function openAccounting() {
     }
     _acTab = 'home';
     _acContactId = null;
+    _acPieTab = 'expense';
     _acRender();
     appWindow.style.display = 'flex';
 }
@@ -283,7 +288,6 @@ function _acOpenBill(contactId, msgIndex) {
         + '<div class="ac-bill-header">'
         + '<div class="ac-nav-back" onclick="_acRender()">‹</div>'
         + '<div style="font-size:17px;font-weight:600;color:#000;">账单详情</div>'
-        + '<div style="width:36px;"></div>'
         + '</div>'
         + '<div class="ac-bill-page">'
         + '<div class="ac-bill-merchant">' + note + '</div>'
@@ -407,42 +411,6 @@ function _acCloseCategoryPicker() {
     if (o) o.remove();
 }
 
-var _acPieTab = 'expense';
-
-function _acSwitchPie(type, el) {
-    _acPieTab = type;
-    var appWindow = document.getElementById('accountingAppWindow');
-    if (!appWindow) return;
-    
-    // 更新按钮高亮
-    var switches = document.querySelectorAll('.ac-pie-switch');
-    switches.forEach(function(s) { s.classList.remove('active'); });
-    if (el) el.classList.add('active');
-    
-    // 重新渲染饼图
-    var bills = _acGetAllBills();
-    var totalExpense = 0, totalIncome = 0;
-    bills.forEach(function(b) {
-        if (b.year === _acDetailYear && b.month === _acDetailMonth) {
-            if (b.isExpense) totalExpense += b.amount;
-            else totalIncome += b.amount;
-        }
-    });
-    
-    var pieValue, pieTotal;
-    if (type === 'expense') { pieValue = totalExpense; pieTotal = totalExpense + totalIncome; }
-    else if (type === 'income') { pieValue = totalIncome; pieTotal = totalExpense + totalIncome; }
-    else { pieValue = totalIncome - totalExpense; pieTotal = Math.max(totalExpense, totalIncome) * 2 || 1; }
-    
-    var pct = pieTotal > 0 ? Math.round((Math.abs(pieValue) / pieTotal) * 100) : 0;
-    var deg = pieTotal > 0 ? (Math.abs(pieValue) / pieTotal) * 360 : 0;
-    
-    var ring = document.querySelector('.ac-pie-ring');
-    var center = document.querySelector('.ac-pie-center');
-    if (ring) ring.style.setProperty('--pie-deg', deg + 'deg');
-    if (center) center.textContent = pct + '%';
-}
-
 function _acRenderBookOverview() {
     var bills = _acGetAllBills();
     var now = new Date();
@@ -471,11 +439,13 @@ function _acRenderBookOverview() {
         + '</div></div>';
 }
 
+// ========== 月度详情 ==========
 function _acOpenMonthDetail() {
     var appWindow = document.getElementById('accountingAppWindow');
     if (!appWindow) return;
     
     _acDetailTab = 'month';
+    _acPieTab = 'expense';
     var now = new Date();
     _acDetailYear = now.getFullYear();
     _acDetailMonth = now.getMonth() + 1;
@@ -483,11 +453,21 @@ function _acOpenMonthDetail() {
     _acRenderMonthDetail(appWindow);
 }
 
+function _acSwitchPie(type, el) {
+    _acPieTab = type;
+    var appWindow = document.getElementById('accountingAppWindow');
+    if (!appWindow) return;
+    
+    var switches = document.querySelectorAll('.ac-pie-switch');
+    switches.forEach(function(s) { s.classList.remove('active'); });
+    if (el) el.classList.add('active');
+    
+    _acRenderMonthDetail(appWindow);
+}
+
 function _acRenderMonthDetail(appWindow) {
-    var monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
     var title = _acDetailYear + '年' + _acDetailMonth + '月';
     
-    // 从聊天记录汇总账单
     var bills = _acGetAllBills();
     var monthBills = bills.filter(function(b) {
         return b.year === _acDetailYear && b.month === _acDetailMonth;
@@ -495,81 +475,100 @@ function _acRenderMonthDetail(appWindow) {
     
     var totalExpense = 0;
     var totalIncome = 0;
-    var categoryMap = {};
     monthBills.forEach(function(b) {
-        if (b.isExpense) {
-            totalExpense += b.amount;
-            categoryMap[b.category] = (categoryMap[b.category] || 0) + b.amount;
-        } else {
-            totalIncome += b.amount;
-        }
+        if (b.isExpense) totalExpense += b.amount;
+        else totalIncome += b.amount;
     });
     var balance = totalIncome - totalExpense;
     
-    // 分类列表
+    var pieValue, pieTotal;
+    if (_acPieTab === 'expense') {
+        pieValue = totalExpense; pieTotal = totalExpense + totalIncome || 1;
+    } else if (_acPieTab === 'income') {
+        pieValue = totalIncome; pieTotal = totalExpense + totalIncome || 1;
+    } else {
+        pieValue = balance; pieTotal = Math.max(Math.abs(totalExpense), Math.abs(totalIncome)) * 2 || 1;
+    }
+    var pct = Math.round((Math.abs(pieValue) / pieTotal) * 100);
+    var deg = (Math.abs(pieValue) / pieTotal) * 360;
+    
+    var categoryMap = {};
+    monthBills.forEach(function(b) {
+        if (_acPieTab === 'expense' && b.isExpense) {
+            categoryMap[b.category] = (categoryMap[b.category] || 0) + b.amount;
+        } else if (_acPieTab === 'income' && !b.isExpense) {
+            categoryMap[b.category] = (categoryMap[b.category] || 0) + b.amount;
+        } else if (_acPieTab === 'balance') {
+            var amt = b.isExpense ? -b.amount : b.amount;
+            categoryMap[b.category] = (categoryMap[b.category] || 0) + amt;
+        }
+    });
+    
     var categoryListHTML = '';
-    var categories = Object.keys(categoryMap).sort(function(a, b) { return categoryMap[b] - categoryMap[a]; });
-    var grandTotal = totalExpense + totalIncome || 1;
+    var categories = Object.keys(categoryMap).sort(function(a, b) { return Math.abs(categoryMap[b]) - Math.abs(categoryMap[a]); });
+    var grandTotal = Math.abs(pieValue) || 1;
     categories.forEach(function(cat) {
         var amt = categoryMap[cat];
-        var pct = ((amt / grandTotal) * 100).toFixed(1);
+        var catPct = ((Math.abs(amt) / grandTotal) * 100).toFixed(1);
+        var barWidth = Math.min(100, parseFloat(catPct));
         categoryListHTML += ''
-    + '<div class="ac-cat-row" onclick="_acOpenCategoryBills(\'' + cat + '\')">'
-    + '<div class="ac-cat-row-top">'
-    + '<div class="ac-cat-dot"></div>'
-    + '<div class="ac-cat-name">' + cat + '</div>'
-    + '<div class="ac-cat-right">'
-    + '<span class="ac-cat-pct">' + pct + '%</span>'
-    + '<span class="ac-cat-amt">¥' + amt.toFixed(2) + '</span>'
-    + '<span class="ac-cat-arrow">›</span>'
-    + '</div>'
-    + '</div>'
-    + '<div class="ac-cat-bar"><div class="ac-cat-bar-fill" style="width:' + Math.min(100, parseFloat(pct)) + '%;"></div><div class="ac-cat-bar-dot"></div></div>'
-    + '</div>';
+            + '<div class="ac-cat-row" onclick="_acOpenCategoryBills(\'' + cat + '\')">'
+            + '<div class="ac-cat-row-top">'
+            + '<div class="ac-cat-dot"></div>'
+            + '<div class="ac-cat-name">' + cat + '</div>'
+            + '<div class="ac-cat-right">'
+            + '<span class="ac-cat-pct">' + catPct + '%</span>'
+            + '<span class="ac-cat-amt">¥' + Math.abs(amt).toFixed(2) + '</span>'
+            + '<span class="ac-cat-arrow">›</span>'
+            + '</div>'
+            + '</div>'
+            + '<div class="ac-cat-bar"><div class="ac-cat-bar-fill" style="width:' + barWidth + '%;"></div><div class="ac-cat-bar-dot"></div></div>'
+            + '</div>';
     });
     
     if (!categoryListHTML) {
-        categoryListHTML = '<div class="ac-empty">暂无账单记录</div>';
+        var pieLabel = _acPieTab === 'expense' ? '支出' : (_acPieTab === 'income' ? '收入' : '结余');
+        categoryListHTML = '<div class="ac-empty">暂无' + pieLabel + '记录</div>';
     }
     
     appWindow.innerHTML = ''
-    + '<div class="accounting-app">'
-    + '<div class="ac-nav">'
-    + '<div class="ac-nav-back" onclick="_acRender()">‹</div>'
-    + '<div class="ac-nav-title" style="display:flex;align-items:center;gap:12px;">'
-    + '<span onclick="_acPrevMonth()" style="cursor:pointer;">‹</span>'
-    + '<span>' + title + '</span>'
-    + '<span onclick="_acNextMonth()" style="cursor:pointer;">›</span>'
-    + '</div>'
-    + '</div>'
-    + '<div class="ac-body">'
-    + '<div style="padding:12px 16px;">'
-    + '<div class="ac-segment" style="margin-bottom:14px;">'
-    + '<span class="ac-seg-btn ' + (_acDetailTab === 'week' ? 'active' : '') + '" onclick="_acSwitchDetailTab(\'week\')">周</span>'
-    + '<span class="ac-seg-btn ' + (_acDetailTab === 'month' ? 'active' : '') + '" onclick="_acSwitchDetailTab(\'month\')">月</span>'
-    + '<span class="ac-seg-btn ' + (_acDetailTab === 'year' ? 'active' : '') + '" onclick="_acSwitchDetailTab(\'year\')">年</span>'
-    + '</div>'
-    + '<div class="ac-summary-card">'
-    + '<div class="ac-summary-item"><div class="ac-summary-label">支出</div><div class="ac-summary-val expense">-¥' + totalExpense.toFixed(2) + '</div></div>'
-    + '<div class="ac-summary-item"><div class="ac-summary-label">收入</div><div class="ac-summary-val income">¥' + totalIncome.toFixed(2) + '</div></div>'
-    + '<div class="ac-summary-item"><div class="ac-summary-label">结余</div><div class="ac-summary-val">¥' + balance.toFixed(2) + '</div></div>'
-    + '</div>'
-    + '<div style="display:flex;align-items:center;gap:16px;margin:16px 0;">'
-    + '<div class="ac-pie-chart">'
-    + '<div class="ac-pie-ring" style="--pie-deg:' + (grandTotal > 0 ? (totalExpense / grandTotal) * 360 : 0) + 'deg;"></div>'
-    + '<div class="ac-pie-center">' + (grandTotal > 0 ? Math.round((totalExpense / grandTotal) * 100) : 0) + '%</div>'
-    + '</div>'
-    + '<div style="display:flex;flex-direction:column;gap:8px;">'
-    + '<span class="ac-pie-switch active" onclick="_acSwitchPie(\'expense\', this)">支出</span>'
-    + '<span class="ac-pie-switch" onclick="_acSwitchPie(\'income\', this)">收入</span>'
-    + '<span class="ac-pie-switch" onclick="_acSwitchPie(\'balance\', this)">结余</span>'
-    + '</div>'
-    + '</div>'
-    + '<div style="font-size:14px;font-weight:600;color:#000;margin:16px 0 8px;">分类明细</div>'
-    + categoryListHTML
-    + '</div>'
-    + '</div>'
-    + '</div>';
+        + '<div class="accounting-app">'
+        + '<div class="ac-nav">'
+        + '<div class="ac-nav-back" onclick="_acRender()">‹</div>'
+        + '<div class="ac-nav-title" style="display:flex;align-items:center;gap:12px;">'
+        + '<span onclick="_acPrevMonth()" style="cursor:pointer;">‹</span>'
+        + '<span>' + title + '</span>'
+        + '<span onclick="_acNextMonth()" style="cursor:pointer;">›</span>'
+        + '</div>'
+        + '</div>'
+        + '<div class="ac-body">'
+        + '<div style="padding:12px 16px;">'
+        + '<div class="ac-segment" style="margin-bottom:14px;">'
+        + '<span class="ac-seg-btn ' + (_acDetailTab === 'week' ? 'active' : '') + '" onclick="_acSwitchDetailTab(\'week\')">周</span>'
+        + '<span class="ac-seg-btn ' + (_acDetailTab === 'month' ? 'active' : '') + '" onclick="_acSwitchDetailTab(\'month\')">月</span>'
+        + '<span class="ac-seg-btn ' + (_acDetailTab === 'year' ? 'active' : '') + '" onclick="_acSwitchDetailTab(\'year\')">年</span>'
+        + '</div>'
+        + '<div class="ac-summary-card">'
+        + '<div class="ac-summary-item"><div class="ac-summary-label">支出</div><div class="ac-summary-val expense">-¥' + totalExpense.toFixed(2) + '</div></div>'
+        + '<div class="ac-summary-item"><div class="ac-summary-label">收入</div><div class="ac-summary-val income">¥' + totalIncome.toFixed(2) + '</div></div>'
+        + '<div class="ac-summary-item"><div class="ac-summary-label">结余</div><div class="ac-summary-val">¥' + balance.toFixed(2) + '</div></div>'
+        + '</div>'
+        + '<div style="display:flex;align-items:center;gap:16px;margin:16px 0;">'
+        + '<div class="ac-pie-chart">'
+        + '<div class="ac-pie-ring" style="--pie-deg:' + deg + 'deg;"></div>'
+        + '<div class="ac-pie-center">' + pct + '%</div>'
+        + '</div>'
+        + '<div style="display:flex;flex-direction:column;gap:8px;">'
+        + '<span class="ac-pie-switch ' + (_acPieTab === 'expense' ? 'active' : '') + '" onclick="_acSwitchPie(\'expense\', this)">支出</span>'
+        + '<span class="ac-pie-switch ' + (_acPieTab === 'income' ? 'active' : '') + '" onclick="_acSwitchPie(\'income\', this)">收入</span>'
+        + '<span class="ac-pie-switch ' + (_acPieTab === 'balance' ? 'active' : '') + '" onclick="_acSwitchPie(\'balance\', this)">结余</span>'
+        + '</div>'
+        + '</div>'
+        + '<div style="font-size:14px;font-weight:600;color:#000;margin:16px 0 8px;">分类明细</div>'
+        + categoryListHTML
+        + '</div>'
+        + '</div>'
+        + '</div>';
 }
 
 function _acSwitchDetailTab(tab) {
@@ -643,7 +642,7 @@ function _acOpenCategoryBills(category) {
             listHTML += ''
                 + '<div class="ac-bill-row">'
                 + '<div><div style="font-size:14px;color:#000;">' + b.text.replace(b.category + '/', '').replace(/[\-\+]?\d+\.?\d*¥?/g, '').replace(/[¥\-\+]/g, '').trim() + '</div><div style="font-size:11px;color:#8e8e93;">' + dateStr + '</div></div>'
-                + '<div style="font-size:15px;font-weight:600;color:' + (b.isExpense ? '#000' : '#000') + ';">' + (b.isExpense ? '-' : '+') + '¥' + b.amount.toFixed(2) + '</div>'
+                + '<div style="font-size:15px;font-weight:600;color:#000;">' + (b.isExpense ? '-' : '+') + '¥' + b.amount.toFixed(2) + '</div>'
                 + '</div>';
         });
     }
@@ -663,4 +662,4 @@ function _acOpenCategoryBills(category) {
 function _acBackToDetail() {
     var appWindow = document.getElementById('accountingAppWindow');
     if (appWindow) _acRenderMonthDetail(appWindow);
-        }
+}
