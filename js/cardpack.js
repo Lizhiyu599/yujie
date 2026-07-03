@@ -112,7 +112,6 @@ function _cpConfirmCreate() {
 // ========== 赠送卡 ==========
 function _cpSendCard(index) {
     var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
-    contacts = contacts.filter(function(c) { return c.id !== 'c1'; });
     if (contacts.length === 0) { showToast('暂无联系人'); return; }
 
     var overlay = document.createElement('div');
