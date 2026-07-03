@@ -304,6 +304,122 @@ function _acOpenBill(contactId, msgIndex) {
 }
 
 // ========== 记账标签页 ==========
+var _acBookType = null;
+var _acBookCategories = null;
+
 function _acRenderBook() {
-    return '<div class="ac-body"><div class="ac-empty">记账功能开发中...</div></div>';
-        }
+    if (!_acBookType) {
+        return _acRenderBookSelect();
+    }
+    return _acRenderBookOverview();
+}
+
+function _acRenderBookSelect() {
+    return ''
+        + '<div class="ac-body">'
+        + '<div style="padding:20px 16px;">'
+        + '<div style="font-size:17px;font-weight:700;color:#000;margin-bottom:16px;">选择账本</div>'
+        + '<div class="ac-book-card" onclick="_acPickBook(\'daily\')">'
+        + '<div class="ac-book-card-header">'
+        + '<span class="ac-book-card-title">日常账本</span>'
+        + '<span style="font-size:11px;color:#fff;background:#000;padding:2px 8px;border-radius:10px;">推荐</span>'
+        + '</div>'
+        + '<div style="font-size:12px;color:#8e8e93;margin-top:4px;">分类 ›</div>'
+        + '</div>'
+        + '<div class="ac-book-card" onclick="_acPickBook(\'family\')" style="margin-top:10px;">'
+        + '<div class="ac-book-card-header">'
+        + '<span class="ac-book-card-title">家庭账本</span>'
+        + '</div>'
+        + '<div style="font-size:12px;color:#8e8e93;margin-top:4px;">分类 ›</div>'
+        + '</div>'
+        + '</div>'
+        + '</div>';
+}
+
+function _acPickBook(type) {
+    _acBookType = type;
+    _acShowCategoryPicker();
+}
+
+function _acShowCategoryPicker() {
+    var isDaily = _acBookType === 'daily';
+    var expenseCategories = isDaily 
+        ? ['餐饮','购物','交通','租房','娱乐','医疗','学习','办公','其他支出']
+        : ['餐饮','购物','交通','居家','娱乐','医疗','学习','育儿','人情往来','其他支出'];
+    var incomeCategories = ['职业收入','经营收入','保险理财','资金往来','二手买卖','生活费','投股','其他收入'];
+    
+    var overlay = document.createElement('div');
+    overlay.className = 'sheet-mask show';
+    overlay.id = 'acCategoryPicker';
+    
+    var expenseHTML = '';
+    for (var i = 0; i < expenseCategories.length; i++) {
+        expenseHTML += '<div class="ac-cat-item" onclick="_acToggleCat(this)">' + expenseCategories[i] + '</div>';
+    }
+    var incomeHTML = '';
+    for (var j = 0; j < incomeCategories.length; j++) {
+        incomeHTML += '<div class="ac-cat-item" onclick="_acToggleCat(this)">' + incomeCategories[j] + '</div>';
+    }
+    
+    overlay.innerHTML = ''
+        + '<div class="half-sheet" onclick="event.stopPropagation()">'
+        + '<div class="sheet-handle"><div class="handle-bar"></div></div>'
+        + '<div class="sheet-scroll">'
+        + '<div style="font-size:16px;font-weight:600;color:#000;text-align:center;padding:8px 0 12px;">日常生活</div>'
+        + '<div class="ac-segment">'
+        + '<span class="ac-seg-btn active" id="acSegExpense" onclick="_acSwitchSeg(\'expense\')">支出</span>'
+        + '<span class="ac-seg-btn" id="acSegIncome" onclick="_acSwitchSeg(\'income\')">收入</span>'
+        + '</div>'
+        + '<div class="ac-cat-grid" id="acCatExpense">' + expenseHTML + '</div>'
+        + '<div class="ac-cat-grid" id="acCatIncome" style="display:none;">' + incomeHTML + '</div>'
+        + '<button class="black-btn" onclick="_acConfirmCategory()" style="margin-top:16px;">确定使用</button>'
+        + '</div>'
+        + '</div>';
+    
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) _acCloseCategoryPicker(); };
+    
+    var handle = overlay.querySelector('.sheet-handle');
+    var startY = 0;
+    handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
+    handle.addEventListener('touchmove', function(e) { if (e.touches[0].clientY - startY > 60) _acCloseCategoryPicker(); });
+}
+
+function _acSwitchSeg(type) {
+    document.getElementById('acSegExpense').classList.toggle('active', type === 'expense');
+    document.getElementById('acSegIncome').classList.toggle('active', type === 'income');
+    document.getElementById('acCatExpense').style.display = type === 'expense' ? 'grid' : 'none';
+    document.getElementById('acCatIncome').style.display = type === 'income' ? 'grid' : 'none';
+}
+
+function _acToggleCat(el) {
+    el.classList.toggle('selected');
+}
+
+function _acConfirmCategory() {
+    var selected = document.querySelectorAll('.ac-cat-item.selected');
+    var cats = [];
+    selected.forEach(function(el) { cats.push(el.textContent); });
+    _acBookCategories = cats;
+    _acCloseCategoryPicker();
+    _acRender();
+    showToast('账本已设置');
+}
+
+function _acCloseCategoryPicker() {
+    var o = document.getElementById('acCategoryPicker');
+    if (o) o.remove();
+}
+
+function _acRenderBookOverview() {
+    return '<div class="ac-body"><div style="padding:16px;">'
+        + '<div class="ac-overview-card">'
+        + '<div style="font-size:13px;color:#8e8e93;">2026年6月</div>'
+        + '<div style="display:flex;justify-content:space-between;margin-top:12px;">'
+        + '<div><div style="font-size:11px;color:#8e8e93;">月支出</div><div style="font-size:24px;font-weight:700;color:#000;">¥0</div></div>'
+        + '<div><div style="font-size:11px;color:#8e8e93;">月收入</div><div style="font-size:24px;font-weight:700;color:#000;">¥0</div></div>'
+        + '<div><div style="font-size:11px;color:#8e8e93;">月结余</div><div style="font-size:24px;font-weight:700;color:#000;">¥0</div></div>'
+        + '</div>'
+        + '</div>'
+        + '</div></div>';
+}
