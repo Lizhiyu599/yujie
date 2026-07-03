@@ -143,7 +143,7 @@ function _acRenderChat() {
             } else if (m.role === 'assistant') {
                 msgsHTML += '<div class="ac-msg-row assistant"><div class="ac-bubble assistant">' + m.text + '</div></div>';
             } else if (m.role === 'bill-link') {
-                msgsHTML += '<div class="ac-row-nav" onclick="_acOpenBill(\'' + _acContactId + '\', ' + m.index + ')">' + m.text + ' ›</div>';
+                msgsHTML += '<div class="ac-bill-row-nav" onclick="_acOpenBill(\'' + _acContactId + '\', ' + m.index + ')">' + m.text + ' ›</div>';
             }
         });
     }
@@ -187,7 +187,7 @@ function _acRefreshChat() {
         } else if (m.role === 'assistant') {
             html += '<div class="ac-msg-row assistant"><div class="ac-bubble assistant">' + m.text + '</div></div>';
         } else if (m.role === 'bill-link') {
-            html += '<div class="ac-row-nav" onclick="_acOpenBill(\'' + _acContactId + '\', ' + m.index + ')">' + m.text + ' ›</div>';
+            html += '<div class="ac-bill-row-nav" onclick="_acOpenBill(\'' + _acContactId + '\', ' + m.index + ')">' + m.text + ' ›</div>';
         }
     });
     container.innerHTML = html || '<div style="text-align:center;color:#c7c7cc;font-size:13px;padding-top:20px;">开始记账吧</div>';
