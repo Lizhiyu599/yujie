@@ -18,6 +18,8 @@ function openAccounting() {
     }
     _acTab = 'home';
     _acContactId = null;
+    _acBookType = null;
+    _acBookCategories = null;
     _acRender();
     appWindow.style.display = 'flex';
 }
