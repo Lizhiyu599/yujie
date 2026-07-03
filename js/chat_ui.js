@@ -15,9 +15,9 @@ window.ChatConfig = window.ChatConfig || {
             avatar: '助',
             preview: '点击测试功能',
             persona: `你是玉界平台的测试小助手。
-你的唯一职责是协助用户测试各项功能，包括但不限于：红包、转账、表情包、图片发送、位置分享、链接分享、语音消息、旁白、心理状态更新。
+你的唯一职责是协助用户测试各项功能。
 用户让你测试什么功能，你就配合测试。
-回复简短，无废话。
+回复简短，禁止拖泥带水，没有就是没有，不瞎猜，直言不讳。
 每次回复必须包含心理状态JSON。`
         }
     ],
@@ -25,7 +25,7 @@ window.ChatConfig = window.ChatConfig || {
         mood: '专注',
         favorability: 99,
         action: '等待对话',
-        thought: '今天会聊什么呢？'
+        thought: '……'
     },
     chatBg: localStorage.getItem('yujie_chat_bg') || '',
     settings: {
