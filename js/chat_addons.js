@@ -813,6 +813,13 @@ function sendBotPaymentCard(type, amount, note) {
     }
     row.appendChild(avatar); row.appendChild(card);
     document.getElementById('chatMessages').appendChild(row);
+
+    var nRow = document.createElement('div');
+nRow.className = 'bubble-narration';
+nRow.textContent = '（' + type + amount.toFixed(2) + '元）';
+nRow.style.display = 'none';
+document.getElementById('chatMessages').appendChild(nRow);
+    
     saveChatHistory(window.ChatState.currentContactId);
 }
 
