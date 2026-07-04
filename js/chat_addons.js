@@ -823,6 +823,40 @@ document.getElementById('chatMessages').appendChild(nRow);
     saveChatHistory(window.ChatState.currentContactId);
 }
 
+// ========== 角色发送黑卡 ==========
+function sendBotBlackCard(amount) {
+    var msgId = 'blackcard_bot_' + Date.now();
+    setPaymentState(msgId, 'pending');
+    var row = document.createElement('div');
+    row.className = 'bubble-row assistant';
+    var avatar = document.createElement('div');
+    avatar.className = 'bubble-avatar bot-avatar';
+    avatar.textContent = getContactById(window.ChatState.currentContactId)?.avatar || 'AI';
+    var card = document.createElement('div');
+    card.className = 'payment-card';
+    card.setAttribute('data-msg-id', msgId);
+    card.setAttribute('data-type', '黑卡');
+    card.setAttribute('data-amount', amount);
+    card.style.cssText = 'background:linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);border-radius:16px;padding:20px;width:220px;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,0.2);cursor:pointer;';
+    card.onclick = function() { openPaymentModal(msgId); };
+    card.innerHTML = ''
+        + '<div style="font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:2px;margin-bottom:16px;">BLACK CARD</div>'
+        + '<div style="font-size:28px;font-weight:700;margin-bottom:4px;">¥' + amount.toFixed(2) + '</div>'
+        + '<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:12px;">可用额度</div>'
+        + '<div style="font-size:12px;color:rgba(255,255,255,0.5);">角色赠送</div>';
+    row.appendChild(avatar);
+    row.appendChild(card);
+    document.getElementById('chatMessages').appendChild(row);
+
+    var nRow = document.createElement('div');
+    nRow.className = 'bubble-narration';
+    nRow.textContent = '（赠送了一张黑卡，额度¥' + amount.toFixed(2) + '）';
+    nRow.style.display = 'none';
+    document.getElementById('chatMessages').appendChild(nRow);
+
+    saveChatHistory(window.ChatState.currentContactId);
+}
+
 // ========== 链接 ==========
 function openFileSend() {
     toggleAddPanel();
