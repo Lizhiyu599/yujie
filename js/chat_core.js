@@ -280,7 +280,18 @@ if (myCpNotices.length > 0) {
         { role: 'user', content: userMessage }
     ];
 
-    window.ChatState.isAITyping = false;
+    window.ChatState.isAITyping = true;
+    const titleEl = document.getElementById('chatTitle');
+    if (titleEl) titleEl.innerHTML = '<span class="nav-typing">输入中...</span>';
+
+    try {
+        const reply = await callChatAPI(allMessages);
+        processAIReply(reply, contactName, contactId);
+    } catch (error) {
+        appendMessage('assistant', '抱歉，消息发送失败：' + error.message);
+        if (titleEl) titleEl.textContent = contactName;
+        window.ChatState.isAITyping = false;
+    }
 }
 
 // ========== 接收/退还红包转账（只处理卡片，返回 true/false） ==========
