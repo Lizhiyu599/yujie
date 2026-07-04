@@ -850,11 +850,11 @@ function getRecentHistory(contactId, maxCount) {
             result.push({ role: 'user', content: '（' + node.textContent + '）' });
             continue;
         }
-        const bubble = node.querySelector('.bubble') || node.querySelector('.offline-message');
+        const bubble = row.querySelector('.bubble') || row.querySelector('.offline-message');
         if (!bubble) continue;
-        const role = node.classList.contains('user') ? 'user' : 'assistant';
-        result.push({ role: role, content: bubble.textContent });
-    }
+        const role = row.classList.contains('user') ? 'user' : 'assistant';
+        const content = bubble.getAttribute('data-history-text') || bubble.textContent;
+        result.push({ role: role, content: content });
 
     if (result.length > maxCount * 2) {
         result.splice(0, result.length - maxCount * 2);
