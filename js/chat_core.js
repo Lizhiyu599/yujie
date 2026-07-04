@@ -488,27 +488,29 @@ if (acceptedAmount) {
     }
 
     // 红包和转账统一处理，只扫一遍
-var paymentRegex = /[\(\（]([^\)\）]*?)(红包|发红包|给红包|转账)[^\)\）]*?(\d+\.?\d*)\s*元?[^\)\）]*[\)\）]/g;
+var paymentRegex = /[\(\（]([^\)\）]*?)(红包|发红包|给红包|转账|黑卡|赠送.*黑卡)[^\)\）]*?(\d+\.?\d*)\s*元?[^\)\）]*[\)\）]/g;
 var match;
 while ((match = paymentRegex.exec(cleanContent)) !== null) {
     var type = match[2];
     var amount = parseFloat(match[3]);
     
-    if (type.includes('转账')) {
+    if (type.indexOf('转账') >= 0) {
         if (amount >= 0.01) {
             var noteMatch = match[1].match(/备注[：:]\s*([^\)\）]+)/);
             var note = noteMatch ? noteMatch[1].trim() : '';
             sendBotPaymentCard('转账', amount, note);
         }
+    } else if (type.indexOf('黑卡') >= 0 || type.indexOf('赠送') >= 0) {
+        if (amount >= 0.01) {
+            sendBotBlackCard(amount);
+        }
     } else {
-        // 红包
         amount = Math.max(0.01, Math.min(amount, 200));
         if (amount >= 0.01) {
             sendBotPaymentCard('红包', amount, '');
         }
     }
 }
-// 处理完后一次性清除所有支付旁白
 cleanContent = cleanContent.replace(paymentRegex, '');
     
     // ===== 检测角色旁白发语音 =====
