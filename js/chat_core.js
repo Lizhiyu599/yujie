@@ -484,11 +484,11 @@ if (redPacketMatch) {
 }
 
     // ===== 检测角色旁白发转账 → 角色侧卡片 =====
-var transferMatch = cleanContent.match(/[\(\（]([^\)\）]*?)(\d+\.?\d*)\s*元?[^\)\）]*[\)\）]/);
+var transferMatch = cleanContent.match(/[\(\（]([^\)\）]*转账[^\)\）]*?(\d+\.?\d*)\s*元?[^\)\）]*)[\)\）]/);
 if (transferMatch) {
     var transferAmount = parseFloat(transferMatch[2]);
-    if (transferAmount >= 0.01 && cleanContent.indexOf('转账') >= 0) {
-        var noteMatch = cleanContent.match(/转账[^\)\）]*备注[：:]\s*([^\)\）]+)/);
+    if (transferAmount >= 0.01) {
+        var noteMatch = transferMatch[1].match(/备注[：:]\s*([^\)\）]+)/);
         var note = noteMatch ? noteMatch[1].trim() : '';
         sendBotPaymentCard('转账', transferAmount, note);
         cleanContent = cleanContent.replace(transferMatch[0], '');
