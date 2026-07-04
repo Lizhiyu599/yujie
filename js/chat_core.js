@@ -401,24 +401,23 @@ function processAIReply(rawContent, contactName, contactId) {
     const titleEl = document.getElementById('chatTitle');
 
     // 解析红包转账系统指令
-    var paymentMatch = rawContent.match(/@@(ACCEPT|REFUND),([\d.]+),(\S+)@@/);
-    if (paymentMatch) {
-        var paymentAction = paymentMatch[1];
-        var paymentAmount = parseFloat(paymentMatch[2]);
-        var paymentType = paymentMatch[3];
-        if (paymentAction === 'ACCEPT' && paymentAmount > 0) {
-    var acceptedAmt = acceptLatestPayment();
-    if (acceptedAmt) {
-        addReceivedCard('assistant', paymentType, acceptedAmt);
-        appendMessage('narration', contactName + '已接收' + paymentType + '，金额' + acceptedAmt + '元');
-    } else {
-        appendMessage('narration', contactName + '已接收，金额' + paymentAmount + '元');
-            }
-        } else if (paymentAction === 'REFUND' && paymentAmount > 0) {
-            refundLatestPayment();
+var paymentMatch = rawContent.match(/@@(ACCEPT|REFUND),([\d.]+),(\S+)@@/);
+if (paymentMatch) {
+    var paymentAction = paymentMatch[1];
+    var paymentAmount = parseFloat(paymentMatch[2]);
+    var paymentType = paymentMatch[3];
+    if (paymentAction === 'ACCEPT' && paymentAmount > 0) {
+        var acceptedAmt = acceptLatestPayment();
+        if (acceptedAmt) {
+            appendMessage('narration', contactName + '已接收' + paymentType + '，金额' + acceptedAmt + '元');
+        } else {
+            appendMessage('narration', contactName + '已接收，金额' + paymentAmount + '元');
         }
-        rawContent = rawContent.replace(paymentMatch[0], '');
+    } else if (paymentAction === 'REFUND' && paymentAmount > 0) {
+        refundLatestPayment();
     }
+    rawContent = rawContent.replace(paymentMatch[0], '');
+}
 
     let jsonMatch = rawContent.match(/\{[^{}]*"mood"[^{}]*\}/);
     if (!jsonMatch) {
