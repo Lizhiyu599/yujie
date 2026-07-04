@@ -838,12 +838,12 @@ function sendBotBlackCard(amount) {
     card.setAttribute('data-type', '黑卡');
     card.setAttribute('data-amount', amount);
     card.style.cssText = 'background:linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);border-radius:16px;padding:20px;width:220px;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,0.2);cursor:pointer;';
-    card.onclick = function() { openPaymentModal(msgId); };
+    card.style.cssText = 'background:linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);border-radius:14px;padding:14px;width:180px;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,0.2);cursor:pointer;';
     card.innerHTML = ''
-        + '<div style="font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:2px;margin-bottom:16px;">BLACK CARD</div>'
-        + '<div style="font-size:28px;font-weight:700;margin-bottom:4px;">¥' + amount.toFixed(2) + '</div>'
-        + '<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:12px;">可用额度</div>'
-        + '<div style="font-size:12px;color:rgba(255,255,255,0.5);">角色赠送</div>';
+    + '<div style="font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:2px;margin-bottom:12px;">BLACK CARD</div>'
+    + '<div style="font-size:22px;font-weight:700;margin-bottom:4px;">¥' + amount.toFixed(2) + '</div>'
+    + '<div style="font-size:10px;color:rgba(255,255,255,0.5);margin-bottom:10px;">可用额度</div>'
+    + '<div style="font-size:11px;color:rgba(255,255,255,0.5);">角色赠送</div>';
     row.appendChild(avatar);
     row.appendChild(card);
     document.getElementById('chatMessages').appendChild(row);
