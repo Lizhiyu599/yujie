@@ -777,7 +777,17 @@ if (messagesEl2) {
     });
 }
     
-    const userMessage = stickerNote ? stickerNote : '（用户暂时没有说话，你可以先开口）';
+    var cpNotices2 = JSON.parse(localStorage.getItem('cp_pending_notices') || '[]');
+    var myCpNotices2 = cpNotices2.filter(function(n) { return n.contactId === contactId; });
+    var cpNote = '';
+    if (myCpNotices2.length > 0) {
+        var latest2 = myCpNotices2[myCpNotices2.length - 1];
+        cpNote = '（系统：用户刚刚送了一张黑卡，金额¥' + latest2.balance.toFixed(2) + '）';
+        cpNotices2 = cpNotices2.filter(function(n) { return n.contactId !== contactId; });
+        localStorage.setItem('cp_pending_notices', JSON.stringify(cpNotices2));
+    }
+
+    const userMessage = cpNote ? cpNote : (stickerNote ? stickerNote : '（用户暂时没有说话，你可以先开口）');
     
     callChatAPI([
         { role: 'system', content: systemPrompt },
