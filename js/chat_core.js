@@ -834,39 +834,27 @@ function getRecentHistory(contactId, maxCount) {
     if (!messages) return [];
 
     const result = [];
-    const rows = messages.querySelectorAll('.bubble-row');
-    const total = rows.length;
-    const start = Math.max(0, total - maxCount);
+    const nodes = messages.querySelectorAll('.bubble-row, .bubble-narration');
+    const total = nodes.length;
+    const start = Math.max(0, total - maxCount * 2);
 
     for (let i = start; i < total; i++) {
-        const row = rows[i];
-        const bubble = row.querySelector('.bubble') || row.querySelector('.offline-message');
-        if (!bubble) continue;
-        const role = row.classList.contains('user') ? 'user' : 'assistant';
-        result.push({ role: role, content: bubble.textContent });
-    }
-
-    var otherKey = (window.ChatState && window.ChatState.isOfflineMode ? 'chat_history_' : 'chat_history_offline_') + contactId;
-    var otherSaved = localStorage.getItem(otherKey);
-    if (otherSaved) {
-        var tempDiv = document.createElement('div');
-        tempDiv.innerHTML = otherSaved;
-        var otherRows = tempDiv.querySelectorAll('.bubble-row, [data-role]');
-        for (var j = 0; j < otherRows.length; j++) {
-            var otherRow = otherRows[j];
-            var otherBubble = otherRow.querySelector('.bubble');
-            if (!otherBubble) continue;
-            var otherRole = otherRow.classList.contains('user') || otherRow.getAttribute('data-role') === 'user' ? 'user' : 'assistant';
-            result.push({ role: otherRole, content: otherBubble.textContent });
+        const node = nodes[i];
+        if (node.classList.contains('bubble-narration')) {
+            result.push({ role: 'user', content: '（' + node.textContent + '）' });
+            continue;
         }
+        const bubble = node.querySelector('.bubble') || node.querySelector('.offline-message');
+        if (!bubble) continue;
+        const role = node.classList.contains('user') ? 'user' : 'assistant';
+        result.push({ role: role, content: bubble.textContent });
     }
 
     if (result.length > maxCount * 2) {
         result.splice(0, result.length - maxCount * 2);
     }
-
     return result;
-} 
+}
 
 function saveChatHistory(contactId) {
     var messages = document.getElementById('chatMessages');
