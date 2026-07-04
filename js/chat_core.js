@@ -868,7 +868,12 @@ function saveChatHistory(contactId) {
     if (!messages) return;
     var html = messages.innerHTML;
     if (html.length > 300000) {
-        html = html.slice(html.length - 300000);
+        var temp = document.createElement('div');
+        temp.innerHTML = html;
+        while (temp.innerHTML.length > 300000 && temp.firstChild) {
+            temp.removeChild(temp.firstChild);
+        }
+        html = temp.innerHTML;
     }
     try {
         var isOffline = (window.ChatState && window.ChatState.isOfflineMode) ? true : false;
@@ -890,6 +895,7 @@ function saveChatHistory(contactId) {
         }
     }
 }
+
 function loadChatHistory(contactId) {
     var messages = document.getElementById('chatMessages');
     if (!messages) return;
