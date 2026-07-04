@@ -298,8 +298,9 @@ function renderWorldbook() {
                 <input type="text" class="wb-search-input" id="wbSearchInput" placeholder="搜索预设..." value="${wbSearchQuery}" 
                        oninput="wbSearchQuery = this.value; renderWorldbook();">
                 ${cardsHTML}
-                <button class="wb-add-btn" onclick="addNewPreset()">+ 新建预设</button>
-            </div>
+                </div>
+
+            <button class="wb-add-btn" onclick="addNewPreset()">+</button>
 
             <div class="wb-bottom-bar">
                 <span class="wb-tab ${wbCurrentFilter === 'all' ? 'active' : ''}" onclick="filterPresets('all')">全部</span>
