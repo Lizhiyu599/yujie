@@ -509,25 +509,23 @@ function openPaymentModal(msgId) {
     var amount = card.getAttribute('data-amount');
     var note = card.getAttribute('data-note');
     var isRedPacket = type === '红包';
+    var isBlackCard = type === '黑卡';
 
     var overlay = document.createElement('div');
     overlay.className = 'payment-open-overlay';
     overlay.id = 'paymentOpenOverlay';
-    overlay.innerHTML = `
-        <div class="payment-open-modal">
-            <div class="payment-open-icon">
-                <span class="payment-open-dollar">$</span>
-            </div>
-            <div class="payment-open-type">${isRedPacket ? '红包' : '转账'}</div>
-            ${note ? '<div class="payment-open-note">' + note + '</div>' : ''}
-            <div class="payment-open-amount" id="paymentOpenAmount">${isRedPacket ? '?' : '$' + amount}</div>
-            <div class="payment-open-hint">${isRedPacket ? '点击拆开' : '点击接收'}</div>
-            <div class="payment-open-buttons">
-                <button class="payment-open-accept" id="paymentOpenAccept">${isRedPacket ? '拆' : '接收'}</button>
-                ${!isRedPacket ? '<button class="payment-open-refund" id="paymentOpenRefund">退还</button>' : ''}
-            </div>
-        </div>
-    `;
+    overlay.innerHTML = ''
+        + '<div class="payment-open-modal">'
+        + '<div class="payment-open-icon"><span class="payment-open-dollar">$</span></div>'
+        + '<div class="payment-open-type">' + (isBlackCard ? '黑卡' : (isRedPacket ? '红包' : '转账')) + '</div>'
+        + (note ? '<div class="payment-open-note">' + note + '</div>' : '')
+        + '<div class="payment-open-amount" id="paymentOpenAmount">' + (isRedPacket ? '?' : '$' + amount) + '</div>'
+        + '<div class="payment-open-hint">' + (isRedPacket ? '点击拆开' : '点击接收') + '</div>'
+        + '<div class="payment-open-buttons">'
+        + '<button class="payment-open-accept" id="paymentOpenAccept">' + (isRedPacket ? '拆' : '接收') + '</button>'
+        + (!isRedPacket && !isBlackCard ? '<button class="payment-open-refund" id="paymentOpenRefund">退还</button>' : '')
+        + '</div>'
+        + '</div>';
     document.body.appendChild(overlay);
 
     var acceptBtn = document.getElementById('paymentOpenAccept');
@@ -537,6 +535,17 @@ function openPaymentModal(msgId) {
             if (isRedPacket) {
                 var amountEl = document.getElementById('paymentOpenAmount');
                 if (amountEl) amountEl.textContent = '$' + amount;
+            } else if (isBlackCard) {
+                var cpCards = JSON.parse(localStorage.getItem('cardpack_cards') || '[]');
+                cpCards.unshift({
+                    id: 'card_' + Date.now(),
+                    balance: parseFloat(amount),
+                    from: getContactById(window.ChatState.currentContactId)?.name || '角色',
+                    fromName: getContactById(window.ChatState.currentContactId)?.name || '角色',
+                    toName: null,
+                    toId: null
+                });
+                localStorage.setItem('cardpack_cards', JSON.stringify(cpCards));
             }
             updatePaymentCardUI(msgId, 'accepted');
             overlay.remove();
