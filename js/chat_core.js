@@ -407,9 +407,12 @@ function processAIReply(rawContent, contactName, contactId) {
         var paymentAmount = parseFloat(paymentMatch[2]);
         var paymentType = paymentMatch[3];
         if (paymentAction === 'ACCEPT' && paymentAmount > 0) {
-            var acceptedAmt = acceptLatestPayment();
-            if (!acceptedAmt) {
-                appendMessage('narration', contactName + '已接收，金额' + paymentAmount + '元');
+    var acceptedAmt = acceptLatestPayment();
+    if (acceptedAmt) {
+        addReceivedCard('assistant', paymentType, acceptedAmt);
+        appendMessage('narration', contactName + '已接收' + paymentType + '，金额' + acceptedAmt + '元');
+    } else {
+        appendMessage('narration', contactName + '已接收，金额' + paymentAmount + '元');
             }
         } else if (paymentAction === 'REFUND' && paymentAmount > 0) {
             refundLatestPayment();
