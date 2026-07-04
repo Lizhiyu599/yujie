@@ -90,9 +90,13 @@ if (contact && contact.maskId) {
 
     const narrationEnabled = ChatConfig?.settings?.onlineNarration !== false;
     if (narrationEnabled) {
+    if (window.ChatState && window.ChatState.isOfflineMode) {
         prompt += '\n\n【旁白模式】开启。请在回复中用括号（）包含旁白内容，用于描写环境、动作、心理活动等。旁白必须且只能使用简体中文。';
     } else {
-        prompt += '\n\n【旁白模式】关闭。不需要写旁白。';
+        prompt += '\n\n【旁白模式】开启。重要：你们现在是隔着手机屏幕聊天，不在同一个物理空间，不能触碰到彼此。旁白只能描写你自己一个人此刻的动作、表情、心情、所处环境（例如"窝在被子里笑了一下""摸了摸自己发烫的脸"），绝对禁止出现任何你和用户之间发生肢体接触的描写（比如摸对方的头、抱住对方、牵手等），因为你们此刻并不在一起。旁白必须且只能使用简体中文。';
+    }
+} else {
+    prompt += '\n\n【旁白模式】关闭。不需要写旁白。';
     }
 
 prompt += '\n\n【记忆连续性】你必须记住和用户之前聊过的所有内容。称呼要前后一致，不能上一句叫姐姐下一句又改口。认真阅读聊天历史，保持对话连贯。';
