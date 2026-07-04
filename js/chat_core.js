@@ -294,15 +294,23 @@ function acceptLatestPayment() {
     for (var i = cards.length - 1; i >= 0; i--) {
         var card = cards[i];
         var msgId = card.getAttribute('data-msg-id');
-        var state = getPaymentState(msgId);
-        if (state === 'pending') {
-            var type = card.getAttribute('data-type');
-            var amount = card.getAttribute('data-amount');
-            updatePaymentCardUI(msgId, 'accepted');
-            addReceivedCard('assistant', type, amount);
-            saveChatHistory(window.ChatState.currentContactId);
-            return amount;
-        }
+        // 1. 检查状态
+        if (getPaymentState(msgId) !== 'pending') continue;
+        
+        // 2. 检查发送者（防自收）
+        var row = card.closest('.bubble-row');
+        if (row && row.classList.contains('assistant')) continue;
+
+        // 3. 检查类型（只收转账）
+        var type = card.getAttribute('data-type');
+        if (type !== '转账') continue;
+
+        // 执行收款
+        var amount = card.getAttribute('data-amount');
+        updatePaymentCardUI(msgId, 'accepted');
+        addReceivedCard('assistant', type, amount);
+        saveChatHistory(window.ChatState.currentContactId);
+        return amount;
     }
     return null;
 }
