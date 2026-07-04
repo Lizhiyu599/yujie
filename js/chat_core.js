@@ -235,6 +235,7 @@ async function sendChatMessage() {
         return;
     }
 
+    const quotedSnapshot = window.ChatState.quotedMsg;
     appendMessage('user', text);
     input.value = '';
 
@@ -265,11 +266,11 @@ if (myCpNotices.length > 0) {
     localStorage.setItem('cp_pending_notices', JSON.stringify(cpNotices));
 }
 
-    if (window.ChatState.quotedMsg) {
-        userMessage = '【引用】' + window.ChatState.quotedMsg.n + '说：' + window.ChatState.quotedMsg.t + '\n\n【回复】' + userMessage;
-        window.ChatState.quotedMsg = null;
-        const qv = document.getElementById('quotePreview');
-        if (qv) qv.style.display = 'none';
+    if (quotedSnapshot) {
+    userMessage = '【引用】' + quotedSnapshot.n + '说：' + quotedSnapshot.t + '\n\n【回复】' + userMessage;
+    window.ChatState.quotedMsg = null;
+    const qv = document.getElementById('quotePreview');
+    if (qv) qv.style.display = 'none';
     }
 
     const memoryCount = parseInt(getContactSetting(contactId, 'memoryCount', '50'));
