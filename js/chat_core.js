@@ -320,15 +320,19 @@ function refundLatestPayment() {
     for (var i = cards.length - 1; i >= 0; i--) {
         var card = cards[i];
         var msgId = card.getAttribute('data-msg-id');
-        var state = getPaymentState(msgId);
+        if (getPaymentState(msgId) !== 'pending') continue;
+        
+        var row = card.closest('.bubble-row');
+        if (row && row.classList.contains('assistant')) continue;
+        
         var type = card.getAttribute('data-type');
-        if (state === 'pending' && type === '转账') {
-            var amount = card.getAttribute('data-amount');
-            updatePaymentCardUI(msgId, 'refunded');
-            addRefundedCard('assistant', amount);
-            saveChatHistory(window.ChatState.currentContactId);
-            return true;
-        }
+        if (type !== '转账') continue;
+        
+        var amount = card.getAttribute('data-amount');
+        updatePaymentCardUI(msgId, 'refunded');
+        addRefundedCard('assistant', amount);
+        saveChatHistory(window.ChatState.currentContactId);
+        return true;
     }
     return false;
 }
