@@ -743,6 +743,7 @@ if (window.ChatState.quotedMsg && (role === 'user' || role === 'assistant')) {
             <div class="quote-ref-content">${window.ChatState.quotedMsg.n}：${window.ChatState.quotedMsg.t}</div>
         </div>
     `;
+    bubble.setAttribute('data-history-text', '【引用】' + window.ChatState.quotedMsg.n + '说：' + window.ChatState.quotedMsg.t + '\n【回复】' + text);
     window.ChatState.quotedMsg = null;
 } else {
     bubble.textContent = text;
