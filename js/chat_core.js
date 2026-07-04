@@ -488,7 +488,7 @@ if (acceptedAmount) {
     }
 
     // 红包和转账统一处理，只扫一遍
-var paymentRegex = /[\(\（]([^\)\）]*?)(红包|发红包|给红包|转账|黑卡|赠送.*黑卡)[^\)\）]*?(\d+\.?\d*)\s*元?[^\)\）]*[\)\）]/g;
+var paymentRegex = /[\(\（]([^\)\）]*?)(红包|转账|黑卡)[^\)\）]*?(\d+\.?\d*)\s*元?[^\)\）]*[\)\）]/g;
 var match;
 while ((match = paymentRegex.exec(cleanContent)) !== null) {
     var type = match[2];
