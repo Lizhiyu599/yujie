@@ -844,6 +844,7 @@ function endDrag(clientX, clientY) {
     // 200ms 后退出编辑并重新渲染
     setTimeout(function() {
     exitEditMode();
+    renderDesktopGrid();
     dragTarget = null;
     dragStarted = false;
     dragLongPressed = false;
