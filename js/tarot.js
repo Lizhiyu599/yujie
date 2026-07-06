@@ -1,6 +1,6 @@
 /**
  * 玉界 - 塔罗占卜
- * 22张大阿卡那，暗黑风格
+ * 22张大阿卡那，暗黑风格，扇形摊牌
  */
 
 var _tarotDeck = [
@@ -29,6 +29,11 @@ var _tarotDeck = [
 ];
 
 var _tarotTodayDate = null;
+var _tarotPickedCards = [];
+var _tarotPickCount = 0;
+var _tarotMaxPick = 3;
+var _tarotModeName = '';
+var _tarotQuestion = '';
 
 function openTarot() {
     var appWindow = document.getElementById('tarotAppWindow');
@@ -123,13 +128,7 @@ function _tarotStartPick() {
     _tarotRenderPickMode(3, '提问占卜', question);
 }
 
-// ========== 选牌模式 ==========
-var _tarotPickedCards = [];
-var _tarotPickCount = 0;
-var _tarotMaxPick = 3;
-var _tarotModeName = '';
-var _tarotQuestion = '';
-
+// ========== 扇形选牌 ==========
 function _tarotRenderPickMode(maxPick, modeName, question) {
     _tarotPickedCards = [];
     _tarotPickCount = 0;
@@ -140,18 +139,32 @@ function _tarotRenderPickMode(maxPick, modeName, question) {
     var appWindow = document.getElementById('tarotAppWindow');
     if (!appWindow) return;
 
-    var cardsHTML = '';
-    for (var i = 0; i < 22; i++) {
-        cardsHTML += ''
-            + '<div class="tarot-card' + (maxPick === 1 ? '' : ' small') + '" onclick="_tarotPickCard(this, ' + i + ')">'
-            + '<div class="tarot-card-inner">'
-            + '<div class="tarot-card-back"></div>'
-            + '<div class="tarot-card-front">'
-            + '<div class="tarot-card-name">' + _tarotDeck[i].name + '</div>'
-            + '</div>'
-            + '</div>'
-            + '</div>';
+    var stacks = [];
+    var cardIdx = 0;
+    var stackSizes = maxPick === 1 ? [5,5,4,4,4] : [4,5,4,5,4];
+    for (var s = 0; s < 5; s++) {
+        var stack = [];
+        for (var c = 0; c < stackSizes[s]; c++) {
+            stack.push(cardIdx);
+            cardIdx++;
+        }
+        stacks.push(stack);
     }
+
+    var fanHTML = '';
+    var centerX = 50;
+    var spacing = 16;
+    var startX = centerX - ((stacks.length - 1) * spacing) / 2;
+
+    stacks.forEach(function(stack, si) {
+        var left = startX + si * spacing;
+        fanHTML += ''
+            + '<div class="tarot-fan-stack" style="position:absolute;left:' + left + '%;top:50%;transform:translate(-50%,-50%) rotate(' + ((si - 2) * 5) + 'deg);z-index:' + (si + 1) + ';" onclick="_tarotPickFromStack(' + JSON.stringify(stack) + ', this)">';
+        for (var c = Math.max(0, stack.length - 3); c < stack.length; c++) {
+            fanHTML += '<div class="tarot-fan-card"></div>';
+        }
+        fanHTML += '</div>';
+    });
 
     appWindow.innerHTML = ''
         + '<div class="tarot-app">'
@@ -161,41 +174,50 @@ function _tarotRenderPickMode(maxPick, modeName, question) {
         + '</div>'
         + '<div class="tarot-body">'
         + (_tarotQuestion ? '<div style="text-align:center;color:rgba(255,255,255,0.35);font-size:12px;padding:8px 0;">Q: ' + _tarotQuestion + '</div>' : '')
-        + '<div class="tarot-selected-count" id="tarotCount">请选择 ' + maxPick + ' 张牌</div>'
-        + '<div class="tarot-grid">' + cardsHTML + '</div>'
+        + '<div class="tarot-fan-count" id="tarotCount">请从牌叠中选择 ' + maxPick + ' 叠</div>'
+        + '<div class="tarot-fan-area">' + fanHTML + '</div>'
+        + '<div id="tarotPickedRow"></div>'
         + '</div>'
         + '</div>';
 }
 
-function _tarotPickCard(cardEl, index) {
-    if (_tarotPickedCards.indexOf(index) >= 0) return;
+function _tarotPickFromStack(stack, el) {
     if (_tarotPickedCards.length >= _tarotMaxPick) return;
 
-    _tarotPickedCards.push(index);
-    cardEl.classList.add('picked');
-    
-    var inner = cardEl.querySelector('.tarot-card-inner');
-    if (inner) inner.classList.add('flipped');
+    var picked = stack[Math.floor(Math.random() * stack.length)];
+    if (_tarotPickedCards.indexOf(picked) >= 0) return;
+
+    _tarotPickedCards.push(picked);
+    el.classList.add('picked');
+
+    // 更新已选展示
+    var pickedRow = document.getElementById('tarotPickedRow');
+    if (pickedRow) {
+        var html = '<div class="tarot-picked-row">';
+        _tarotPickedCards.forEach(function(ci) {
+            html += '<div class="tarot-picked-card"><div class="tarot-card-name">' + _tarotDeck[ci].name + '</div></div>';
+        });
+        html += '</div>';
+        pickedRow.innerHTML = html;
+    }
 
     var countEl = document.getElementById('tarotCount');
-    if (countEl) {
-        var remaining = _tarotMaxPick - _tarotPickedCards.length;
-        if (remaining === 0) {
-            countEl.textContent = '已选完，正在解读…';
-            setTimeout(function() { _tarotShowReading(); }, 600);
-        } else {
-            countEl.textContent = '请选择 ' + _tarotMaxPick + ' 张牌（还剩 ' + remaining + ' 张）';
-        }
+    var remaining = _tarotMaxPick - _tarotPickedCards.length;
+    if (remaining === 0) {
+        if (countEl) countEl.textContent = '命运之门正在开启…';
+        setTimeout(function() { _tarotShowReading(); }, 800);
+    } else {
+        if (countEl) countEl.textContent = '请从牌叠中选择 ' + _tarotMaxPick + ' 叠（还剩 ' + remaining + ' 叠）';
     }
 }
 
+// ========== AI 解读 ==========
 function _tarotShowReading() {
     var appWindow = document.getElementById('tarotAppWindow');
     if (!appWindow) return;
 
     var positions = _tarotMaxPick === 1 ? ['今日指引'] : ['过去', '现在', '未来'];
 
-    // 先显示加载状态
     appWindow.innerHTML = ''
         + '<div class="tarot-app">'
         + '<div class="tarot-nav">'
@@ -209,7 +231,6 @@ function _tarotShowReading() {
         + '</div>'
         + '</div>';
 
-    // 构建牌面信息
     var cardsInfo = '';
     _tarotPickedCards.forEach(function(cardIdx, i) {
         var card = _tarotDeck[cardIdx];
@@ -251,7 +272,6 @@ function _tarotRenderReading(appWindow, positions, aiReading) {
             + '</div>';
     }
 
-    // 附上每张牌的单独释义
     readingsHTML += '<div class="tarot-reading-title" style="margin-top:16px;">牌面详情</div>';
 
     _tarotPickedCards.forEach(function(cardIdx, i) {
