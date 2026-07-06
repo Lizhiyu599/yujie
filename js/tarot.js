@@ -1,6 +1,6 @@
 /**
  * 玉界 - 塔罗占卜
- * 22张大阿卡那，暗黑风格，扇形摊牌
+ * 22张大阿卡那，暗黑风格
  */
 
 var _tarotDeck = [
@@ -28,9 +28,7 @@ var _tarotDeck = [
     { name: '世界', upright: '一个圆满的循环即将完成。你已经走完了这段旅程，值得所有赞誉。', reversed: '某件事尚未完成，还有最后一里路。不要半途而废，坚持到底。' }
 ];
 
-var _tarotTodayDate = null;
 var _tarotPickedCards = [];
-var _tarotPickCount = 0;
 var _tarotMaxPick = 3;
 var _tarotModeName = '';
 var _tarotQuestion = '';
@@ -77,10 +75,10 @@ function _tarotRenderHome() {
         + '</div>';
 }
 
-// ========== 今日运势 ==========
 function _tarotTodayFortune() {
     var today = new Date().toDateString();
-    if (_tarotTodayDate === today) {
+    var saved = localStorage.getItem('tarot_today_date');
+    if (saved === today) {
         var appWindow = document.getElementById('tarotAppWindow');
         appWindow.innerHTML = ''
             + '<div class="tarot-app">'
@@ -94,11 +92,10 @@ function _tarotTodayFortune() {
             + '</div>';
         return;
     }
-    _tarotTodayDate = today;
+    localStorage.setItem('tarot_today_date', today);
     _tarotRenderPickMode(1, '今日运势');
 }
 
-// ========== 提问模式 ==========
 function _tarotQuestionMode() {
     var appWindow = document.getElementById('tarotAppWindow');
     if (!appWindow) return;
@@ -128,10 +125,8 @@ function _tarotStartPick() {
     _tarotRenderPickMode(3, '提问占卜', question);
 }
 
-// ========== 扇形选牌 ==========
 function _tarotRenderPickMode(maxPick, modeName, question) {
     _tarotPickedCards = [];
-    _tarotPickCount = 0;
     _tarotMaxPick = maxPick;
     _tarotModeName = modeName;
     _tarotQuestion = question || '';
@@ -139,17 +134,18 @@ function _tarotRenderPickMode(maxPick, modeName, question) {
     var appWindow = document.getElementById('tarotAppWindow');
     if (!appWindow) return;
 
-    // 22张牌扇形摊开
+    var fanHTML = '';
+    var totalCards = 22;
     var arcStart = -35;
-var arcEnd = 35;
-var radius = 130;
+    var arcEnd = 35;
+    var radius = 130;
 
-for (var i = 0; i < totalCards; i++) {
-    var angle = arcStart + (arcEnd - arcStart) * (i / (totalCards - 1));
-    var rad = angle * Math.PI / 180;
-    var x = 50 + Math.sin(rad) * radius * 0.55;
-    var y = 55 - Math.cos(rad) * radius * 0.45;
-    var rotate = angle * 0.6;
+    for (var i = 0; i < totalCards; i++) {
+        var angle = arcStart + (arcEnd - arcStart) * (i / (totalCards - 1));
+        var rad = angle * Math.PI / 180;
+        var x = 50 + Math.sin(rad) * radius * 0.55;
+        var y = 55 - Math.cos(rad) * radius * 0.45;
+        var rotate = angle * 0.6;
 
         fanHTML += ''
             + '<div class="tarot-fan-card-wrap" style="left:' + x + '%;top:' + y + '%;transform:translate(-50%,-50%) rotate(' + rotate + 'deg);z-index:' + i + ';" onclick="_tarotPickFanCard(' + i + ', this)">'
@@ -185,7 +181,6 @@ function _tarotPickFanCard(index, el) {
     var countEl = document.getElementById('tarotCount');
     var remaining = _tarotMaxPick - _tarotPickedCards.length;
 
-    // 更新已选展示
     var pickedRow = document.getElementById('tarotPickedRow');
     var html = '<div class="tarot-picked-row">';
     _tarotPickedCards.forEach(function(ci) {
@@ -202,7 +197,6 @@ function _tarotPickFanCard(index, el) {
     }
 }
 
-// ========== AI 解读 ==========
 function _tarotShowReading() {
     var appWindow = document.getElementById('tarotAppWindow');
     if (!appWindow) return;
@@ -290,4 +284,4 @@ function _tarotRenderReading(appWindow, positions, aiReading) {
         + readingsHTML
         + '</div>'
         + '</div>';
-}
+        }
