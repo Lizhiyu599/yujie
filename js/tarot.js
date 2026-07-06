@@ -140,18 +140,16 @@ function _tarotRenderPickMode(maxPick, modeName, question) {
     if (!appWindow) return;
 
     // 22张牌扇形摊开
-    var fanHTML = '';
-    var totalCards = 22;
-    var arcStart = -40;  // 起始角度
-    var arcEnd = 40;     // 结束角度
-    var radius = 160;    // 扇形半径
+    var arcStart = -35;
+var arcEnd = 35;
+var radius = 130;
 
-    for (var i = 0; i < totalCards; i++) {
-        var angle = arcStart + (arcEnd - arcStart) * (i / (totalCards - 1));
-        var rad = angle * Math.PI / 180;
-        var x = 50 + Math.sin(rad) * radius * 0.7;
-        var y = 50 - Math.cos(rad) * radius * 0.5;
-        var rotate = angle * 0.6;
+for (var i = 0; i < totalCards; i++) {
+    var angle = arcStart + (arcEnd - arcStart) * (i / (totalCards - 1));
+    var rad = angle * Math.PI / 180;
+    var x = 50 + Math.sin(rad) * radius * 0.55;
+    var y = 55 - Math.cos(rad) * radius * 0.45;
+    var rotate = angle * 0.6;
 
         fanHTML += ''
             + '<div class="tarot-fan-card-wrap" style="left:' + x + '%;top:' + y + '%;transform:translate(-50%,-50%) rotate(' + rotate + 'deg);z-index:' + i + ';" onclick="_tarotPickFanCard(' + i + ', this)">'
