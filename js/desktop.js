@@ -219,31 +219,31 @@ function renderDesktopGrid() {
             grid.appendChild(cell);
         });
 
-        // 渲染塔罗
+                // 渲染塔罗
         tarotItems.forEach(function(item) {
             var sizeParts = (item.size || '1x1').split('x');
             var rowSpan = parseInt(sizeParts[0]) || 1;
             var colSpan = parseInt(sizeParts[1]) || 1;
 
             var cell = document.createElement('div');
-cell.className = 'grid-cell';
-cell.setAttribute('data-id', item.id);
+            cell.className = 'grid-cell';
+            cell.setAttribute('data-id', item.id);
 
-//  优先使用拖拽保存的 gridPos
-if (item.gridPos) {
-    cell.style.gridColumn = item.gridPos.col + ' / span ' + item.gridPos.colSpan;
-    cell.style.gridRow = item.gridPos.row + ' / span ' + item.gridPos.rowSpan;
-} else if (!tarotMoved) {
-    cell.style.gridColumn = '3 / span ' + colSpan;
-    cell.style.gridRow = '5 / span ' + rowSpan;
-} else {
-    cell.style.gridColumn = 'span ' + colSpan;
-    cell.style.gridRow = 'span ' + rowSpan;
-}
-renderCellContent(cell, item);
-setupCellLongPress(cell);
-setupDrag(cell);
-grid.appendChild(cell);
+            // ★ 优先使用拖拽保存的 gridPos
+            if (item.gridPos) {
+                cell.style.gridColumn = item.gridPos.col + ' / span ' + item.gridPos.colSpan;
+                cell.style.gridRow = item.gridPos.row + ' / span ' + item.gridPos.rowSpan;
+            } else if (!tarotMoved) {
+                cell.style.gridColumn = '3 / span ' + colSpan;
+                cell.style.gridRow = '5 / span ' + rowSpan;
+            } else {
+                cell.style.gridColumn = 'span ' + colSpan;
+                cell.style.gridRow = 'span ' + rowSpan;
+            }
+            renderCellContent(cell, item);
+            setupCellLongPress(cell);
+            setupDrag(cell);
+            grid.appendChild(cell);
         });
 
         page.appendChild(grid);
@@ -581,6 +581,29 @@ function deleteCountdown(cdId) {
 
 // ========== 长按进编辑 ==========
 document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+
+// ★ 阻止浏览器长按图片弹菜单
+document.addEventListener('touchstart', function(e) {
+    if (e.target.closest('.grid-cell') ||
+        e.target.closest('.desktop-grid') ||
+        e.target.closest('.app-icon') ||
+        e.target.closest('.icon-img') ||
+        e.target.closest('img')) {
+        e.preventDefault();
+    }
+}, { passive: false });
+
+// ★ 阻止长按图片出现右键菜单（mousemove 触发）
+document.addEventListener('touchmove', function(e) {
+    if (e.target.closest('img') || e.target.closest('.grid-cell')) {
+        e.preventDefault();
+    }
+}, { passive: false });
+
+// ★ 阻止图片拖拽
+document.addEventListener('dragstart', function(e) {
+    if (e.target.tagName === 'IMG') e.preventDefault();
+});
 
 function setupCellLongPress(cell) {
     var startX, startY, timer;
