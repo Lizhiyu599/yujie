@@ -1103,3 +1103,16 @@ input, textarea {
     margin-top: 4px;
     white-space: nowrap; /* 防止文字换行把格子撑开 */
 }
+/* 强制把软件图标图片恢复为标准的 iOS 方圆角 */
+.app-icon .icon-img img {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 12px !important; /* 12px 是最好看的果冻方圆角，你也可以改成 8px */
+    object-fit: cover !important;
+}
+
+/* 确保包裹图片的容器也是方的 */
+.app-icon .icon-img {
+    border-radius: 14px !important; 
+    overflow: hidden !important;
+}
