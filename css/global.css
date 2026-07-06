@@ -1072,3 +1072,34 @@ input, textarea {
     -webkit-user-select: text;
     user-select: text;
 }
+
+/* 确保 1x1 的网格单元格和内部图标能够正确撑开并居中显示 */
+.grid-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.app-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%; /* 让图标占满 1x1 的 70px 空间 */
+}
+
+/* 确保图标图片不会溢出 70px 的格子 */
+.icon-img {
+    width: 48px;  /* 稍微缩小一点（原60px在70px行高加gap里显得太挤），更精致 */
+    height: 48px;
+    flex-shrink: 0;
+}
+
+.icon-label {
+    font-size: 11px;
+    margin-top: 4px;
+    white-space: nowrap; /* 防止文字换行把格子撑开 */
+}
