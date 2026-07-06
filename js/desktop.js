@@ -250,6 +250,15 @@ function renderDesktopGrid() {
 }
 
 function buildWidgetHTML(item) {
+    if (item.widgetType === 'tarot') {
+    return '<div class="desktop-widget grid-widget tarot-widget" onclick="openTarot()">'
+        + '<div class="tarot-cards-preview">'
+        + '<div class="tarot-mini-card card1"></div>'
+        + '<div class="tarot-mini-card card2"></div>'
+        + '</div>'
+        + '<div class="tarot-label">塔罗占卜</div>'
+        + '</div>';
+    }
     if (item.widgetType === 'countdown') {
     var countdowns = getCountdowns();
     var cd = null;
