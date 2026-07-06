@@ -1,7 +1,7 @@
 /**
- * 玉界 - 桌面管理系统 v3.1
+ * 玉界 - 桌面管理系统 v3.2
  * 图标与小组件统一网格混排
- * 4列网格，size格式：行x列，如2x4=2行4列占满全宽
+ * 4列x6行网格，塔罗默认固定右下角，可通过拖拽换位
  */
 
 // ========== 全局状态 ==========
@@ -106,135 +106,112 @@ function renderDesktopGrid() {
 
         var pageItems = items.filter(function(item) { return (item.page || 0) === pageIndex; });
 
-        pageItems.forEach(function(item) {
+        // ★ 分离塔罗和其他 items
+        var tarotItems = pageItems.filter(function(it) { return it.widgetType === 'tarot'; });
+        var normalItems = pageItems.filter(function(it) { return it.widgetType !== 'tarot'; });
+
+        // ★ 判断塔罗是否被拖拽过
+        var tarotMoved = localStorage.getItem('tarot_moved') === '1';
+
+        // ★ 6x4 网格占用记录
+        var TOTAL_ROWS = 6;
+        var TOTAL_COLS = 4;
+        var occupied = {};
+        function occupy(r1, c1, r2, c2) {
+            for (var r = r1; r <= r2; r++) {
+                for (var c = c1; c <= c2; c++) { occupied[r + '_' + c] = true; }
+            }
+        }
+        function isFree(r, c) { return !occupied[r + '_' + c]; }
+
+        var cursor = { row: 1, col: 1 };
+        function nextSlot(rowSpan, colSpan) {
+            while (cursor.row <= TOTAL_ROWS) {
+                var canFit = (cursor.col + colSpan - 1 <= TOTAL_COLS) && (cursor.row + rowSpan - 1 <= TOTAL_ROWS);
+                if (canFit) {
+                    for (var r = 0; r < rowSpan && canFit; r++) {
+                        for (var c = 0; c < colSpan && canFit; c++) {
+                            if (!isFree(cursor.row + r, cursor.col + c)) canFit = false;
+                        }
+                    }
+                }
+                if (canFit) {
+                    var pos = { row: cursor.row, col: cursor.col };
+                    occupy(pos.row, pos.col, pos.row + rowSpan - 1, pos.col + colSpan - 1);
+                    cursor.col += colSpan;
+                    if (cursor.col > TOTAL_COLS) { cursor.col = 1; cursor.row++; }
+                    return pos;
+                }
+                cursor.col++;
+                if (cursor.col > TOTAL_COLS) { cursor.col = 1; cursor.row++; }
+            }
+            return null;
+        }
+
+        // ★ 未拖拽过：先预留塔罗占位（第5-6行第3-4列）
+        if (!tarotMoved && tarotItems.length > 0) {
+            occupy(5, 3, 6, 4);
+        }
+
+        // 渲染普通 items（按时钟→倒数日→App 顺序自然填充）
+        normalItems.forEach(function(item) {
+            var sizeParts = (item.size || '1x1').split('x');
+            var rowSpan = parseInt(sizeParts[0]) || 1;
+            var colSpan = parseInt(sizeParts[1]) || 1;
+
+            var pos;
+            if (tarotMoved) {
+                // 已拖拽过：使用流式 span 占格
+                pos = null;
+                cell_assign: {
+                    var cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.setAttribute('data-id', item.id);
+                    cell.style.gridColumn = 'span ' + colSpan;
+                    cell.style.gridRow = 'span ' + rowSpan;
+                    renderCellContent(cell, item);
+                    setupCellLongPress(cell);
+                    setupDrag(cell);
+                    grid.appendChild(cell);
+                    break cell_assign;
+                }
+                return;
+            } else {
+                pos = nextSlot(rowSpan, colSpan);
+                if (!pos) return;
+            }
+
+            var cell = document.createElement('div');
+            cell.className = 'grid-cell';
+            cell.setAttribute('data-id', item.id);
+            cell.style.gridColumn = pos.col + ' / span ' + colSpan;
+            cell.style.gridRow = pos.row + ' / span ' + rowSpan;
+            renderCellContent(cell, item);
+            setupCellLongPress(cell);
+            setupDrag(cell);
+            grid.appendChild(cell);
+        });
+
+        // 渲染塔罗
+        tarotItems.forEach(function(item) {
+            var sizeParts = (item.size || '1x1').split('x');
+            var rowSpan = parseInt(sizeParts[0]) || 1;
+            var colSpan = parseInt(sizeParts[1]) || 1;
+
             var cell = document.createElement('div');
             cell.className = 'grid-cell';
             cell.setAttribute('data-id', item.id);
 
-            var sizeParts = (item.size || '1x1').split('x');
-var rowSpan = parseInt(sizeParts[0]) || 1;
-var colSpan = parseInt(sizeParts[1]) || 1;
-if (item.widgetType === 'tarot') {
-    cell.style.gridColumn = '3 / span 2';
-    cell.style.gridRow = '5 / span 2';
-} else {
-    cell.style.gridColumn = 'span ' + colSpan;
-    cell.style.gridRow = 'span ' + rowSpan;
-}
-            
-            if (item.type === 'app') {
-                cell.innerHTML =
-                    '<div class="app-icon">' +
-                        '<div class="icon-img">' + (item.icon || '') + '</div>' +
-                        '<div class="icon-label">' + (item.name || '') + '</div>' +
-                    '</div>';
-                (function(it) {
-                    var iconEl = cell.querySelector('.app-icon');
-                    if (iconEl) {
-                        iconEl.addEventListener('click', function(e) {
-                            if (isEditing) return;
-                            if (it.action && typeof window[it.action] === 'function') {
-                                e.stopPropagation();
-                                window[it.action]();
-                            }
-                        });
-                        iconEl.style.pointerEvents = 'auto';
-                    }
-                })(item);
-            } else if (item.type === 'widget') {
-                cell.innerHTML = buildWidgetHTML(item);
-                var avatar = cell.querySelector('.widget-avatar');
-                if (avatar) {
-                    (function() {
-                        avatar.addEventListener('click', function(e) {
-                            e.stopPropagation();
-                            var inp = document.getElementById('widget-avatar-upload');
-                            if (inp) inp.click();
-                        });
-                    })();
-                }
-                var weatherEl = cell.querySelector('.widget-weather-desc');
-                if (weatherEl) {
-                    weatherEl.style.cursor = 'pointer';
-                    (function(it, el) {
-                        el.addEventListener('click', function(e) {
-                            e.stopPropagation();
-                            var overlay = document.createElement('div');
-                            overlay.className = 'caption-modal-overlay';
-                            overlay.id = 'weatherEditOverlay';
-                            overlay.innerHTML = `
-                                <div class="caption-modal">
-                                    <div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">编辑地点</div>
-                                    <input type="text" class="payment-note" id="weatherEditInput" placeholder="输入地点名称" value="${it.weatherDesc || ''}">
-                                    <div class="caption-buttons">
-                                        <div class="payment-btn-cancel" onclick="closeWeatherEdit()">取消</div>
-                                        <div class="payment-btn-confirm" onclick="confirmWeatherEdit('${it.id}')">确定</div>
-                                    </div>
-                                </div>
-                            `;
-                            document.body.appendChild(overlay);
-                            overlay.onclick = function(ev) { if (ev.target === overlay) closeWeatherEdit(); };
-                            window._weatherEditItem = it;
-                            window._weatherEditEl = el;
-                        });
-                    })(item, weatherEl);
-                }
-                var sig = cell.querySelector('.widget-signature');
-                if (sig) {
-                    sig.style.cursor = 'pointer';
-                    (function(it, el) {
-                        el.addEventListener('click', function(e) {
-                            e.stopPropagation();
-                            if (isEditing) return;
-                            var overlay = document.createElement('div');
-                            overlay.className = 'caption-modal-overlay';
-                            overlay.id = 'signEditOverlay';
-                            overlay.innerHTML = `
-                                <div class="caption-modal">
-                                    <div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">编辑签名</div>
-                                    <input type="text" class="payment-note" id="signEditInput" placeholder="输入个性签名" value="${it.signature || ''}">
-                                    <div class="caption-buttons">
-                                        <div class="payment-btn-cancel" onclick="closeSignEdit()">取消</div>
-                                        <div class="payment-btn-confirm" onclick="confirmSignEdit('${it.id}')">确定</div>
-                                    </div>
-                                </div>
-                            `;
-                            document.body.appendChild(overlay);
-                            overlay.onclick = function(ev) { if (ev.target === overlay) closeSignEdit(); };
-                            window._signEditItem = it;
-                            window._signEditEl = el;
-                        });
-                    })(item, sig);
-                }
-                var sig2 = cell.querySelector('.widget-signature2');
-                if (sig2) {
-                    sig2.style.cursor = 'pointer';
-                    (function(it, el) {
-                        el.addEventListener('click', function(e) {
-                            e.stopPropagation();
-                            if (isEditing) return;
-                            var overlay = document.createElement('div');
-                            overlay.className = 'caption-modal-overlay';
-                            overlay.id = 'sign2EditOverlay';
-                            overlay.innerHTML = `
-                                <div class="caption-modal">
-                                    <div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">编辑签名</div>
-                                    <input type="text" class="payment-note" id="sign2EditInput" placeholder="输入个性签名" value="${it.signature2 || ''}">
-                                    <div class="caption-buttons">
-                                        <div class="payment-btn-cancel" onclick="closeSign2Edit()">取消</div>
-                                        <div class="payment-btn-confirm" onclick="confirmSign2Edit('${it.id}')">确定</div>
-                                    </div>
-                                </div>
-                            `;
-                            document.body.appendChild(overlay);
-                            overlay.onclick = function(ev) { if (ev.target === overlay) closeSign2Edit(); };
-                            window._sign2EditItem = it;
-                            window._sign2EditEl = el;
-                        });
-                    })(item, sig2);
-                }
+            if (!tarotMoved) {
+                // 默认固定到第5-6行第3-4列
+                cell.style.gridColumn = '3 / span ' + colSpan;
+                cell.style.gridRow = '5 / span ' + rowSpan;
+            } else {
+                // 已拖拽过：流式占格
+                cell.style.gridColumn = 'span ' + colSpan;
+                cell.style.gridRow = 'span ' + rowSpan;
             }
-
+            renderCellContent(cell, item);
             setupCellLongPress(cell);
             setupDrag(cell);
             grid.appendChild(cell);
@@ -244,6 +221,119 @@ if (item.widgetType === 'tarot') {
     });
 
     updateAllWidgetClocks();
+}
+
+// ★ 单元格内容渲染（提取函数复用）
+function renderCellContent(cell, item) {
+    if (item.type === 'app') {
+        cell.innerHTML =
+            '<div class="app-icon">' +
+                '<div class="icon-img">' + (item.icon || '') + '</div>' +
+                '<div class="icon-label">' + (item.name || '') + '</div>' +
+            '</div>';
+        (function(it) {
+            var iconEl = cell.querySelector('.app-icon');
+            if (iconEl) {
+                iconEl.addEventListener('click', function(e) {
+                    if (isEditing) return;
+                    if (it.action && typeof window[it.action] === 'function') {
+                        e.stopPropagation();
+                        window[it.action]();
+                    }
+                });
+                iconEl.style.pointerEvents = 'auto';
+            }
+        })(item);
+    } else if (item.type === 'widget') {
+        cell.innerHTML = buildWidgetHTML(item);
+        var avatar = cell.querySelector('.widget-avatar');
+        if (avatar) {
+            (function() {
+                avatar.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var inp = document.getElementById('widget-avatar-upload');
+                    if (inp) inp.click();
+                });
+            })();
+        }
+        var weatherEl = cell.querySelector('.widget-weather-desc');
+        if (weatherEl) {
+            weatherEl.style.cursor = 'pointer';
+            (function(it, el) {
+                el.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var overlay = document.createElement('div');
+                    overlay.className = 'caption-modal-overlay';
+                    overlay.id = 'weatherEditOverlay';
+                    overlay.innerHTML =
+                        '<div class="caption-modal">' +
+                            '<div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">编辑地点</div>' +
+                            '<input type="text" class="payment-note" id="weatherEditInput" placeholder="输入地点名称" value="' + (it.weatherDesc || '') + '">' +
+                            '<div class="caption-buttons">' +
+                                '<div class="payment-btn-cancel" onclick="closeWeatherEdit()">取消</div>' +
+                                '<div class="payment-btn-confirm" onclick="confirmWeatherEdit(\'' + it.id + '\')">确定</div>' +
+                            '</div>' +
+                        '</div>';
+                    document.body.appendChild(overlay);
+                    overlay.onclick = function(ev) { if (ev.target === overlay) closeWeatherEdit(); };
+                    window._weatherEditItem = it;
+                    window._weatherEditEl = el;
+                });
+            })(item, weatherEl);
+        }
+        var sig = cell.querySelector('.widget-signature');
+        if (sig) {
+            sig.style.cursor = 'pointer';
+            (function(it, el) {
+                el.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (isEditing) return;
+                    var overlay = document.createElement('div');
+                    overlay.className = 'caption-modal-overlay';
+                    overlay.id = 'signEditOverlay';
+                    overlay.innerHTML =
+                        '<div class="caption-modal">' +
+                            '<div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">编辑签名</div>' +
+                            '<input type="text" class="payment-note" id="signEditInput" placeholder="输入个性签名" value="' + (it.signature || '') + '">' +
+                            '<div class="caption-buttons">' +
+                                '<div class="payment-btn-cancel" onclick="closeSignEdit()">取消</div>' +
+                                '<div class="payment-btn-confirm" onclick="confirmSignEdit(\'' + it.id + '\')">确定</div>' +
+                            '</div>' +
+                        '</div>';
+                    document.body.appendChild(overlay);
+                    overlay.onclick = function(ev) { if (ev.target === overlay) closeSignEdit(); };
+                    window._signEditItem = it;
+                    window._signEditEl = el;
+                });
+            })(item, sig);
+        }
+        var sig2 = cell.querySelector('.widget-signature2');
+        if (sig2) {
+            sig2.style.cursor = 'pointer';
+            (function(it, el) {
+                el.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (isEditing) return;
+                    var overlay = document.createElement('div');
+                    overlay.className = 'caption-modal-overlay';
+                    overlay.id = 'sign2EditOverlay';
+                    overlay.innerHTML =
+                        '<div class="caption-modal">' +
+                            '<div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">编辑签名</div>' +
+                            '<input type="text" class="payment-note" id="sign2EditInput" placeholder="输入个性签名" value="' + (it.signature2 || '') + '">' +
+                            '<div class="caption-buttons">' +
+                                '<div class="payment-btn-cancel" onclick="closeSign2Edit()">取消</div>' +
+                                '<div class="payment-btn-confirm" onclick="confirmSign2Edit(\'' + it.id + '\')">确定</div>' +
+                            '</div>' +
+                        '</div>';
+                    document.body.appendChild(overlay);
+                    overlay.onclick = function(ev) { if (ev.target === overlay) closeSign2Edit(); };
+                    window._sign2EditItem = it;
+                    window._sign2EditEl = el;
+                });
+            })(item, sig2);
+        }
+    }
 }
 
 function buildWidgetHTML(item) {
@@ -637,6 +727,11 @@ function endDrag(clientX, clientY) {
         if (di >= 0 && ti >= 0) {
             var tmp = items[di]; items[di] = items[ti]; items[ti] = tmp;
             saveItems(items);
+
+            // ★ 新增：塔罗一旦被拖拽，标记后改为流式布局
+            if (dragId === 'widget-tarot-default' || targetId === 'widget-tarot-default') {
+                localStorage.setItem('tarot_moved', '1');
+            }
         }
     }
     exitEditMode();
@@ -868,6 +963,12 @@ function setupWidgetAvatarUpload() {
     };
 }
 
+// ========== 重置塔罗位置 ==========
+function resetTarotPosition() {
+    localStorage.removeItem('tarot_moved');
+    renderDesktopGrid();
+}
+
 // ========== 兼容旧函数名 ==========
 function renderDesktopIcons() { renderDesktopGrid(); }
 function renderWidgets() { renderDesktopGrid(); }
@@ -884,17 +985,19 @@ window.addEventListener('DOMContentLoaded', function() {
     addDesktopIcon({ id: 'music', name: '音乐', icon: '<img src="https://i.ibb.co/Vk3LH0p/1782714962959.png" style="width:29px;height:29px;border-radius:8px;object-fit:cover;">', action: 'openMusic' });
     addDesktopIcon({ id: 'accounting', name: '记账', icon: '<img src="https://i.ibb.co/FbMqTMNr/1783095194517.png" style="width:36px;height:36px;border-radius:8px;object-fit:cover;">', action: 'openAccounting' });
     addDesktopIcon({ id: 'cardpack', name: '卡包', icon: '<img src="https://i.ibb.co/Pv2zqg00/1782715064654.png" style="width:35px;height:35px;border-radius:8px;object-fit:cover;">', action: 'openCardpack' });
+
+    // ★ 插入塔罗小组件（如果不存在）
     var items = getItems();
     if (!items.find(function(i) { return i.id === 'widget-tarot-default'; })) {
-    items.push({
-        id: 'widget-tarot-default',
-        type: 'widget',
-        widgetType: 'tarot',
-        size: '2x2',
-        page: 0
-    });
-    saveItems(items);
-}
+        items.push({
+            id: 'widget-tarot-default',
+            type: 'widget',
+            widgetType: 'tarot',
+            size: '2x2',
+            page: 0
+        });
+        saveItems(items);
+    }
     
     renderDesktopGrid();
     setupDesktopLongPress();
@@ -930,4 +1033,5 @@ window.addEventListener('DOMContentLoaded', function() {
     window.saveWidgets = saveWidgets;
     window.renderWidgets = renderDesktopGrid;
     window.addCustomWidget = addCustomWidget;
+    window.resetTarotPosition = resetTarotPosition;
 });
