@@ -1056,3 +1056,36 @@ body, html {
     letter-spacing: 1px;
     text-transform: uppercase;
 }
+
+/* ===== 阻止长按图片弹浏览器菜单 ===== */
+img,
+.grid-cell,
+.app-icon,
+.icon-img,
+.icon-label,
+.desktop-widget,
+.widget-avatar,
+.widget-signature,
+.widget-signature2,
+.widget-time,
+.widget-date,
+.widget-temp,
+.widget-weather-desc,
+.countdown-title,
+.countdown-days,
+.countdown-date,
+.tarot-widget,
+.tarot-label,
+.tarot-cards-preview,
+.tarot-mini-card {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.grid-cell {
+    -webkit-touch-callout: none;
+}
