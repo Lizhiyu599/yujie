@@ -147,12 +147,11 @@ function _tarotRenderPickMode(maxPick, modeName, question) {
         var rotate = angle * 0.6;
 
         fanHTML += ''
-            + '<div class="tarot-fan-card-wrap" style="left:' + x + '%;top:' + y + '%;transform:translate(-50%,-50%) rotate(' + rotate + 'deg);z-index:' + i + ';" onclick="_tarotPickFanCard(' + i + ', this)">'
-            + '<div class="tarot-card-face">'
-            + '<div class="tarot-card-symbol">✦</div>'
-            + '<div class="tarot-card-label">' + _tarotDeck[i].name + '</div>'
-            + '</div>'
-            + '</div>';
+    + '<div class="tarot-fan-card-wrap" style="left:' + x + '%;top:' + y + '%;transform:translate(-50%,-50%) rotate(' + rotate + 'deg);z-index:' + i + ';" onclick="_tarotPickFanCard(' + i + ', this)">'
+    + '<div class="tarot-card-face">'
+    + '<div class="tarot-card-symbol">✦</div>'
+    + '</div>'
+    + '</div>';
     }
 
     appWindow.innerHTML = ''
