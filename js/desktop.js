@@ -162,10 +162,22 @@ function renderDesktopGrid() {
             return null;
         }
 
-        // ★ 未拖拽过：先预留塔罗占位（第5-6行第3-4列）
+       // ★ 预留塔罗占位（第5-6行第3-4列）
         if (!tarotMoved && tarotItems.length > 0) {
             occupy(5, 3, 6, 4);
         }
+
+        // ★ 预留所有有 gridPos 的 items 的占位（保护拖拽后的位置不被其他 items 侵占）
+        pageItems.forEach(function(item) {
+            if (item.gridPos) {
+                occupy(
+                    item.gridPos.row,
+                    item.gridPos.col,
+                    item.gridPos.row + item.gridPos.rowSpan - 1,
+                    item.gridPos.col + item.gridPos.colSpan - 1
+                );
+            }
+        });
 
         // 渲染普通 items（按时钟→倒数日→App 顺序自然填充）
         normalItems.forEach(function(item) {
