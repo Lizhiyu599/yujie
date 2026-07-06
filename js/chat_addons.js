@@ -854,6 +854,7 @@ function sendBotBlackCard(amount) {
     + '<div style="font-size:10px;color:rgba(255,255,255,0.5);">可用额度</div>'
     + '<div style="font-size:10px;color:rgba(255,255,255,0.4);">角色赠送</div>'
     + '</div>';
+    card.onclick = function() { openPaymentModal(msgId); };
     row.appendChild(avatar);
     row.appendChild(card);
     document.getElementById('chatMessages').appendChild(row);
