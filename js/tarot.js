@@ -193,8 +193,66 @@ function _tarotShowReading() {
     var appWindow = document.getElementById('tarotAppWindow');
     if (!appWindow) return;
 
-    var readingsHTML = '';
     var positions = _tarotMaxPick === 1 ? ['今日指引'] : ['过去', '现在', '未来'];
+
+    // 先显示加载状态
+    appWindow.innerHTML = ''
+        + '<div class="tarot-app">'
+        + '<div class="tarot-nav">'
+        + '<div class="tarot-nav-back" onclick="_tarotRenderHome()">‹</div>'
+        + '<div class="tarot-nav-title">' + _tarotModeName + '</div>'
+        + '</div>'
+        + '<div class="tarot-body">'
+        + '<div style="text-align:center;color:rgba(255,255,255,0.3);padding:40px 0;font-size:14px;">'
+        + '命运之轮正在转动…'
+        + '</div>'
+        + '</div>'
+        + '</div>';
+
+    // 构建牌面信息
+    var cardsInfo = '';
+    _tarotPickedCards.forEach(function(cardIdx, i) {
+        var card = _tarotDeck[cardIdx];
+        var isReversed = Math.random() > 0.5;
+        var posLabel = isReversed ? '逆位' : '正位';
+        cardsInfo += positions[i] + '：' + card.name + '（' + posLabel + '）\n';
+    });
+
+    var prompt = '你是一位经验丰富的塔罗占卜师。请根据以下牌阵，用温暖、神秘、富有洞察力的口吻给出一段完整的解读。\n\n';
+    if (_tarotQuestion && _tarotQuestion !== '未写下问题') {
+        prompt += '求问者的问题：' + _tarotQuestion + '\n\n';
+    }
+    prompt += '牌阵：\n' + cardsInfo + '\n';
+    prompt += '请将牌串联解读，不要逐张分开解释。用"你"称呼求问者。字数控制在200字以内。';
+
+    if (typeof callChatAPI === 'function') {
+        callChatAPI([
+            { role: 'system', content: '你是神秘的塔罗占卜师。解读温暖而深刻，不说教，不套话。' },
+            { role: 'user', content: prompt }
+        ]).then(function(reply) {
+            var reading = reply.replace(/\{[^}]*\}/g, '').trim();
+            _tarotRenderReading(appWindow, positions, reading);
+        }).catch(function() {
+            _tarotRenderReading(appWindow, positions, null);
+        });
+    } else {
+        _tarotRenderReading(appWindow, positions, null);
+    }
+}
+
+function _tarotRenderReading(appWindow, positions, aiReading) {
+    var readingsHTML = '';
+
+    if (aiReading) {
+        readingsHTML += ''
+            + '<div class="tarot-reading" style="margin-bottom:16px;">'
+            + '<div class="tarot-reading-title">✦ 解读</div>'
+            + '<div class="tarot-reading-text">' + aiReading + '</div>'
+            + '</div>';
+    }
+
+    // 附上每张牌的单独释义
+    readingsHTML += '<div class="tarot-reading-title" style="margin-top:16px;">牌面详情</div>';
 
     _tarotPickedCards.forEach(function(cardIdx, i) {
         var card = _tarotDeck[cardIdx];
@@ -217,7 +275,7 @@ function _tarotShowReading() {
         + '<div class="tarot-nav-title">' + _tarotModeName + '</div>'
         + '</div>'
         + '<div class="tarot-body">'
-        + (_tarotQuestion ? '<div style="text-align:center;color:rgba(255,255,255,0.35);font-size:12px;padding:8px 0;">Q: ' + _tarotQuestion + '</div>' : '')
+        + (_tarotQuestion && _tarotQuestion !== '未写下问题' ? '<div style="text-align:center;color:rgba(255,255,255,0.35);font-size:12px;padding:8px 0;">Q: ' + _tarotQuestion + '</div>' : '')
         + readingsHTML
         + '</div>'
         + '</div>';
