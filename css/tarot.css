@@ -1,0 +1,200 @@
+/* ===== 塔罗占卜容器 ===== */
+.tarot-app {
+    width: 100%;
+    height: 100%;
+    background: #f2f2f7;
+    display: flex;
+    flex-direction: column;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, sans-serif;
+    overflow: hidden;
+    position: relative;
+}
+.tarot-nav {
+    display: flex;
+    align-items: center;
+    padding: 48px 16px 12px;
+    flex-shrink: 0;
+    position: relative;
+}
+.tarot-nav-back {
+    color: #000;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0 8px;
+}
+.tarot-nav-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 17px;
+    font-weight: 600;
+    color: #000;
+}
+.tarot-body {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 16px 20px;
+}
+
+/* ===== 首页 ===== */
+.tarot-home-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #000;
+    text-align: center;
+    padding: 20px 0 8px;
+}
+.tarot-home-desc {
+    font-size: 13px;
+    color: #8e8e93;
+    text-align: center;
+    margin-bottom: 24px;
+}
+.tarot-menu-card {
+    background: rgba(255,255,255,0.6);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.5);
+}
+.tarot-menu-card:active {
+    background: rgba(255,255,255,0.85);
+}
+.tarot-menu-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #000;
+    margin-bottom: 4px;
+}
+.tarot-menu-desc {
+    font-size: 12px;
+    color: #8e8e93;
+}
+
+/* ===== 翻牌动画 ===== */
+.tarot-cards-row {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 20px 0;
+    flex-wrap: wrap;
+}
+.tarot-slot {
+    width: 90px;
+    height: 140px;
+    perspective: 600px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.tarot-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s ease;
+    transform-style: preserve-3d;
+}
+.tarot-card-inner.flipped {
+    transform: rotateY(180deg);
+}
+.tarot-card-front,
+.tarot-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.tarot-card-back {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    flex-direction: column;
+}
+.tarot-card-back::before {
+    content: '✦';
+    font-size: 28px;
+    color: rgba(255,255,255,0.3);
+}
+.tarot-card-front {
+    background: #fff;
+    border: 1.5px solid rgba(0,0,0,0.1);
+    transform: rotateY(180deg);
+    flex-direction: column;
+    padding: 8px;
+    text-align: center;
+}
+.tarot-card-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: #000;
+    margin-bottom: 4px;
+}
+.tarot-card-meaning {
+    font-size: 10px;
+    color: #555;
+    line-height: 1.3;
+}
+.tarot-card-pos {
+    font-size: 9px;
+    color: #8e8e93;
+    margin-top: 6px;
+    padding: 2px 8px;
+    background: rgba(0,0,0,0.04);
+    border-radius: 8px;
+}
+
+/* ===== 提问输入 ===== */
+.tarot-question-bar {
+    display: flex;
+    gap: 8px;
+    padding: 8px 0 20px;
+    flex-shrink: 0;
+}
+.tarot-question-input {
+    flex: 1;
+    height: 40px;
+    background: rgba(255,255,255,0.5);
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 20px;
+    padding: 0 16px;
+    font-size: 14px;
+    outline: none;
+    color: #000;
+}
+.tarot-question-btn {
+    width: 40px;
+    height: 40px;
+    background: #1c1c1e;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    color: #fff;
+    font-size: 18px;
+    border: none;
+}
+
+/* ===== 重新抽牌按钮 ===== */
+.tarot-retry-btn {
+    display: block;
+    margin: 16px auto;
+    padding: 12px 28px;
+    background: #1c1c1e;
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+}
+.tarot-retry-btn:active {
+    opacity: 0.8;
+}
