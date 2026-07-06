@@ -45,6 +45,14 @@ function getItems() {
             countdownId: cd.id
         });
     });
+
+    items.push({
+    id: 'widget-tarot-default',
+    type: 'widget',
+    widgetType: 'tarot',
+    size: '2x2',
+    page: 0
+});
     
     return items;
 }
