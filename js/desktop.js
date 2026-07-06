@@ -1,7 +1,7 @@
 /**
- * 玉界 - 桌面管理系统 v4.0
+ * 玉界 - 桌面管理系统 v3.2
  * 图标与小组件统一网格混排
- * 4列x6行网格 + 真机级实时拖拽避让
+ * 4列x6行网格，塔罗默认固定右下角，可通过拖拽换位
  */
 
 // ========== 全局状态 ==========
@@ -10,9 +10,6 @@ var longPressTimer = null;
 var addButton = null;
 var halfPanel = null;
 var touchStartX = 0, touchStartY = 0;
-
-// ========== 拖拽状态 ==========
-var dragState = null; // 当前拖拽状态对象
 
 // ========== 数据层 ==========
 function getItems() {
@@ -37,6 +34,7 @@ function getItems() {
         weatherDesc: displayCity + '·晴'
     }];
     
+    // 倒数日小组件
     countdowns.forEach(function(cd) {
         items.push({
             id: 'widget-countdown-' + cd.id,
@@ -80,7 +78,7 @@ function addDesktopIcon(item) {
         icon: item.icon || '',
         action: item.action || null,
         size: '1x1',
-        page: 0
+        page: 0  // 强制放第1页
     };
     if (existing >= 0) {
         items[existing] = newItem;
@@ -88,71 +86,6 @@ function addDesktopIcon(item) {
         items.push(newItem);
     }
     saveItems(items);
-}
-
-// ========== 网格工具函数 ==========
-var TOTAL_ROWS = 6, TOTAL_COLS = 4;
-
-function buildOccupiedMap(pageItems, reserved) {
-    var occupied = {};
-    function occupy(r1, c1, r2, c2) {
-        for (var r = r1; r <= r2; r++) {
-            for (var c = c1; c <= c2; c++) { occupied[r + '_' + c] = true; }
-        }
-    }
-    pageItems.forEach(function(item) {
-        if (item.id === (reserved || '').id) return;
-        if (item.gridPos) {
-            occupy(item.gridPos.row, item.gridPos.col,
-                item.gridPos.row + (item.gridPos.rowSpan || 1) - 1,
-                item.gridPos.col + (item.gridPos.colSpan || 1) - 1);
-        }
-    });
-    return { occupied: occupied, occupy: occupy };
-}
-
-function findFreeSlot(pageItems, rowSpan, colSpan, reservedId) {
-    var map = buildOccupiedMap(pageItems, reservedId ? pageItems.find(function(i) { return i.id === reservedId; }) : null);
-    var occupied = map.occupied;
-    function isFree(r, c) { return !occupied[r + '_' + c]; }
-
-    for (var row = 1; row <= TOTAL_ROWS; row++) {
-        for (var col = 1; col <= TOTAL_COLS; col++) {
-            if (row + rowSpan - 1 > TOTAL_ROWS || col + colSpan - 1 > TOTAL_COLS) continue;
-            var fit = true;
-            for (var r = 0; r < rowSpan && fit; r++) {
-                for (var c = 0; c < colSpan && fit; c++) {
-                    if (!isFree(row + r, col + c)) fit = false;
-                }
-            }
-            if (fit) return { row: row, col: col, rowSpan: rowSpan, colSpan: colSpan };
-        }
-    }
-    return null;
-}
-
-function assignGridPositions(pageItems) {
-    // 清除旧的 gridPos
-    pageItems.forEach(function(it) { delete it.gridPos; });
-
-    // 先把塔罗固定到右下角
-    var tarot = pageItems.find(function(it) { return it.widgetType === 'tarot'; });
-    if (tarot) {
-        var sizeP = (tarot.size || '1x1').split('x');
-        tarot.gridPos = { row: 5, col: 3, rowSpan: parseInt(sizeP[0]) || 2, colSpan: parseInt(sizeP[1]) || 2 };
-    }
-
-    // 按顺序分配其他 items
-    pageItems.forEach(function(item) {
-        if (item.gridPos) return; // 塔罗已分配
-        var sizeParts = (item.size || '1x1').split('x');
-        var rowSpan = parseInt(sizeParts[0]) || 1;
-        var colSpan = parseInt(sizeParts[1]) || 1;
-        var slot = findFreeSlot(pageItems, rowSpan, colSpan, item.id);
-        if (slot) {
-            item.gridPos = slot;
-        }
-    });
 }
 
 // ========== 渲染网格 ==========
@@ -173,18 +106,113 @@ function renderDesktopGrid() {
 
         var pageItems = items.filter(function(item) { return (item.page || 0) === pageIndex; });
 
-        // 分配 grid 位置
-        assignGridPositions(pageItems);
+        // ★ 分离塔罗和其他 items
+        var tarotItems = pageItems.filter(function(it) { return it.widgetType === 'tarot'; });
+        var normalItems = pageItems.filter(function(it) { return it.widgetType !== 'tarot'; });
 
-        pageItems.forEach(function(item) {
-            if (!item.gridPos) return;
+        // ★ 判断塔罗是否被拖拽过
+        var tarotMoved = localStorage.getItem('tarot_moved') === '1';
+
+        // ★ 6x4 网格占用记录
+        var TOTAL_ROWS = 6;
+        var TOTAL_COLS = 4;
+        var occupied = {};
+        function occupy(r1, c1, r2, c2) {
+            for (var r = r1; r <= r2; r++) {
+                for (var c = c1; c <= c2; c++) { occupied[r + '_' + c] = true; }
+            }
+        }
+        function isFree(r, c) { return !occupied[r + '_' + c]; }
+
+        var cursor = { row: 1, col: 1 };
+        function nextSlot(rowSpan, colSpan) {
+            while (cursor.row <= TOTAL_ROWS) {
+                var canFit = (cursor.col + colSpan - 1 <= TOTAL_COLS) && (cursor.row + rowSpan - 1 <= TOTAL_ROWS);
+                if (canFit) {
+                    for (var r = 0; r < rowSpan && canFit; r++) {
+                        for (var c = 0; c < colSpan && canFit; c++) {
+                            if (!isFree(cursor.row + r, cursor.col + c)) canFit = false;
+                        }
+                    }
+                }
+                if (canFit) {
+                    var pos = { row: cursor.row, col: cursor.col };
+                    occupy(pos.row, pos.col, pos.row + rowSpan - 1, pos.col + colSpan - 1);
+                    cursor.col += colSpan;
+                    if (cursor.col > TOTAL_COLS) { cursor.col = 1; cursor.row++; }
+                    return pos;
+                }
+                cursor.col++;
+                if (cursor.col > TOTAL_COLS) { cursor.col = 1; cursor.row++; }
+            }
+            return null;
+        }
+
+        // ★ 未拖拽过：先预留塔罗占位（第5-6行第3-4列）
+        if (!tarotMoved && tarotItems.length > 0) {
+            occupy(5, 3, 6, 4);
+        }
+
+        // 渲染普通 items（按时钟→倒数日→App 顺序自然填充）
+        normalItems.forEach(function(item) {
+            var sizeParts = (item.size || '1x1').split('x');
+            var rowSpan = parseInt(sizeParts[0]) || 1;
+            var colSpan = parseInt(sizeParts[1]) || 1;
+
+            var pos;
+            if (tarotMoved) {
+                // 已拖拽过：使用流式 span 占格
+                pos = null;
+                cell_assign: {
+                    var cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.setAttribute('data-id', item.id);
+                    cell.style.gridColumn = 'span ' + colSpan;
+                    cell.style.gridRow = 'span ' + rowSpan;
+                    renderCellContent(cell, item);
+                    setupCellLongPress(cell);
+                    setupDrag(cell);
+                    grid.appendChild(cell);
+                    break cell_assign;
+                }
+                return;
+            } else {
+                pos = nextSlot(rowSpan, colSpan);
+                if (!pos) return;
+            }
 
             var cell = document.createElement('div');
             cell.className = 'grid-cell';
             cell.setAttribute('data-id', item.id);
-            cell.style.gridColumn = item.gridPos.col + ' / span ' + item.gridPos.colSpan;
-            cell.style.gridRow = item.gridPos.row + ' / span ' + item.gridPos.rowSpan;
+            cell.style.gridColumn = pos.col + ' / span ' + colSpan;
+            cell.style.gridRow = pos.row + ' / span ' + rowSpan;
             renderCellContent(cell, item);
+            setupCellLongPress(cell);
+            setupDrag(cell);
+            grid.appendChild(cell);
+        });
+
+        // 渲染塔罗
+        tarotItems.forEach(function(item) {
+            var sizeParts = (item.size || '1x1').split('x');
+            var rowSpan = parseInt(sizeParts[0]) || 1;
+            var colSpan = parseInt(sizeParts[1]) || 1;
+
+            var cell = document.createElement('div');
+            cell.className = 'grid-cell';
+            cell.setAttribute('data-id', item.id);
+
+            if (!tarotMoved) {
+                // 默认固定到第5-6行第3-4列
+                cell.style.gridColumn = '3 / span ' + colSpan;
+                cell.style.gridRow = '5 / span ' + rowSpan;
+            } else {
+                // 已拖拽过：流式占格
+                cell.style.gridColumn = 'span ' + colSpan;
+                cell.style.gridRow = 'span ' + rowSpan;
+            }
+            renderCellContent(cell, item);
+            setupCellLongPress(cell);
             setupDrag(cell);
             grid.appendChild(cell);
         });
@@ -195,6 +223,7 @@ function renderDesktopGrid() {
     updateAllWidgetClocks();
 }
 
+// ★ 单元格内容渲染（提取函数复用）
 function renderCellContent(cell, item) {
     if (item.type === 'app') {
         cell.innerHTML =
@@ -309,36 +338,40 @@ function renderCellContent(cell, item) {
 
 function buildWidgetHTML(item) {
     if (item.widgetType === 'tarot') {
-        return '<div class="desktop-widget grid-widget tarot-widget" onclick="openTarot()">'
-            + '<div class="tarot-cards-preview">'
-            + '<div class="tarot-mini-card card1"></div>'
-            + '<div class="tarot-mini-card card2"></div>'
-            + '</div>'
-            + '<div class="tarot-label">Tarot Divination</div>'
-            + '</div>';
+    return '<div class="desktop-widget grid-widget tarot-widget" onclick="openTarot()">'
+        + '<div class="tarot-cards-preview">'
+        + '<div class="tarot-mini-card card1"></div>'
+        + '<div class="tarot-mini-card card2"></div>'
+        + '</div>'
+        + '<div class="tarot-label">Tarot Divination</div>'
+        + '</div>';
     }
     if (item.widgetType === 'countdown') {
-        var countdowns = getCountdowns();
-        var cd = null;
-        for (var ci = 0; ci < countdowns.length; ci++) {
-            if (countdowns[ci].id === item.countdownId) { cd = countdowns[ci]; break; }
-        }
-        if (!cd) return '<div class="desktop-widget grid-widget" style="display:flex;align-items:center;justify-content:center;color:rgba(0,0,0,0.3);">倒数日已删除</div>';
+    var countdowns = getCountdowns();
+    var cd = null;
+    for (var ci = 0; ci < countdowns.length; ci++) {
+        if (countdowns[ci].id === item.countdownId) { cd = countdowns[ci]; break; }
+    }
+    if (!cd) return '<div class="desktop-widget grid-widget" style="display:flex;align-items:center;justify-content:center;color:rgba(0,0,0,0.3);">倒数日已删除</div>';
+    
+    var targetDate = new Date(cd.date);
+    var now = new Date();
+    var diffDays = Math.floor((targetDate - now) / (1000 * 60 * 60 * 24));
+    var displayDays = Math.abs(diffDays);
+   var suffix;
+if (diffDays > 0) {
+    suffix = '还有';
+} else if (diffDays < 0) {
+    suffix = '已经';
+} else {
+    suffix = '在今天';
+}
 
-        var targetDate = new Date(cd.date);
-        var now = new Date();
-        var diffDays = Math.floor((targetDate - now) / (1000 * 60 * 60 * 24));
-        var displayDays = Math.abs(diffDays);
-        var suffix;
-        if (diffDays > 0) { suffix = '还有'; }
-        else if (diffDays < 0) { suffix = '已经'; }
-        else { suffix = '在今天'; }
-
-        return '<div class="desktop-widget grid-widget countdown-widget" style="' + (cd.bg ? 'background-image:url(' + cd.bg + ');background-size:cover;background-position:center;' : '') + '" onclick="openCountdownEditor(\'' + cd.id + '\')">'
-            + '<div class="countdown-title">' + cd.title + suffix + '</div>'
-            + '<div class="countdown-days">' + (suffix === '今天' ? '今天' : displayDays) + '</div>'
-            + '<div class="countdown-date">' + cd.date + '</div>'
-            + '</div>';
+return '<div class="desktop-widget grid-widget countdown-widget" style="' + (cd.bg ? 'background-image:url(' + cd.bg + ');background-size:cover;background-position:center;' : '') + '" onclick="openCountdownEditor(\'' + cd.id + '\')">'
+    + '<div class="countdown-title">' + cd.title + suffix + '</div>'
+    + '<div class="countdown-days">' + (suffix === '今天' ? '今天' : displayDays) + '</div>'
+    + '<div class="countdown-date">' + cd.date + '</div>'
+    + '</div>'; 
     }
     if (item.widgetType === 'custom') {
         return '<div class="desktop-widget grid-widget" style="padding:0;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;border:none;box-shadow:none;">' +
@@ -427,7 +460,8 @@ function confirmSign2Edit(id) {
         updateWidgetField(id, 'signature2', newVal);
         if (window._sign2EditEl) window._sign2EditEl.textContent = newVal;
     }
-}
+  }
+
 function openCountdownEditor(cdId) {
     var countdowns = getCountdowns();
     var cd = null;
@@ -519,6 +553,24 @@ function deleteCountdown(cdId) {
 // ========== 长按进编辑 ==========
 document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
+function setupCellLongPress(cell) {
+    var startX, startY, timer;
+    cell.addEventListener('touchstart', function(e) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        timer = setTimeout(function() { enterEditMode(); }, 500);
+    }, { passive: true });
+    cell.addEventListener('touchmove', function(e) {
+        var dx = e.touches[0].clientX - startX;
+        var dy = e.touches[0].clientY - startY;
+        if (Math.abs(dx) > 15 || Math.abs(dy) > 15) clearTimeout(timer);
+    }, { passive: true });
+    cell.addEventListener('touchend', function() { clearTimeout(timer); });
+    cell.addEventListener('mousedown', function() { timer = setTimeout(function() { enterEditMode(); }, 500); });
+    cell.addEventListener('mouseup', function() { clearTimeout(timer); });
+    cell.addEventListener('mouseleave', function() { clearTimeout(timer); });
+}
+
 // ========== 编辑模式 ==========
 function enterEditMode() {
     if (isEditing) return;
@@ -584,290 +636,107 @@ function executeDelete() {
     renderDesktopGrid();
 }
 
-// ========== ★★★ 真机级实时拖拽避让 ★★★ ==========
-// dragState = {
-//   cell: DOM元素,
-//   itemId: string,
-//   startX/Y: 触摸起点,
-//   origRect: getBoundingClientRect(),
-//   dragRow/Col: 当前所在grid位置,
-//   rowSpan/colSpan: 尺寸,
-//   ghost: 拖拽幽灵元素,
-//   gridItems: 当前页所有item的gridPos快照
-// }
+// ========== 拖拽换位 ==========
+var dragTarget = null;
+var dragStartX = 0, dragStartY = 0;
+var dragOrigLeft = 0, dragOrigTop = 0;
+var dragOrigWidth = 0, dragOrigHeight = 0;
+var dragStarted = false;
+var dragLongPressed = false;
+var dragTimer = null;
 
 function setupDrag(cell) {
-    // 长按检测
-    var pressTimer = null;
-    var pressStartX = 0, pressStartY = 0;
-    var isLongPress = false;
-
     cell.addEventListener('touchstart', function(e) {
-        if (isEditing) return;
-        pressStartX = e.touches[0].clientX;
-        pressStartY = e.touches[0].clientY;
-        isLongPress = false;
-        pressTimer = setTimeout(function() {
-            isLongPress = true;
-            startDragSession(cell, e);
-        }, 400);
+        dragTarget = cell;
+        dragStartX = e.touches[0].clientX;
+        dragStartY = e.touches[0].clientY;
+        var rect = cell.getBoundingClientRect();
+        dragOrigLeft = rect.left;
+        dragOrigTop = rect.top;
+        dragOrigWidth = rect.width;
+        dragOrigHeight = rect.height;
+        dragStarted = false;
+        dragLongPressed = false;
+        dragTimer = setTimeout(function() { dragLongPressed = true; }, 500);
     }, { passive: true });
 
     cell.addEventListener('touchmove', function(e) {
-        if (isEditing) return;
-        var dx = Math.abs(e.touches[0].clientX - pressStartX);
-        var dy = Math.abs(e.touches[0].clientY - pressStartY);
-        if (dx > 8 || dy > 8) {
-            clearTimeout(pressTimer);
+        var dx = e.touches[0].clientX - dragStartX;
+        var dy = e.touches[0].clientY - dragStartY;
+        if (dragLongPressed && !dragStarted && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+            dragStarted = true;
+            cell.style.position = 'fixed';
+            cell.style.zIndex = '500';
+            cell.style.left = dragOrigLeft + 'px';
+            cell.style.top = dragOrigTop + 'px';
+            cell.style.width = dragOrigWidth + 'px';
+            cell.style.height = dragOrigHeight + 'px';
+            cell.style.opacity = '0.65';
+            cell.style.pointerEvents = 'none';
         }
-        // 如果已经进入拖拽状态
-        if (dragState && dragState.cell === cell) {
-            continueDrag(e);
+        if (dragStarted) {
+            e.preventDefault();
+            cell.style.left = (dragOrigLeft + dx) + 'px';
+            cell.style.top = (dragOrigTop + dy) + 'px';
         }
     }, { passive: false });
 
     cell.addEventListener('touchend', function(e) {
-        clearTimeout(pressTimer);
-        if (dragState && dragState.cell === cell) {
-            endDragSession(e);
-        }
-    }, { passive: true });
-
-    cell.addEventListener('mousedown', function(e) {
-        if (isEditing) return;
-        pressStartX = e.clientX;
-        pressStartY = e.clientY;
-        isLongPress = false;
-        pressTimer = setTimeout(function() {
-            isLongPress = true;
-            startDragSession(cell, e);
-        }, 400);
-    });
-    cell.addEventListener('mousemove', function(e) {
-        if (dragState && dragState.cell === cell) {
-            continueDrag(e);
-        }
-    });
-    cell.addEventListener('mouseup', function(e) {
-        clearTimeout(pressTimer);
-        if (dragState && dragState.cell === cell) {
-            endDragSession(e);
-        }
-    });
-    cell.addEventListener('mouseleave', function() {
-        clearTimeout(pressTimer);
+        clearTimeout(dragTimer);
+        if (dragStarted) endDrag(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+        dragStarted = false;
+        dragLongPressed = false;
+        dragTarget = null;
     });
 }
 
-function getGridCellAtPoint(clientX, clientY) {
-    // 通过手指位置找到对应的 grid 格子行列
-    var grid = document.querySelector('.desktop-grid');
-    if (!grid) return null;
-    var gridRect = grid.getBoundingClientRect();
-    var cellW = gridRect.width / TOTAL_COLS;
-    var cellH = gridRect.height / TOTAL_ROWS;
-    var col = Math.floor((clientX - gridRect.left) / cellW) + 1;
-    var row = Math.floor((clientY - gridRect.top) / cellH) + 1;
-    col = Math.max(1, Math.min(col, TOTAL_COLS));
-    row = Math.max(1, Math.min(row, TOTAL_ROWS));
-    return { row: row, col: col };
-}
+function endDrag(clientX, clientY) {
+    if (!dragTarget) return;
+    dragTarget.style.position = '';
+    dragTarget.style.zIndex = '';
+    dragTarget.style.left = '';
+    dragTarget.style.top = '';
+    dragTarget.style.width = '';
+    dragTarget.style.height = '';
+    dragTarget.style.opacity = '';
+    dragTarget.style.pointerEvents = '';
+    dragTarget.style.transform = '';
+    dragTarget.style.margin = '';
 
-function getItemsForCurrentPage() {
-    var items = getItems();
-    var pageIndices = [];
-    ['page1', 'page2'].forEach(function(pageId, idx) {
-        var page = document.getElementById(pageId);
-        if (page && !page.style.display) pageIndices.push(idx);
-    });
-    // 找当前显示的页面
-    var visiblePage = 0;
-    return items.filter(function(item) { return (item.page || 0) === visiblePage; });
-}
-
-function startDragSession(cell, e) {
-    if (dragState) return;
-    enterEditMode();
-    
-    var itemId = cell.getAttribute('data-id');
-    var items = getItemsForCurrentPage();
-    var item = items.find(function(it) { return it.id === itemId; });
-    if (!item) return;
-
-    var rect = cell.getBoundingClientRect();
-    var sizeParts = (item.size || '1x1').split('x');
-    var rowSpan = parseInt(sizeParts[0]) || 1;
-    var colSpan = parseInt(sizeParts[1]) || 1;
-    
-    // 创建幽灵元素（跟随手指）
-    var ghost = cell.cloneNode(true);
-    ghost.className = 'grid-cell drag-ghost';
-    ghost.style.position = 'fixed';
-    ghost.style.zIndex = '1000';
-    ghost.style.pointerEvents = 'none';
-    ghost.style.width = rect.width + 'px';
-    ghost.style.height = rect.height + 'px';
-    ghost.style.left = (e.clientX ? e.clientX : e.touches ? e.touches[0].clientX : 0) - rect.width / 2 + 'px';
-    ghost.style.top = (e.clientY ? e.clientY : e.touches ? e.touches[0].clientY : 0) - rect.height / 2 + 'px';
-    ghost.style.opacity = '0.85';
-    ghost.style.transform = 'scale(1.05)';
-    ghost.style.transition = 'none';
-    document.body.appendChild(ghost);
-
-    // 原 cell 变透明（占位）
-    cell.style.opacity = '0.35';
-    cell.style.transition = 'opacity 0.1s';
-
-    // 记录拖拽状态
-    dragState = {
-        cell: cell,
-        itemId: itemId,
-        startX: e.clientX || (e.touches ? e.touches[0].clientX : 0),
-        startY: e.clientY || (e.touches ? e.touches[0].clientY : 0),
-        origRect: rect,
-        rowSpan: rowSpan,
-        colSpan: colSpan,
-        ghost: ghost,
-        currentRow: null,
-        currentCol: null,
-        lastSwapTime: 0
-    };
-}
-
-function continueDrag(e) {
-    if (!dragState) return;
-    e.preventDefault();
-
-    var clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
-    var clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
-
-    // 移动幽灵
-    dragState.ghost.style.left = (clientX - dragState.origRect.width / 2) + 'px';
-    dragState.ghost.style.top = (clientY - dragState.origRect.height / 2) + 'px';
-
-    // 检测当前手指落在哪个格子
-    var gridPos = getGridCellAtPoint(clientX, clientY);
-    if (!gridPos) return;
-
-    // 节流：每 80ms 检测一次避让
-    var now = Date.now();
-    if (now - (dragState.lastSwapTime || 0) < 80) return;
-    dragState.lastSwapTime = now;
-
-    // 计算"被拖元素实际要占的格子范围"
-    var targetRow = Math.min(gridPos.row, TOTAL_ROWS - dragState.rowSpan + 1);
-    var targetCol = Math.min(gridPos.col, TOTAL_COLS - dragState.colSpan + 1);
-    targetRow = Math.max(1, targetRow);
-    targetCol = Math.max(1, targetCol);
-
-    // 如果没变位置，跳过
-    if (dragState.currentRow === targetRow && dragState.currentCol === targetCol) return;
-    dragState.currentRow = targetRow;
-    dragState.currentCol = targetCol;
-
-    // 获取当前页所有 items 并计算新的布局
-    var items = getItemsForCurrentPage();
-    var gridItems = items.map(function(it) {
-        var sizeP = (it.size || '1x1').split('x');
-        return {
-            id: it.id,
-            rowSpan: parseInt(sizeP[0]) || 1,
-            colSpan: parseInt(sizeP[1]) || 1
-        };
-    });
-
-    // 在被拖元素的原位和 target 位置之间做 "挤入" 计算
-    // 简化实现：把所有 items（除了被拖的）重新排列，把被拖元素放在 targetRow/targetCol
-    var dragItem = gridItems.find(function(it) { return it.id === dragState.itemId; });
-    if (!dragItem) return;
-
-    // 构建一个新的 gridPos 映射，先把被拖元素放在 target 位置
-    var newPositions = {};
-    newPositions[dragState.itemId] = {
-        row: targetRow,
-        col: targetCol,
-        rowSpan: dragState.rowSpan,
-        colSpan: dragState.colSpan
-    };
-
-    // 其他 items 按顺序填充剩余格子
-    var otherItems = gridItems.filter(function(it) { return it.id !== dragState.itemId; });
-    var occupied = {};
-    function occupy(r1, c1, r2, c2) {
-        for (var r = r1; r <= r2; r++) {
-            for (var c = c1; c <= c2; c++) { occupied[r + '_' + c] = true; }
+    var cells = document.querySelectorAll('.grid-cell');
+    var targetCell = null;
+    var minDist = Infinity;
+    cells.forEach(function(c) {
+        if (c === dragTarget) return;
+        var rect = c.getBoundingClientRect();
+        var cx = rect.left + rect.width / 2;
+        var cy = rect.top + rect.height / 2;
+        var dist = Math.sqrt((clientX - cx) * (clientX - cx) + (clientY - cy) * (clientY - cy));
+        if (dist < minDist && dist < 100) {
+            minDist = dist;
+            targetCell = c;
         }
-    }
-    occupy(targetRow, targetCol, targetRow + dragState.rowSpan - 1, targetCol + dragState.colSpan - 1);
+    });
 
-    otherItems.forEach(function(it) {
-        var found = false;
-        for (var r = 1; r <= TOTAL_ROWS && !found; r++) {
-            for (var c = 1; c <= TOTAL_COLS && !found; c++) {
-                if (r + it.rowSpan - 1 > TOTAL_ROWS || c + it.colSpan - 1 > TOTAL_COLS) continue;
-                var fit = true;
-                for (var rr = 0; rr < it.rowSpan && fit; rr++) {
-                    for (var cc = 0; cc < it.colSpan && fit; cc++) {
-                        if (occupied[(r + rr) + '_' + (c + cc)]) fit = false;
-                    }
-                }
-                if (fit) {
-                    occupy(r, c, r + it.rowSpan - 1, c + it.colSpan - 1);
-                    newPositions[it.id] = { row: r, col: c, rowSpan: it.rowSpan, colSpan: it.colSpan };
-                    found = true;
-                }
+    if (targetCell) {
+        var dragId = dragTarget.getAttribute('data-id');
+        var targetId = targetCell.getAttribute('data-id');
+        var items = getItems();
+        var di = items.findIndex(function(i) { return i.id === dragId; });
+        var ti = items.findIndex(function(i) { return i.id === targetId; });
+        if (di >= 0 && ti >= 0) {
+            var tmp = items[di]; items[di] = items[ti]; items[ti] = tmp;
+            saveItems(items);
+
+            // ★ 新增：塔罗一旦被拖拽，标记后改为流式布局
+            if (dragId === 'widget-tarot-default' || targetId === 'widget-tarot-default') {
+                localStorage.setItem('tarot_moved', '1');
             }
         }
-    });
-
-    // 应用新的 grid 位置到实际的 cell 上
-    var cells = document.querySelectorAll('.grid-cell');
-    cells.forEach(function(cell) {
-        var id = cell.getAttribute('data-id');
-        var pos = newPositions[id];
-        if (!pos) return;
-        if (id === dragState.itemId) return; // 被拖的 cell 保持透明占位
-        cell.style.transition = 'grid-column 0.15s ease, grid-row 0.15s ease';
-        cell.style.gridColumn = pos.col + ' / span ' + pos.colSpan;
-        cell.style.gridRow = pos.row + ' / span ' + pos.rowSpan;
-    });
-}
-
-function endDragSession(e) {
-    if (!dragState) return;
-
-    var clientX = e.clientX || (e.changedTouches ? e.changedTouches[0].clientX : 0);
-    var clientY = e.clientY || (e.changedTouches ? e.changedTouches[0].clientY : 0);
-
-    // 移除幽灵
-    if (dragState.ghost && dragState.ghost.parentNode) {
-        dragState.ghost.parentNode.removeChild(dragState.ghost);
     }
-
-    // 恢复原 cell 透明度
-    dragState.cell.style.opacity = '';
-    dragState.cell.style.transition = '';
-
-    // 如果拖拽过程中有最终位置，把被拖元素放到那个位置
-    if (dragState.currentRow && dragState.currentCol) {
-        var items = getItems();
-        var pageItems = getItemsForCurrentPage();
-
-        // 在数组中移动被拖元素到对应位置（保持数据一致性）
-        var dragIdx = items.findIndex(function(it) { return it.id === dragState.itemId; });
-        if (dragIdx >= 0) {
-            var dragItem = items[dragIdx];
-            items.splice(dragIdx, 1);
-            // 把被拖元素放到数组末尾，然后重新 render 会通过 assignGridPositions 正确摆放
-            items.push(dragItem);
-        }
-        saveItems(items);
-    }
-
-    dragState = null;
     exitEditMode();
-    // 重新渲染确保位置精准
-    setTimeout(function() { renderDesktopGrid(); }, 50);
+    renderDesktopGrid();
+    dragTarget = null;
 }
 
 // 点空白退出编辑
@@ -1094,6 +963,12 @@ function setupWidgetAvatarUpload() {
     };
 }
 
+// ========== 重置塔罗位置 ==========
+function resetTarotPosition() {
+    localStorage.removeItem('tarot_moved');
+    renderDesktopGrid();
+}
+
 // ========== 兼容旧函数名 ==========
 function renderDesktopIcons() { renderDesktopGrid(); }
 function renderWidgets() { renderDesktopGrid(); }
@@ -1123,7 +998,7 @@ window.addEventListener('DOMContentLoaded', function() {
         });
         saveItems(items);
     }
-
+    
     renderDesktopGrid();
     setupDesktopLongPress();
     setupWidgetAvatarUpload();
@@ -1158,4 +1033,5 @@ window.addEventListener('DOMContentLoaded', function() {
     window.saveWidgets = saveWidgets;
     window.renderWidgets = renderDesktopGrid;
     window.addCustomWidget = addCustomWidget;
+    window.resetTarotPosition = resetTarotPosition;
 });
