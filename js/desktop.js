@@ -462,7 +462,7 @@ function openCountdownEditor(cdId) {
         + '<div class="settings-section-title">倒数日</div>'
         + '<div class="glass-card">'
         + '<div style="font-size:13px;color:#8e8e93;margin-bottom:4px;">标题</div>'
-        + '<input type="text" class="search-input" id="cdTitleInput" value="' + cd.title + '" placeholder="例如：玉界已经">'
+        + '<input type="text" class="search-input" id="cdTitleInput" value="' + cd.title + '" placeholder="例如：毕业">'
         + '<div style="font-size:13px;color:#8e8e93;margin:8px 0 4px;">日期</div>'
         + '<input type="date" class="search-input" id="cdDateInput" value="' + cd.date + '">'
         + '<div style="font-size:13px;color:#8e8e93;margin:8px 0 4px;">背景图</div>'
