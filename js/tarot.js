@@ -92,7 +92,6 @@ function _tarotTodayFortune() {
             + '</div>';
         return;
     }
-    localStorage.setItem('tarot_today_date', today);
     _tarotRenderPickMode(1, '今日运势');
 }
 
@@ -144,7 +143,7 @@ function _tarotRenderPickMode(maxPick, modeName, question) {
         var angle = arcStart + (arcEnd - arcStart) * (i / (totalCards - 1));
         var rad = angle * Math.PI / 180;
         var x = 50 + Math.sin(rad) * radius * 0.55;
-        var y = 55 - Math.cos(rad) * radius * 0.45;
+        var y = 65 - Math.cos(rad) * radius * 0.45;
         var rotate = angle * 0.6;
 
         fanHTML += ''
@@ -203,6 +202,10 @@ function _tarotShowReading() {
 
     var positions = _tarotMaxPick === 1 ? ['今日指引'] : ['过去', '现在', '未来'];
 
+    if (_tarotMaxPick === 1) {
+    localStorage.setItem('tarot_today_date', new Date().toDateString());
+    }
+    
     appWindow.innerHTML = ''
         + '<div class="tarot-app">'
         + '<div class="tarot-nav">'
