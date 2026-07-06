@@ -723,7 +723,6 @@ function sendPaymentCard(type, amount, note, method) {
     card.setAttribute('data-amount', amount);
     card.setAttribute('data-note', note || '');
     card.style.cssText = 'background:#fff;border-radius:14px;padding:0;width:220px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);cursor:pointer;';
-    card.onclick = function() { openPaymentModal(msgId); };
     
     if (isRedPacket) {
         card.innerHTML = `
@@ -802,7 +801,6 @@ function sendBotPaymentCard(type, amount, note) {
     card.setAttribute('data-amount', amount);
     card.setAttribute('data-note', note || '');
     card.style.cssText = 'background:#fff;border-radius:14px;padding:0;width:220px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);cursor:pointer;';
-    card.onclick = function() { openPaymentModal(msgId); };
     if (isRedPacket) {
         card.innerHTML = `
     <div style="display:flex;align-items:center;gap:12px;padding:14px;width:220px;max-width:220px;box-sizing:border-box;">
@@ -862,7 +860,6 @@ function sendBotBlackCard(amount) {
     + '<div style="font-size:10px;color:rgba(255,255,255,0.5);">可用额度</div>'
     + '<div style="font-size:10px;color:rgba(255,255,255,0.4);">角色赠送</div>'
     + '</div>';
-    card.onclick = function() { openPaymentModal(msgId); };
     row.appendChild(avatar);
     row.appendChild(card);
     document.getElementById('chatMessages').appendChild(row);
