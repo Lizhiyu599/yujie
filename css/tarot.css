@@ -75,88 +75,114 @@
     color: rgba(255,255,255,0.4);
 }
 
-/* ===== 牌阵网格 ===== */
-.tarot-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    padding: 16px 0;
-    justify-items: center;
-}
-.tarot-grid.single {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-}
-
-/* ===== 单张牌 ===== */
-.tarot-card {
-    width: 64px;
-    height: 96px;
-    perspective: 800px;
-    cursor: pointer;
-    position: relative;
-}
-.tarot-card.small {
-    width: 56px;
-    height: 84px;
-}
-.tarot-card-inner {
+/* ===== 扇形摊牌区域 ===== */
+.tarot-fan-area {
     position: relative;
     width: 100%;
-    height: 100%;
-    transition: transform 0.5s ease;
-    transform-style: preserve-3d;
+    height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 20px 0;
 }
-.tarot-card-inner.flipped {
-    transform: rotateY(180deg);
-}
-.tarot-card-front,
-.tarot-card-back {
+.tarot-fan-stack {
     position: absolute;
-    width: 100%;
-    height: 100%;
-    backface-visibility: hidden;
-    border-radius: 6px;
+    cursor: pointer;
+    transition: transform 0.3s ease, filter 0.3s ease;
 }
-.tarot-card-back {
+.tarot-fan-stack:hover,
+.tarot-fan-stack:active {
+    transform: translateY(-12px) !important;
+    filter: brightness(1.3);
+    z-index: 50 !important;
+}
+.tarot-fan-stack.picked {
+    transform: translateY(-20px) scale(1.08) !important;
+    filter: brightness(1.5) drop-shadow(0 0 12px rgba(255,215,0,0.3));
+    z-index: 60 !important;
+}
+.tarot-fan-card {
+    width: 56px;
+    height: 88px;
     background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
     border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 5px;
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
 }
-.tarot-card-back::after {
-    content: '✦';
-    font-size: 18px;
-    color: rgba(255,255,255,0.15);
+.tarot-fan-card::before {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px; right: 3px; bottom: 3px;
+    border: 0.5px solid rgba(255,255,255,0.08);
+    border-radius: 3px;
 }
-.tarot-card-front {
+.tarot-fan-card::after {
+    content: '✦';
+    font-size: 14px;
+    color: rgba(255,255,255,0.12);
+}
+.tarot-fan-stack .tarot-fan-card:nth-child(2) {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    z-index: -1;
+}
+.tarot-fan-stack .tarot-fan-card:nth-child(3) {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    z-index: -2;
+}
+
+/* ===== 选中牌展示 ===== */
+.tarot-picked-row {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    padding: 10px 0;
+    flex-wrap: wrap;
+}
+.tarot-picked-card {
+    width: 80px;
+    height: 124px;
     background: #1a1a1a;
     border: 1px solid rgba(255,255,255,0.2);
-    transform: rotateY(180deg);
+    border-radius: 8px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 4px;
     text-align: center;
+    padding: 6px;
+    animation: tarotReveal 0.5s ease;
 }
-.tarot-card-name {
-    font-size: 10px;
-    font-weight: 700;
-    color: rgba(255,255,255,0.9);
-    margin-bottom: 2px;
+@keyframes tarotReveal {
+    from { transform: rotateY(90deg); opacity: 0; }
+    to { transform: rotateY(0deg); opacity: 1; }
 }
-.tarot-card-pos {
-    font-size: 8px;
-    color: rgba(255,255,255,0.5);
-    padding: 1px 6px;
-    border: 0.5px solid rgba(255,255,255,0.15);
+.tarot-picked-card .tarot-card-name {
+    font-size: 11px;
+    color: rgba(255,255,255,0.85);
+    font-weight: 600;
+    margin-bottom: 3px;
+}
+.tarot-picked-card .tarot-card-pos {
+    font-size: 9px;
+    color: rgba(255,255,255,0.4);
+    border: 0.5px solid rgba(255,255,255,0.12);
+    padding: 2px 8px;
     border-radius: 6px;
 }
-.tarot-card.picked .tarot-card-back {
-    border-color: rgba(255,255,255,0.3);
-    box-shadow: 0 0 12px rgba(255,255,255,0.1);
+
+/* ===== 已选计数 ===== */
+.tarot-fan-count {
+    text-align: center;
+    color: rgba(255,255,255,0.45);
+    font-size: 13px;
+    padding: 4px 0;
 }
 
 /* ===== 解读区 ===== */
