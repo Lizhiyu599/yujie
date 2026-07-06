@@ -256,7 +256,7 @@ function buildWidgetHTML(item) {
         + '<div class="tarot-mini-card card1"></div>'
         + '<div class="tarot-mini-card card2"></div>'
         + '</div>'
-        + '<div class="tarot-label">塔罗占卜</div>'
+        + '<div class="tarot-label">Tarot Divination</div>'
         + '</div>';
     }
     if (item.widgetType === 'countdown') {
