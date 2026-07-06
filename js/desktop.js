@@ -594,28 +594,16 @@ function deleteCountdown(cdId) {
 // ========== 长按进编辑 ==========
 document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
-// ★ 阻止浏览器长按图片弹菜单
+// ★ 阻止浏览器长按图片弹菜单（精细版本，不影响按钮点击）
+document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+
+// 只阻止 img 的默认长按行为，不阻止 grid-cell 内部的按钮
 document.addEventListener('touchstart', function(e) {
-    if (e.target.closest('.grid-cell') ||
-        e.target.closest('.desktop-grid') ||
-        e.target.closest('.app-icon') ||
-        e.target.closest('.icon-img') ||
-        e.target.closest('img')) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('.delete-btn') && !t.closest('.dock-icon')) {
         e.preventDefault();
     }
 }, { passive: false });
-
-// ★ 阻止长按图片出现右键菜单（mousemove 触发）
-document.addEventListener('touchmove', function(e) {
-    if (e.target.closest('img') || e.target.closest('.grid-cell')) {
-        e.preventDefault();
-    }
-}, { passive: false });
-
-// ★ 阻止图片拖拽
-document.addEventListener('dragstart', function(e) {
-    if (e.target.tagName === 'IMG') e.preventDefault();
-});
 
 function setupCellLongPress(cell) {
     var startX, startY, timer;
