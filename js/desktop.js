@@ -537,14 +537,6 @@ document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 // ★ 阻止浏览器长按图片弹菜单（精细版本，不影响按钮点击）
 document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
-// 只阻止 img 的默认长按行为，不阻止 grid-cell 内部的按钮
-document.addEventListener('touchstart', function(e) {
-    var t = e.target;
-    if (t && t.tagName === 'IMG' && !t.closest('.delete-btn') && !t.closest('.dock-icon')) {
-        e.preventDefault();
-    }
-}, { passive: false });
-
 function setupCellLongPress(cell) {
     var startX, startY, timer;
     cell.addEventListener('touchstart', function(e) {
