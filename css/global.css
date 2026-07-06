@@ -952,11 +952,12 @@ body, html {
 .desktop-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(6, 70px);  /* ★ 固定6行 */
     gap: 22px;
     padding: 44px 20px 10px;
-    grid-auto-rows: 70px;
     width: 100%;
     align-items: start;
+    overflow: hidden;  /* 防止溢出滑动 */
 }
 
 .grid-cell {
