@@ -851,6 +851,7 @@ function endDrag(clientX, clientY) {
     dragTargetGridPos = null;
     dragLastSwapKey = '';
 }, 200);
+}
 
 // ========== 桌面空白长按加号 ==========
 function setupDesktopLongPress() {
