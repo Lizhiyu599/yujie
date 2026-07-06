@@ -104,32 +104,15 @@ function renderDesktopGrid() {
         grid.className = 'desktop-grid';
         grid.setAttribute('data-page', pageIndex);
 
-                var pageItems = items.filter(function(item) { return (item.page || 0) === pageIndex; });
+        var pageItems = items.filter(function(item) { return (item.page || 0) === pageIndex; });
 
-        // ★ 清理冲突的 gridPos（多个 item 指向同一格子时只保留最后一个）
-        var usedPos = {};
-        pageItems.forEach(function(item) {
-            if (!item.gridPos) return;
-            var key = item.gridPos.row + '_' + item.gridPos.col;
-            if (usedPos[key]) {
-                delete item.gridPos;
-            } else {
-                usedPos[key] = true;
-            }
-        });
-        // 同步清理 result 到 localStorage
-        saveItems(items);
-
-        // ★ 分离塔罗和其他 items
+        // 分离塔罗和其他
         var tarotItems = pageItems.filter(function(it) { return it.widgetType === 'tarot'; });
         var normalItems = pageItems.filter(function(it) { return it.widgetType !== 'tarot'; });
-            
-        // ★ 判断塔罗是否被拖拽过
         var tarotMoved = localStorage.getItem('tarot_moved') === '1';
 
-        // ★ 6x4 网格占用记录
-        var TOTAL_ROWS = 6;
-        var TOTAL_COLS = 4;
+        // 6x4 网格占用记录
+        var TOTAL_ROWS = 6, TOTAL_COLS = 4;
         var occupied = {};
         function occupy(r1, c1, r2, c2) {
             for (var r = r1; r <= r2; r++) {
@@ -162,49 +145,18 @@ function renderDesktopGrid() {
             return null;
         }
 
-                // ★ 预留塔罗占位
+        // 预留塔罗占位（如果没被移动过）
         if (!tarotMoved && tarotItems.length > 0) {
             occupy(5, 3, 6, 4);
         }
 
-        // ★ 预留所有有 gridPos 的 items 占位（但只在塔罗已移动时使用，否则会乱）
-        if (tarotMoved || dragState) {
-            pageItems.forEach(function(item) {
-                if (item.gridPos) {
-                    occupy(
-                        item.gridPos.row,
-                        item.gridPos.col,
-                        item.gridPos.row + item.gridPos.rowSpan - 1,
-                        item.gridPos.col + item.gridPos.colSpan - 1
-                    );
-                }
-            });
-        }
-
-                // 渲染普通 items（按时钟→倒数日→App 顺序自然填充）
+        // 渲染普通 items
         normalItems.forEach(function(item) {
             var sizeParts = (item.size || '1x1').split('x');
             var rowSpan = parseInt(sizeParts[0]) || 1;
             var colSpan = parseInt(sizeParts[1]) || 1;
 
-            var pos = null;
-
-            if (tarotMoved) {
-                // 已拖拽过：流式占格，不占用位
-                var cell = document.createElement('div');
-                cell.className = 'grid-cell';
-                cell.setAttribute('data-id', item.id);
-                cell.style.gridColumn = 'span ' + colSpan;
-                cell.style.gridRow = 'span ' + rowSpan;
-                renderCellContent(cell, item);
-                setupCellLongPress(cell);
-                setupDrag(cell);
-                grid.appendChild(cell);
-                return;
-            }
-
-            // 未拖拽过：使用 nextSlot 智能填充（跳过塔罗预留位置）
-            pos = nextSlot(rowSpan, colSpan);
+            var pos = nextSlot(rowSpan, colSpan);
             if (!pos) return;
 
             var cell = document.createElement('div');
@@ -218,7 +170,7 @@ function renderDesktopGrid() {
             grid.appendChild(cell);
         });
 
-                // 渲染塔罗
+        // 渲染塔罗
         tarotItems.forEach(function(item) {
             var sizeParts = (item.size || '1x1').split('x');
             var rowSpan = parseInt(sizeParts[0]) || 1;
@@ -228,7 +180,7 @@ function renderDesktopGrid() {
             cell.className = 'grid-cell';
             cell.setAttribute('data-id', item.id);
 
-            // ★ 优先使用拖拽保存的 gridPos
+            // 有 gridPos 就用（拖拽后保存的），否则走硬编码或流式
             if (item.gridPos) {
                 cell.style.gridColumn = item.gridPos.col + ' / span ' + item.gridPos.colSpan;
                 cell.style.gridRow = item.gridPos.row + ' / span ' + item.gridPos.rowSpan;
@@ -236,8 +188,9 @@ function renderDesktopGrid() {
                 cell.style.gridColumn = '3 / span ' + colSpan;
                 cell.style.gridRow = '5 / span ' + rowSpan;
             } else {
-                cell.style.gridColumn = 'span ' + colSpan;
-                cell.style.gridRow = 'span ' + rowSpan;
+                var pos = nextSlot(rowSpan, colSpan);
+                cell.style.gridColumn = (pos ? pos.col : 1) + ' / span ' + colSpan;
+                cell.style.gridRow = (pos ? pos.row : 1) + ' / span ' + rowSpan;
             }
             renderCellContent(cell, item);
             setupCellLongPress(cell);
