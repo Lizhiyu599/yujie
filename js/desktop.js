@@ -843,15 +843,13 @@ function endDrag(clientX, clientY) {
 
     // 200ms 后退出编辑并重新渲染
     setTimeout(function() {
-        exitEditMode();
-        renderDesktopGrid();
-        dragTarget = null;
-        dragStarted = false;
-        dragLongPressed = false;
-        dragTargetGridPos = null;
-        dragLastSwapKey = '';
-    }, 200);
-}
+    exitEditMode();
+    dragTarget = null;
+    dragStarted = false;
+    dragLongPressed = false;
+    dragTargetGridPos = null;
+    dragLastSwapKey = '';
+}, 200);
 
 // ========== 桌面空白长按加号 ==========
 function setupDesktopLongPress() {
