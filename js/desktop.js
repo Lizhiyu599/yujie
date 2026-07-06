@@ -181,52 +181,37 @@ function renderDesktopGrid() {
             });
         }
 
-        // 渲染普通 items（按时钟→倒数日→App 顺序自然填充）
+                // 渲染普通 items（按时钟→倒数日→App 顺序自然填充）
         normalItems.forEach(function(item) {
             var sizeParts = (item.size || '1x1').split('x');
             var rowSpan = parseInt(sizeParts[0]) || 1;
             var colSpan = parseInt(sizeParts[1]) || 1;
 
-            var pos;
+            var pos = null;
+
             if (tarotMoved) {
-                // 已拖拽过：使用流式 span 占格
-                pos = null;
-                cell_assign: {
-                    var cell = document.createElement('div');
-                    cell.className = 'grid-cell';
-                    cell.setAttribute('data-id', item.id);
-                    cell.style.gridColumn = 'span ' + colSpan;
-                    cell.style.gridRow = 'span ' + rowSpan;
-                    renderCellContent(cell, item);
-                    setupCellLongPress(cell);
-                    setupDrag(cell);
-                    grid.appendChild(cell);
-                    break cell_assign;
-                }
+                // 已拖拽过：流式占格，不占用位
+                var cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.setAttribute('data-id', item.id);
+                cell.style.gridColumn = 'span ' + colSpan;
+                cell.style.gridRow = 'span ' + rowSpan;
+                renderCellContent(cell, item);
+                setupCellLongPress(cell);
+                setupDrag(cell);
+                grid.appendChild(cell);
                 return;
-                } else {
-                // 优先使用 dragState 记录的位置（拖拽中悬浮位置）
-                if (dragState && dragState.itemId === item.id && dragState.currentRow) {
-                    pos = { row: dragState.currentRow, col: dragState.currentCol, rowSpan: rowSpan, colSpan: colSpan };
-                } else if (item.gridPos && tarotMoved) {
-                    pos = item.gridPos;
-                } else {
-                    pos = nextSlot(rowSpan, colSpan);
-                }
-                if (!pos) return;
             }
+
+            // 未拖拽过：使用 nextSlot 智能填充（跳过塔罗预留位置）
+            pos = nextSlot(rowSpan, colSpan);
+            if (!pos) return;
 
             var cell = document.createElement('div');
             cell.className = 'grid-cell';
             cell.setAttribute('data-id', item.id);
-            // ★ 优先使用拖拽保存的 gridPos
-            if (item.gridPos) {
-                cell.style.gridColumn = item.gridPos.col + ' / span ' + item.gridPos.colSpan;
-                cell.style.gridRow = item.gridPos.row + ' / span ' + item.gridPos.rowSpan;
-            } else {
-                cell.style.gridColumn = pos.col + ' / span ' + colSpan;
-                cell.style.gridRow = pos.row + ' / span ' + rowSpan;
-            }
+            cell.style.gridColumn = pos.col + ' / span ' + colSpan;
+            cell.style.gridRow = pos.row + ' / span ' + rowSpan;
             renderCellContent(cell, item);
             setupCellLongPress(cell);
             setupDrag(cell);
