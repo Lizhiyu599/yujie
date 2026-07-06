@@ -523,17 +523,17 @@ function openPaymentModal(msgId) {
     overlay.className = 'payment-open-overlay';
     overlay.id = 'paymentOpenOverlay';
     overlay.innerHTML = ''
-        + '<div class="payment-open-modal">'
-        + '<div class="payment-open-icon"><span class="payment-open-dollar">$</span></div>'
-        + '<div class="payment-open-type">' + (isBlackCard ? '黑卡' : (isRedPacket ? '红包' : '转账')) + '</div>'
-        + (note ? '<div class="payment-open-note">' + note + '</div>' : '')
-        + '<div class="payment-open-amount" id="paymentOpenAmount">' + (isRedPacket ? '?' : '$' + amount) + '</div>'
-        + '<div class="payment-open-hint">' + (isRedPacket ? '点击拆开' : '点击接收') + '</div>'
-        + '<div class="payment-open-buttons">'
-        + '<button class="payment-open-accept" id="paymentOpenAccept">' + (isRedPacket ? '拆' : '接收') + '</button>'
-        + (!isRedPacket && !isBlackCard ? '<button class="payment-open-refund" id="paymentOpenRefund">退还</button>' : '')
-        + '</div>'
-        + '</div>';
+    + '<div class="payment-open-modal" style="' + (isBlackCard ? 'background:#1a1a1a;color:#fff;' : '') + '">'
+    + (isBlackCard ? '' : '<div class="payment-open-icon"><span class="payment-open-dollar">$</span></div>')
+    + '<div class="payment-open-type" style="' + (isBlackCard ? 'color:rgba(255,255,255,0.7);' : '') + '">' + (isBlackCard ? '黑卡' : (isRedPacket ? '红包' : '转账')) + '</div>'
+    + (note ? '<div class="payment-open-note">' + note + '</div>' : '')
+    + '<div class="payment-open-amount" id="paymentOpenAmount" style="' + (isBlackCard ? 'color:#fff;' : '') + '">' + (isRedPacket ? '?' : '$' + amount) + '</div>'
+    + '<div class="payment-open-hint">' + (isRedPacket ? '点击拆开' : '点击接收') + '</div>'
+    + '<div class="payment-open-buttons">'
+    + '<button class="payment-open-accept" id="paymentOpenAccept">' + (isRedPacket ? '拆' : '接收') + '</button>'
+    + (!isRedPacket && !isBlackCard ? '<button class="payment-open-refund" id="paymentOpenRefund">退还</button>' : '')
+    + '</div>'
+    + '</div>';
     document.body.appendChild(overlay);
 
     var acceptBtn = document.getElementById('paymentOpenAccept');
