@@ -112,11 +112,16 @@ function renderDesktopGrid() {
             cell.setAttribute('data-id', item.id);
 
             var sizeParts = (item.size || '1x1').split('x');
-            var rowSpan = parseInt(sizeParts[0]) || 1;
-            var colSpan = parseInt(sizeParts[1]) || 1;
-            cell.style.gridColumn = 'span ' + colSpan;
-            cell.style.gridRow = 'span ' + rowSpan;
-
+var rowSpan = parseInt(sizeParts[0]) || 1;
+var colSpan = parseInt(sizeParts[1]) || 1;
+if (item.widgetType === 'tarot') {
+    cell.style.gridColumn = '3 / span 2';
+    cell.style.gridRow = '5 / span 2';
+} else {
+    cell.style.gridColumn = 'span ' + colSpan;
+    cell.style.gridRow = 'span ' + rowSpan;
+}
+            
             if (item.type === 'app') {
                 cell.innerHTML =
                     '<div class="app-icon">' +
