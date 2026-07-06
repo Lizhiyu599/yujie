@@ -162,22 +162,24 @@ function renderDesktopGrid() {
             return null;
         }
 
-       // ★ 预留塔罗占位（第5-6行第3-4列）
+                // ★ 预留塔罗占位
         if (!tarotMoved && tarotItems.length > 0) {
             occupy(5, 3, 6, 4);
         }
 
-        // ★ 预留所有有 gridPos 的 items 的占位（保护拖拽后的位置不被其他 items 侵占）
-        pageItems.forEach(function(item) {
-            if (item.gridPos) {
-                occupy(
-                    item.gridPos.row,
-                    item.gridPos.col,
-                    item.gridPos.row + item.gridPos.rowSpan - 1,
-                    item.gridPos.col + item.gridPos.colSpan - 1
-                );
-            }
-        });
+        // ★ 预留所有有 gridPos 的 items 占位（但只在塔罗已移动时使用，否则会乱）
+        if (tarotMoved || dragState) {
+            pageItems.forEach(function(item) {
+                if (item.gridPos) {
+                    occupy(
+                        item.gridPos.row,
+                        item.gridPos.col,
+                        item.gridPos.row + item.gridPos.rowSpan - 1,
+                        item.gridPos.col + item.gridPos.colSpan - 1
+                    );
+                }
+            });
+        }
 
         // 渲染普通 items（按时钟→倒数日→App 顺序自然填充）
         normalItems.forEach(function(item) {
@@ -202,16 +204,16 @@ function renderDesktopGrid() {
                     break cell_assign;
                 }
                 return;
-                        } else {
-                pos = nextSlot(rowSpan, colSpan);
-                if (!pos) {
-                    // 没位置了：尝试用 gridPos
-                    if (item.gridPos) {
-                        pos = item.gridPos;
-                    } else {
-                        return;
-                    }
+                } else {
+                // 优先使用 dragState 记录的位置（拖拽中悬浮位置）
+                if (dragState && dragState.itemId === item.id && dragState.currentRow) {
+                    pos = { row: dragState.currentRow, col: dragState.currentCol, rowSpan: rowSpan, colSpan: colSpan };
+                } else if (item.gridPos && tarotMoved) {
+                    pos = item.gridPos;
+                } else {
+                    pos = nextSlot(rowSpan, colSpan);
                 }
+                if (!pos) return;
             }
 
             var cell = document.createElement('div');
