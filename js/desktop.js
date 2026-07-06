@@ -104,12 +104,26 @@ function renderDesktopGrid() {
         grid.className = 'desktop-grid';
         grid.setAttribute('data-page', pageIndex);
 
-        var pageItems = items.filter(function(item) { return (item.page || 0) === pageIndex; });
+                var pageItems = items.filter(function(item) { return (item.page || 0) === pageIndex; });
+
+        // ★ 清理冲突的 gridPos（多个 item 指向同一格子时只保留最后一个）
+        var usedPos = {};
+        pageItems.forEach(function(item) {
+            if (!item.gridPos) return;
+            var key = item.gridPos.row + '_' + item.gridPos.col;
+            if (usedPos[key]) {
+                delete item.gridPos;
+            } else {
+                usedPos[key] = true;
+            }
+        });
+        // 同步清理 result 到 localStorage
+        saveItems(items);
 
         // ★ 分离塔罗和其他 items
         var tarotItems = pageItems.filter(function(it) { return it.widgetType === 'tarot'; });
         var normalItems = pageItems.filter(function(it) { return it.widgetType !== 'tarot'; });
-
+            
         // ★ 判断塔罗是否被拖拽过
         var tarotMoved = localStorage.getItem('tarot_moved') === '1';
 
@@ -176,26 +190,33 @@ function renderDesktopGrid() {
                     break cell_assign;
                 }
                 return;
-            } else {
+                        } else {
                 pos = nextSlot(rowSpan, colSpan);
-                if (!pos) return;
+                if (!pos) {
+                    // 没位置了：尝试用 gridPos
+                    if (item.gridPos) {
+                        pos = item.gridPos;
+                    } else {
+                        return;
+                    }
+                }
             }
 
             var cell = document.createElement('div');
-cell.className = 'grid-cell';
-cell.setAttribute('data-id', item.id);
-// ★优先使用拖拽保存的 gridPos
-if (item.gridPos) {
-    cell.style.gridColumn = item.gridPos.col + ' / span ' + item.gridPos.colSpan;
-    cell.style.gridRow = item.gridPos.row + ' / span ' + item.gridPos.rowSpan;
-} else {
-    cell.style.gridColumn = pos.col + ' / span ' + colSpan;
-    cell.style.gridRow = pos.row + ' / span ' + rowSpan;
-}
-renderCellContent(cell, item);
-setupCellLongPress(cell);
-setupDrag(cell);
-grid.appendChild(cell);
+            cell.className = 'grid-cell';
+            cell.setAttribute('data-id', item.id);
+            // ★ 优先使用拖拽保存的 gridPos
+            if (item.gridPos) {
+                cell.style.gridColumn = item.gridPos.col + ' / span ' + item.gridPos.colSpan;
+                cell.style.gridRow = item.gridPos.row + ' / span ' + item.gridPos.rowSpan;
+            } else {
+                cell.style.gridColumn = pos.col + ' / span ' + colSpan;
+                cell.style.gridRow = pos.row + ' / span ' + rowSpan;
+            }
+            renderCellContent(cell, item);
+            setupCellLongPress(cell);
+            setupDrag(cell);
+            grid.appendChild(cell);
         });
 
         // 渲染塔罗
