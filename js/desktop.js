@@ -182,14 +182,20 @@ function renderDesktopGrid() {
             }
 
             var cell = document.createElement('div');
-            cell.className = 'grid-cell';
-            cell.setAttribute('data-id', item.id);
-            cell.style.gridColumn = pos.col + ' / span ' + colSpan;
-            cell.style.gridRow = pos.row + ' / span ' + rowSpan;
-            renderCellContent(cell, item);
-            setupCellLongPress(cell);
-            setupDrag(cell);
-            grid.appendChild(cell);
+cell.className = 'grid-cell';
+cell.setAttribute('data-id', item.id);
+// ★优先使用拖拽保存的 gridPos
+if (item.gridPos) {
+    cell.style.gridColumn = item.gridPos.col + ' / span ' + item.gridPos.colSpan;
+    cell.style.gridRow = item.gridPos.row + ' / span ' + item.gridPos.rowSpan;
+} else {
+    cell.style.gridColumn = pos.col + ' / span ' + colSpan;
+    cell.style.gridRow = pos.row + ' / span ' + rowSpan;
+}
+renderCellContent(cell, item);
+setupCellLongPress(cell);
+setupDrag(cell);
+grid.appendChild(cell);
         });
 
         // 渲染塔罗
@@ -199,22 +205,24 @@ function renderDesktopGrid() {
             var colSpan = parseInt(sizeParts[1]) || 1;
 
             var cell = document.createElement('div');
-            cell.className = 'grid-cell';
-            cell.setAttribute('data-id', item.id);
+cell.className = 'grid-cell';
+cell.setAttribute('data-id', item.id);
 
-            if (!tarotMoved) {
-                // 默认固定到第5-6行第3-4列
-                cell.style.gridColumn = '3 / span ' + colSpan;
-                cell.style.gridRow = '5 / span ' + rowSpan;
-            } else {
-                // 已拖拽过：流式占格
-                cell.style.gridColumn = 'span ' + colSpan;
-                cell.style.gridRow = 'span ' + rowSpan;
-            }
-            renderCellContent(cell, item);
-            setupCellLongPress(cell);
-            setupDrag(cell);
-            grid.appendChild(cell);
+//  优先使用拖拽保存的 gridPos
+if (item.gridPos) {
+    cell.style.gridColumn = item.gridPos.col + ' / span ' + item.gridPos.colSpan;
+    cell.style.gridRow = item.gridPos.row + ' / span ' + item.gridPos.rowSpan;
+} else if (!tarotMoved) {
+    cell.style.gridColumn = '3 / span ' + colSpan;
+    cell.style.gridRow = '5 / span ' + rowSpan;
+} else {
+    cell.style.gridColumn = 'span ' + colSpan;
+    cell.style.gridRow = 'span ' + rowSpan;
+}
+renderCellContent(cell, item);
+setupCellLongPress(cell);
+setupDrag(cell);
+grid.appendChild(cell);
         });
 
         page.appendChild(grid);
