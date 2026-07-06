@@ -111,6 +111,10 @@ function _cpConfirmCreate() {
 
 // ========== 赠送卡 ==========
 function _cpSendCard(index) {
+    if (_cpCards[index] && _cpCards[index].from !== 'user') {
+        showToast('角色赠送的卡不能转赠');
+        return;
+    }
     var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
     if (contacts.length === 0) { showToast('暂无联系人'); return; }
 
@@ -147,15 +151,14 @@ function _cpConfirmSend(index, contactId, contactName) {
     _cpCards[index].toId = contactId;
     _cpSaveCards();
 
-// 存未读卡包通知
-var notices = JSON.parse(localStorage.getItem('cp_pending_notices') || '[]');
-notices.push({
-    contactId: contactId,
-    contactName: contactName,
-    balance: _cpCards[index].balance,
-    time: Date.now()
-});
-localStorage.setItem('cp_pending_notices', JSON.stringify(notices));
+    var notices = JSON.parse(localStorage.getItem('cp_pending_notices') || '[]');
+    notices.push({
+        contactId: contactId,
+        contactName: contactName,
+        balance: _cpCards[index].balance,
+        time: Date.now()
+    });
+    localStorage.setItem('cp_pending_notices', JSON.stringify(notices));
     
     _cpRender();
     
