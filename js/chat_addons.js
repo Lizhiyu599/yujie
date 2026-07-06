@@ -3,6 +3,14 @@
  * 包含：表情包面板渲染、发送贴纸、相册、图片查看器、位置、红包、转账、链接、线下模式切换
  */
 
+document.addEventListener('click', function(e) {
+    var card = e.target.closest('.payment-card');
+    if (card) {
+        var msgId = card.getAttribute('data-msg-id');
+        if (msgId) openPaymentModal(msgId);
+    }
+});
+
 // ========== 表情包面板渲染 ==========
 function renderAddPanelContent(tab) {
     const body = document.getElementById('addPanelBody');
