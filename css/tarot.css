@@ -79,11 +79,11 @@
 .tarot-fan-area {
     position: relative;
     width: 100%;
-    height: 340px;
+    height: 380px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 8px 0;
+    margin: 20px 0 8px;
     overflow: visible;
 }
 .tarot-fan-card-wrap {
