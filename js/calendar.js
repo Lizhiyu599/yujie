@@ -266,8 +266,8 @@ gridHTML += '<div class="cal-schedule-time-cell" onclick="_calEditPeriodTime(' +
             days.forEach(function(d, di) {
             var key = di + '_' + p.num;
             var course = schedule[key];
-            var isTodayCol = di === todayIndex ? ' today-col' : '';
-            gridHTML += '<div class="cal-schedule-cell' + (course ? ' has-course' : '') + isTodayCol + '" onclick="_calEditCourse(' + di + ',' + p.num + ')">'
+            var isTodayCol = '';
+                gridHTML += '<div class="cal-schedule-cell' + (course ? ' has-course' : '') + isTodayCol + '" onclick="_calEditCourse(' + di + ',' + p.num + ')">'
                 + (course ? '<div class="cal-course-name">' + course.name + '</div><div class="cal-course-room">' + (course.room || '') + '</div>' : '')
                 + '</div>';
         });
