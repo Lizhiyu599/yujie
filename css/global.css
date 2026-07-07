@@ -1079,20 +1079,20 @@ input, textarea {
 
 /* ===== 修复：日历与课程表导航栏及右上角三点菜单位置 ===== */
 
-/* 1. 让整个日历整体向下移动，避开可能被手机状态栏遮挡的区域 */
+/* 1. 让整个日历整体向下移动 */
 .cal-app {
     display: flex;
     flex-direction: column;
     height: 100%;
-    padding-top: 24px; /* 如果觉得还太靠上，可以把 24px 改成 30px 或 40px */
+    padding-top: 24px; 
 }
 
-/* 2. 规范导航栏的排版 */
+/* 2. 规范导航栏的排版：让右边留出更多空白，把菜单往左推 */
 .cal-nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 20px;
+    padding: 10px 24px; /* 把原本的 20px 改成 24px 或者 30px，右边就会空出更多距离 */
     position: relative;
     height: 44px;
 }
@@ -1101,17 +1101,17 @@ input, textarea {
 .cal-nav-menu {
     display: flex;
     align-items: center;
-    gap: 3px;          /* 三个点的间距 */
+    gap: 3px;          
     cursor: pointer;
-    padding: 10px;     /* 增大点击区域 */
-    margin-right: -10px;
+    padding: 10px;     
+    margin-right: 4px; /* 改为正数的 4px 或 8px，它就会自动往左边“缩”进来一点，远离屏幕最右侧边缘 */
 }
 
-/* 4. 调整三个点本身的形状与颜色（防止样式丢失） */
+/* 4. 调整三个点本身的形状与颜色 */
 .cal-menu-dot {
     width: 4px;
     height: 4px;
-    background-color: #1d1d1f; /* 莫兰迪黑/深灰 */
+    background-color: #1d1d1f; 
     border-radius: 50%;
     display: inline-block;
 }
