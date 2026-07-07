@@ -241,15 +241,17 @@ function _calRenderSchedule(appWindow) {
     var today = new Date().getDay();
     var todayIndex = today === 0 ? 6 : today - 1;
     var periods = [
-        { num: 1, defaultTime: '08:00-08:45' },
-        { num: 2, defaultTime: '08:55-09:40' },
-        { num: 3, defaultTime: '10:00-10:45' },
-        { num: 4, defaultTime: '10:55-11:40' },
-        { num: 5, defaultTime: '14:00-14:45' },
-        { num: 6, defaultTime: '14:55-15:40' },
-        { num: 7, defaultTime: '16:00-16:45' },
-        { num: 8, defaultTime: '16:55-17:40' }
-    ];
+    { num: 1, defaultStart: '08:00', defaultEnd: '08:45' },
+    { num: 2, defaultStart: '08:55', defaultEnd: '09:40' },
+    { num: 3, defaultStart: '10:00', defaultEnd: '10:45' },
+    { num: 4, defaultStart: '10:55', defaultEnd: '11:40' },
+    { num: 5, defaultStart: '14:00', defaultEnd: '14:45' },
+    { num: 6, defaultStart: '14:55', defaultEnd: '15:40' },
+    { num: 7, defaultStart: '16:00', defaultEnd: '16:45' },
+    { num: 8, defaultStart: '16:55', defaultEnd: '17:40' },
+    { num: 9, defaultStart: '19:00', defaultEnd: '19:45' },
+    { num: 10, defaultStart: '19:55', defaultEnd: '20:40' }
+];
 
     var gridHTML = '<div class="cal-schedule-table">';
     gridHTML += '<div class="cal-schedule-header-cell" style="background:rgba(255,255,255,0.4);"></div>';
@@ -258,10 +260,10 @@ function _calRenderSchedule(appWindow) {
     });
 
     periods.forEach(function(p) {
-        var timeKey = 'time_' + p.num;
-        var savedTime = localStorage.getItem('cal_period_' + timeKey) || p.defaultTime;
-        gridHTML += '<div class="cal-schedule-time-cell" onclick="_calEditPeriodTime(' + p.num + ')"><span class="cal-schedule-time-num">' + p.num + '</span><span>' + savedTime + '</span></div>';
-        days.forEach(function(d, di) {
+        var savedStart = localStorage.getItem('cal_period_start_' + p.num) || p.defaultStart;
+var savedEnd = localStorage.getItem('cal_period_end_' + p.num) || p.defaultEnd;
+gridHTML += '<div class="cal-schedule-time-cell" onclick="_calEditPeriodTime(' + p.num + ')"><span class="cal-schedule-time-num">' + p.num + '</span><span>' + savedStart + '</span><span>' + savedEnd + '</span></div>';
+            days.forEach(function(d, di) {
             var key = di + '_' + p.num;
             var course = schedule[key];
             var isTodayCol = di === todayIndex ? ' today-col' : '';
@@ -280,22 +282,24 @@ function _calRenderSchedule(appWindow) {
 }
 
 function _calEditPeriodTime(num) {
-    var timeKey = 'time_' + num;
-    var current = localStorage.getItem('cal_period_' + timeKey) || '';
+    var currentStart = localStorage.getItem('cal_period_start_' + num) || '';
+    var currentEnd = localStorage.getItem('cal_period_end_' + num) || '';
     var overlay = document.createElement('div');
     overlay.className = 'caption-modal-overlay'; overlay.id = 'calPeriodTimeOverlay';
     overlay.innerHTML = '<div class="caption-modal">'
         + '<div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">编辑第' + num + '节时间</div>'
-        + '<input type="text" class="payment-note" id="calPeriodTimeInput" placeholder="如08:00-08:45" value="' + current + '">'
+        + '<div style="display:flex;gap:8px;align-items:center;"><input type="text" class="payment-note" id="calPeriodStartInput" placeholder="开始" value="' + currentStart + '" style="flex:1;"><span style="color:#8e8e93;">至</span><input type="text" class="payment-note" id="calPeriodEndInput" placeholder="结束" value="' + currentEnd + '" style="flex:1;"></div>'
         + '<div class="caption-buttons" style="margin-top:12px;"><div class="payment-btn-cancel" onclick="_calClosePeriodTime()">取消</div><div class="payment-btn-confirm" onclick="_calSavePeriodTime(' + num + ')">保存</div></div></div>';
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) _calClosePeriodTime(); };
 }
 function _calClosePeriodTime() { var o = document.getElementById('calPeriodTimeOverlay'); if (o) o.remove(); }
 function _calSavePeriodTime(num) {
-    var val = document.getElementById('calPeriodTimeInput').value.trim();
+    var startVal = document.getElementById('calPeriodStartInput').value.trim();
+    var endVal = document.getElementById('calPeriodEndInput').value.trim();
     _calClosePeriodTime();
-    if (val) localStorage.setItem('cal_period_time_' + num, val);
+    if (startVal) localStorage.setItem('cal_period_start_' + num, startVal);
+    if (endVal) localStorage.setItem('cal_period_end_' + num, endVal);
     var appWindow = document.getElementById('calendarAppWindow');
     if (appWindow) _calRenderSchedule(appWindow);
 }
