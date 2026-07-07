@@ -1,4 +1,18 @@
 /* ===== 日历小组件 ===== */
+.calendar-widget {
+    display: flex;
+    flex-direction: column;
+    background: rgba(255,255,255,0.4);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    border: 1px solid rgba(255,255,255,0.55);
+    border-radius: 22px;
+    padding: 16px 12px;
+    cursor: pointer;
+    min-height: 100%;
+    color: #000;
+    justify-content: center;
+}
 .cal-widget-header {
     display: flex;
     justify-content: center;
