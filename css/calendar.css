@@ -175,7 +175,7 @@
 .cal-nav-menu {
     display: flex; flex-direction: column; gap: 3px;
     cursor: pointer; padding: 8px;
-    position: absolute; right: 12px; top: calc(50% + 8px); transform: translateY(-50%);
+    position: absolute; right: 12px; top: 18px;
     z-index: 10;
 }
 .cal-menu-dot {
