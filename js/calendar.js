@@ -267,7 +267,7 @@ gridHTML += '<div class="cal-schedule-time-cell" onclick="_calEditPeriodTime(' +
             var key = di + '_' + p.num;
             var course = schedule[key];
             var isTodayCol = '';
-                gridHTML += '<div class="cal-schedule-cell' + (course ? ' has-course' : '') + isTodayCol + '" onclick="_calEditCourse(' + di + ',' + p.num + ')">'
+                gridHTML += '<div class="cal-schedule-cell' + (course ? ' has-course' : '') + isTodayCol + '" style="' + (course && course.bg ? 'background:' + course.bg + ';' : '') + '" onclick="_calEditCourse(' + di + ',' + p.num + ')">'
                 + (course ? '<div class="cal-course-name">' + course.name + '</div><div class="cal-course-room">' + (course.room || '') + '</div>' : '')
                 + '</div>';
         });
@@ -275,7 +275,7 @@ gridHTML += '<div class="cal-schedule-time-cell" onclick="_calEditPeriodTime(' +
     gridHTML += '</div>';
 
     appWindow.innerHTML = '<div class="cal-app">'
-        + '<div class="cal-nav"><div class="cal-nav-back" onclick="_calRenderMonth()">‹</div><div class="cal-nav-title">课程表</div></div>'
+        + '<div class="cal-nav"><div class="cal-nav-back" onclick="_calRenderMonth()">‹</div><div class="cal-nav-title">课程表</div><div class="cal-nav-menu" onclick="event.stopPropagation();_calOpenScheduleMenu()"><span class="cal-menu-dot"></span><span class="cal-menu-dot"></span><span class="cal-menu-dot"></span></div></div>'
         + '<div class="cal-body" style="padding:0;">'
         + '<div class="cal-schedule-wrapper">' + gridHTML + '</div>'
         + '</div></div>';
@@ -334,6 +334,34 @@ function _calDeleteCourse(day, num) {
     _calCloseCourse();
     var schedule = JSON.parse(localStorage.getItem('cal_schedule') || '{}');
     delete schedule[day + '_' + num];
+    localStorage.setItem('cal_schedule', JSON.stringify(schedule));
+    var appWindow = document.getElementById('calendarAppWindow');
+    if (appWindow) _calRenderSchedule(appWindow);
+}
+
+function _calOpenScheduleMenu() {
+    var overlay = document.createElement('div');
+    overlay.className = 'music-menu-overlay';
+    overlay.style.zIndex = '9999';
+    overlay.id = 'calScheduleMenuOverlay';
+    overlay.innerHTML = '<div class="music-menu-panel" onclick="event.stopPropagation();">'
+        + '<div class="music-menu-handle"></div>'
+        + '<div class="music-menu-item" onclick="_calApplyMorandiColors()"><span>莫兰迪蓝色系</span></div>'
+        + '</div>';
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) _calCloseScheduleMenu(); };
+}
+function _calCloseScheduleMenu() { var o = document.getElementById('calScheduleMenuOverlay'); if (o) o.remove(); }
+
+function _calApplyMorandiColors() {
+    _calCloseScheduleMenu();
+    var colors = ['#E0E5E9','#C0D0D8','#B8C7D0','#A0B0C8','#D0D8E0','#C0CDD0','#A8B8C0','#8898A0'];
+    var schedule = JSON.parse(localStorage.getItem('cal_schedule') || '{}');
+    var colorIdx = 0;
+    for (var key in schedule) {
+        schedule[key].bg = colors[colorIdx % colors.length];
+        colorIdx++;
+    }
     localStorage.setItem('cal_schedule', JSON.stringify(schedule));
     var appWindow = document.getElementById('calendarAppWindow');
     if (appWindow) _calRenderSchedule(appWindow);
