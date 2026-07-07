@@ -334,7 +334,7 @@ function buildWidgetHTML(item) {
         gridHTML += '<div class="cal-widget-day' + isToday + '">' + d + '</div>';
     }
     return '<div class="calendar-widget" onclick="openCalendar()">'
-        + '<div class="cal-widget-header" style="padding-top:6px;">' + calYear + '年' + calMonth + '月</div>'
+        + '<div class="cal-widget-header" style="margin-top:-4px;">' + calYear + '年' + calMonth + '月</div>'
         + '<div class="cal-widget-grid">' + gridHTML + '</div>'
         + '</div>';
     }
