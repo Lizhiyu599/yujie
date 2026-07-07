@@ -240,73 +240,96 @@ function _calRenderSchedule(appWindow) {
     var days = ['周一','周二','周三','周四','周五','周六','周日'];
     var today = new Date().getDay();
     var todayIndex = today === 0 ? 6 : today - 1;
-
     var periods = [
-        { label: '上午', slots: ['08:00','09:00','10:00','11:00'] },
-        { label: '中午', slots: ['12:00','13:00'] },
-        { label: '下午', slots: ['14:00','15:00','16:00','17:00','18:00','19:00'] }
+        { num: 1, defaultTime: '08:00-08:45' },
+        { num: 2, defaultTime: '08:55-09:40' },
+        { num: 3, defaultTime: '10:00-10:45' },
+        { num: 4, defaultTime: '10:55-11:40' },
+        { num: 5, defaultTime: '14:00-14:45' },
+        { num: 6, defaultTime: '14:55-15:40' },
+        { num: 7, defaultTime: '16:00-16:45' },
+        { num: 8, defaultTime: '16:55-17:40' }
     ];
 
-    var gridHTML = '';
-    periods.forEach(function(period) {
-        gridHTML += '<div class="cal-period-label">' + period.label + '</div>';
-        period.slots.forEach(function(t) {
-            gridHTML += '<div class="cal-schedule-row">';
-            days.forEach(function(d, di) {
-                var key = di + '_' + t;
-                var course = schedule[key];
-                var isTodayCol = di === todayIndex ? ' today-col' : '';
-                gridHTML += '<div class="cal-schedule-cell' + (course ? ' has-course' : '') + isTodayCol + '" onclick="_calEditCourse(' + di + ',\'' + t + '\')">'
-                    + (course ? '<div class="cal-course-name">' + course.name + '</div><div class="cal-course-room">' + (course.room || '') + '</div>' : '')
-                    + '</div>';
-            });
-            gridHTML += '</div>';
+    var gridHTML = '<div class="cal-schedule-table">';
+    gridHTML += '<div class="cal-schedule-header-cell" style="background:rgba(255,255,255,0.4);"></div>';
+    days.forEach(function(d, i) {
+        gridHTML += '<div class="cal-schedule-header-cell' + (i === todayIndex ? ' today' : '') + '">' + d + '</div>';
+    });
+
+    periods.forEach(function(p) {
+        var timeKey = 'time_' + p.num;
+        var savedTime = localStorage.getItem('cal_period_' + timeKey) || p.defaultTime;
+        gridHTML += '<div class="cal-schedule-time-cell" onclick="_calEditPeriodTime(' + p.num + ')"><span class="cal-schedule-time-num">' + p.num + '</span><span>' + savedTime + '</span></div>';
+        days.forEach(function(d, di) {
+            var key = di + '_' + p.num;
+            var course = schedule[key];
+            var isTodayCol = di === todayIndex ? ' today-col' : '';
+            gridHTML += '<div class="cal-schedule-cell' + (course ? ' has-course' : '') + isTodayCol + '" onclick="_calEditCourse(' + di + ',' + p.num + ')">'
+                + (course ? '<div class="cal-course-name">' + course.name + '</div><div class="cal-course-room">' + (course.room || '') + '</div>' : '')
+                + '</div>';
         });
     });
+    gridHTML += '</div>';
 
     appWindow.innerHTML = '<div class="cal-app">'
         + '<div class="cal-nav"><div class="cal-nav-back" onclick="_calRenderMonth()">‹</div><div class="cal-nav-title">课程表</div></div>'
         + '<div class="cal-body" style="padding:0;">'
-        + '<div class="cal-schedule-header"><div class="cal-schedule-time-label"></div>'
-        + days.map(function(d, i) { return '<div class="cal-schedule-day-label' + (i === todayIndex ? ' today-label' : '') + '">' + d + '</div>'; }).join('')
-        + '</div>'
-        + gridHTML
+        + '<div class="cal-schedule-wrapper">' + gridHTML + '</div>'
         + '</div></div>';
 }
 
-function _calEditCourse(day, time) {
-    var schedule = JSON.parse(localStorage.getItem('cal_schedule') || '{}');
-    var key = day + '_' + time;
-    var course = schedule[key] || {};
-    
+function _calEditPeriodTime(num) {
+    var timeKey = 'time_' + num;
+    var current = localStorage.getItem('cal_period_' + timeKey) || '';
     var overlay = document.createElement('div');
-    overlay.className = 'caption-modal-overlay';
-    overlay.id = 'calCourseOverlay';
+    overlay.className = 'caption-modal-overlay'; overlay.id = 'calPeriodTimeOverlay';
+    overlay.innerHTML = '<div class="caption-modal">'
+        + '<div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">编辑第' + num + '节时间</div>'
+        + '<input type="text" class="payment-note" id="calPeriodTimeInput" placeholder="如08:00-08:45" value="' + current + '">'
+        + '<div class="caption-buttons" style="margin-top:12px;"><div class="payment-btn-cancel" onclick="_calClosePeriodTime()">取消</div><div class="payment-btn-confirm" onclick="_calSavePeriodTime(' + num + ')">保存</div></div></div>';
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) _calClosePeriodTime(); };
+}
+function _calClosePeriodTime() { var o = document.getElementById('calPeriodTimeOverlay'); if (o) o.remove(); }
+function _calSavePeriodTime(num) {
+    var val = document.getElementById('calPeriodTimeInput').value.trim();
+    _calClosePeriodTime();
+    if (val) localStorage.setItem('cal_period_time_' + num, val);
+    var appWindow = document.getElementById('calendarAppWindow');
+    if (appWindow) _calRenderSchedule(appWindow);
+}
+
+function _calEditCourse(day, num) {
+    var schedule = JSON.parse(localStorage.getItem('cal_schedule') || '{}');
+    var key = day + '_' + num;
+    var course = schedule[key] || {};
+    var overlay = document.createElement('div');
+    overlay.className = 'caption-modal-overlay'; overlay.id = 'calCourseOverlay';
     overlay.innerHTML = '<div class="caption-modal">'
         + '<div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#000;">' + (course.name ? '编辑课程' : '添加课程') + '</div>'
         + '<input type="text" class="payment-note" id="calCourseName" placeholder="课程名称" value="' + (course.name || '') + '">'
         + '<input type="text" class="payment-note" id="calCourseRoom" placeholder="教室（选填）" value="' + (course.room || '') + '" style="margin-top:6px;">'
-        + (course.name ? '<div style="color:#ff3b30;font-size:13px;cursor:pointer;margin-top:8px;" onclick="_calDeleteCourse(' + day + ',\'' + time + '\')">删除课程</div>' : '')
-        + '<div class="caption-buttons" style="margin-top:12px;"><div class="payment-btn-cancel" onclick="_calCloseCourse()">取消</div><div class="payment-btn-confirm" onclick="_calSaveCourse(' + day + ',\'' + time + '\')">保存</div></div></div>';
+        + (course.name ? '<div style="color:#ff3b30;font-size:13px;cursor:pointer;margin-top:8px;" onclick="_calDeleteCourse(' + day + ',' + num + ')">删除课程</div>' : '')
+        + '<div class="caption-buttons" style="margin-top:12px;"><div class="payment-btn-cancel" onclick="_calCloseCourse()">取消</div><div class="payment-btn-confirm" onclick="_calSaveCourse(' + day + ',' + num + ')">保存</div></div></div>';
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) _calCloseCourse(); };
 }
 function _calCloseCourse() { var o = document.getElementById('calCourseOverlay'); if (o) o.remove(); }
-function _calSaveCourse(day, time) {
+function _calSaveCourse(day, num) {
     var name = document.getElementById('calCourseName').value.trim();
     var room = document.getElementById('calCourseRoom').value.trim();
-    _calCloseCourse();
-    if (!name) return;
+    _calCloseCourse(); if (!name) return;
     var schedule = JSON.parse(localStorage.getItem('cal_schedule') || '{}');
-    schedule[day + '_' + time] = { name: name, room: room };
+    schedule[day + '_' + num] = { name: name, room: room };
     localStorage.setItem('cal_schedule', JSON.stringify(schedule));
     var appWindow = document.getElementById('calendarAppWindow');
     if (appWindow) _calRenderSchedule(appWindow);
 }
-function _calDeleteCourse(day, time) {
+function _calDeleteCourse(day, num) {
     _calCloseCourse();
     var schedule = JSON.parse(localStorage.getItem('cal_schedule') || '{}');
-    delete schedule[day + '_' + time];
+    delete schedule[day + '_' + num];
     localStorage.setItem('cal_schedule', JSON.stringify(schedule));
     var appWindow = document.getElementById('calendarAppWindow');
     if (appWindow) _calRenderSchedule(appWindow);
@@ -316,4 +339,4 @@ function _calDeleteEvent(d, index) {
     var key = _calYear + '-' + _calMonth + '-' + d;
     if (_calEvents[key]) { _calEvents[key].splice(index, 1); if (_calEvents[key].length === 0) delete _calEvents[key]; }
     _calSaveEvents(); _calRenderMonth();
-}
+                                       }
