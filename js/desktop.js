@@ -909,6 +909,16 @@ function openHalfPanel() {
                     '</div>' +
                     '<div class="widget-preview-label">倒数日小组件</div>' +
                 '</div>' +
+                '<div class="widget-preview-card" onclick="confirmAddTarotWidget()" style="max-width:50%;margin:8px auto;">' +
+                    '<div class="widget-preview-inner" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 0;">' +
+                        '<div style="position:relative;width:36px;height:48px;">' +
+                            '<div style="position:absolute;width:28px;height:42px;background:#1a1a1a;border:1px solid rgba(255,255,255,0.2);border-radius:2px;top:0;left:0;transform:rotate(-6deg);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.2);font-size:10px;">✦</div>' +
+                            '<div style="position:absolute;width:28px;height:42px;background:#1a1a1a;border:1px solid rgba(255,255,255,0.2);border-radius:2px;top:2px;left:8px;transform:rotate(4deg);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.2);font-size:10px;">✦</div>' +
+                        '</div>' +
+                        '<div style="font-size:11px;color:rgba(0,0,0,0.5);">Tarot</div>' +
+                    '</div>' +
+                    '<div class="widget-preview-label">塔罗小组件</div>' +
+                '</div>' +
             '</div>' +
             '<div class="widget-list-item" data-target="wp-2x4"><span>2x4 小组件</span><span class="toggle-arrow">›</span></div>' +
             '<div id="wp-2x4" class="collapsible-section" style="display:none;">' +
@@ -1015,6 +1025,26 @@ function confirmAddCountdownWidget() {
     closeHalfPanel();
     renderDesktopGrid();
     showToast('倒数日已添加');
+}
+
+function confirmAddTarotWidget() {
+    var items = getItems();
+    if (items.find(function(i) { return i.id === 'widget-tarot-default'; })) {
+        showToast('塔罗小组件已在桌面');
+        closeHalfPanel();
+        return;
+    }
+    items.push({
+        id: 'widget-tarot-default',
+        type: 'widget',
+        widgetType: 'tarot',
+        size: '2x2',
+        page: 0
+    });
+    saveItems(items);
+    closeHalfPanel();
+    renderDesktopGrid();
+    showToast('塔罗小组件已添加');
 }
 
 // ========== 自定义小组件（美化模块调用） ==========
