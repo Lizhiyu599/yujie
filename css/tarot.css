@@ -61,9 +61,7 @@
     margin-bottom: 12px;
     cursor: pointer;
 }
-.tarot-menu-card:active {
-    background: rgba(255,255,255,0.1);
-}
+.tarot-menu-card:active { background: rgba(255,255,255,0.1); }
 .tarot-menu-title {
     font-size: 17px;
     font-weight: 600;
@@ -104,7 +102,7 @@
     z-index: 110 !important;
 }
 
-/* ===== CSS卡面（牌背用图床） ===== */
+/* ===== CSS卡面（图床） ===== */
 .tarot-card-face {
     width: 52px;
     height: 84px;
@@ -113,7 +111,6 @@
     position: relative;
     overflow: hidden;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
 }
@@ -135,8 +132,7 @@
 .tarot-picked-card {
     width: 72px;
     height: 112px;
-    background: linear-gradient(160deg, #1a1a1a 0%, #111 40%, #0a0a0a 100%);
-    border: 1px solid rgba(180,150,80,0.4);
+    background: url('https://i.ibb.co/4gsQxZpJ/file-000000002760720c9835177720771fb9.png') center/cover no-repeat;
     border-radius: 6px;
     display: flex;
     flex-direction: column;
@@ -147,34 +143,19 @@
     animation: tarotReveal 0.5s ease;
     position: relative;
 }
-.tarot-picked-card::before {
-    content: '';
-    position: absolute;
-    top: 4px; left: 4px; right: 4px; bottom: 4px;
-    border: 0.5px solid rgba(180,150,80,0.2);
-    border-radius: 3px;
-}
-.tarot-picked-card .tarot-card-symbol {
-    font-size: 18px;
-    color: rgba(180,150,80,0.5);
-    z-index: 1;
-    margin-bottom: 4px;
-}
+.tarot-picked-card .tarot-card-symbol { display: none; }
 .tarot-picked-card .tarot-card-name {
+    font-family: 'Times New Roman', 'Georgia', serif;
     font-size: 10px;
-    color: rgba(255,255,255,0.85);
-    font-weight: 600;
-    z-index: 1;
-    margin-bottom: 3px;
-}
-.tarot-picked-card .tarot-card-pos {
-    font-size: 8px;
-    color: rgba(180,150,80,0.5);
-    border: 0.5px solid rgba(180,150,80,0.2);
-    padding: 2px 6px;
-    border-radius: 4px;
+    font-weight: 700;
+    color: #c8a84e;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
     z-index: 1;
 }
+.tarot-picked-card .tarot-card-pos { display: none; }
 @keyframes tarotReveal {
     from { transform: rotateY(90deg) scale(0.8); opacity: 0; }
     to { transform: rotateY(0deg) scale(1); opacity: 1; }
@@ -188,17 +169,63 @@
     padding: 4px 0;
 }
 
-/* ===== 翻牌动画牌背 ===== */
+/* ===== 翻牌动画 ===== */
+.tarot-slot {
+    width: 90px;
+    height: 140px;
+    perspective: 600px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.tarot-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s ease;
+    transform-style: preserve-3d;
+}
+.tarot-card-inner.flipped { transform: rotateY(180deg); }
+.tarot-card-front,
+.tarot-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 6px;
+}
 .tarot-card-back {
     background: url('https://i.ibb.co/5gv45GwS/retouch-2026070722094191.png') center/cover no-repeat;
     border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
-.tarot-card-back::after {
-    display: none;
+.tarot-card-back::after { display: none; }
+.tarot-card-front {
+    background: url('https://i.ibb.co/4gsQxZpJ/file-000000002760720c9835177720771fb9.png') center/cover no-repeat;
+    transform: rotateY(180deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.tarot-card-name {
+    font-family: 'Times New Roman', 'Georgia', serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: #c8a84e;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8), 0 0 8px rgba(180,140,60,0.4);
+    max-width: 50%;
+    padding: 0 4px;
+    line-height: 1.1;
+}
+.tarot-card-pos { display: none; }
+.tarot-card-meaning { display: none; }
+.tarot-card.picked .tarot-card-back {
+    border-color: rgba(255,255,255,0.3);
+    box-shadow: 0 0 12px rgba(255,255,255,0.1);
 }
 
 /* ===== 解读区 ===== */
@@ -249,9 +276,7 @@
     color: rgba(255,255,255,0.8);
     margin-bottom: 10px;
 }
-.tarot-question-input::placeholder {
-    color: rgba(255,255,255,0.25);
-}
+.tarot-question-input::placeholder { color: rgba(255,255,255,0.25); }
 .tarot-draw-btn {
     width: 100%;
     height: 42px;
@@ -263,26 +288,9 @@
     cursor: pointer;
     letter-spacing: 1px;
 }
-.tarot-draw-btn:active {
-    background: rgba(255,255,255,0.18);
-}
+.tarot-draw-btn:active { background: rgba(255,255,255,0.18); }
 
 /* ===== 提示文字 ===== */
-.tarot-hint {
-    text-align: center;
-    color: rgba(255,255,255,0.3);
-    font-size: 12px;
-    padding: 8px 0;
-}
-.tarot-locked {
-    text-align: center;
-    color: rgba(255,255,255,0.25);
-    font-size: 13px;
-    padding: 30px 0;
-}
-.tarot-selected-count {
-    text-align: center;
-    color: rgba(255,255,255,0.5);
-    font-size: 13px;
-    padding: 8px 0;
-}
+.tarot-hint { text-align: center; color: rgba(255,255,255,0.3); font-size: 12px; padding: 8px 0; }
+.tarot-locked { text-align: center; color: rgba(255,255,255,0.25); font-size: 13px; padding: 30px 0; }
+.tarot-selected-count { text-align: center; color: rgba(255,255,255,0.5); font-size: 13px; padding: 8px 0; }
