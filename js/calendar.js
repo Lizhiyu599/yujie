@@ -341,26 +341,62 @@ function _calDeleteCourse(day, num) {
 
 function _calOpenScheduleMenu() {
     var overlay = document.createElement('div');
-    overlay.className = 'music-menu-overlay';
-    overlay.style.zIndex = '9999';
+    overlay.className = 'sheet-mask show';
     overlay.id = 'calScheduleMenuOverlay';
-    overlay.innerHTML = '<div class="music-menu-panel" onclick="event.stopPropagation();">'
-        + '<div class="music-menu-handle"></div>'
-        + '<div class="music-menu-item" onclick="_calApplyMorandiColors()"><span>莫兰迪蓝色系</span></div>'
-        + '</div>';
+    
+    var colors = ['#E0E5E9','#C0D0D8','#B8C7D0','#A0B0C8','#D0D8E0','#C0CDD0','#A8B8C0','#8898A0'];
+    var colorBtns = '';
+    colors.forEach(function(c, i) {
+        colorBtns += '<div class="ac-cat-item" onclick="_calPickScheduleColor(this,\'' + c + '\')" style="background:' + c + ';flex:1;min-width:60px;height:40px;border-radius:8px;"></div>';
+    });
+    
+    overlay.innerHTML = '<div class="half-sheet" onclick="event.stopPropagation();">'
+        + '<div class="sheet-handle"><div class="handle-bar"></div></div>'
+        + '<div class="sheet-scroll">'
+        + '<div class="settings-section-title">莫兰迪</div>'
+        + '<div style="font-size:13px;color:#8e8e93;margin-bottom:8px;">蓝色系</div>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + colorBtns + '</div>'
+        + '<div style="margin-top:20px;">'
+        + '<div class="settings-section-title">自定义调色盘</div>'
+        + '<div style="font-size:12px;color:#8e8e93;">即将推出</div>'
+        + '</div>'
+        + '</div></div>';
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) _calCloseScheduleMenu(); };
+    
+    var handle = overlay.querySelector('.sheet-handle');
+    var startY = 0;
+    handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
+    handle.addEventListener('touchmove', function(e) { if (e.touches[0].clientY - startY > 60) _calCloseScheduleMenu(); });
 }
 function _calCloseScheduleMenu() { var o = document.getElementById('calScheduleMenuOverlay'); if (o) o.remove(); }
 
-function _calApplyMorandiColors() {
-    _calCloseScheduleMenu();
+var _calPickedScheduleColor = null;
+function _calPickScheduleColor(el, color) {
+    var allItems = el.parentElement.querySelectorAll('.ac-cat-item');
+    if (_calPickedScheduleColor === color) {
+        _calPickedScheduleColor = null;
+        allItems.forEach(function(i) { i.classList.remove('selected'); });
+        _calApplyScheduleColors(null);
+        return;
+    }
+    _calPickedScheduleColor = color;
+    allItems.forEach(function(i) { i.classList.remove('selected'); });
+    el.classList.add('selected');
+    _calApplyScheduleColors(color);
+}
+
+function _calApplyScheduleColors(baseColor) {
     var colors = ['#E0E5E9','#C0D0D8','#B8C7D0','#A0B0C8','#D0D8E0','#C0CDD0','#A8B8C0','#8898A0'];
     var schedule = JSON.parse(localStorage.getItem('cal_schedule') || '{}');
-    var colorIdx = 0;
-    for (var key in schedule) {
-        schedule[key].bg = colors[colorIdx % colors.length];
-        colorIdx++;
+    if (!baseColor) {
+        for (var key in schedule) { delete schedule[key].bg; }
+    } else {
+        var colorIdx = 0;
+        for (var key in schedule) {
+            schedule[key].bg = colors[colorIdx % colors.length];
+            colorIdx++;
+        }
     }
     localStorage.setItem('cal_schedule', JSON.stringify(schedule));
     var appWindow = document.getElementById('calendarAppWindow');
@@ -371,4 +407,4 @@ function _calDeleteEvent(d, index) {
     var key = _calYear + '-' + _calMonth + '-' + d;
     if (_calEvents[key]) { _calEvents[key].splice(index, 1); if (_calEvents[key].length === 0) delete _calEvents[key]; }
     _calSaveEvents(); _calRenderMonth();
-                                       }
+}
