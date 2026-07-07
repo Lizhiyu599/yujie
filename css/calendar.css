@@ -1,0 +1,210 @@
+/* ===== 日历小组件 ===== */
+.calendar-widget {
+    display: flex;
+    flex-direction: column;
+    background: rgba(255,255,255,0.4);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    border: 1px solid rgba(255,255,255,0.55);
+    border-radius: 22px;
+    padding: 12px 10px;
+    cursor: pointer;
+    min-height: 100%;
+    color: #000;
+}
+.cal-widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+.cal-widget-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    text-align: center;
+    font-size: 10px;
+}
+.cal-widget-day-name {
+    color: rgba(0,0,0,0.35);
+    font-weight: 500;
+    padding: 2px 0;
+}
+.cal-widget-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    position: relative;
+    color: rgba(0,0,0,0.6);
+}
+.cal-widget-day.today {
+    background: #000;
+    color: #fff;
+    font-weight: 600;
+}
+.cal-widget-dots {
+    display: flex;
+    gap: 2px;
+    position: absolute;
+    bottom: 2px;
+}
+.cal-widget-dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+}
+.cal-widget-dot.period { background: #ff6b6b; }
+.cal-widget-dot.anniversary { background: #ffb347; }
+.cal-widget-dot.birthday { background: #64b5f6; }
+
+/* ===== 日历完整页面 ===== */
+.cal-app {
+    width: 100%;
+    height: 100%;
+    background: #f2f2f7;
+    display: flex;
+    flex-direction: column;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, sans-serif;
+    overflow: hidden;
+}
+.cal-nav {
+    display: flex;
+    align-items: center;
+    padding: 48px 16px 12px;
+    flex-shrink: 0;
+    position: relative;
+}
+.cal-nav-back {
+    color: #000;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0 8px;
+}
+.cal-nav-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 17px;
+    font-weight: 600;
+    color: #000;
+}
+.cal-body {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 16px;
+}
+
+/* ===== 月视图 ===== */
+.cal-month-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0 16px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #000;
+}
+.cal-month-arrow {
+    font-size: 18px;
+    color: #8e8e93;
+    cursor: pointer;
+    padding: 8px;
+}
+.cal-month-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    text-align: center;
+}
+.cal-month-day-name {
+    font-size: 12px;
+    color: rgba(0,0,0,0.3);
+    font-weight: 500;
+    padding: 6px 0;
+}
+.cal-month-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-size: 15px;
+    color: #000;
+    cursor: pointer;
+    position: relative;
+}
+.cal-month-day:active { background: rgba(0,0,0,0.04); }
+.cal-month-day.today {
+    background: #000;
+    color: #fff;
+    font-weight: 600;
+}
+.cal-month-day.other-month { color: rgba(0,0,0,0.15); }
+.cal-month-dots {
+    display: flex;
+    gap: 3px;
+    position: absolute;
+    bottom: 4px;
+}
+.cal-month-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+}
+.cal-month-dot.period { background: #ff6b6b; }
+.cal-month-dot.anniversary { background: #ffb347; }
+.cal-month-dot.birthday { background: #64b5f6; }
+
+/* ===== 事件列表 ===== */
+.cal-events {
+    margin-top: 16px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+    padding-top: 12px;
+}
+.cal-events-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #000;
+    margin-bottom: 10px;
+}
+.cal-event-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 0.5px solid rgba(0,0,0,0.04);
+}
+.cal-event-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.cal-event-text {
+    flex: 1;
+    font-size: 14px;
+    color: #000;
+}
+.cal-event-del {
+    color: #c7c7cc;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0 4px;
+}
+.cal-add-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 10px;
+}
