@@ -333,8 +333,8 @@ function buildWidgetHTML(item) {
         var isToday = d === calToday ? ' today' : '';
         gridHTML += '<div class="cal-widget-day' + isToday + '">' + d + '</div>';
     }
-    return '<div class="calendar-widget" onclick="openCalendar()" style="justify-content:flex-start;padding-top:14px;">'
-    + '<div class="cal-widget-header">' + calYear + '年' + calMonth + '月</div>'
+    return '<div class="calendar-widget" onclick="openCalendar()">'
+    + '<div class="cal-widget-header" style="margin-bottom:14px;">' + calYear + '年' + calMonth + '月</div>'
     + '<div class="cal-widget-grid">' + gridHTML + '</div>'
     + '</div>';
     }
