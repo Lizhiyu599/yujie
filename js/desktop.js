@@ -318,6 +318,26 @@ function renderCellContent(cell, item) {
 }
 
 function buildWidgetHTML(item) {
+    if (item.widgetType === 'calendar') {
+    var now = new Date();
+    var calYear = now.getFullYear();
+    var calMonth = now.getMonth() + 1;
+    var calToday = now.getDate();
+    var daysInMonth = new Date(calYear, calMonth, 0).getDate();
+    var firstDay = new Date(calYear, calMonth - 1, 1).getDay();
+    var dayNames = ['日','一','二','三','四','五','六'];
+    var gridHTML = '';
+    dayNames.forEach(function(d) { gridHTML += '<div class="cal-widget-day-name">' + d + '</div>'; });
+    for (var i = 0; i < firstDay; i++) gridHTML += '<div class="cal-widget-day"></div>';
+    for (var d = 1; d <= daysInMonth; d++) {
+        var isToday = d === calToday ? ' today' : '';
+        gridHTML += '<div class="cal-widget-day' + isToday + '">' + d + '</div>';
+    }
+    return '<div class="calendar-widget" onclick="openCalendar()">'
+        + '<div class="cal-widget-header">' + calYear + '年' + calMonth + '月</div>'
+        + '<div class="cal-widget-grid">' + gridHTML + '</div>'
+        + '</div>';
+    }
     if (item.widgetType === 'tarot') {
     return '<div class="desktop-widget grid-widget tarot-widget" onclick="openTarot()">'
         + '<div class="tarot-cards-preview">'
@@ -1124,6 +1144,17 @@ window.addEventListener('DOMContentLoaded', function() {
         });
         saveItems(items);
     }
+
+if (!items.find(function(i) { return i.id === 'widget-calendar-default'; })) {
+    items.push({
+        id: 'widget-calendar-default',
+        type: 'widget',
+        widgetType: 'calendar',
+        size: '4x4',
+        page: 1
+    });
+    saveItems(items);
+}
     
     renderDesktopGrid();
     setupDesktopLongPress();
