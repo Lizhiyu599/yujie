@@ -901,7 +901,8 @@ function openHalfPanel() {
             '<div id="wp-1x4" class="collapsible-section" style="display:none;"><div class="widget-placeholder">即将推出</div></div>' +
             '<div class="widget-list-item" data-target="wp-2x2"><span>2x2 小组件</span><span class="toggle-arrow">›</span></div>' +
             '<div id="wp-2x2" class="collapsible-section" style="display:none;">' +
-                '<div class="widget-preview-card" onclick="confirmAddCountdownWidget()" style="max-width:50%;margin:8px auto;">' +
+                '<div style="display:flex;gap:8px;">' +
+                '<div class="widget-preview-card" onclick="confirmAddCountdownWidget()" style="flex:1;margin:8px 0;">' +
                     '<div class="widget-preview-inner" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 0;">' +
                         '<div style="font-size:11px;color:rgba(0,0,0,0.5);">玉界已经</div>' +
                         '<div style="font-size:32px;font-weight:800;color:#000;">365</div>' +
@@ -909,7 +910,7 @@ function openHalfPanel() {
                     '</div>' +
                     '<div class="widget-preview-label">倒数日小组件</div>' +
                 '</div>' +
-                '<div class="widget-preview-card" onclick="confirmAddTarotWidget()" style="max-width:50%;margin:8px auto;">' +
+                '<div class="widget-preview-card" onclick="confirmAddTarotWidget()" style="flex:1;margin:8px 0;">' +
                     '<div class="widget-preview-inner" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 0;">' +
                         '<div style="position:relative;width:36px;height:48px;">' +
                             '<div style="position:absolute;width:28px;height:42px;background:#1a1a1a;border:1px solid rgba(255,255,255,0.2);border-radius:2px;top:0;left:0;transform:rotate(-6deg);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.2);font-size:10px;">✦</div>' +
@@ -918,6 +919,7 @@ function openHalfPanel() {
                         '<div style="font-size:11px;color:rgba(0,0,0,0.5);">Tarot</div>' +
                     '</div>' +
                     '<div class="widget-preview-label">塔罗小组件</div>' +
+                '</div>' +
                 '</div>' +
             '</div>' +
             '<div class="widget-list-item" data-target="wp-2x4"><span>2x4 小组件</span><span class="toggle-arrow">›</span></div>' +
