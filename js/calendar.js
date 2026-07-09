@@ -355,14 +355,24 @@ function _calOpenScheduleMenu() {
         + '<div class="sheet-scroll">'
         + '<div class="settings-section-title">莫兰迪</div>'
         + '<div style="font-size:13px;color:#8e8e93;margin-bottom:8px;">蓝色系</div>'
-        + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + colorBtns + '</div>'
-        + '<div style="margin-top:20px;">'
-        + '<div class="settings-section-title">自定义调色盘</div>'
++ '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + colorBtns + '</div>'
++ '<div style="font-size:13px;color:#8e8e93;margin:12px 0 8px;">粉色系</div>'
++ '<div style="display:flex;flex-wrap:wrap;gap:8px;" id="morandiPinkBtns"></div>'
++ '<div style="margin-top:20px;">'
++ '<div class="settings-section-title">自定义调色盘</div>'
         + '<div style="font-size:12px;color:#8e8e93;">即将推出</div>'
         + '</div>'
         + '</div></div>';
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) _calCloseScheduleMenu(); };
+
+    var pinkColors = ['#FADADD','#F8C8DC','#EFCFE3','#E6C7C2','#F4D0D8','#D9C0C9','#EBD4D8','#D1C4C8'];
+var pinkBtnsHTML = '';
+pinkColors.forEach(function(c) {
+    pinkBtnsHTML += '<div class="ac-cat-item" onclick="_calPickScheduleColor(this,\'' + c + '\')" style="background:' + c + ';flex:1;min-width:60px;height:40px;border-radius:8px;"></div>';
+});
+var pinkContainer = overlay.querySelector('#morandiPinkBtns');
+if (pinkContainer) pinkContainer.innerHTML = pinkBtnsHTML;
     
     var handle = overlay.querySelector('.sheet-handle');
     var startY = 0;
