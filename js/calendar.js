@@ -351,6 +351,8 @@ function _calOpenScheduleMenu() {
     var strawberryColors = ['#FFDEE9','#FFE8EF','#FFF0F5','#FFFFFF'];
     var seasaltColors = ['#E0F7FA','#B2EBF2','#FFF9C4','#FFF176'];
     var matchaColors = ['#E0EAD3','#C4D6B0','#A7C08C','#8EAD6F'];
+    var purpleyellowColors = ['#FFFDA2','#C7AFFF'];
+    var orangegreenColors = ['#FF9F5E','#73FFEB'];
 
     function buildColorBtns(colors, palette) {
         var html = '';
@@ -379,6 +381,11 @@ function _calOpenScheduleMenu() {
         + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + buildColorBtns(seasaltColors, 'seasalt') + '</div>'
         + '<div style="font-size:13px;color:#8e8e93;margin:12px 0 8px;">抹茶</div>'
         + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + buildColorBtns(matchaColors, 'matcha') + '</div>'
+        + '<div class="settings-section-title" style="margin-top:16px;">多巴胺</div>'
+        + '<div style="font-size:13px;color:#8e8e93;margin-bottom:8px;">紫黄</div>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + buildColorBtns(['#FFFDA2','#C7AFFF'], 'purpleyellow') + '</div>'
+        + '<div style="font-size:13px;color:#8e8e93;margin:12px 0 8px;">橙绿</div>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + buildColorBtns(['#FF9F5E','#73FFEB'], 'orangegreen') + '</div>'
         + '<div style="margin-top:20px;">'
         + '<div class="settings-section-title">自定义调色盘</div>'
         + '<div style="font-size:12px;color:#8e8e93;">即将推出</div>'
@@ -417,6 +424,8 @@ function _calApplyScheduleColors(palette) {
     var strawberryColors = ['#FFDEE9','#FFE8EF','#FFF0F5','#FFFFFF'];
     var seasaltColors = ['#E0F7FA','#B2EBF2','#FFF9C4','#FFF176'];
     var matchaColors = ['#E0EAD3','#C4D6B0','#A7C08C','#8EAD6F'];
+    var purpleyellowColors = ['#FFFDA2','#C7AFFF'];
+    var orangegreenColors = ['#FF9F5E','#73FFEB'];
     var colors;
     if (palette === 'blue') colors = blueColors;
     else if (palette === 'pink') colors = pinkColors;
@@ -425,6 +434,8 @@ function _calApplyScheduleColors(palette) {
     else if (palette === 'strawberry') colors = strawberryColors;
     else if (palette === 'seasalt') colors = seasaltColors;
     else if (palette === 'matcha') colors = matchaColors;
+    else if (palette === 'purpleyellow') colors = purpleyellowColors;
+    else if (palette === 'orangegreen') colors = orangegreenColors;
     else { colors = null; }
 
     var schedule = JSON.parse(localStorage.getItem('cal_schedule') || '{}');
