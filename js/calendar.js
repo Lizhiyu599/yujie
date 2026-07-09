@@ -343,37 +343,34 @@ function _calOpenScheduleMenu() {
     var overlay = document.createElement('div');
     overlay.className = 'sheet-mask show';
     overlay.id = 'calScheduleMenuOverlay';
-    
-    var colors = ['#E0E5E9','#C0D0D8','#B8C7D0','#A0B0C8','#D0D8E0','#C0CDD0','#A8B8C0','#8898A0'];
-    var colorBtns = '';
-    colors.forEach(function(c, i) {
-        colorBtns += '<div class="ac-cat-item" onclick="_calPickScheduleColor(this,\'' + c + '\')" style="background:' + c + ';flex:1;min-width:60px;height:40px;border-radius:8px;"></div>';
-    });
-    
+
+    var blueColors = ['#E0E5E9','#C0D0D8','#B8C7D0','#A0B0C8','#D0D8E0','#C0CDD0','#A8B8C0','#8898A0'];
+    var pinkColors = ['#FADADD','#F8C8DC','#EFCFE3','#E6C7C2','#F4D0D8','#D9C0C9','#EBD4D8','#D1C4C8'];
+
+    function buildColorBtns(colors, palette) {
+        var html = '';
+        colors.forEach(function(c) {
+            html += '<div class="ac-cat-item" onclick="_calPickScheduleColor(this,\'' + palette + '\')" style="background:' + c + ';flex:1;min-width:60px;height:40px;border-radius:8px;"></div>';
+        });
+        return html;
+    }
+
     overlay.innerHTML = '<div class="half-sheet" onclick="event.stopPropagation();">'
         + '<div class="sheet-handle"><div class="handle-bar"></div></div>'
         + '<div class="sheet-scroll">'
         + '<div class="settings-section-title">莫兰迪</div>'
         + '<div style="font-size:13px;color:#8e8e93;margin-bottom:8px;">蓝色系</div>'
-+ '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + colorBtns + '</div>'
-+ '<div style="font-size:13px;color:#8e8e93;margin:12px 0 8px;">粉色系</div>'
-+ '<div style="display:flex;flex-wrap:wrap;gap:8px;" id="morandiPinkBtns"></div>'
-+ '<div style="margin-top:20px;">'
-+ '<div class="settings-section-title">自定义调色盘</div>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + buildColorBtns(blueColors, 'blue') + '</div>'
+        + '<div style="font-size:13px;color:#8e8e93;margin:12px 0 8px;">粉色系</div>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + buildColorBtns(pinkColors, 'pink') + '</div>'
+        + '<div style="margin-top:20px;">'
+        + '<div class="settings-section-title">自定义调色盘</div>'
         + '<div style="font-size:12px;color:#8e8e93;">即将推出</div>'
         + '</div>'
         + '</div></div>';
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) _calCloseScheduleMenu(); };
 
-    var pinkColors = ['#FADADD','#F8C8DC','#EFCFE3','#E6C7C2','#F4D0D8','#D9C0C9','#EBD4D8','#D1C4C8'];
-var pinkBtnsHTML = '';
-pinkColors.forEach(function(c) {
-    pinkBtnsHTML += '<div class="ac-cat-item" onclick="_calPickScheduleColor(this,\'' + c + '\')" style="background:' + c + ';flex:1;min-width:60px;height:40px;border-radius:8px;"></div>';
-});
-var pinkContainer = overlay.querySelector('#morandiPinkBtns');
-if (pinkContainer) pinkContainer.innerHTML = pinkBtnsHTML;
-    
     var handle = overlay.querySelector('.sheet-handle');
     var startY = 0;
     handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
@@ -381,25 +378,31 @@ if (pinkContainer) pinkContainer.innerHTML = pinkBtnsHTML;
 }
 function _calCloseScheduleMenu() { var o = document.getElementById('calScheduleMenuOverlay'); if (o) o.remove(); }
 
-var _calPickedScheduleColor = null;
-function _calPickScheduleColor(el, color) {
+var _calPickedSchedulePalette = null;
+function _calPickScheduleColor(el, palette) {
     var allItems = el.parentElement.querySelectorAll('.ac-cat-item');
-    if (_calPickedScheduleColor === color) {
-        _calPickedScheduleColor = null;
+    if (_calPickedSchedulePalette === palette) {
+        _calPickedSchedulePalette = null;
         allItems.forEach(function(i) { i.classList.remove('selected'); });
         _calApplyScheduleColors(null);
         return;
     }
-    _calPickedScheduleColor = color;
+    _calPickedSchedulePalette = palette;
     allItems.forEach(function(i) { i.classList.remove('selected'); });
     el.classList.add('selected');
-    _calApplyScheduleColors(color);
+    _calApplyScheduleColors(palette);
 }
 
-function _calApplyScheduleColors(baseColor) {
-    var colors = ['#E0E5E9','#C0D0D8','#B8C7D0','#A0B0C8','#D0D8E0','#C0CDD0','#A8B8C0','#8898A0'];
+function _calApplyScheduleColors(palette) {
+    var blueColors = ['#E0E5E9','#C0D0D8','#B8C7D0','#A0B0C8','#D0D8E0','#C0CDD0','#A8B8C0','#8898A0'];
+    var pinkColors = ['#FADADD','#F8C8DC','#EFCFE3','#E6C7C2','#F4D0D8','#D9C0C9','#EBD4D8','#D1C4C8'];
+    var colors;
+    if (palette === 'blue') colors = blueColors;
+    else if (palette === 'pink') colors = pinkColors;
+    else { colors = null; }
+
     var schedule = JSON.parse(localStorage.getItem('cal_schedule') || '{}');
-    if (!baseColor) {
+    if (!colors) {
         for (var key in schedule) { delete schedule[key].bg; }
     } else {
         var colorIdx = 0;
