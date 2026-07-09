@@ -346,6 +346,7 @@ function _calOpenScheduleMenu() {
 
     var blueColors = ['#E0E5E9','#C0D0D8','#B8C7D0','#A0B0C8','#D0D8E0','#C0CDD0','#A8B8C0','#8898A0'];
     var pinkColors = ['#FADADD','#F8C8DC','#EFCFE3','#E6C7C2','#F4D0D8','#D9C0C9','#EBD4D8','#D1C4C8'];
+    var macaronColors = ['#CBE7E2','#675157'];
 
     function buildColorBtns(colors, palette) {
         var html = '';
@@ -363,6 +364,9 @@ function _calOpenScheduleMenu() {
         + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + buildColorBtns(blueColors, 'blue') + '</div>'
         + '<div style="font-size:13px;color:#8e8e93;margin:12px 0 8px;">粉色系</div>'
         + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + buildColorBtns(pinkColors, 'pink') + '</div>'
+        + '<div class="settings-section-title" style="margin-top:16px;">马卡龙</div>'
+        + '<div style="font-size:13px;color:#8e8e93;margin-bottom:8px;">薄巧</div>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + buildColorBtns(macaronColors, 'macaron') + '</div>'
         + '<div style="margin-top:20px;">'
         + '<div class="settings-section-title">自定义调色盘</div>'
         + '<div style="font-size:12px;color:#8e8e93;">即将推出</div>'
@@ -396,9 +400,11 @@ function _calPickScheduleColor(el, palette) {
 function _calApplyScheduleColors(palette) {
     var blueColors = ['#E0E5E9','#C0D0D8','#B8C7D0','#A0B0C8','#D0D8E0','#C0CDD0','#A8B8C0','#8898A0'];
     var pinkColors = ['#FADADD','#F8C8DC','#EFCFE3','#E6C7C2','#F4D0D8','#D9C0C9','#EBD4D8','#D1C4C8'];
+    var macaronColors = ['#CBE7E2','#675157'];
     var colors;
     if (palette === 'blue') colors = blueColors;
     else if (palette === 'pink') colors = pinkColors;
+    else if (palette === 'macaron') colors = macaronColors;
     else { colors = null; }
 
     var schedule = JSON.parse(localStorage.getItem('cal_schedule') || '{}');
