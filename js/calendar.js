@@ -358,7 +358,7 @@ function _calOpenScheduleMenu() {
         return html;
     }
 
-    overlay.innerHTML = '<div class="half-sheet" onclick="event.stopPropagation();">'
+    overlay.innerHTML = + '<div class="half-sheet" onclick="event.stopPropagation();" style="max-height:50vh;">'
         + '<div class="sheet-handle"><div class="handle-bar"></div></div>'
         + '<div class="sheet-scroll">'
         + '<div class="settings-section-title">莫兰迪</div>'
