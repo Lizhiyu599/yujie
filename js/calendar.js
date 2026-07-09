@@ -349,6 +349,8 @@ function _calOpenScheduleMenu() {
     var macaronColors = ['#CBE7E2','#675157'];
     var macaron2Colors = ['#E8F3E8','#CBE7E2','#675157','#F8F6F1'];
     var strawberryColors = ['#FFDEE9','#FFE8EF','#FFF0F5','#FFFFFF'];
+    var seasaltColors = ['#E0F7FA','#B2EBF2','#FFF9C4','#FFF176'];
+    var matchaColors = ['#E0EAD3','#C4D6B0','#A7C08C','#8EAD6F'];
 
     function buildColorBtns(colors, palette) {
         var html = '';
@@ -358,7 +360,7 @@ function _calOpenScheduleMenu() {
         return html;
     }
 
-    overlay.innerHTML = + '<div class="half-sheet" onclick="event.stopPropagation();" style="max-height:50vh;">'
+    overlay.innerHTML = '<div class="half-sheet" onclick="event.stopPropagation();" style="max-height:50vh;">'
         + '<div class="sheet-handle"><div class="handle-bar"></div></div>'
         + '<div class="sheet-scroll">'
         + '<div class="settings-section-title">莫兰迪</div>'
@@ -373,6 +375,10 @@ function _calOpenScheduleMenu() {
         + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + buildColorBtns(macaron2Colors, 'macaron2') + '</div>'
         + '<div style="font-size:13px;color:#8e8e93;margin:12px 0 8px;">草莓奶昔</div>'
         + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + buildColorBtns(strawberryColors, 'strawberry') + '</div>'
+        + '<div style="font-size:13px;color:#8e8e93;margin:12px 0 8px;">海盐芝士</div>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + buildColorBtns(seasaltColors, 'seasalt') + '</div>'
+        + '<div style="font-size:13px;color:#8e8e93;margin:12px 0 8px;">抹茶</div>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + buildColorBtns(matchaColors, 'matcha') + '</div>'
         + '<div style="margin-top:20px;">'
         + '<div class="settings-section-title">自定义调色盘</div>'
         + '<div style="font-size:12px;color:#8e8e93;">即将推出</div>'
@@ -409,12 +415,16 @@ function _calApplyScheduleColors(palette) {
     var macaronColors = ['#CBE7E2','#675157'];
     var macaron2Colors = ['#E8F3E8','#CBE7E2','#675157','#F8F6F1'];
     var strawberryColors = ['#FFDEE9','#FFE8EF','#FFF0F5','#FFFFFF'];
+    var seasaltColors = ['#E0F7FA','#B2EBF2','#FFF9C4','#FFF176'];
+    var matchaColors = ['#E0EAD3','#C4D6B0','#A7C08C','#8EAD6F'];
     var colors;
     if (palette === 'blue') colors = blueColors;
     else if (palette === 'pink') colors = pinkColors;
     else if (palette === 'macaron') colors = macaronColors;
     else if (palette === 'macaron2') colors = macaron2Colors;
     else if (palette === 'strawberry') colors = strawberryColors;
+    else if (palette === 'seasalt') colors = seasaltColors;
+    else if (palette === 'matcha') colors = matchaColors;
     else { colors = null; }
 
     var schedule = JSON.parse(localStorage.getItem('cal_schedule') || '{}');
@@ -436,4 +446,4 @@ function _calDeleteEvent(d, index) {
     var key = _calYear + '-' + _calMonth + '-' + d;
     if (_calEvents[key]) { _calEvents[key].splice(index, 1); if (_calEvents[key].length === 0) delete _calEvents[key]; }
     _calSaveEvents(); _calRenderMonth();
-        }
+                      }
