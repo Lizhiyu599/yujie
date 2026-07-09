@@ -388,11 +388,26 @@ function _calOpenScheduleMenu() {
         + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + buildColorBtns(['#FF9F5E','#73FFEB'], 'orangegreen') + '</div>'
         + '<div style="margin-top:20px;">'
         + '<div class="settings-section-title">自定义调色盘</div>'
-        + '<div style="font-size:12px;color:#8e8e93;">即将推出</div>'
+        + '<div style="font-size:12px;color:#8e8e93;margin-bottom:8px;">点击空位添加颜色，点击色块删除</div>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:8px;" id="customColorGrid"></div>'
+        + '<button class="black-btn" onclick="_calApplyCustomColors()" style="margin-top:12px;">应用自定义色系</button>'
         + '</div>'
         + '</div></div>';
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) _calCloseScheduleMenu(); };
+
+    // 渲染自定义调色盘
+    var customColors = JSON.parse(localStorage.getItem('cal_custom_colors') || '[]');
+    var customGridHTML = '';
+    for (var i = 0; i < 8; i++) {
+        if (i < customColors.length) {
+            customGridHTML += '<div class="ac-cat-item" onclick="_calRemoveCustomColor(' + i + ')" style="background:' + customColors[i] + ';flex:1;min-width:60px;height:40px;border-radius:8px;"></div>';
+        } else {
+            customGridHTML += '<div class="ac-cat-item" onclick="_calAddCustomColor()" style="border:1px dashed rgba(0,0,0,0.2);flex:1;min-width:60px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:rgba(0,0,0,0.3);font-size:20px;">+</div>';
+        }
+    }
+    var customGrid = overlay.querySelector('#customColorGrid');
+    if (customGrid) customGrid.innerHTML = customGridHTML;
 
     var handle = overlay.querySelector('.sheet-handle');
     var startY = 0;
@@ -453,8 +468,49 @@ function _calApplyScheduleColors(palette) {
     if (appWindow) _calRenderSchedule(appWindow);
 }
 
+function _calAddCustomColor() {
+    var input = document.createElement('input');
+    input.type = 'color';
+    input.onchange = function(e) {
+        var color = e.target.value;
+        var customColors = JSON.parse(localStorage.getItem('cal_custom_colors') || '[]');
+        if (customColors.length >= 8) { showToast('最多8个颜色'); return; }
+        customColors.push(color);
+        localStorage.setItem('cal_custom_colors', JSON.stringify(customColors));
+        _calCloseScheduleMenu();
+        _calOpenScheduleMenu();
+    };
+    input.click();
+}
+
+function _calRemoveCustomColor(index) {
+    var customColors = JSON.parse(localStorage.getItem('cal_custom_colors') || '[]');
+    customColors.splice(index, 1);
+    localStorage.setItem('cal_custom_colors', JSON.stringify(customColors));
+    _calCloseScheduleMenu();
+    _calOpenScheduleMenu();
+}
+
+function _calApplyCustomColors() {
+    var customColors = JSON.parse(localStorage.getItem('cal_custom_colors') || '[]');
+    if (customColors.length === 0) {
+        showToast('请先添加至少一个颜色');
+        return;
+    }
+    _calCloseScheduleMenu();
+    var schedule = JSON.parse(localStorage.getItem('cal_schedule') || '{}');
+    var colorIdx = 0;
+    for (var key in schedule) {
+        schedule[key].bg = customColors[colorIdx % customColors.length];
+        colorIdx++;
+    }
+    localStorage.setItem('cal_schedule', JSON.stringify(schedule));
+    var appWindow = document.getElementById('calendarAppWindow');
+    if (appWindow) _calRenderSchedule(appWindow);
+}
+
 function _calDeleteEvent(d, index) {
     var key = _calYear + '-' + _calMonth + '-' + d;
     if (_calEvents[key]) { _calEvents[key].splice(index, 1); if (_calEvents[key].length === 0) delete _calEvents[key]; }
     _calSaveEvents(); _calRenderMonth();
-                      }
+}
