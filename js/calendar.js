@@ -347,6 +347,8 @@ function _calOpenScheduleMenu() {
     var blueColors = ['#E0E5E9','#C0D0D8','#B8C7D0','#A0B0C8','#D0D8E0','#C0CDD0','#A8B8C0','#8898A0'];
     var pinkColors = ['#FADADD','#F8C8DC','#EFCFE3','#E6C7C2','#F4D0D8','#D9C0C9','#EBD4D8','#D1C4C8'];
     var macaronColors = ['#CBE7E2','#675157'];
+    var macaron2Colors = ['#E8F3E8','#CBE7E2','#675157','#F8F6F1'];
+    var strawberryColors = ['#FFDEE9','#FFE8EF','#FFF0F5','#FFFFFF'];
 
     function buildColorBtns(colors, palette) {
         var html = '';
@@ -367,6 +369,10 @@ function _calOpenScheduleMenu() {
         + '<div class="settings-section-title" style="margin-top:16px;">马卡龙</div>'
         + '<div style="font-size:13px;color:#8e8e93;margin-bottom:8px;">薄巧</div>'
         + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + buildColorBtns(macaronColors, 'macaron') + '</div>'
+        + '<div style="font-size:13px;color:#8e8e93;margin:12px 0 8px;">薄巧2</div>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + buildColorBtns(macaron2Colors, 'macaron2') + '</div>'
+        + '<div style="font-size:13px;color:#8e8e93;margin:12px 0 8px;">草莓奶昔</div>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + buildColorBtns(strawberryColors, 'strawberry') + '</div>'
         + '<div style="margin-top:20px;">'
         + '<div class="settings-section-title">自定义调色盘</div>'
         + '<div style="font-size:12px;color:#8e8e93;">即将推出</div>'
@@ -401,10 +407,14 @@ function _calApplyScheduleColors(palette) {
     var blueColors = ['#E0E5E9','#C0D0D8','#B8C7D0','#A0B0C8','#D0D8E0','#C0CDD0','#A8B8C0','#8898A0'];
     var pinkColors = ['#FADADD','#F8C8DC','#EFCFE3','#E6C7C2','#F4D0D8','#D9C0C9','#EBD4D8','#D1C4C8'];
     var macaronColors = ['#CBE7E2','#675157'];
+    var macaron2Colors = ['#E8F3E8','#CBE7E2','#675157','#F8F6F1'];
+    var strawberryColors = ['#FFDEE9','#FFE8EF','#FFF0F5','#FFFFFF'];
     var colors;
     if (palette === 'blue') colors = blueColors;
     else if (palette === 'pink') colors = pinkColors;
     else if (palette === 'macaron') colors = macaronColors;
+    else if (palette === 'macaron2') colors = macaron2Colors;
+    else if (palette === 'strawberry') colors = strawberryColors;
     else { colors = null; }
 
     var schedule = JSON.parse(localStorage.getItem('cal_schedule') || '{}');
@@ -426,4 +436,4 @@ function _calDeleteEvent(d, index) {
     var key = _calYear + '-' + _calMonth + '-' + d;
     if (_calEvents[key]) { _calEvents[key].splice(index, 1); if (_calEvents[key].length === 0) delete _calEvents[key]; }
     _calSaveEvents(); _calRenderMonth();
-}
+        }
