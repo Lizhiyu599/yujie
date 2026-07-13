@@ -220,7 +220,11 @@ function _calOpenMenu() {
     overlay.style.zIndex = '9999';
     overlay.id = 'calMenuOverlay';
     overlay.innerHTML = '<div class="music-menu-panel" onclick="event.stopPropagation();">'
-        + '<div class="music-menu-item" onclick="_calOpenSchedule()"><span>课程表</span></div>'
+        + '<div class="music-menu-handle"></div>'
+        + '<div class="music-menu-item" onclick="_calOpenSchedule()">'
+        + '<svg class="menu-icon" viewBox="0 0 24 24" width="18" height="18" style="margin-right:10px; opacity:0.8;"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 16H6c-.55 0-1-.45-1-1V6c0-.55.45-1 1-1h12c.55 0 1 .45 1 1v12c0 .55-.45 1-1 1zM7 7h10v2H7zm0 4h10v2H7zm0 4h7v2H7z"/></svg>'
+        + '<span>课程表</span>'
+        + '</div>'
         + '</div>';
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) _calCloseMenu(); };
@@ -337,7 +341,6 @@ function _calDeleteCourse(day, num) {
     if (appWindow) _calRenderSchedule(appWindow);
 }
 
-// 打开设置面板（优化版：不随点击更新而重建弹窗，彻底根治闪退和重绘卡顿）
 function _calOpenScheduleMenu() {
     var overlay = document.createElement('div');
     overlay.className = 'sheet-mask show';
@@ -393,7 +396,6 @@ function _calOpenScheduleMenu() {
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) _calCloseScheduleMenu(); };
 
-    // 初始化加载自定义网格
     _calUpdateCustomGridInPlace();
 
     var handle = overlay.querySelector('.sheet-handle');
@@ -403,7 +405,6 @@ function _calOpenScheduleMenu() {
 }
 function _calCloseScheduleMenu() { var o = document.getElementById('calScheduleMenuOverlay'); if (o) o.remove(); }
 
-// 纯局部渲染自定义色盘块，不摧毁弹窗，绝不动弹框的滚动位置！
 function _calUpdateCustomGridInPlace() {
     var grid = document.getElementById('customColorGrid');
     if (!grid) return;
@@ -477,14 +478,28 @@ function _calApplyScheduleColors(palette) {
 function _calAddCustomColor() {
     var input = document.createElement('input');
     input.type = 'color';
+    input.value = '#000000'; 
+    
+    input.oninput = function(e) {
+        var color = e.target.value;
+        var customColors = JSON.parse(localStorage.getItem('cal_custom_colors') || '[]');
+        if (customColors.length >= 8) { return; }
+        if (color) {
+            customColors.push(color);
+            localStorage.setItem('cal_custom_colors', JSON.stringify(customColors));
+            _calUpdateCustomGridInPlace();
+        }
+    };
+    
     input.onchange = function(e) {
         var color = e.target.value;
         var customColors = JSON.parse(localStorage.getItem('cal_custom_colors') || '[]');
         if (customColors.length >= 8) { return; }
-        customColors.push(color);
-        localStorage.setItem('cal_custom_colors', JSON.stringify(customColors));
-        // 关键：仅局部刷新色盘DOM结构，拒绝重置位置
-        _calUpdateCustomGridInPlace();
+        if (color && !customColors.includes(color)) {
+            customColors.push(color);
+            localStorage.setItem('cal_custom_colors', JSON.stringify(customColors));
+            _calUpdateCustomGridInPlace();
+        }
     };
     input.click();
 }
@@ -493,7 +508,6 @@ function _calRemoveCustomColor(index) {
     var customColors = JSON.parse(localStorage.getItem('cal_custom_colors') || '[]');
     customColors.splice(index, 1);
     localStorage.setItem('cal_custom_colors', JSON.stringify(customColors));
-    // 关键：仅局部刷新色盘DOM结构，拒绝重置位置
     _calUpdateCustomGridInPlace();
 }
 
@@ -509,4 +523,4 @@ function _calDeleteEvent(d, index) {
     var key = _calYear + '-' + _calMonth + '-' + d;
     if (_calEvents[key]) { _calEvents[key].splice(index, 1); if (_calEvents[key].length === 0) delete _calEvents[key]; }
     _calSaveEvents(); _calRenderMonth();
-}
+        }
