@@ -220,7 +220,6 @@ function _calOpenMenu() {
     overlay.style.zIndex = '9999';
     overlay.id = 'calMenuOverlay';
     overlay.innerHTML = '<div class="music-menu-panel" onclick="event.stopPropagation();">'
-        + '<div class="music-menu-handle"></div>'
         + '<div class="music-menu-item" onclick="_calOpenSchedule()"><span>课程表</span></div>'
         + '</div>';
     document.body.appendChild(overlay);
@@ -266,8 +265,7 @@ function _calRenderSchedule(appWindow) {
         days.forEach(function(d, di) {
             var key = di + '_' + p.num;
             var course = schedule[key];
-            var isTodayCol = '';
-            gridHTML += '<div class="cal-schedule-cell' + (course ? ' has-course' : '') + isTodayCol + '" style="' + (course && course.bg ? 'background:' + course.bg + ';' : '') + '" onclick="_calEditCourse(' + di + ',' + p.num + ')">'
+            gridHTML += '<div class="cal-schedule-cell' + (course ? ' has-course' : '') + '" style="' + (course && course.bg ? 'background:' + course.bg + ';' : '') + '" onclick="_calEditCourse(' + di + ',' + p.num + ')">'
                 + (course ? '<div class="cal-course-name">' + course.name + '</div><div class="cal-course-room">' + (course.room || '') + '</div>' : '')
                 + '</div>';
         });
@@ -339,6 +337,7 @@ function _calDeleteCourse(day, num) {
     if (appWindow) _calRenderSchedule(appWindow);
 }
 
+// 打开设置面板（优化版：不随点击更新而重建弹窗，彻底根治闪退和重绘卡顿）
 function _calOpenScheduleMenu() {
     var overlay = document.createElement('div');
     overlay.className = 'sheet-mask show';
@@ -360,9 +359,9 @@ function _calOpenScheduleMenu() {
         return html;
     }
 
-    overlay.innerHTML = '<div class="half-sheet" onclick="event.stopPropagation();" style="max-height:50vh;">'
+    overlay.innerHTML = '<div class="half-sheet" onclick="event.stopPropagation();" style="max-height:50vh; will-change: transform;">'
         + '<div class="sheet-handle"><div class="handle-bar"></div></div>'
-        + '<div class="sheet-scroll">'
+        + '<div class="sheet-scroll" style="-webkit-overflow-scrolling:touch;">'
         + '<div class="settings-section-title">莫兰迪</div>'
         + '<div style="font-size:13px;color:#8e8e93;margin-bottom:8px;">蓝色系</div>'
         + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + buildColorBtns(blueColors, 'blue') + '</div>'
@@ -384,7 +383,7 @@ function _calOpenScheduleMenu() {
         + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + buildColorBtns(['#FFFDA2','#C7AFFF'], 'purpleyellow') + '</div>'
         + '<div style="font-size:13px;color:#8e8e93;margin:12px 0 8px;">橙绿</div>'
         + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + buildColorBtns(['#FF9F5E','#73FFEB'], 'orangegreen') + '</div>'
-        + '<div style="margin-top:20px;">'
+        + '<div style="margin-top:20px;padding-bottom:20px;">'
         + '<div class="settings-section-title">自定义调色盘</div>'
         + '<div style="font-size:12px;color:#8e8e93;margin-bottom:8px;">点击空位添加，长按色块/右键删除</div>'
         + '<div style="display:flex;flex-wrap:wrap;gap:8px;" id="customColorGrid"></div>'
@@ -394,6 +393,20 @@ function _calOpenScheduleMenu() {
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) _calCloseScheduleMenu(); };
 
+    // 初始化加载自定义网格
+    _calUpdateCustomGridInPlace();
+
+    var handle = overlay.querySelector('.sheet-handle');
+    var startY = 0;
+    handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; }, {passive: true});
+    handle.addEventListener('touchmove', function(e) { if (e.touches[0].clientY - startY > 60) _calCloseScheduleMenu(); }, {passive: true});
+}
+function _calCloseScheduleMenu() { var o = document.getElementById('calScheduleMenuOverlay'); if (o) o.remove(); }
+
+// 纯局部渲染自定义色盘块，不摧毁弹窗，绝不动弹框的滚动位置！
+function _calUpdateCustomGridInPlace() {
+    var grid = document.getElementById('customColorGrid');
+    if (!grid) return;
     var customColors = JSON.parse(localStorage.getItem('cal_custom_colors') || '[]');
     var customGridHTML = '';
     for (var i = 0; i < 8; i++) {
@@ -403,19 +416,13 @@ function _calOpenScheduleMenu() {
             customGridHTML += '<div class="ac-cat-item" onclick="_calAddCustomColor()" style="border:1px dashed rgba(0,0,0,0.2);flex:1;min-width:60px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:rgba(0,0,0,0.3);font-size:20px;cursor:pointer;">+</div>';
         }
     }
-    var customGrid = overlay.querySelector('#customColorGrid');
-    if (customGrid) customGrid.innerHTML = customGridHTML;
-
-    var handle = overlay.querySelector('.sheet-handle');
-    var startY = 0;
-    handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
-    handle.addEventListener('touchmove', function(e) { if (e.touches[0].clientY - startY > 60) _calCloseScheduleMenu(); });
+    grid.innerHTML = customGridHTML;
 }
-function _calCloseScheduleMenu() { var o = document.getElementById('calScheduleMenuOverlay'); if (o) o.remove(); }
 
 var _calPickedSchedulePalette = null;
 function _calPickScheduleColor(el, palette) {
-    var allItems = el.parentElement.querySelectorAll('.ac-cat-item');
+    var container = el.parentElement.parentElement;
+    var allItems = container.querySelectorAll('.ac-cat-item');
     if (_calPickedSchedulePalette === palette) {
         _calPickedSchedulePalette = null;
         allItems.forEach(function(i) { i.classList.remove('selected'); });
@@ -476,8 +483,8 @@ function _calAddCustomColor() {
         if (customColors.length >= 8) { return; }
         customColors.push(color);
         localStorage.setItem('cal_custom_colors', JSON.stringify(customColors));
-        _calCloseScheduleMenu();
-        _calOpenScheduleMenu();
+        // 关键：仅局部刷新色盘DOM结构，拒绝重置位置
+        _calUpdateCustomGridInPlace();
     };
     input.click();
 }
@@ -486,15 +493,13 @@ function _calRemoveCustomColor(index) {
     var customColors = JSON.parse(localStorage.getItem('cal_custom_colors') || '[]');
     customColors.splice(index, 1);
     localStorage.setItem('cal_custom_colors', JSON.stringify(customColors));
-    _calCloseScheduleMenu();
-    _calOpenScheduleMenu();
+    // 关键：仅局部刷新色盘DOM结构，拒绝重置位置
+    _calUpdateCustomGridInPlace();
 }
 
 function _calApplyCustomColors() {
     var customColors = JSON.parse(localStorage.getItem('cal_custom_colors') || '[]');
-    if (customColors.length === 0) {
-        return;
-    }
+    if (customColors.length === 0) return;
     _calPickedSchedulePalette = 'custom';
     _calApplyScheduleColors('custom');
     _calCloseScheduleMenu();
