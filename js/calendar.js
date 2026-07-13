@@ -241,17 +241,17 @@ function _calRenderSchedule(appWindow) {
     var today = new Date().getDay();
     var todayIndex = today === 0 ? 6 : today - 1;
     var periods = [
-    { num: 1, defaultStart: '08:00', defaultEnd: '08:45' },
-    { num: 2, defaultStart: '08:55', defaultEnd: '09:40' },
-    { num: 3, defaultStart: '10:00', defaultEnd: '10:45' },
-    { num: 4, defaultStart: '10:55', defaultEnd: '11:40' },
-    { num: 5, defaultStart: '14:00', defaultEnd: '14:45' },
-    { num: 6, defaultStart: '14:55', defaultEnd: '15:40' },
-    { num: 7, defaultStart: '16:00', defaultEnd: '16:45' },
-    { num: 8, defaultStart: '16:55', defaultEnd: '17:40' },
-    { num: 9, defaultStart: '19:00', defaultEnd: '19:45' },
-    { num: 10, defaultStart: '19:55', defaultEnd: '20:40' }
-];
+        { num: 1, defaultStart: '08:00', defaultEnd: '08:45' },
+        { num: 2, defaultStart: '08:55', defaultEnd: '09:40' },
+        { num: 3, defaultStart: '10:00', defaultEnd: '10:45' },
+        { num: 4, defaultStart: '10:55', defaultEnd: '11:40' },
+        { num: 5, defaultStart: '14:00', defaultEnd: '14:45' },
+        { num: 6, defaultStart: '14:55', defaultEnd: '15:40' },
+        { num: 7, defaultStart: '16:00', defaultEnd: '16:45' },
+        { num: 8, defaultStart: '16:55', defaultEnd: '17:40' },
+        { num: 9, defaultStart: '19:00', defaultEnd: '19:45' },
+        { num: 10, defaultStart: '19:55', defaultEnd: '20:40' }
+    ];
 
     var gridHTML = '<div class="cal-schedule-table">';
     gridHTML += '<div class="cal-schedule-header-cell" style="background:rgba(255,255,255,0.4);"></div>';
@@ -261,13 +261,13 @@ function _calRenderSchedule(appWindow) {
 
     periods.forEach(function(p) {
         var savedStart = localStorage.getItem('cal_period_start_' + p.num) || p.defaultStart;
-var savedEnd = localStorage.getItem('cal_period_end_' + p.num) || p.defaultEnd;
-gridHTML += '<div class="cal-schedule-time-cell" onclick="_calEditPeriodTime(' + p.num + ')"><span class="cal-schedule-time-num">' + p.num + '</span><span>' + savedStart + '</span><span>' + savedEnd + '</span></div>';
-            days.forEach(function(d, di) {
+        var savedEnd = localStorage.getItem('cal_period_end_' + p.num) || p.defaultEnd;
+        gridHTML += '<div class="cal-schedule-time-cell" onclick="_calEditPeriodTime(' + p.num + ')"><span class="cal-schedule-time-num">' + p.num + '</span><span>' + savedStart + '</span><span>' + savedEnd + '</span></div>';
+        days.forEach(function(d, di) {
             var key = di + '_' + p.num;
             var course = schedule[key];
             var isTodayCol = '';
-                gridHTML += '<div class="cal-schedule-cell' + (course ? ' has-course' : '') + isTodayCol + '" style="' + (course && course.bg ? 'background:' + course.bg + ';' : '') + '" onclick="_calEditCourse(' + di + ',' + p.num + ')">'
+            gridHTML += '<div class="cal-schedule-cell' + (course ? ' has-course' : '') + isTodayCol + '" style="' + (course && course.bg ? 'background:' + course.bg + ';' : '') + '" onclick="_calEditCourse(' + di + ',' + p.num + ')">'
                 + (course ? '<div class="cal-course-name">' + course.name + '</div><div class="cal-course-room">' + (course.room || '') + '</div>' : '')
                 + '</div>';
         });
@@ -351,13 +351,11 @@ function _calOpenScheduleMenu() {
     var strawberryColors = ['#FFDEE9','#FFE8EF','#FFF0F5','#FFFFFF'];
     var seasaltColors = ['#E0F7FA','#B2EBF2','#FFF9C4','#FFF176'];
     var matchaColors = ['#E0EAD3','#C4D6B0','#A7C08C','#8EAD6F'];
-    var purpleyellowColors = ['#FFFDA2','#C7AFFF'];
-    var orangegreenColors = ['#FF9F5E','#73FFEB'];
 
     function buildColorBtns(colors, palette) {
         var html = '';
         colors.forEach(function(c) {
-            html += '<div class="ac-cat-item" onclick="_calPickScheduleColor(this,\'' + palette + '\')" style="background:' + c + ';flex:1;min-width:60px;height:40px;border-radius:8px;"></div>';
+            html += '<div class="ac-cat-item' + (_calPickedSchedulePalette === palette ? ' selected' : '') + '" onclick="_calPickScheduleColor(this,\'' + palette + '\')" style="background:' + c + ';flex:1;min-width:60px;height:40px;border-radius:8px;"></div>';
         });
         return html;
     }
@@ -388,22 +386,21 @@ function _calOpenScheduleMenu() {
         + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + buildColorBtns(['#FF9F5E','#73FFEB'], 'orangegreen') + '</div>'
         + '<div style="margin-top:20px;">'
         + '<div class="settings-section-title">自定义调色盘</div>'
-        + '<div style="font-size:12px;color:#8e8e93;margin-bottom:8px;">点击空位添加颜色，点击色块删除</div>'
+        + '<div style="font-size:12px;color:#8e8e93;margin-bottom:8px;">点击空位添加，长按色块/右键删除</div>'
         + '<div style="display:flex;flex-wrap:wrap;gap:8px;" id="customColorGrid"></div>'
-        + '<button class="black-btn" onclick="_calApplyCustomColors()" style="margin-top:12px;">应用自定义色系</button>'
+        + '<button class="black-btn" onclick="_calApplyCustomColors()" style="margin-top:12px;width:100%;">应用自定义色系</button>'
         + '</div>'
         + '</div></div>';
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) _calCloseScheduleMenu(); };
 
-    // 渲染自定义调色盘
     var customColors = JSON.parse(localStorage.getItem('cal_custom_colors') || '[]');
     var customGridHTML = '';
     for (var i = 0; i < 8; i++) {
         if (i < customColors.length) {
-            customGridHTML += '<div class="ac-cat-item" onclick="_calRemoveCustomColor(' + i + ')" style="background:' + customColors[i] + ';flex:1;min-width:60px;height:40px;border-radius:8px;"></div>';
+            customGridHTML += '<div class="ac-cat-item" oncontextmenu="event.preventDefault();_calRemoveCustomColor(' + i + ')" ontouchstart="window._calDelTimer=setTimeout(function(){_calRemoveCustomColor(' + i + ')},600);" ontouchend="clearTimeout(window._calDelTimer);" style="background:' + customColors[i] + ';flex:1;min-width:60px;height:40px;border-radius:8px;position:relative;"></div>';
         } else {
-            customGridHTML += '<div class="ac-cat-item" onclick="_calAddCustomColor()" style="border:1px dashed rgba(0,0,0,0.2);flex:1;min-width:60px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:rgba(0,0,0,0.3);font-size:20px;">+</div>';
+            customGridHTML += '<div class="ac-cat-item" onclick="_calAddCustomColor()" style="border:1px dashed rgba(0,0,0,0.2);flex:1;min-width:60px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:rgba(0,0,0,0.3);font-size:20px;cursor:pointer;">+</div>';
         }
     }
     var customGrid = overlay.querySelector('#customColorGrid');
@@ -441,6 +438,7 @@ function _calApplyScheduleColors(palette) {
     var matchaColors = ['#E0EAD3','#C4D6B0','#A7C08C','#8EAD6F'];
     var purpleyellowColors = ['#FFFDA2','#C7AFFF'];
     var orangegreenColors = ['#FF9F5E','#73FFEB'];
+    
     var colors;
     if (palette === 'blue') colors = blueColors;
     else if (palette === 'pink') colors = pinkColors;
@@ -451,10 +449,11 @@ function _calApplyScheduleColors(palette) {
     else if (palette === 'matcha') colors = matchaColors;
     else if (palette === 'purpleyellow') colors = purpleyellowColors;
     else if (palette === 'orangegreen') colors = orangegreenColors;
+    else if (palette === 'custom') colors = JSON.parse(localStorage.getItem('cal_custom_colors') || '[]');
     else { colors = null; }
 
     var schedule = JSON.parse(localStorage.getItem('cal_schedule') || '{}');
-    if (!colors) {
+    if (!colors || colors.length === 0) {
         for (var key in schedule) { delete schedule[key].bg; }
     } else {
         var colorIdx = 0;
@@ -474,7 +473,7 @@ function _calAddCustomColor() {
     input.onchange = function(e) {
         var color = e.target.value;
         var customColors = JSON.parse(localStorage.getItem('cal_custom_colors') || '[]');
-        if (customColors.length >= 8) { showToast('最多8个颜色'); return; }
+        if (customColors.length >= 8) { return; }
         customColors.push(color);
         localStorage.setItem('cal_custom_colors', JSON.stringify(customColors));
         _calCloseScheduleMenu();
@@ -494,19 +493,11 @@ function _calRemoveCustomColor(index) {
 function _calApplyCustomColors() {
     var customColors = JSON.parse(localStorage.getItem('cal_custom_colors') || '[]');
     if (customColors.length === 0) {
-        showToast('请先添加至少一个颜色');
         return;
     }
+    _calPickedSchedulePalette = 'custom';
+    _calApplyScheduleColors('custom');
     _calCloseScheduleMenu();
-    var schedule = JSON.parse(localStorage.getItem('cal_schedule') || '{}');
-    var colorIdx = 0;
-    for (var key in schedule) {
-        schedule[key].bg = customColors[colorIdx % customColors.length];
-        colorIdx++;
-    }
-    localStorage.setItem('cal_schedule', JSON.stringify(schedule));
-    var appWindow = document.getElementById('calendarAppWindow');
-    if (appWindow) _calRenderSchedule(appWindow);
 }
 
 function _calDeleteEvent(d, index) {
