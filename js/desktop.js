@@ -78,7 +78,7 @@ function addDesktopIcon(item) {
         icon: item.icon || '',
         action: item.action || null,
         size: '1x1',
-        page: 0  // 强制放第1页
+        page: item.page || 0
     };
     if (existing >= 0) {
         items[existing] = newItem;
@@ -180,7 +180,6 @@ function renderDesktopGrid() {
             cell.className = 'grid-cell';
             cell.setAttribute('data-id', item.id);
 
-            // 有 gridPos 就用（拖拽后保存的），否则走硬编码或流式
             if (item.gridPos) {
                 cell.style.gridColumn = item.gridPos.col + ' / span ' + item.gridPos.colSpan;
                 cell.style.gridRow = item.gridPos.row + ' / span ' + item.gridPos.rowSpan;
@@ -554,9 +553,6 @@ function deleteCountdown(cdId) {
 // ========== 长按进编辑 ==========
 document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
-// ★ 阻止浏览器长按图片弹菜单（精细版本，不影响按钮点击）
-document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-
 function setupCellLongPress(cell) {
     var startX, startY, timer;
     cell.addEventListener('touchstart', function(e) {
@@ -645,8 +641,8 @@ var dragTarget = null;
 var dragStartX = 0, dragStartY = 0;
 var dragOrigLeft = 0, dragOrigTop = 0;
 var dragOrigWidth = 0, dragOrigHeight = 0;
-var dragStarted = false;        // 是否进入了"拖拽跟随"状态
-var dragLongPressed = false;    // 长按 500ms 已触发
+var dragStarted = false;
+var dragLongPressed = false;
 var dragTimer = null;
 var dragGhost = null;
 var dragLastSwapKey = '';
@@ -667,34 +663,27 @@ function setupDrag(cell) {
         dragLongPressed = false;
         dragLastSwapKey = '';
         dragTargetGridPos = null;
-        // 长按 500ms：只进入编辑模式，不创建幽灵
         dragTimer = setTimeout(function() {
             dragLongPressed = true;
             if (!isEditing) enterEditMode();
-            // ★ 注意：此时不创建幽灵，等手指滑动后才创建
         }, 500);
     }, { passive: true });
 
     cell.addEventListener('touchmove', function(e) {
         var dx = e.touches[0].clientX - dragStartX;
         var dy = e.touches[0].clientY - dragStartY;
-
-        // 长按已触发 + 手指明显滑动 → 进入拖拽跟随
         if (dragLongPressed && !dragStarted && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
             dragStarted = true;
             createDragGhost(cell, e.touches[0].clientX, e.touches[0].clientY);
-            // 隐藏原 cell（占位透明）
             cell.style.opacity = '0';
             cell.style.pointerEvents = 'none';
         }
         if (dragStarted) {
             e.preventDefault();
-            // 移动幽灵
             if (dragGhost) {
                 dragGhost.style.left = (e.touches[0].clientX - dragOrigWidth / 2) + 'px';
                 dragGhost.style.top = (e.touches[0].clientY - dragOrigHeight / 2) + 'px';
             }
-            // 实时避让
             liveRearrange(e.touches[0].clientX, e.touches[0].clientY, cell);
         }
     }, { passive: false });
@@ -704,8 +693,6 @@ function setupDrag(cell) {
         if (dragStarted) {
             endDrag(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
         } else {
-            // 长按但没拖动 → 仅清理状态，保留编辑模式（删除按钮可点）
-            // 移除残留幽灵（保险）
             if (dragGhost) { dragGhost.remove(); dragGhost = null; }
             dragLongPressed = false;
             dragTarget = null;
@@ -713,17 +700,12 @@ function setupDrag(cell) {
     });
 }
 
-// 创建跟随手指的幽灵
 function createDragGhost(cell, clientX, clientY) {
-    // 先清理可能残留的幽灵
     if (dragGhost) { dragGhost.remove(); dragGhost = null; }
     dragGhost = cell.cloneNode(true);
-    // 移除幽灵里的删除按钮，防止重复
     var delBtn = dragGhost.querySelector('.delete-btn');
     if (delBtn) delBtn.remove();
-    // 移除幽灵的 jiggle 动画
     dragGhost.classList.remove('editing');
-    // 重要：阻止幽灵触发自己的 touch 事件
     dragGhost.style.pointerEvents = 'none';
     dragGhost.style.position = 'fixed';
     dragGhost.style.zIndex = '9999';
@@ -738,19 +720,16 @@ function createDragGhost(cell, clientX, clientY) {
     document.body.appendChild(dragGhost);
 }
 
-// 实时避让
 function liveRearrange(clientX, clientY, dragCell) {
     var grid = dragCell.parentNode;
     if (!grid || grid.className !== 'desktop-grid') return;
     var gridRect = grid.getBoundingClientRect();
     var cellW = gridRect.width / 4;
     var cellH = gridRect.height / 6;
-
     var col = Math.floor((clientX - gridRect.left) / cellW) + 1;
     var row = Math.floor((clientY - gridRect.top) / cellH) + 1;
     col = Math.max(1, Math.min(4, col));
     row = Math.max(1, Math.min(6, row));
-
     var dragId = dragCell.getAttribute('data-id');
     var items = getItems();
     var dragItem = items.find(function(i) { return i.id === dragId; });
@@ -758,29 +737,22 @@ function liveRearrange(clientX, clientY, dragCell) {
     var sizeP = (dragItem.size || '1x1').split('x');
     var rowSpan = parseInt(sizeP[0]) || 1;
     var colSpan = parseInt(sizeP[1]) || 1;
-
     var targetCol = Math.min(col, 4 - colSpan + 1);
     var targetRow = Math.min(row, 6 - rowSpan + 1);
     targetCol = Math.max(1, targetCol);
     targetRow = Math.max(1, targetRow);
-
     var swapKey = targetRow + '_' + targetCol;
     if (swapKey === dragLastSwapKey) return;
     dragLastSwapKey = swapKey;
-
     var dragPage = parseInt(grid.getAttribute('data-page') || '0');
     var pageItems = items.filter(function(it) { return (it.page || 0) === dragPage; });
-
     var occupied = {};
     function occupy(r1, c1, r2, c2) {
         for (var r = r1; r <= r2; r++) for (var c = c1; c <= c2; c++) occupied[r + '_' + c] = true;
     }
     occupy(targetRow, targetCol, targetRow + rowSpan - 1, targetCol + colSpan - 1);
-
     var newPositions = {};
     newPositions[dragId] = { row: targetRow, col: targetCol, rowSpan: rowSpan, colSpan: colSpan };
-
-    // 其他 items 按数组顺序填充剩余空格
     pageItems.forEach(function(it) {
         if (it.id === dragId) return;
         if (newPositions[it.id]) return;
@@ -803,7 +775,6 @@ function liveRearrange(clientX, clientY, dragCell) {
             }
         }
     });
-
     grid.querySelectorAll('.grid-cell').forEach(function(c) {
         var id = c.getAttribute('data-id');
         if (id === dragId) return;
@@ -813,36 +784,25 @@ function liveRearrange(clientX, clientY, dragCell) {
         c.style.gridColumn = pos.col + ' / span ' + pos.colSpan;
         c.style.gridRow = pos.row + ' / span ' + pos.rowSpan;
     });
-
     dragTargetGridPos = { row: targetRow, col: targetCol, rowSpan: rowSpan, colSpan: colSpan };
 }
 
 function endDrag(clientX, clientY) {
     if (!dragTarget) return;
-
-    // 移除幽灵
     if (dragGhost) { dragGhost.remove(); dragGhost = null; }
-
-    // 恢复原 cell 显示
     dragTarget.style.opacity = '';
     dragTarget.style.pointerEvents = '';
     dragTarget.style.transition = '';
-
-    // 把被拖元素放到 target grid 位置
     if (dragTargetGridPos) {
         dragTarget.style.transition = 'grid-column 0.18s ease, grid-row 0.18s ease';
         dragTarget.style.gridColumn = dragTargetGridPos.col + ' / span ' + dragTargetGridPos.colSpan;
         dragTarget.style.gridRow = dragTargetGridPos.row + ' / span ' + dragTargetGridPos.rowSpan;
     }
-
-    // ★ 不再 splice/push 移动数组（这是导致塔罗甩到末尾的元凶）
-    // 只保存 items，让 renderDesktopGrid 用 gridPos 重新分配
     if (dragTargetGridPos) {
         var items = getItems();
         var dragId = dragTarget.getAttribute('data-id');
         var dragItem = items.find(function(i) { return i.id === dragId; });
         if (dragItem) {
-            // 把目标 gridPos 写入 item，render 时优先用
             dragItem.gridPos = {
                 row: dragTargetGridPos.row,
                 col: dragTargetGridPos.col,
@@ -852,8 +812,6 @@ function endDrag(clientX, clientY) {
         }
         saveItems(items);
     }
-
-    // 200ms 后退出编辑并重新渲染
     setTimeout(function() {
     exitEditMode();
     renderDesktopGrid();
@@ -1131,30 +1089,17 @@ window.addEventListener('DOMContentLoaded', function() {
     addDesktopIcon({ id: 'music', name: '音乐', icon: '<img src="https://i.ibb.co/Vk3LH0p/1782714962959.png" style="width:29px;height:29px;border-radius:8px;object-fit:cover;">', action: 'openMusic' });
     addDesktopIcon({ id: 'accounting', name: '记账', icon: '<img src="https://i.ibb.co/FbMqTMNr/1783095194517.png" style="width:36px;height:36px;border-radius:8px;object-fit:cover;">', action: 'openAccounting' });
     addDesktopIcon({ id: 'cardpack', name: '卡包', icon: '<img src="https://i.ibb.co/Pv2zqg00/1782715064654.png" style="width:35px;height:35px;border-radius:8px;object-fit:cover;">', action: 'openCardpack' });
+    addDesktopIcon({ id: 'creation', name: '创作', icon: '<img src="https://i.ibb.co/sd7V4xcN/1784007234536.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openCreation', page: 1 });
 
-    // ★ 插入塔罗小组件（如果不存在）
     var items = getItems();
     if (!items.find(function(i) { return i.id === 'widget-tarot-default'; })) {
-        items.push({
-            id: 'widget-tarot-default',
-            type: 'widget',
-            widgetType: 'tarot',
-            size: '2x2',
-            page: 0
-        });
+        items.push({ id: 'widget-tarot-default', type: 'widget', widgetType: 'tarot', size: '2x2', page: 0 });
         saveItems(items);
     }
-
-if (!items.find(function(i) { return i.id === 'widget-calendar-default'; })) {
-    items.push({
-        id: 'widget-calendar-default',
-        type: 'widget',
-        widgetType: 'calendar',
-        size: '4x4',
-        page: 1
-    });
-    saveItems(items);
-}
+    if (!items.find(function(i) { return i.id === 'widget-calendar-default'; })) {
+        items.push({ id: 'widget-calendar-default', type: 'widget', widgetType: 'calendar', size: '4x4', page: 1 });
+        saveItems(items);
+    }
     
     renderDesktopGrid();
     setupDesktopLongPress();
