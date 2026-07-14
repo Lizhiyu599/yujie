@@ -261,6 +261,15 @@ if (messagesEl) {
 
     let userMessage = text;
 
+    var shopNotices = JSON.parse(localStorage.getItem('shop_pending_notices') || '[]');
+var myShopNotices = shopNotices.filter(function(n) { return n.contactId === contactId; });
+if (myShopNotices.length > 0) {
+    var sl = myShopNotices[myShopNotices.length - 1];
+    userMessage = userMessage + '\n（系统：用户想买' + sl.name + '，价格¥' + sl.price + '，请你帮ta买单。说出商品名和金额。）';
+    shopNotices = shopNotices.filter(function(n) { return n.contactId !== contactId; });
+    localStorage.setItem('shop_pending_notices', JSON.stringify(shopNotices));
+}
+
     // 检测未读黑卡通知，拼接到用户消息里
 var cpNotices = JSON.parse(localStorage.getItem('cp_pending_notices') || '[]');
 var myCpNotices = cpNotices.filter(function(n) { return n.contactId === contactId; });
