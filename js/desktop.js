@@ -1105,7 +1105,7 @@ window.addEventListener('DOMContentLoaded', function() {
     addDesktopIcon({ id: 'music', name: '音乐', icon: '<img src="https://i.ibb.co/Vk3LH0p/1782714962959.png" style="width:29px;height:29px;border-radius:8px;object-fit:cover;">', action: 'openMusic' });
     addDesktopIcon({ id: 'accounting', name: '记账', icon: '<img src="https://i.ibb.co/FbMqTMNr/1783095194517.png" style="width:36px;height:36px;border-radius:8px;object-fit:cover;">', action: 'openAccounting' });
     addDesktopIcon({ id: 'cardpack', name: '卡包', icon: '<img src="https://i.ibb.co/Pv2zqg00/1782715064654.png" style="width:35px;height:35px;border-radius:8px;object-fit:cover;">', action: 'openCardpack' });
-    addDesktopIcon({ id: 'creation', name: '创作', icon: '<img src="https://i.ibb.co/sd7V4xcN/1784007234536.png" style="width:30px;height:30px;border-radius:8px;object-fit:cover;">', action: 'openCreation', page: 1 });
+    addDesktopIcon({ id: 'creation', name: '创作', icon: '<img src="https://i.ibb.co/k63pjC7n/1784023539074.png" style="width:30px;height:30px;border-radius:8px;object-fit:cover;">', action: 'openCreation', page: 1 });
 
     var items = getItems();
     if (!items.find(function(i) { return i.id === 'widget-tarot-default'; })) {
