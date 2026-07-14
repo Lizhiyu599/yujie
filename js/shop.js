@@ -1,0 +1,162 @@
+/**
+ * 玉界 - 商城
+ * 推荐 / 外卖 / 购物车
+ */
+
+var _shopTab = 'recommend';
+var _shopItems = [];
+var _shopCart = [];
+
+function _shopLoad() {
+    try { _shopItems = JSON.parse(localStorage.getItem('shop_items') || '[]'); } catch(e) { _shopItems = []; }
+    try { _shopCart = JSON.parse(localStorage.getItem('shop_cart') || '[]'); } catch(e) { _shopCart = []; }
+}
+function _shopSave() { localStorage.setItem('shop_items', JSON.stringify(_shopItems)); }
+function _shopSaveCart() { localStorage.setItem('shop_cart', JSON.stringify(_shopCart)); }
+
+function openShop() {
+    var appWindow = document.getElementById('shopAppWindow');
+    if (!appWindow) {
+        appWindow = document.createElement('div');
+        appWindow.id = 'shopAppWindow';
+        appWindow.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:#f2f2f7;z-index:200;display:none;flex-direction:column;';
+        document.getElementById('desktop').appendChild(appWindow);
+    }
+    _shopLoad();
+    _shopTab = 'recommend';
+    _shopRender();
+    appWindow.style.display = 'flex';
+}
+function closeShop() { var appWindow = document.getElementById('shopAppWindow'); if (appWindow) appWindow.style.display = 'none'; }
+
+function _shopRender() {
+    var appWindow = document.getElementById('shopAppWindow');
+    if (!appWindow) return;
+    var titles = { recommend: '推荐', food: '外卖', cart: '购物车' };
+    var bodyHTML = _shopTab === 'recommend' ? _shopRenderList() : (_shopTab === 'food' ? _shopRenderList() : _shopRenderCart());
+    appWindow.innerHTML = '<div class="shop-app">'
+        + '<div class="shop-nav"><div class="shop-nav-back" onclick="closeShop()">‹</div><div class="shop-nav-title">' + titles[_shopTab] + '</div></div>'
+        + bodyHTML
+        + '<div class="shop-tab-bar">'
+        + '<span class="shop-tab ' + (_shopTab === 'recommend' ? 'active' : '') + '" onclick="_shopSwitch(\'recommend\')">推荐</span>'
+        + '<span class="shop-tab ' + (_shopTab === 'food' ? 'active' : '') + '" onclick="_shopSwitch(\'food\')">外卖</span>'
+        + '<span class="shop-tab ' + (_shopTab === 'cart' ? 'active' : '') + '" onclick="_shopSwitch(\'cart\')">购物车</span>'
+        + '</div></div>';
+}
+
+function _shopSwitch(tab) { _shopTab = tab; _shopRender(); }
+
+function _shopRenderList() {
+    var html = '<div class="shop-body"><div class="shop-grid">';
+    _shopItems.forEach(function(item, i) {
+        html += '<div class="shop-item" onclick="_shopAddToCart(' + i + ')">'
+            + (item.img ? '<div class="shop-item-img" style="background-image:url(' + item.img + ');"></div>' : '<div class="shop-item-img"></div>')
+            + '<div class="shop-item-info"><div class="shop-item-name">' + item.name + '</div><div class="shop-item-price">¥' + item.price + '</div><div class="shop-item-desc">' + (item.desc || '') + '</div></div>'
+            + '</div>';
+    });
+    html += '<div class="shop-item" onclick="_shopAddItem()"><div class="shop-add-btn">+</div></div>';
+    html += '</div></div>';
+    return html;
+}
+
+function _shopAddToCart(index) {
+    _shopCart.push(_shopItems[index]);
+    _shopSaveCart();
+    showToast('已加入购物车');
+}
+
+function _shopRenderCart() {
+    var html = '<div class="shop-body">';
+    if (_shopCart.length === 0) {
+        html += '<div style="text-align:center;color:#8e8e93;padding:40px 0;">购物车是空的</div>';
+    } else {
+        _shopCart.forEach(function(item, i) {
+            html += '<div class="shop-cart-item">'
+                + (item.img ? '<div class="shop-cart-img" style="background-image:url(' + item.img + ');"></div>' : '<div class="shop-cart-img"></div>')
+                + '<div class="shop-cart-info"><div class="shop-cart-name">' + item.name + '</div><div class="shop-cart-price">¥' + item.price + '</div></div>'
+                + '<button class="shop-cart-send" onclick="event.stopPropagation();_shopSendToChar(' + i + ')">发给角色</button>'
+                + '<div class="shop-cart-del" onclick="event.stopPropagation();_shopRemoveCart(' + i + ')">×</div>'
+                + '</div>';
+        });
+    }
+    html += '</div>';
+    return html;
+}
+
+function _shopRemoveCart(index) { _shopCart.splice(index, 1); _shopSaveCart(); _shopRender(); }
+
+function _shopSendToChar(index) {
+    var item = _shopCart[index];
+    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts.filter(function(c) { return c.id !== 'c1'; }) : [];
+    if (contacts.length === 0) { showToast('暂无联系人'); return; }
+    var overlay = document.createElement('div');
+    overlay.className = 'sheet-mask show';
+    overlay.id = 'shopSendOverlay';
+    var listHTML = '';
+    contacts.forEach(function(c) {
+        listHTML += '<div class="music-menu-item" onclick="_shopConfirmSend(\'' + c.id + '\',' + index + ')"><span>' + c.name + '</span></div>';
+    });
+    overlay.innerHTML = '<div class="half-sheet" onclick="event.stopPropagation();"><div class="sheet-handle"><div class="handle-bar"></div></div><div class="sheet-scroll"><div class="settings-section-title">发给谁买单</div>' + listHTML + '</div></div>';
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) _shopCloseSend(); };
+    var handle = overlay.querySelector('.sheet-handle');
+    var startY = 0;
+    handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
+    handle.addEventListener('touchmove', function(e) { if (e.touches[0].clientY - startY > 60) _shopCloseSend(); });
+}
+function _shopCloseSend() { var o = document.getElementById('shopSendOverlay'); if (o) o.remove(); }
+function _shopConfirmSend(contactId, index) {
+    _shopCloseSend();
+    var item = _shopCart[index];
+    var contact = window.ChatConfig.contacts.find(function(c) { return c.id === contactId; });
+    var contactName = contact ? contact.name : '角色';
+    var msg = '（我想买这个：' + item.name + '，¥' + item.price + '，你能帮我买单吗？）';
+    if (typeof appendMessage === 'function') {
+        var prevId = window.ChatState && window.ChatState.currentContactId;
+        if (window.ChatState) window.ChatState.currentContactId = contactId;
+        appendMessage('narration', msg);
+        if (typeof saveChatHistory === 'function') saveChatHistory(contactId);
+        if (window.ChatState) window.ChatState.currentContactId = prevId;
+    }
+    showToast('已发送给' + contactName);
+}
+
+function _shopAddItem() {
+    var overlay = document.createElement('div');
+    overlay.className = 'caption-modal-overlay';
+    overlay.id = 'shopAddOverlay';
+    overlay.innerHTML = '<div class="caption-modal"><div class="shop-add-form">'
+        + '<div style="font-size:15px;font-weight:600;color:#000;">添加商品</div>'
+        + '<div class="shop-add-img-preview" id="shopAddImgPreview" onclick="document.getElementById(\'shopAddImgInput\').click()">+</div>'
+        + '<input type="file" id="shopAddImgInput" accept="image/*" style="display:none;" onchange="_shopPreviewImg(event)">'
+        + '<input type="text" id="shopAddName" placeholder="商品名称">'
+        + '<input type="number" id="shopAddPrice" placeholder="价格" step="0.01">'
+        + '<textarea id="shopAddDesc" placeholder="商品描述" rows="2"></textarea>'
+        + '<div class="caption-buttons"><div class="payment-btn-cancel" onclick="_shopCloseAdd()">取消</div><div class="payment-btn-confirm" onclick="_shopConfirmAdd()">添加</div></div>'
+        + '</div></div>';
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) _shopCloseAdd(); };
+    window._shopAddImg = '';
+}
+function _shopCloseAdd() { var o = document.getElementById('shopAddOverlay'); if (o) o.remove(); }
+function _shopPreviewImg(e) {
+    var file = e.target.files[0]; if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+        window._shopAddImg = ev.target.result;
+        var preview = document.getElementById('shopAddImgPreview');
+        if (preview) { preview.style.backgroundImage = 'url(' + ev.target.result + ')'; preview.innerText = ''; }
+    };
+    reader.readAsDataURL(file);
+}
+function _shopConfirmAdd() {
+    var name = document.getElementById('shopAddName').value.trim();
+    var price = document.getElementById('shopAddPrice').value.trim();
+    var desc = document.getElementById('shopAddDesc').value.trim();
+    _shopCloseAdd();
+    if (!name || !price) { showToast('请填写名称和价格'); return; }
+    _shopItems.push({ name: name, price: price, desc: desc, img: window._shopAddImg || '' });
+    _shopSave();
+    _shopRender();
+    showToast('商品已添加');
+}
