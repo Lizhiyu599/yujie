@@ -151,10 +151,14 @@ function renderDesktopGrid() {
             return null;
         }
 
-        // 预留塔罗占位（如果没被移动过）
-        if (!tarotMoved && tarotItems.length > 0) {
-            occupy(5, 3, 6, 4);
-        }
+        // 预留塔罗实际所在位置（不管是默认角落还是被拖拽到的新位置）
+tarotItems.forEach(function(item) {
+    if (item.gridPos) {
+        occupy(item.gridPos.row, item.gridPos.col, item.gridPos.row + item.gridPos.rowSpan - 1, item.gridPos.col + item.gridPos.colSpan - 1);
+    } else if (!tarotMoved) {
+        occupy(5, 3, 6, 4);
+    }
+});
 
         // 渲染普通 items
         normalItems.forEach(function(item) {
