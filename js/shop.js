@@ -135,12 +135,18 @@ function _shopConfirmSend(contactId, index) {
     var contact = window.ChatConfig.contacts.find(function(c) { return c.id === contactId; });
     var contactName = contact ? contact.name : '角色';
 
+    // 先尝试直接发卡片
     var prevId = window.ChatState && window.ChatState.currentContactId;
     if (window.ChatState) window.ChatState.currentContactId = contactId;
     if (typeof sendShopCard === 'function') {
         sendShopCard(contactId, item);
     }
     if (window.ChatState) window.ChatState.currentContactId = prevId;
+
+    // 同时存到localStorage，下次角色回复时通过系统提示读取
+    var notices = JSON.parse(localStorage.getItem('shop_pending_notices') || '[]');
+    notices.push({ contactId: contactId, contactName: contactName, name: item.name, price: item.price, desc: item.desc || '', time: Date.now() });
+    localStorage.setItem('shop_pending_notices', JSON.stringify(notices));
 
     showToast('已发送给' + contactName);
 }
