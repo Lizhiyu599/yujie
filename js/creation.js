@@ -7,6 +7,7 @@ var _crTab = 'search';
 var _crBooks = [];
 var _crSelectedChar = null;
 var _crSelectedTags = [];
+var _crSelectedPerson = '我';
 var _crIsGenerating = false;
 var _crReaderSettings = {
     bg: 'default',
@@ -69,6 +70,7 @@ function _crRenderSearch() {
         + _crRenderCharSelect()
         + _crRenderWordCount()
         + _crRenderTags()
+        + _crRenderPerson()
         + _crRenderEnding()
         + _crRenderBanned()
         + '<button class="cr-generate-btn" onclick="_crGenerate()">生成文章</button>'
@@ -129,6 +131,25 @@ function _crToggleTag(el, tag) {
     else { _crSelectedTags.push(tag); el.classList.add('selected'); }
 }
 
+function _crRenderPerson() {
+    var persons = ['我','你','ta'];
+    var labels = ['第一人称"我"','第二人称"你"','第三人称"ta"'];
+    var html = '<div class="cr-card"><div class="cr-card-title">人称选择</div><div class="cr-tags">';
+    persons.forEach(function(p, i) {
+        var sel = _crSelectedPerson === p ? ' selected' : '';
+        html += '<div class="cr-tag' + sel + '" onclick="_crPickPerson(\'' + p + '\', this)">' + labels[i] + '</div>';
+    });
+    html += '</div></div>';
+    return html;
+}
+
+function _crPickPerson(p, el) {
+    _crSelectedPerson = p;
+    var tags = el.parentElement.querySelectorAll('.cr-tag');
+    tags.forEach(function(t) { t.classList.remove('selected'); });
+    el.classList.add('selected');
+}
+
 function _crRenderEnding() {
     return '<div class="cr-card">'
         + '<div class="cr-card-title">结局核心走向</div>'
@@ -169,6 +190,7 @@ function _crGenerate() {
     }
     
     var prompt = '请根据以下设定创作一篇完整的短篇小说。\n\n';
+    prompt += '【叙述人称】以"' + _crSelectedPerson + '"为第一视角叙述\n';
     prompt += '【角色人设】\n' + persona + '\n\n';
     if (maskPersona) prompt += '【用户身份】\n' + maskPersona + '\n\n';
     prompt += '【字数要求】' + wordCount + '字左右，必须写完结局，禁止烂尾。\n';
@@ -315,16 +337,25 @@ function _crOpenBook(index) {
     else if (_crReaderSettings.bg === 'green') bgClass = ' green';
     
     appWindow.innerHTML = ''
-        + '<div class="creation-app">'
-        + '<div class="cr-nav">'
-        + '<div class="cr-nav-back" onclick="_crSwitchTab(\'bookshelf\');_crRender();">‹</div>'
-        + '<div class="cr-nav-title">阅读</div>'
-        + '</div>'
+        + '<div class="creation-app" style="position:relative;">'
         + '<div class="cr-reader' + bgClass + '" style="font-size:' + _crReaderSettings.fontSize + 'px;" id="crReaderContent">'
         + contentHTML
         + '</div>'
+        + '<div class="cr-reader-top" id="crReaderTop" style="position:absolute;top:0;left:0;right:0;padding:48px 16px 8px;background:rgba(255,255,255,0.8);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:10;display:none;">'
+        + '<span onclick="_crSwitchTab(\'bookshelf\');_crRender();" style="font-size:16px;color:#000;cursor:pointer;">‹ 返回</span>'
+        + '</div>'
         + '<div class="cr-reader-fab" onclick="_crOpenReaderSettings()">Aa</div>'
         + '</div>';
+    
+    var reader = document.getElementById('crReaderContent');
+    var topBar = document.getElementById('crReaderTop');
+    if (reader) {
+        reader.onclick = function(e) {
+            if (e.target === reader || e.target.tagName === 'P' || e.target.tagName === 'H2') {
+                if (topBar) topBar.style.display = topBar.style.display === 'none' ? 'block' : 'none';
+            }
+        };
+    }
 }
 
 function _crOpenReaderSettings() {
