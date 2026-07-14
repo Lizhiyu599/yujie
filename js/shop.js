@@ -111,7 +111,7 @@ function _shopRemoveCart(index) { _shopCart.splice(index, 1); _shopSaveCart(); _
 
 function _shopSendToChar(index) {
     var item = _shopCart[index];
-    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts.filter(function(c) { return c.id !== 'c1'; }) : [];
+    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
     if (contacts.length === 0) { showToast('暂无联系人'); return; }
     var overlay = document.createElement('div');
     overlay.className = 'sheet-mask show';
