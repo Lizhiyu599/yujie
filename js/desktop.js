@@ -159,19 +159,25 @@ function renderDesktopGrid() {
 
         // 渲染普通 items
         normalItems.forEach(function(item) {
-            var sizeParts = (item.size || '1x1').split('x');
-            var rowSpan = parseInt(sizeParts[0]) || 1;
-            var colSpan = parseInt(sizeParts[1]) || 1;
+    var sizeParts = (item.size || '1x1').split('x');
+    var rowSpan = parseInt(sizeParts[0]) || 1;
+    var colSpan = parseInt(sizeParts[1]) || 1;
 
-            var pos = nextSlot(rowSpan, colSpan);
-            if (!pos) return;
+    var cell = document.createElement('div');
+    cell.className = 'grid-cell';
+    cell.setAttribute('data-id', item.id);
 
-            var cell = document.createElement('div');
-            cell.className = 'grid-cell';
-            cell.setAttribute('data-id', item.id);
-            cell.style.gridColumn = pos.col + ' / span ' + colSpan;
-            cell.style.gridRow = pos.row + ' / span ' + rowSpan;
-            renderCellContent(cell, item);
+    if (item.gridPos) {
+        occupy(item.gridPos.row, item.gridPos.col, item.gridPos.row + item.gridPos.rowSpan - 1, item.gridPos.col + item.gridPos.colSpan - 1);
+        cell.style.gridColumn = item.gridPos.col + ' / span ' + item.gridPos.colSpan;
+        cell.style.gridRow = item.gridPos.row + ' / span ' + item.gridPos.rowSpan;
+    } else {
+        var pos = nextSlot(rowSpan, colSpan);
+        if (!pos) return;
+        cell.style.gridColumn = pos.col + ' / span ' + colSpan;
+        cell.style.gridRow = pos.row + ' / span ' + rowSpan;
+    }
+        renderCellContent(cell, item);
             setupCellLongPress(cell);
             setupDrag(cell);
             grid.appendChild(cell);
@@ -752,7 +758,7 @@ function liveRearrange(clientX, clientY, dragCell) {
     if (swapKey === dragLastSwapKey) return;
     dragLastSwapKey = swapKey;
     var dragPage = parseInt(grid.getAttribute('data-page') || '0');
-    var pageItems = items.filter(function(it) { return (it.page || 0) === dragPage; });
+    var pageItems = items.filter(function(it) { return (it.page || 0) === dragPage && it.widgetType !== 'tarot'; });
     var occupied = {};
     function occupy(r1, c1, r2, c2) {
         for (var r = r1; r <= r2; r++) for (var c = c1; c <= c2; c++) occupied[r + '_' + c] = true;
