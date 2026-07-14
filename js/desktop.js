@@ -93,11 +93,14 @@ function renderDesktopGrid() {
     var items = getItems();
 
     ['page1', 'page2'].forEach(function(pageId, pageIndex) {
-        var page = document.getElementById(pageId);
-        if (!page) return;
+    var page = document.getElementById(pageId);
+    if (!page) return;
 
-        var grid = document.createElement('div');
-        grid.className = 'desktop-grid';
+    page.innerHTML = '';
+
+    var grid = document.createElement('div');
+       
+    grid.className = 'desktop-grid';
         grid.setAttribute('data-page', pageIndex);
 
         var pageItems = items.filter(function(item) { return (item.page || 0) === pageIndex; });
