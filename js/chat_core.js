@@ -289,13 +289,53 @@ if (myCpNotices.length > 0) {
     }
 
     const memoryCount = parseInt(getContactSetting(contactId, 'memoryCount', '50'));
-    const historyMessages = getRecentHistory(contactId, memoryCount);
-    const allMessages = [
-        { role: 'system', content: systemPrompt },
-        ...historyMessages,
-        { role: 'user', content: userMessage }
-    ];
+const historyMessages = getRecentHistory(contactId, memoryCount);
 
+// ====== 新增：读取并注入商城通知 ======
+let shopPromptInject = "";
+try {
+    let notices = JSON.parse(localStorage.getItem('shop_pending_notices') || '[]');
+    const myNotices = notices.filter(n => n.contactId === contactId);
+    
+    if (myNotices.length > 0) {
+        shopPromptInject = "\n\n【系统提醒：用户刚刚向你发送了以下商品卡片，希望你帮他/她买单。请你对此做出符合你人设的傲娇、宠溺或调侃的回复，并决定是否帮他付款（可以通过口头答应或发送对应的转账卡片）：";
+        myNotices.forEach(item => {
+            shopPromptInject += `\n- 商品名: ${item.name}, 价格: ${item.price}元, 描述: ${item.desc}`;
+        });
+        shopPromptInject += "】";
+        
+        const remainingNotices = notices.filter(n => n.contactId !== contactId);
+        localStorage.setItem('shop_pending_notices', JSON.stringify(remainingNotices));
+    }
+} catch (e) {
+    console.error("读取商城通知失败", e);
+}
+
+const finalSystemPrompt = systemPrompt + shopPromptInject;
+// ===================================
+
+const allMessages = [
+    { role: 'system', content: finalSystemPrompt }, // 注入新 prompt
+    ...historyMessages,
+    { role: 'user', content: userMessage }
+];
+
+// 开启打字状态并调用 API 闭环
+window.ChatState.isAITyping = true;
+try {
+    const aiReply = await callChatAPI(allMessages); 
+    processAIReply(aiReply, contactName, contactId); 
+} catch(err) {
+    console.error(err);
+    // 这里最好加一个界面提示
+    const chatMessages = document.getElementById('chatMessages');
+    if (chatMessages) {
+        const errDiv = document.createElement('div');
+        errDiv.className = 'message system';
+        errDiv.innerText = '发送失败：' + err.message;
+        chatMessages.appendChild(errDiv);
+    }
+} finally {
     window.ChatState.isAITyping = false;
 }
 
@@ -1238,3 +1278,45 @@ async function generateDiaryContent(contactId) {
         return null;
     }
 }
+
+// ---------------- 贴在 chat_core.js 最底部 ----------------
+window.sendShopCard = function(contactId, item) {
+    const cardHtml = `
+        <div class="shop-card-msg" style="background:#fff; border-radius:12px; padding:12px; max-width:260px; box-shadow:0 2px 8px rgba(0,0,0,0.08); border:1px solid #eee; margin: 8px 0;">
+            ${item.img ? `<div style="width:100%; height:120px; background-image:url(${item.img}); background-size:cover; background-position:center; border-radius:8px; margin-bottom:8px;"></div>` : ''}
+            <div style="font-weight:600; font-size:14px; color:#333; margin-bottom:4px;">${item.name}</div>
+            <div style="font-size:12px; color:#666; margin-bottom:8px; line-height:1.4;">${item.desc || '求买单～'}</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #f2f2f7; padding-top:8px; margin-top:8px;">
+                <span style="color:#ff3b30; font-weight:700; font-size:15px;">¥${item.price}</span>
+                <span style="font-size:11px; background:#f2f2f7; color:#8e8e93; padding:2px 8px; border-radius:10px;">等待买单</span>
+            </div>
+        </div>
+    `;
+
+    const currentContactId = window.ChatState && window.ChatState.currentContactId;
+    if (currentContactId === contactId) {
+        const chatMessages = document.getElementById('chatMessages');
+        if (chatMessages) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message user';
+            msgDiv.innerHTML = `<div class="message-text" style="background:transparent; padding:0; box-shadow:none;">${cardHtml}</div>`;
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    }
+
+    const historyKey = `chat_history_${contactId}`;
+    let history = [];
+    try {
+        history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+    } catch(e) {
+        history = [];
+    }
+    
+    history.push({
+        role: 'user',
+        content: `[商品卡片] 我把“${item.name}”（价格: ¥${item.price}）加入了购物车，想让你帮我买单。`
+    });
+    
+    localStorage.setItem(historyKey, JSON.stringify(history));
+};
