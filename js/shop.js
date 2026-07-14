@@ -109,7 +109,6 @@ function _shopRenderCart() {
 
 function _shopRemoveCart(index) { _shopCart.splice(index, 1); _shopSaveCart(); _shopRender(); }
 
-// ========== 发给角色（带卡片） ==========
 function _shopSendToChar(index) {
     var item = _shopCart[index];
     var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts.filter(function(c) { return c.id !== 'c1'; }) : [];
@@ -136,46 +135,16 @@ function _shopConfirmSend(contactId, index) {
     var contact = window.ChatConfig.contacts.find(function(c) { return c.id === contactId; });
     var contactName = contact ? contact.name : '角色';
 
-    // 发卡片到聊天窗口
-    if (typeof appendMessage === 'function') {
-        var prevId = window.ChatState && window.ChatState.currentContactId;
-        if (window.ChatState) window.ChatState.currentContactId = contactId;
-        _shopSendCard(contactId, item);
-        if (window.ChatState) window.ChatState.currentContactId = prevId;
+    var prevId = window.ChatState && window.ChatState.currentContactId;
+    if (window.ChatState) window.ChatState.currentContactId = contactId;
+    if (typeof sendShopCard === 'function') {
+        sendShopCard(contactId, item);
     }
+    if (window.ChatState) window.ChatState.currentContactId = prevId;
+
     showToast('已发送给' + contactName);
 }
 
-function _shopSendCard(contactId, item) {
-    var msgId = 'shop_' + Date.now();
-    var row = document.createElement('div');
-    row.className = 'bubble-row user';
-    var avatar = document.createElement('div');
-    avatar.className = 'bubble-avatar user-avatar';
-    avatar.textContent = '我';
-    var card = document.createElement('div');
-    card.style.cssText = 'background:#fff;border-radius:14px;padding:12px;width:220px;box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;gap:12px;align-items:center;';
-    card.innerHTML = ''
-        + (item.img ? '<div style="width:56px;height:56px;border-radius:10px;background-image:url(' + item.img + ');background-size:cover;background-position:center;flex-shrink:0;"></div>' : '<div style="width:56px;height:56px;border-radius:10px;background:rgba(0,0,0,0.04);flex-shrink:0;"></div>')
-        + '<div style="flex:1;min-width:0;">'
-        + '<div style="font-size:13px;font-weight:500;color:#000;">' + item.name + '</div>'
-        + '<div style="font-size:16px;font-weight:700;color:#000;margin-top:2px;">¥' + item.price + '</div>'
-        + '<div style="font-size:11px;color:#8e8e93;margin-top:2px;">' + (item.desc || '') + '</div>'
-        + '</div>';
-    row.appendChild(avatar);
-    row.appendChild(card);
-    document.getElementById('chatMessages').appendChild(row);
-
-    var nRow = document.createElement('div');
-    nRow.className = 'bubble-narration';
-    nRow.textContent = '（想买：' + item.name + '，¥' + item.price + '，请求买单）';
-    nRow.style.display = 'none';
-    document.getElementById('chatMessages').appendChild(nRow);
-
-    saveChatHistory(contactId);
-}
-
-// ========== 添加商品 ==========
 function _shopAddItem() {
     var overlay = document.createElement('div');
     overlay.className = 'caption-modal-overlay';
