@@ -109,6 +109,13 @@ function renderDesktopGrid() {
         // 分离塔罗和其他
         var tarotItems = pageItems.filter(function(it) { return it.widgetType === 'tarot'; });
         var normalItems = pageItems.filter(function(it) { return it.widgetType !== 'tarot'; });
+        normalItems.sort(function(a, b) {
+    var aSize = (a.size || '1x1').split('x');
+    var bSize = (b.size || '1x1').split('x');
+    var aArea = (parseInt(aSize[0]) || 1) * (parseInt(aSize[1]) || 1);
+    var bArea = (parseInt(bSize[0]) || 1) * (parseInt(bSize[1]) || 1);
+    return bArea - aArea;
+});
         var tarotMoved = localStorage.getItem('tarot_moved') === '1';
 
         // 6x4 网格占用记录
