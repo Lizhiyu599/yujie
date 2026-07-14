@@ -43,7 +43,7 @@ function _shopRender() {
     if (!appWindow) return;
     var titles = { recommend: '推荐', food: '外卖', cart: '购物车' };
     var bodyHTML = _shopTab === 'cart' ? _shopRenderCart() : _shopRenderList();
-    var addBtnHTML = (_shopTab === 'recommend' || _shopTab === 'food') ? '<div class="shop-nav-add" onclick="_shopAddItem()" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:22px;color:#000;cursor:pointer;padding:4px 8px;">+</div>' : '';
+    var addBtnHTML = (_shopTab === 'recommend' || _shopTab === 'food') ? '<div class="shop-nav-add" onclick="_shopAddItem()" style="position:absolute;right:16px;top:calc(50% + 4px);transform:translateY(-50%);font-size:22px;color:#000;cursor:pointer;padding:4px 8px;">+</div>' : '';
     appWindow.innerHTML = '<div class="shop-app">'
         + '<div class="shop-nav"><div class="shop-nav-back" onclick="closeShop()">‹</div><div class="shop-nav-title">' + titles[_shopTab] + '</div>' + addBtnHTML + '</div>'
         + bodyHTML
@@ -52,6 +52,19 @@ function _shopRender() {
         + '<span class="shop-tab ' + (_shopTab === 'food' ? 'active' : '') + '" onclick="_shopSwitch(\'food\')">外卖</span>'
         + '<span class="shop-tab ' + (_shopTab === 'cart' ? 'active' : '') + '" onclick="_shopSwitch(\'cart\')">购物车</span>'
         + '</div></div>';
+
+    var body = appWindow.querySelector('.shop-body');
+    if (body) {
+        var lastScroll = 0;
+        body.addEventListener('scroll', function() {
+            var tabBar = appWindow.querySelector('.shop-tab-bar');
+            if (!tabBar) return;
+            var scrollTop = body.scrollTop;
+            if (scrollTop > lastScroll && scrollTop > 60) { tabBar.style.display = 'none'; }
+            else { tabBar.style.display = ''; }
+            lastScroll = scrollTop;
+        });
+    }
 }
 
 function _shopSwitch(tab) { _shopTab = tab; _shopRender(); }
@@ -66,7 +79,6 @@ function _shopRenderList() {
             + '<div class="shop-item-info"><div class="shop-item-name">' + item.name + '</div><div class="shop-item-price">¥' + item.price + '</div><div class="shop-item-desc">' + (item.desc || '') + '</div></div>'
             + '</div>';
     });
-    html += '<div class="shop-item" onclick="_shopAddItem()"><div class="shop-add-btn">+</div></div>';
     html += '</div></div>';
     return html;
 }
