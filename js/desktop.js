@@ -96,10 +96,6 @@ function renderDesktopGrid() {
         var page = document.getElementById(pageId);
         if (!page) return;
 
-        var shortcuts = page.querySelector('#page2Shortcuts');
-        page.innerHTML = '';
-        if (shortcuts) page.appendChild(shortcuts);
-
         var grid = document.createElement('div');
         grid.className = 'desktop-grid';
         grid.setAttribute('data-page', pageIndex);
