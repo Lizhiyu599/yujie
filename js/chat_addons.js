@@ -933,6 +933,32 @@ function confirmSendLink() {
     saveChatHistory(window.ChatState.currentContactId);
     }
 
+function sendShopCard(contactId, item) {
+    var messages = document.getElementById('chatMessages');
+    if (!messages) return;
+    var row = document.createElement('div');
+    row.className = 'bubble-row user';
+    var avatar = document.createElement('div');
+    avatar.className = 'bubble-avatar user-avatar';
+    avatar.textContent = '我';
+    var card = document.createElement('div');
+    card.className = 'shop-chat-card';
+    card.style.cssText = 'background:#fff;border-radius:14px;padding:12px;width:220px;box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;gap:10px;align-items:center;cursor:pointer;';
+    card.innerHTML = ''
+        + (item.img ? '<div style="width:50px;height:50px;border-radius:8px;background-image:url(' + item.img + ');background-size:cover;background-position:center;flex-shrink:0;"></div>' : '')
+        + '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;color:#000;">' + item.name + '</div><div style="font-size:15px;font-weight:700;color:#000;margin-top:2px;">¥' + item.price + '</div></div>';
+    row.appendChild(avatar); row.appendChild(card);
+    messages.appendChild(row);
+
+    var nRow = document.createElement('div');
+    nRow.className = 'bubble-narration';
+    nRow.textContent = '（想买：' + item.name + '，¥' + item.price + '，请求买单）';
+    nRow.style.display = 'none';
+    messages.appendChild(nRow);
+    messages.scrollTop = messages.scrollHeight;
+    saveChatHistory(contactId);
+}
+
 function sendStickerFromBot(src, note) {
     var messages = document.getElementById('chatMessages');
     if (!messages) return;
