@@ -189,8 +189,24 @@ function _crGenerate() {
         if (mask && mask.persona) maskPersona = mask.persona;
     }
     
+    // 人称示例
+    var personDemo = '';
+    if (_crSelectedPerson === '我') personDemo = '示例开头：我推开门的瞬间，愣住了。';
+    else if (_crSelectedPerson === '你') personDemo = '示例开头：你推开门的瞬间，愣住了。';
+    else personDemo = '示例开头：ta推开门的瞬间，愣住了。';
+    
+    var systemPrompt = '你是一位才华横溢的小说作家。\n\n'
+        + '【写作要求-必须严格遵守】\n'
+        + '1. 严格使用"' + _crSelectedPerson + '"作为叙述视角，全文统一。\n'
+        + personDemo + '\n'
+        + '2. 用动作和对话推动剧情，对话占全文40%以上。\n'
+        + '3. 姿势描写和环境描写要丰富：手的动作、身体姿态、光线、声音、气味，让读者身临其境。\n'
+        + '4. 用户情绪可以写，但要简短（一两句），配上动作落地。角色微反应要细腻（眼神、耳根、指尖）。\n'
+        + '5. 长短句交替，别全是大长句。开头要有钩子，别上来就交代背景。\n'
+        + '6. 禁止狗血套路（失忆、车祸、绝症、替身、误会三连）。禁止AI腔（"总而言之""此外""值得一提的是""总的来说"）。\n'
+        + '7. 创作完整、有深度、不烂尾。必须写完结局。';
+    
     var prompt = '请根据以下设定创作一篇完整的短篇小说。\n\n';
-    prompt += '【叙述人称】以"' + _crSelectedPerson + '"为第一视角叙述\n';
     prompt += '【角色人设】\n' + persona + '\n\n';
     if (maskPersona) prompt += '【用户身份】\n' + maskPersona + '\n\n';
     prompt += '【字数要求】' + wordCount + '字左右，必须写完结局，禁止烂尾。\n';
@@ -201,7 +217,7 @@ function _crGenerate() {
     
     if (typeof callChatAPI === 'function') {
         callChatAPI([
-            { role: 'system', content: '你是一位才华横溢的小说作家。创作完整、有深度、不烂尾的短篇小说。' },
+            { role: 'system', content: systemPrompt },
             { role: 'user', content: prompt }
         ]).then(function(reply) {
             _crIsGenerating = false;
