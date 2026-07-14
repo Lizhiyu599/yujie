@@ -1093,7 +1093,7 @@ function saveWidgets() {}
 
 // ========== 初始化 ==========
 window.addEventListener('DOMContentLoaded', function() {
-    addDesktopIcon({ id: 'chat', name: '聊天', icon: '<img src="https://i.ibb.co/3yN7gbxD/1782621034253.png" style="width:26px;height:26px;border-radius:8px;object-fit:cover;">', action: 'openChat' });
+    addDesktopIcon({ id: 'chat', name: '聊天', icon: '<img src="https://i.ibb.co/3yN7gbxD/1782621034253.png" style="width:25px;height:25px;border-radius:8px;object-fit:cover;">', action: 'openChat' });
     addDesktopIcon({ id: 'shiyilin', name: '拾忆林', icon: '<img src="https://i.ibb.co/dwNq5VfT/1782621400981.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openShiyilin' });
     addDesktopIcon({ id: 'qianban', name: '牵绊', icon: '<img src="https://i.ibb.co/1f11jCzs/1782623493282.png" style="width:27px;height:27px;border-radius:8px;object-fit:cover;">', action: 'openQianban' });
     addDesktopIcon({ id: 'gallery', name: '映像馆', icon: '<img src="https://i.ibb.co/Dfcz9js0/1782623882994.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openGallery' });
@@ -1101,7 +1101,7 @@ window.addEventListener('DOMContentLoaded', function() {
     addDesktopIcon({ id: 'music', name: '音乐', icon: '<img src="https://i.ibb.co/Vk3LH0p/1782714962959.png" style="width:29px;height:29px;border-radius:8px;object-fit:cover;">', action: 'openMusic' });
     addDesktopIcon({ id: 'accounting', name: '记账', icon: '<img src="https://i.ibb.co/FbMqTMNr/1783095194517.png" style="width:36px;height:36px;border-radius:8px;object-fit:cover;">', action: 'openAccounting' });
     addDesktopIcon({ id: 'cardpack', name: '卡包', icon: '<img src="https://i.ibb.co/Pv2zqg00/1782715064654.png" style="width:35px;height:35px;border-radius:8px;object-fit:cover;">', action: 'openCardpack' });
-    addDesktopIcon({ id: 'creation', name: '创作', icon: '<img src="https://i.ibb.co/sd7V4xcN/1784007234536.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openCreation', page: 1 });
+    addDesktopIcon({ id: 'creation', name: '创作', icon: '<img src="https://i.ibb.co/sd7V4xcN/1784007234536.png" style="width:30px;height:30px;border-radius:8px;object-fit:cover;">', action: 'openCreation', page: 1 });
 
     var items = getItems();
     if (!items.find(function(i) { return i.id === 'widget-tarot-default'; })) {
