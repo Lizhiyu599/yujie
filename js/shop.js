@@ -9,6 +9,15 @@ var _shopCart = [];
 
 function _shopLoad() {
     try { _shopItems = JSON.parse(localStorage.getItem('shop_items') || '[]'); } catch(e) { _shopItems = []; }
+    if (_shopItems.length === 0) {
+        _shopItems = [
+            { name: '黑白玫瑰冷香', price: '859', desc: '极简黑白玫瑰调，冷淡中透出高级感', img: 'https://i.ibb.co/vCQBBd0X/1784027231656.png', tab: 'recommend' },
+            { name: '雏菊珍珠', price: '650', desc: '清新雏菊花香，缀以珍珠光泽瓶身', img: 'https://i.ibb.co/DfDpH5cG/1784027203695.png', tab: 'recommend' },
+            { name: '美式快餐三件套', price: '35', desc: '经典汉堡+薯条+可乐', img: 'https://i.ibb.co/vx5Md2Sn/Fast-Food-Packaging-Mockup-1536x1152.jpg', tab: 'food' },
+            { name: '轻食蔬菜沙拉', price: '23', desc: '新鲜时蔬搭配低脂酱汁', img: 'https://i.ibb.co/q3Y1cm8V/Square-Salad-Container-Mockup-1536x1536.jpg', tab: 'food' }
+        ];
+        _shopSave();
+    }
     try { _shopCart = JSON.parse(localStorage.getItem('shop_cart') || '[]'); } catch(e) { _shopCart = []; }
 }
 function _shopSave() { localStorage.setItem('shop_items', JSON.stringify(_shopItems)); }
@@ -33,9 +42,10 @@ function _shopRender() {
     var appWindow = document.getElementById('shopAppWindow');
     if (!appWindow) return;
     var titles = { recommend: '推荐', food: '外卖', cart: '购物车' };
-    var bodyHTML = _shopTab === 'recommend' ? _shopRenderList() : (_shopTab === 'food' ? _shopRenderList() : _shopRenderCart());
+    var bodyHTML = _shopTab === 'cart' ? _shopRenderCart() : _shopRenderList();
+    var addBtnHTML = (_shopTab === 'recommend' || _shopTab === 'food') ? '<div class="shop-nav-add" onclick="_shopAddItem()" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:22px;color:#000;cursor:pointer;padding:4px 8px;">+</div>' : '';
     appWindow.innerHTML = '<div class="shop-app">'
-        + '<div class="shop-nav"><div class="shop-nav-back" onclick="closeShop()">‹</div><div class="shop-nav-title">' + titles[_shopTab] + '</div></div>'
+        + '<div class="shop-nav"><div class="shop-nav-back" onclick="closeShop()">‹</div><div class="shop-nav-title">' + titles[_shopTab] + '</div>' + addBtnHTML + '</div>'
         + bodyHTML
         + '<div class="shop-tab-bar">'
         + '<span class="shop-tab ' + (_shopTab === 'recommend' ? 'active' : '') + '" onclick="_shopSwitch(\'recommend\')">推荐</span>'
@@ -47,9 +57,11 @@ function _shopRender() {
 function _shopSwitch(tab) { _shopTab = tab; _shopRender(); }
 
 function _shopRenderList() {
+    var items = _shopItems.filter(function(item) { return item.tab === _shopTab || !item.tab; });
     var html = '<div class="shop-body"><div class="shop-grid">';
-    _shopItems.forEach(function(item, i) {
-        html += '<div class="shop-item" onclick="_shopAddToCart(' + i + ')">'
+    items.forEach(function(item, i) {
+        var realIndex = _shopItems.indexOf(item);
+        html += '<div class="shop-item" onclick="_shopAddToCart(' + realIndex + ')">'
             + (item.img ? '<div class="shop-item-img" style="background-image:url(' + item.img + ');"></div>' : '<div class="shop-item-img"></div>')
             + '<div class="shop-item-info"><div class="shop-item-name">' + item.name + '</div><div class="shop-item-price">¥' + item.price + '</div><div class="shop-item-desc">' + (item.desc || '') + '</div></div>'
             + '</div>';
@@ -155,7 +167,7 @@ function _shopConfirmAdd() {
     var desc = document.getElementById('shopAddDesc').value.trim();
     _shopCloseAdd();
     if (!name || !price) { showToast('请填写名称和价格'); return; }
-    _shopItems.push({ name: name, price: price, desc: desc, img: window._shopAddImg || '' });
+    _shopItems.push({ name: name, price: price, desc: desc, img: window._shopAddImg || '', tab: _shopTab === 'food' ? 'food' : 'recommend' });
     _shopSave();
     _shopRender();
     showToast('商品已添加');
