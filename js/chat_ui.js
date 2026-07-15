@@ -980,8 +980,27 @@ function sendVoiceBubble(role, text, voiceUrl, isRealVoice) {
 
     const avatar = document.createElement('div');
     avatar.className = 'bubble-avatar ' + (role === 'assistant' ? 'bot-avatar' : 'user-avatar');
-    avatar.textContent = role === 'assistant' ? (getContactById(window.ChatState.currentContactId)?.avatar || 'AI') : '我';
-
+    if (role === 'assistant') {
+    avatar.textContent = getContactById(window.ChatState.currentContactId)?.avatar || 'AI';
+} else {
+    var masks = typeof getMasks === 'function' ? getMasks() : [];
+    var contactForMask = getContactById(window.ChatState.currentContactId);
+    var activeMaskId = (contactForMask && contactForMask.maskId) ? contactForMask.maskId : localStorage.getItem('active_mask_id') || '';
+    var activeMask = null;
+    for (var mi = 0; mi < masks.length; mi++) {
+        if (masks[mi].id === activeMaskId) { activeMask = masks[mi]; break; }
+    }
+    if (!activeMask && masks.length > 0) activeMask = masks[0];
+    if (activeMask && activeMask.avatar) {
+        avatar.style.backgroundImage = 'url(' + activeMask.avatar + ')';
+        avatar.style.backgroundSize = 'cover';
+        avatar.style.backgroundPosition = 'center';
+        avatar.textContent = '';
+    } else {
+        avatar.textContent = '我';
+    }
+    }
+    
     const voiceBubble = document.createElement('div');
     voiceBubble.className = 'bubble bubble-voice ' + (role === 'assistant' ? 'bubble-assistant' : 'bubble-user');
     voiceBubble.setAttribute('data-voice-url', voiceUrl || '');
