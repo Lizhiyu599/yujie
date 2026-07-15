@@ -226,9 +226,13 @@ function renderBubbleCards(items) {
             + '<div class="sj-card" onclick="previewBubble(\'' + item.id + '\')">'
             + '<div class="sj-card-preview">'
             + '<div class="sj-bubble-preview">'
-            + '<div class="sj-bubble-user" style="' + (item.cssUser || '') + '">你好呀</div>'
-            + '<div class="sj-bubble-assistant" style="' + (item.cssAssistant || '') + '">今天过得怎么样</div>'
-            + '</div>'
++ '<div class="sj-bubble-user" style="' + (item.cssUser || '') + '">'
++ (item.cssUserBefore ? '<img src="' + (item.cssUserBefore.match(/url\("(.+?)"\)/) || [])[1] + '" style="position:absolute;top:-8px;left:-6px;width:32px;height:32px;pointer-events:none;">' : '')
++ '你好呀</div>'
++ '<div class="sj-bubble-assistant" style="' + (item.cssAssistant || '') + '">'
++ (item.cssAssistantAfter ? '<img src="' + (item.cssAssistantAfter.match(/url\("(.+?)"\)/) || [])[1] + '" style="position:absolute;top:-40px;right:-40px;width:90px;height:90px;pointer-events:none;">' : '')
++ '今天过得怎么样</div>'
++ '</div>'
             + '</div>'
             + '<div class="sj-card-info">'
             + '<div class="sj-card-name">' + item.name + '</div>'
