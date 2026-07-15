@@ -139,6 +139,7 @@ function _shopSendToCharFromDetail(index) {
     handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
     handle.addEventListener('touchmove', function(e) { if (e.touches[0].clientY - startY > 60) _shopCloseSend(); });
 }
+function _shopCloseSend() { var o = document.getElementById('shopSendOverlay'); if (o) o.remove(); }
 function _shopConfirmSendItem(contactId, index) {
     _shopCloseSend();
     var item = _shopItems[index];
@@ -160,11 +161,10 @@ function _shopRenderCart() {
         html += '<div style="text-align:center;color:#8e8e93;padding:40px 0;">购物车是空的</div>';
     } else {
         _shopCart.forEach(function(item, i) {
-            html += '<div class="shop-cart-item">'
+            var realIndex = _shopItems.indexOf(item);
+            html += '<div class="shop-cart-item" onclick="_shopOpenDetail(' + realIndex + ')">'
                 + (item.img ? '<div class="shop-cart-img" style="background-image:url(' + item.img + ');"></div>' : '<div class="shop-cart-img"></div>')
                 + '<div class="shop-cart-info"><div class="shop-cart-name">' + item.name + '</div><div class="shop-cart-price">¥' + item.price + '</div></div>'
-                + '<button class="shop-cart-send" style="background:#000;color:#fff;" onclick="event.stopPropagation();_shopBuySelfCart(' + i + ')">自己购买</button>'
-                + '<button class="shop-cart-send" onclick="event.stopPropagation();_shopSendToCharCart(' + i + ')">发给角色</button>'
                 + '<div class="shop-cart-del" onclick="event.stopPropagation();_shopRemoveCart(' + i + ')">×</div>'
                 + '</div>';
         });
@@ -174,53 +174,12 @@ function _shopRenderCart() {
 }
 function _shopRemoveCart(index) { _shopCart.splice(index, 1); _shopSaveCart(); _shopRender(); }
 
-function _shopSendToCharCart(index) {
-    var item = _shopCart[index];
-    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
-    if (contacts.length === 0) { showToast('暂无联系人'); return; }
-    var overlay = document.createElement('div');
-    overlay.className = 'sheet-mask show';
-    overlay.id = 'shopSendOverlay';
-    var listHTML = '';
-    contacts.forEach(function(c) {
-        listHTML += '<div class="music-menu-item" onclick="_shopConfirmSendCart(\'' + c.id + '\',' + index + ')"><span>' + c.name + '</span></div>';
-    });
-    overlay.innerHTML = '<div class="half-sheet" onclick="event.stopPropagation();"><div class="sheet-handle"><div class="handle-bar"></div></div><div class="sheet-scroll"><div class="settings-section-title">发给谁买单</div>' + listHTML + '</div></div>';
-    document.body.appendChild(overlay);
-    overlay.onclick = function(e) { if (e.target === overlay) _shopCloseSend(); };
-    var handle = overlay.querySelector('.sheet-handle');
-    var startY = 0;
-    handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
-    handle.addEventListener('touchmove', function(e) { if (e.touches[0].clientY - startY > 60) _shopCloseSend(); });
-}
-function _shopCloseSend() { var o = document.getElementById('shopSendOverlay'); if (o) o.remove(); }
-function _shopConfirmSendCart(contactId, index) {
-    _shopCloseSend();
-    var item = _shopCart[index];
-    var contact = window.ChatConfig.contacts.find(function(c) { return c.id === contactId; });
-    var contactName = contact ? contact.name : '角色';
-    var prevId = window.ChatState && window.ChatState.currentContactId;
-    if (window.ChatState) window.ChatState.currentContactId = contactId;
-    if (typeof sendShopCard === 'function') { sendShopCard(contactId, item); }
-    if (window.ChatState) window.ChatState.currentContactId = prevId;
-    var notices = JSON.parse(localStorage.getItem('shop_pending_notices') || '[]');
-    notices.push({ contactId: contactId, contactName: contactName, name: item.name, price: item.price, desc: item.desc || '', time: Date.now() });
-    localStorage.setItem('shop_pending_notices', JSON.stringify(notices));
-    showToast('已发送给' + contactName);
-}
-
 function _shopBuySelf(index) {
     _shopCloseDetail();
     var item = _shopItems[index];
     if (!item) return;
-    _shopShowPayMethod(item, function() { _shopItems.splice(index, 1); _shopSave(); });
+    _shopShowPayMethod(item, function() {});
 }
-function _shopBuySelfCart(index) {
-    var item = _shopCart[index];
-    if (!item) return;
-    _shopShowPayMethod(item, function() { _shopCart.splice(index, 1); _shopSaveCart(); _shopRender(); });
-}
-
 function _shopShowPayMethod(item, onSuccess) {
     var overlay = document.createElement('div');
     overlay.className = 'sheet-mask show';
@@ -244,7 +203,6 @@ function _shopClosePayMethod() { var o = document.getElementById('shopPayMethodO
 function _shopConfirmPay(method, cardIndex) {
     _shopClosePayMethod();
     var item = window._shopPayItem;
-    var onSuccess = window._shopPaySuccess;
     if (!item) return;
     var price = parseFloat(item.price);
     if (method === 'wallet') {
@@ -262,33 +220,8 @@ function _shopConfirmPay(method, cardIndex) {
     var orders = JSON.parse(localStorage.getItem('logistics_orders') || '[]');
     orders.unshift({ cat: _shopTab === 'food' ? 'food' : 'express', name: item.name, price: item.price, img: item.img || '', status: 'shipping', time: new Date().toLocaleDateString() });
     localStorage.setItem('logistics_orders', JSON.stringify(orders));
-    if (onSuccess) onSuccess();
     _shopRender();
     showToast('购买成功');
-    var payMethodText = method === 'wallet' ? '零钱' : '黑卡';
-    _shopPickContactToNotify(item, payMethodText);
-}
-
-function _shopPickContactToNotify(item, payMethodText) {
-    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
-    if (contacts.length === 0) return;
-    var overlay = document.createElement('div');
-    overlay.className = 'sheet-mask show';
-    overlay.id = 'shopNotifyOverlay';
-    var listHTML = '';
-    contacts.forEach(function(c) {
-        listHTML += '<div class="music-menu-item" onclick="_shopConfirmNotify(\'' + c.id + '\', \'' + item.name + '\', \'' + item.price + '\', \'' + payMethodText + '\')"><span>' + c.name + '</span></div>';
-    });
-    overlay.innerHTML = '<div class="half-sheet" onclick="event.stopPropagation();"><div class="sheet-handle"><div class="handle-bar"></div></div><div class="sheet-scroll"><div class="settings-section-title">让谁知道你买了这个？（可跳过）</div>' + listHTML + '</div></div>';
-    document.body.appendChild(overlay);
-    overlay.onclick = function(e) { if (e.target === overlay) { var o = document.getElementById('shopNotifyOverlay'); if (o) o.remove(); } };
-}
-function _shopConfirmNotify(contactId, name, price, payMethodText) {
-    var o = document.getElementById('shopNotifyOverlay'); if (o) o.remove();
-    var notices = JSON.parse(localStorage.getItem('shop_self_purchase_notices') || '[]');
-    notices.push({ contactId: contactId, name: name, price: price, payMethod: payMethodText, time: Date.now() });
-    localStorage.setItem('shop_self_purchase_notices', JSON.stringify(notices));
-    showToast('已告诉ta');
 }
 
 function _shopAddItem() {
@@ -329,4 +262,4 @@ function _shopConfirmAdd() {
     _shopSave();
     _shopRender();
     showToast('商品已添加');
-        }
+}
