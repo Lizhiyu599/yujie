@@ -787,6 +787,18 @@ if (messagesEl2) {
         localStorage.setItem('cp_pending_notices', JSON.stringify(cpNotices2));
     }
 
+    var shopNotices2 = JSON.parse(localStorage.getItem('shop_pending_notices') || '[]');
+    var myShopNotices2 = shopNotices2.filter(function(n) { return n.contactId === contactId; });
+    var shopNote = '';
+    if (myShopNotices2.length > 0) {
+        var sl2 = myShopNotices2[myShopNotices2.length - 1];
+        shopNote = '（系统：用户想买' + sl2.name + '，价格¥' + sl2.price + '，请你帮ta买单。说出商品名和金额。）';
+        shopNotices2 = shopNotices2.filter(function(n) { return n.contactId !== contactId; });
+        localStorage.setItem('shop_pending_notices', JSON.stringify(shopNotices2));
+    }
+
+    const userMessage = shopNote ? shopNote : (stickerNote ? stickerNote : '（用户暂时没有说话，你可以先开口）');
+
     const userMessage = cpNote ? cpNote : (stickerNote ? stickerNote : '（用户暂时没有说话，你可以先开口）');
     
     callChatAPI([
