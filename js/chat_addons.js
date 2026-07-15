@@ -11,12 +11,33 @@ document.addEventListener('click', function(e) {
     }
 });
 
+function _getUserAvatarHTML() {
+    var masks = typeof getMasks === 'function' ? getMasks() : [];
+    var contactForMask = getContactById(window.ChatState.currentContactId);
+    var activeMaskId = (contactForMask && contactForMask.maskId) ? contactForMask.maskId : localStorage.getItem('active_mask_id') || '';
+    var activeMask = null;
+    for (var mi = 0; mi < masks.length; mi++) {
+        if (masks[mi].id === activeMaskId) { activeMask = masks[mi]; break; }
+    }
+    if (!activeMask && masks.length > 0) activeMask = masks[0];
+    var avatar = document.createElement('div');
+    avatar.className = 'bubble-avatar user-avatar';
+    if (activeMask && activeMask.avatar) {
+        avatar.style.backgroundImage = 'url(' + activeMask.avatar + ')';
+        avatar.style.backgroundSize = 'cover';
+        avatar.style.backgroundPosition = 'center';
+        avatar.textContent = '';
+    } else {
+        avatar.textContent = '我';
+    }
+    return avatar;
+}
+
 // ========== 表情包面板渲染 ==========
 function renderAddPanelContent(tab) {
     const body = document.getElementById('addPanelBody');
     if (!body) return;
 
-    // 线下模式：只显示场景设置面板
     if (window.ChatState && window.ChatState.isOfflineMode) {
         body.innerHTML = `
             <div class="offline-panel">
@@ -98,9 +119,8 @@ function sendSticker(idx) {
         const sticker = savedEmojis[idx];
         const row = document.createElement('div');
         row.className = 'bubble-row user';
-        const avatar = document.createElement('div');
-        avatar.className = 'bubble-avatar user-avatar';
-        avatar.textContent = '我';
+        row.setAttribute('data-role', 'user');
+        const avatar = _getUserAvatarHTML();
         const bubble = document.createElement('div');
         bubble.className = 'bubble bubble-user';
         bubble.style.backgroundImage = `url(${sticker.src})`;
@@ -356,9 +376,8 @@ function confirmSendImage(imageSrc) {
 function sendImageWithCaption(imageSrc, caption) {
     const row = document.createElement('div');
     row.className = 'bubble-row user';
-    const avatar = document.createElement('div');
-    avatar.className = 'bubble-avatar user-avatar';
-    avatar.textContent = '我';
+    row.setAttribute('data-role', 'user');
+    const avatar = _getUserAvatarHTML();
     const bubble = document.createElement('div');
     bubble.className = 'bubble bubble-user';
     bubble.style.backgroundImage = `url(${imageSrc})`;
@@ -455,9 +474,8 @@ function sendLocation() {
     if (!location) return;
     const row = document.createElement('div');
     row.className = 'bubble-row user';
-    const avatar = document.createElement('div');
-    avatar.className = 'bubble-avatar user-avatar';
-    avatar.textContent = '我';
+    row.setAttribute('data-role', 'user');
+    const avatar = _getUserAvatarHTML();
     const card = document.createElement('div');
     card.style.cssText = 'background:rgba(255,255,255,0.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:14px;padding:0;width:220px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid rgba(255,255,255,0.4);';
     card.innerHTML = `
@@ -486,7 +504,7 @@ function sendLocation() {
     document.getElementById('chatMessages').appendChild(nRow);
 
     saveChatHistory(window.ChatState.currentContactId);
-}
+    }
 
 // ========== 红包/转账状态存储 ==========
 function getPaymentState(msgId) {
@@ -585,13 +603,17 @@ function openPaymentModal(msgId) {
     };
 }
 
-// 添加已接收卡片
 function addReceivedCard(side, type, amount) {
     var row = document.createElement('div');
     row.className = 'bubble-row ' + side;
-    var avatar = document.createElement('div');
-    avatar.className = 'bubble-avatar ' + (side === 'user' ? 'user-avatar' : 'bot-avatar');
-    avatar.textContent = side === 'user' ? '我' : (getContactById(window.ChatState.currentContactId)?.avatar || 'AI');
+    var avatar;
+    if (side === 'user') {
+        avatar = _getUserAvatarHTML();
+    } else {
+        avatar = document.createElement('div');
+        avatar.className = 'bubble-avatar bot-avatar';
+        avatar.textContent = getContactById(window.ChatState.currentContactId)?.avatar || 'AI';
+    }
     var card = document.createElement('div');
     card.style.cssText = 'background:#fff;border-radius:14px;padding:0;width:220px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
     var isRedPacket = type === '红包';
@@ -610,13 +632,17 @@ function addReceivedCard(side, type, amount) {
     document.getElementById('chatMessages').appendChild(row);
 }
 
-// 添加已退还卡片
 function addRefundedCard(side, amount) {
     var row = document.createElement('div');
     row.className = 'bubble-row ' + side;
-    var avatar = document.createElement('div');
-    avatar.className = 'bubble-avatar ' + (side === 'user' ? 'user-avatar' : 'bot-avatar');
-    avatar.textContent = side === 'user' ? '我' : (getContactById(window.ChatState.currentContactId)?.avatar || 'AI');
+    var avatar;
+    if (side === 'user') {
+        avatar = _getUserAvatarHTML();
+    } else {
+        avatar = document.createElement('div');
+        avatar.className = 'bubble-avatar bot-avatar';
+        avatar.textContent = getContactById(window.ChatState.currentContactId)?.avatar || 'AI';
+    }
     var card = document.createElement('div');
     card.className = 'payment-card';
     card.style.cssText = 'background:#fff;border-radius:14px;padding:0;width:220px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
@@ -713,7 +739,8 @@ function sendPaymentCard(type, amount, note, method) {
     setPaymentState(msgId, 'pending');
 
     const row = document.createElement('div'); row.className = 'bubble-row user';
-    const avatar = document.createElement('div'); avatar.className = 'bubble-avatar user-avatar'; avatar.textContent = '我';
+    row.setAttribute('data-role', 'user');
+    const avatar = _getUserAvatarHTML();
     const isRedPacket = type === '红包';
     const card = document.createElement('div');
     card.className = 'payment-card';
@@ -905,9 +932,8 @@ function confirmSendLink() {
 
     const row = document.createElement('div');
     row.className = 'bubble-row user';
-    const avatar = document.createElement('div');
-    avatar.className = 'bubble-avatar user-avatar';
-    avatar.textContent = '我';
+    row.setAttribute('data-role', 'user');
+    const avatar = _getUserAvatarHTML();
     const card = document.createElement('div');
     card.style.cssText = 'background:#fff;border-radius:14px;padding:12px 14px;max-width:220px;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
     let displayLink = link;
@@ -931,7 +957,7 @@ function confirmSendLink() {
     document.getElementById('chatMessages').appendChild(nRow);
 
     saveChatHistory(window.ChatState.currentContactId);
-    }
+}
 
 function sendShopCard(contactId, item) {
     var cardHTML = '<div class="shop-chat-card" style="background:#fff;border-radius:14px;padding:12px;width:220px;box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;gap:10px;align-items:center;cursor:pointer;">'
@@ -944,9 +970,7 @@ function sendShopCard(contactId, item) {
         var row = document.createElement('div');
         row.className = 'bubble-row user';
         row.setAttribute('data-role', 'user');
-        var avatar = document.createElement('div');
-        avatar.className = 'bubble-avatar user-avatar';
-        avatar.textContent = '我';
+        var avatar = _getUserAvatarHTML();
         var bubble = document.createElement('div');
         bubble.className = 'bubble bubble-user';
         bubble.style.cssText = 'background:transparent;padding:0;box-shadow:none;border:none;backdrop-filter:none;-webkit-backdrop-filter:none;';
@@ -969,9 +993,7 @@ function sendShopCard(contactId, item) {
         var row = document.createElement('div');
         row.className = 'bubble-row user';
         row.setAttribute('data-role', 'user');
-        var avatar = document.createElement('div');
-        avatar.className = 'bubble-avatar user-avatar';
-        avatar.textContent = '我';
+        var avatar = _getUserAvatarHTML();
         var bubble = document.createElement('div');
         bubble.className = 'bubble bubble-user';
         bubble.style.cssText = 'background:transparent;padding:0;box-shadow:none;border:none;backdrop-filter:none;-webkit-backdrop-filter:none;';
@@ -1001,9 +1023,7 @@ function sendLogiCard(contactId, item) {
         var row = document.createElement('div');
         row.className = 'bubble-row user';
         row.setAttribute('data-role', 'user');
-        var avatar = document.createElement('div');
-        avatar.className = 'bubble-avatar user-avatar';
-        avatar.textContent = '我';
+        var avatar = _getUserAvatarHTML();
         var bubble = document.createElement('div');
         bubble.className = 'bubble bubble-user';
         bubble.style.cssText = 'background:transparent;padding:0;box-shadow:none;border:none;backdrop-filter:none;-webkit-backdrop-filter:none;';
@@ -1026,9 +1046,7 @@ function sendLogiCard(contactId, item) {
         var row = document.createElement('div');
         row.className = 'bubble-row user';
         row.setAttribute('data-role', 'user');
-        var avatar = document.createElement('div');
-        avatar.className = 'bubble-avatar user-avatar';
-        avatar.textContent = '我';
+        var avatar = _getUserAvatarHTML();
         var bubble = document.createElement('div');
         bubble.className = 'bubble bubble-user';
         bubble.style.cssText = 'background:transparent;padding:0;box-shadow:none;border:none;backdrop-filter:none;-webkit-backdrop-filter:none;';
@@ -1043,6 +1061,38 @@ function sendLogiCard(contactId, item) {
         container.appendChild(nRow);
         localStorage.setItem(storageKey, container.innerHTML);
     }
+}
+
+function sendStickerFromBot(src, note) {
+    var messages = document.getElementById('chatMessages');
+    if (!messages) return;
+    var row = document.createElement('div');
+    row.className = 'bubble-row assistant';
+    var avatar = document.createElement('div');
+    avatar.className = 'bubble-avatar bot-avatar';
+    avatar.textContent = getContactById(window.ChatState.currentContactId)?.avatar || 'AI';
+    var bubble = document.createElement('div');
+    bubble.className = 'bubble bubble-assistant';
+    bubble.style.backgroundImage = 'url(' + src + ')';
+    bubble.style.backgroundSize = 'cover';
+    bubble.style.backgroundPosition = 'center';
+    bubble.style.width = '100px';
+    bubble.style.height = '100px';
+    bubble.style.padding = '0';
+    bubble.style.borderRadius = '12px';
+    bubble.textContent = '';
+    bubble.onclick = function() { openImageViewer(src); };
+    row.appendChild(avatar);
+    row.appendChild(bubble);
+    messages.appendChild(row);
+
+        var nRow = document.createElement('div');
+    nRow.className = 'bubble-narration';
+    nRow.textContent = '（发送了表情包：' + note + '）';
+    nRow.style.display = 'none';
+    messages.appendChild(nRow);
+    messages.scrollTop = messages.scrollHeight;
+    saveChatHistory(window.ChatState.currentContactId);
 }
 
 // ========== 线下模式切换 ==========
