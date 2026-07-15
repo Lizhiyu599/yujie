@@ -567,8 +567,8 @@ function initShijieSampleData() {
         id: 'bubble_no_avatar',
         name: '无头像气泡',
         author: '官方',
-        cssUser: 'background: #fff !important; color: #000 !important; border-top-right-radius: 4px !important; border-radius: 18px !important; box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important; padding: 10px 14px !important; font-size: 14px !important;',
-        cssAssistant: 'background: #1d1d1f !important; color: #fff !important; border-top-left-radius: 4px !important; border-radius: 18px !important; box-shadow: 0 1px 4px rgba(0,0,0,0.1) !important; padding: 10px 14px !important; font-size: 14px !important;',
+        cssUser: 'background: #fff !important; color: #000 !important; border-radius: 18px !important; border-top-right-radius: 4px !important; box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important; padding: 10px 14px !important; font-size: 14px !important;',
+cssAssistant: 'background: #1d1d1f !important; color: #fff !important; border-radius: 18px !important; border-top-left-radius: 4px !important; box-shadow: 0 1px 4px rgba(0,0,0,0.1) !important; padding: 10px 14px !important; font-size: 14px !important;',
         hideAvatar: true,
         tags: ['简约', '无头像']
     });
