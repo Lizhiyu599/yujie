@@ -264,6 +264,10 @@ function _shopConfirmBuySelf(index, method, cardIndex) {
     _shopRender();
     showToast('购买成功');
 
+    var orders = JSON.parse(localStorage.getItem('logistics_orders') || '[]');
+orders.unshift({ cat: _shopTab === 'food' ? 'food' : 'express', name: item.name, price: item.price, img: item.img || '', status: 'shipping', time: new Date().toLocaleDateString() });
+localStorage.setItem('logistics_orders', JSON.stringify(orders));
+
     var payMethodText = method === 'wallet' ? '零钱' : '黑卡';
     _shopPickContactToNotify(item, payMethodText);
 }
