@@ -13,6 +13,8 @@ function _shopLoad() {
         _shopItems = [
             { name: '黑白玫瑰冷香', price: '859', desc: '极简黑白玫瑰调，冷淡中透出高级感', img: 'https://i.ibb.co/vCQBBd0X/1784027231656.png', tab: 'recommend' },
             { name: '雏菊珍珠', price: '650', desc: '清新雏菊花香，缀以珍珠光泽瓶身', img: 'https://i.ibb.co/DfDpH5cG/1784027203695.png', tab: 'recommend' },
+            { name: '鸭舌帽', price: '27', desc: '帽子带有英文印花，帽檐清新的绿色', img: 'https://i.ibb.co/pvzk4rqH/Free-Front-View-Cap-Mockup-1536x1025.jpg', tab: 'recommend' },
+            { name: '2024年日记本', price: '18', desc: '一本棕色复古版很有质感的日记本', img: 'https://i.ibb.co/pB9hkCM1/Leather-Notebook-Mockup-1536x1152.jpg', tab: 'recommend' },
             { name: '美式快餐三件套', price: '35', desc: '经典汉堡+薯条+可乐', img: 'https://i.ibb.co/vx5Md2Sn/Fast-Food-Packaging-Mockup-1536x1152.jpg', tab: 'food' },
             { name: '轻食蔬菜沙拉', price: '23', desc: '新鲜时蔬搭配低脂酱汁', img: 'https://i.ibb.co/q3Y1cm8V/Square-Salad-Container-Mockup-1536x1536.jpg', tab: 'food' }
         ];
