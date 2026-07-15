@@ -1,0 +1,100 @@
+/* ===== 物流容器 ===== */
+.logi-app {
+    width: 100%; height: 100%;
+    background: #f2f2f7;
+    display: flex; flex-direction: column;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, sans-serif;
+    overflow: hidden; position: relative;
+}
+.logi-nav {
+    display: flex; align-items: center;
+    padding: 48px 16px 12px;
+    flex-shrink: 0; position: relative;
+}
+.logi-nav-back { color: #000; font-size: 16px; font-weight: 500; cursor: pointer; padding: 0 8px; }
+.logi-nav-title {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    font-size: 17px; font-weight: 600; color: #000;
+}
+.logi-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 16px 20px; }
+
+/* ===== 用户头像区 ===== */
+.logi-user-card {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px;
+    background: rgba(255,255,255,0.4);
+    backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
+    border: 1px solid rgba(255,255,255,0.55);
+    border-radius: 16px; margin-bottom: 14px;
+}
+.logi-user-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    background-size: cover; background-position: center;
+    background-color: rgba(0,0,0,0.06); flex-shrink: 0;
+}
+.logi-user-name { font-size: 16px; font-weight: 600; color: #000; }
+
+/* ===== 分类标签栏 ===== */
+.logi-cat-tabs {
+    display: flex; gap: 8px; margin-bottom: 12px;
+}
+.logi-cat-tab {
+    padding: 8px 16px; border-radius: 18px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    background: rgba(255,255,255,0.4);
+    backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
+    border: 1px solid rgba(255,255,255,0.55);
+    color: #8e8e93; transition: 0.2s;
+}
+.logi-cat-tab.active { background: #000; color: #fff; border-color: #000; }
+
+/* ===== 子标签 ===== */
+.logi-sub-tabs {
+    display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap;
+}
+.logi-sub-tab {
+    padding: 6px 12px; border-radius: 14px;
+    font-size: 12px; cursor: pointer;
+    background: rgba(255,255,255,0.3);
+    border: 1px solid rgba(255,255,255,0.4);
+    color: #8e8e93;
+}
+.logi-sub-tab.active { background: #000; color: #fff; border-color: #000; }
+
+/* ===== 订单卡片 ===== */
+.logi-order-card {
+    background: rgba(255,255,255,0.4);
+    backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
+    border: 1px solid rgba(255,255,255,0.55);
+    border-radius: 14px; padding: 14px; margin-bottom: 10px;
+}
+.logi-order-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+}
+.logi-order-status {
+    font-size: 12px; font-weight: 600;
+    padding: 3px 8px; border-radius: 10px;
+}
+.logi-order-status.pending { background: rgba(255,149,0,0.12); color: #ff9500; }
+.logi-order-status.shipping { background: rgba(0,122,255,0.1); color: #007aff; }
+.logi-order-status.done { background: rgba(52,199,89,0.12); color: #34c759; }
+
+.logi-order-info { display: flex; gap: 10px; }
+.logi-order-img {
+    width: 60px; height: 60px; border-radius: 10px;
+    background-size: cover; background-position: center;
+    background-color: rgba(0,0,0,0.03); flex-shrink: 0;
+}
+.logi-order-detail { flex: 1; min-width: 0; }
+.logi-order-name { font-size: 14px; font-weight: 500; color: #000; }
+.logi-order-price { font-size: 13px; color: #8e8e93; margin-top: 2px; }
+.logi-order-actions { display: flex; gap: 8px; margin-top: 8px; }
+.logi-order-btn {
+    padding: 6px 14px; border-radius: 14px; font-size: 12px;
+    cursor: pointer; border: none;
+    background: rgba(0,0,0,0.06); color: #000;
+}
+.logi-order-btn.primary { background: #000; color: #fff; }
+
+.logi-empty { text-align: center; color: #8e8e93; padding: 40px 0; font-size: 14px; }
