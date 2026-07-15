@@ -1,6 +1,6 @@
 /**
  * 玉界 - 商城
- * 推荐 / 外卖 / 购物车
+ * 推荐 / 外卖 / 订单
  */
 
 var _shopTab = 'recommend';
@@ -49,8 +49,8 @@ function closeShop() { var appWindow = document.getElementById('shopAppWindow');
 function _shopRender() {
     var appWindow = document.getElementById('shopAppWindow');
     if (!appWindow) return;
-    var titles = { recommend: '推荐', food: '外卖', cart: '购物车' };
-    var bodyHTML = _shopTab === 'cart' ? _shopRenderCart() : _shopRenderList();
+    var titles = { recommend: '推荐', food: '外卖', cart: '订单' };
+    var bodyHTML = _shopRenderList();
     var addBtnHTML = (_shopTab === 'recommend' || _shopTab === 'food') ? '<div class="shop-nav-add" onclick="_shopAddItem()" style="position:absolute;right:16px;top:calc(50% + 4px);transform:translateY(-50%);font-size:22px;color:#000;cursor:pointer;padding:4px 8px;">+</div>' : '';
     appWindow.innerHTML = '<div class="shop-app">'
         + '<div class="shop-nav"><div class="shop-nav-back" onclick="closeShop()">‹</div><div class="shop-nav-title">' + titles[_shopTab] + '</div>' + addBtnHTML + '</div>'
@@ -58,7 +58,7 @@ function _shopRender() {
         + '<div class="shop-tab-bar">'
         + '<span class="shop-tab ' + (_shopTab === 'recommend' ? 'active' : '') + '" onclick="_shopSwitch(\'recommend\')">推荐</span>'
         + '<span class="shop-tab ' + (_shopTab === 'food' ? 'active' : '') + '" onclick="_shopSwitch(\'food\')">外卖</span>'
-        + '<span class="shop-tab ' + (_shopTab === 'cart' ? 'active' : '') + '" onclick="_shopSwitch(\'cart\')">购物车</span>'
+        + '<span class="shop-tab ' + (_shopTab === 'cart' ? 'active' : '') + '" onclick="_shopSwitch(\'cart\')">订单</span>'
         + '</div></div>';
 
     var body = appWindow.querySelector('.shop-body');
@@ -75,14 +75,17 @@ function _shopRender() {
     }
 }
 
-function _shopSwitch(tab) { _shopTab = tab; _shopRender(); }
+function _shopSwitch(tab) {
+    if (tab === 'cart') { closeShop(); if (typeof openLogistics === 'function') setTimeout(openLogistics, 200); return; }
+    _shopTab = tab; _shopRender();
+}
 
 function _shopRenderList() {
     var items = _shopItems.filter(function(item) { return item.tab === _shopTab || !item.tab; });
     var html = '<div class="shop-body"><div class="shop-grid">';
     items.forEach(function(item, i) {
         var realIndex = _shopItems.indexOf(item);
-        html += '<div class="shop-item" onclick="_shopAddToCart(' + realIndex + ')">'
+        html += '<div class="shop-item" onclick="_shopOpenDetail(' + realIndex + ')">'
             + (item.img ? '<div class="shop-item-img" style="background-image:url(' + item.img + ');"></div>' : '<div class="shop-item-img"></div>')
             + '<div class="shop-item-info"><div class="shop-item-name">' + item.name + '</div><div class="shop-item-price">¥' + item.price + '</div><div class="shop-item-desc">' + (item.desc || '') + '</div></div>'
             + '</div>';
@@ -91,35 +94,31 @@ function _shopRenderList() {
     return html;
 }
 
-function _shopAddToCart(index) {
-    _shopCart.push(_shopItems[index]);
-    _shopSaveCart();
-    showToast('已加入购物车');
+// ========== 商品详情弹窗 ==========
+function _shopOpenDetail(index) {
+    var item = _shopItems[index];
+    if (!item) return;
+    var overlay = document.createElement('div');
+    overlay.className = 'caption-modal-overlay';
+    overlay.id = 'shopDetailOverlay';
+    overlay.innerHTML = '<div class="caption-modal" style="text-align:center;padding:20px;">'
+        + (item.img ? '<div style="width:100%;height:180px;border-radius:12px;background-image:url(' + item.img + ');background-size:cover;background-position:center;margin-bottom:12px;"></div>' : '')
+        + '<div style="font-size:18px;font-weight:600;color:#000;margin-bottom:4px;">' + item.name + '</div>'
+        + '<div style="font-size:22px;font-weight:700;color:#000;margin-bottom:8px;">¥' + item.price + '</div>'
+        + '<div style="font-size:13px;color:#8e8e93;margin-bottom:16px;">' + (item.desc || '') + '</div>'
+        + '<div style="display:flex;gap:8px;">'
+        + '<button class="black-btn" style="flex:1;" onclick="_shopBuySelf(' + index + ')">自己购买</button>'
+        + '<button class="white-btn" style="flex:1;border:1px solid rgba(0,0,0,0.2);" onclick="_shopSendToChar(' + index + ')">发给角色</button>'
+        + '</div></div>';
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) _shopCloseDetail(); };
 }
+function _shopCloseDetail() { var o = document.getElementById('shopDetailOverlay'); if (o) o.remove(); }
 
-function _shopRenderCart() {
-    var html = '<div class="shop-body">';
-    if (_shopCart.length === 0) {
-        html += '<div style="text-align:center;color:#8e8e93;padding:40px 0;">购物车是空的</div>';
-    } else {
-        _shopCart.forEach(function(item, i) {
-    html += '<div class="shop-cart-item">'
-        + (item.img ? '<div class="shop-cart-img" style="background-image:url(' + item.img + ');"></div>' : '<div class="shop-cart-img"></div>')
-        + '<div class="shop-cart-info"><div class="shop-cart-name">' + item.name + '</div><div class="shop-cart-price">¥' + item.price + '</div></div>'
-        + '<button class="shop-cart-send" style="background:#000;color:#fff;" onclick="event.stopPropagation();_shopBuySelf(' + i + ')">自己购买</button>'
-        + '<button class="shop-cart-send" onclick="event.stopPropagation();_shopSendToChar(' + i + ')">发给角色</button>'
-        + '<div class="shop-cart-del" onclick="event.stopPropagation();_shopRemoveCart(' + i + ')">×</div>'
-        + '</div>';
-      });
-    }
-    html += '</div>';
-    return html;
-}
-
-function _shopRemoveCart(index) { _shopCart.splice(index, 1); _shopSaveCart(); _shopRender(); }
-
+// ========== 发给角色 ==========
 function _shopSendToChar(index) {
-    var item = _shopCart[index];
+    _shopCloseDetail();
+    var item = _shopItems[index];
     var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
     if (contacts.length === 0) { showToast('暂无联系人'); return; }
     var overlay = document.createElement('div');
@@ -140,26 +139,92 @@ function _shopSendToChar(index) {
 function _shopCloseSend() { var o = document.getElementById('shopSendOverlay'); if (o) o.remove(); }
 function _shopConfirmSend(contactId, index) {
     _shopCloseSend();
-    var item = _shopCart[index];
+    var item = _shopItems[index];
     var contact = window.ChatConfig.contacts.find(function(c) { return c.id === contactId; });
     var contactName = contact ? contact.name : '角色';
-
-    // 先尝试直接发卡片
     var prevId = window.ChatState && window.ChatState.currentContactId;
     if (window.ChatState) window.ChatState.currentContactId = contactId;
-    if (typeof sendShopCard === 'function') {
-        sendShopCard(contactId, item);
-    }
+    if (typeof sendShopCard === 'function') { sendShopCard(contactId, item); }
     if (window.ChatState) window.ChatState.currentContactId = prevId;
-
-    // 同时存到localStorage，下次角色回复时通过系统提示读取
     var notices = JSON.parse(localStorage.getItem('shop_pending_notices') || '[]');
     notices.push({ contactId: contactId, contactName: contactName, name: item.name, price: item.price, desc: item.desc || '', time: Date.now() });
     localStorage.setItem('shop_pending_notices', JSON.stringify(notices));
-
     showToast('已发送给' + contactName);
 }
 
+// ========== 自己购买 ==========
+function _shopBuySelf(index) {
+    _shopCloseDetail();
+    var item = _shopItems[index];
+    if (!item) return;
+    var overlay = document.createElement('div');
+    overlay.className = 'sheet-mask show';
+    overlay.id = 'shopPayMethodOverlay';
+    var cpCards = JSON.parse(localStorage.getItem('cardpack_cards') || '[]');
+    var cardListHTML = '';
+    cpCards.forEach(function(card, ci) {
+        cardListHTML += '<div class="music-menu-item" onclick="_shopConfirmBuySelf(' + index + ', \'card\', ' + ci + ')"><span>黑卡 · ¥' + card.balance.toFixed(2) + (card.fromName ? '（' + card.fromName + '赠送）' : '') + '</span></div>';
+    });
+    overlay.innerHTML = '<div class="half-sheet" onclick="event.stopPropagation();"><div class="sheet-handle"><div class="handle-bar"></div></div><div class="sheet-scroll"><div class="settings-section-title">选择支付方式（¥' + item.price + '）</div><div class="music-menu-item" onclick="_shopConfirmBuySelf(' + index + ', \'wallet\')"><span>零钱余额</span></div>' + cardListHTML + (cpCards.length === 0 ? '<div style="padding:12px 16px;color:#8e8e93;font-size:13px;">暂无黑卡</div>' : '') + '</div></div>';
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) _shopClosePayMethod(); };
+    var handle = overlay.querySelector('.sheet-handle');
+    var startY = 0;
+    handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
+    handle.addEventListener('touchmove', function(e) { if (e.touches[0].clientY - startY > 60) _shopClosePayMethod(); });
+}
+function _shopClosePayMethod() { var o = document.getElementById('shopPayMethodOverlay'); if (o) o.remove(); }
+function _shopConfirmBuySelf(index, method, cardIndex) {
+    _shopClosePayMethod();
+    var item = _shopItems[index];
+    if (!item) return;
+    var price = parseFloat(item.price);
+    if (method === 'wallet') {
+        var balance = typeof getWalletBalance === 'function' ? getWalletBalance() : 0;
+        if (balance < price) { showToast('零钱余额不足'); return; }
+        setWalletBalance(balance - price);
+        if (typeof addWalletRecord === 'function') addWalletRecord('send', price, '购买' + item.name);
+    } else if (method === 'card') {
+        var cpCards = JSON.parse(localStorage.getItem('cardpack_cards') || '[]');
+        var card = cpCards[cardIndex];
+        if (!card || card.balance < price) { showToast('黑卡余额不足'); return; }
+        card.balance -= price;
+        localStorage.setItem('cardpack_cards', JSON.stringify(cpCards));
+    } else { return; }
+
+    // 生成物流订单
+    var orders = JSON.parse(localStorage.getItem('logistics_orders') || '[]');
+    orders.unshift({ cat: _shopTab === 'food' ? 'food' : 'express', name: item.name, price: item.price, img: item.img || '', status: 'shipping', time: new Date().toLocaleDateString() });
+    localStorage.setItem('logistics_orders', JSON.stringify(orders));
+
+    showToast('购买成功');
+    var payMethodText = method === 'wallet' ? '零钱' : '黑卡';
+    _shopPickContactToNotify(item, payMethodText);
+}
+
+function _shopPickContactToNotify(item, payMethodText) {
+    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
+    if (contacts.length === 0) return;
+    var overlay = document.createElement('div');
+    overlay.className = 'sheet-mask show';
+    overlay.id = 'shopNotifyOverlay';
+    var listHTML = '';
+    contacts.forEach(function(c) {
+        listHTML += '<div class="music-menu-item" onclick="_shopConfirmNotify(\'' + c.id + '\', \'' + item.name + '\', \'' + item.price + '\', \'' + payMethodText + '\')"><span>' + c.name + '</span></div>';
+    });
+    overlay.innerHTML = '<div class="half-sheet" onclick="event.stopPropagation();"><div class="sheet-handle"><div class="handle-bar"></div></div><div class="sheet-scroll"><div class="settings-section-title">让谁知道你买了这个？（可跳过）</div>' + listHTML + '</div></div>';
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) { var o = document.getElementById('shopNotifyOverlay'); if (o) o.remove(); } };
+}
+function _shopConfirmNotify(contactId, name, price, payMethodText) {
+    var o = document.getElementById('shopNotifyOverlay'); if (o) o.remove();
+    var notices = JSON.parse(localStorage.getItem('shop_self_purchase_notices') || '[]');
+    notices.push({ contactId: contactId, name: name, price: price, payMethod: payMethodText, time: Date.now() });
+    localStorage.setItem('shop_self_purchase_notices', JSON.stringify(notices));
+    showToast('已告诉ta');
+}
+
+// ========== 添加商品 ==========
 function _shopAddItem() {
     var overlay = document.createElement('div');
     overlay.className = 'caption-modal-overlay';
@@ -198,103 +263,4 @@ function _shopConfirmAdd() {
     _shopSave();
     _shopRender();
     showToast('商品已添加');
-}
-
-// ========== 用户自己购买 ==========
-function _shopBuySelf(index) {
-    var item = _shopCart[index];
-    if (!item) return;
-
-    var overlay = document.createElement('div');
-    overlay.className = 'sheet-mask show';
-    overlay.id = 'shopPayMethodOverlay';
-
-    var cpCards = JSON.parse(localStorage.getItem('cardpack_cards') || '[]');
-    var cardListHTML = '';
-    cpCards.forEach(function(card, ci) {
-        cardListHTML += '<div class="music-menu-item" onclick="_shopConfirmBuySelf(' + index + ', \'card\', ' + ci + ')">'
-            + '<span>黑卡 · ¥' + card.balance.toFixed(2) + (card.fromName ? '（' + card.fromName + '赠送）' : '') + '</span>'
-            + '</div>';
-    });
-
-    overlay.innerHTML = '<div class="half-sheet" onclick="event.stopPropagation();">'
-        + '<div class="sheet-handle"><div class="handle-bar"></div></div>'
-        + '<div class="sheet-scroll">'
-        + '<div class="settings-section-title">选择支付方式（¥' + item.price + '）</div>'
-        + '<div class="music-menu-item" onclick="_shopConfirmBuySelf(' + index + ', \'wallet\')"><span>零钱余额</span></div>'
-        + cardListHTML
-        + (cpCards.length === 0 ? '<div style="padding:12px 16px;color:#8e8e93;font-size:13px;">暂无黑卡</div>' : '')
-        + '</div></div>';
-    document.body.appendChild(overlay);
-    overlay.onclick = function(e) { if (e.target === overlay) _shopClosePayMethod(); };
-    var handle = overlay.querySelector('.sheet-handle');
-    var startY = 0;
-    handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
-    handle.addEventListener('touchmove', function(e) { if (e.touches[0].clientY - startY > 60) _shopClosePayMethod(); });
-}
-
-function _shopClosePayMethod() {
-    var o = document.getElementById('shopPayMethodOverlay');
-    if (o) o.remove();
-}
-
-function _shopConfirmBuySelf(index, method, cardIndex) {
-    _shopClosePayMethod();
-    var item = _shopCart[index];
-    if (!item) return;
-    var price = parseFloat(item.price);
-
-    if (method === 'wallet') {
-        var balance = typeof getWalletBalance === 'function' ? getWalletBalance() : 0;
-        if (balance < price) { showToast('零钱余额不足'); return; }
-        setWalletBalance(balance - price);
-        if (typeof addWalletRecord === 'function') addWalletRecord('send', price, '购买' + item.name);
-    } else if (method === 'card') {
-        var cpCards = JSON.parse(localStorage.getItem('cardpack_cards') || '[]');
-        var card = cpCards[cardIndex];
-        if (!card || card.balance < price) { showToast('黑卡余额不足'); return; }
-        card.balance -= price;
-        localStorage.setItem('cardpack_cards', JSON.stringify(cpCards));
-    } else {
-        return;
-    }
-
-    _shopCart.splice(index, 1);
-    _shopSaveCart();
-    _shopRender();
-    showToast('购买成功');
-
-    var orders = JSON.parse(localStorage.getItem('logistics_orders') || '[]');
-orders.unshift({ cat: _shopTab === 'food' ? 'food' : 'express', name: item.name, price: item.price, img: item.img || '', status: 'shipping', time: new Date().toLocaleDateString() });
-localStorage.setItem('logistics_orders', JSON.stringify(orders));
-
-    var payMethodText = method === 'wallet' ? '零钱' : '黑卡';
-    _shopPickContactToNotify(item, payMethodText);
-}
-
-function _shopPickContactToNotify(item, payMethodText) {
-    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
-    if (contacts.length === 0) return;
-
-    var overlay = document.createElement('div');
-    overlay.className = 'sheet-mask show';
-    overlay.id = 'shopNotifyOverlay';
-    var listHTML = '';
-    contacts.forEach(function(c) {
-        listHTML += '<div class="music-menu-item" onclick="_shopConfirmNotify(\'' + c.id + '\', \'' + item.name + '\', \'' + item.price + '\', \'' + payMethodText + '\')"><span>' + c.name + '</span></div>';
-    });
-    overlay.innerHTML = '<div class="half-sheet" onclick="event.stopPropagation();">'
-        + '<div class="sheet-handle"><div class="handle-bar"></div></div>'
-        + '<div class="sheet-scroll"><div class="settings-section-title">让谁知道你买了这个？（可跳过）</div>' + listHTML + '</div></div>';
-    document.body.appendChild(overlay);
-    overlay.onclick = function(e) { if (e.target === overlay) { var o = document.getElementById('shopNotifyOverlay'); if (o) o.remove(); } };
-}
-
-function _shopConfirmNotify(contactId, name, price, payMethodText) {
-    var o = document.getElementById('shopNotifyOverlay');
-    if (o) o.remove();
-    var notices = JSON.parse(localStorage.getItem('shop_self_purchase_notices') || '[]');
-    notices.push({ contactId: contactId, name: name, price: price, payMethod: payMethodText, time: Date.now() });
-    localStorage.setItem('shop_self_purchase_notices', JSON.stringify(notices));
-    showToast('已告诉ta');
 }
