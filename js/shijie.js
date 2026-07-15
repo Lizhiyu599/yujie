@@ -580,18 +580,17 @@ function initShijieSampleData() {
 
     // 毛玻璃气泡 - 苹果风格尖角
     data.bubbles.push({
-        id: 'bubble_sample_1',
-        name: '毛玻璃气泡',
-        author: '官方',
-        cssUser: 'position: relative !important; padding: 8px 12px !important; padding-right: 26px !important; font-size: 13px !important; line-height: 1.35 !important; max-width: 68% !important; word-wrap: break-word !important; background: rgba(0,122,255,0.7) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; border: 1px solid rgba(255,255,255,0.3) !important; color: #fff !important; box-shadow: none !important; margin-right: 12px !important; float: right !important; clear: both !important; border-radius: 14px !important;',
-cssUserAfter: 'content: "" !important; position: absolute !important; right: -7px !important; bottom: -0.4px !important; width: 19px !important; height: 19px !important; background-image: url("https://img.heliar.top/file/1775873123711_pop 小 尾 巴 _20260411100031.png") !important; background-size: contain !important; background-repeat: no-repeat !important; background-position: bottom right !important; pointer-events: none !important; z-index: 1 !important;',
-cssUserBefore: 'content: "" !important; position: absolute !important; right: 8px !important; bottom: 7px !important; width: 10px !important; height: 10px !important; background-image: url("https://img.heliar.top/file/1775364726055_无 标 题13220260405125134.png") !important; background-size: contain !important; background-repeat: no-repeat !important; background-position: center !important; z-index: 10 !important; pointer-events: none !important;',
-cssAssistant: 'position: relative !important; padding: 8px 12px !important; font-size: 13px !important; line-height: 1.35 !important; max-width: 68% !important; word-wrap: break-word !important; background: rgba(255,255,255,0.55) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; border: 1px solid rgba(255,255,255,0.4) !important; color: #000 !important; box-shadow: none !important; margin-left: 12px !important; float: left !important; clear: both !important; border-radius: 14px !important;',
-cssAssistantAfter: 'content: "" !important; position: absolute !important; left: -7px !important; bottom: -0.4px !important; width: 19px !important; height: 19px !important; background-image: url("https://img.heliar.top/file/1775870740858_pop 小 尾 巴 _20260411092506.png") !important; background-size: contain !important; background-repeat: no-repeat !important; background-position: bottom left !important; pointer-events: none !important; z-index: 1 !important;',
-hideAvatar: true,
-        tags: ['简约', '透明'],
-        hideAvatar: true
-    });
+    id: 'bubble_sample_1',
+    name: '毛玻璃气泡',
+    author: '官方',
+    cssUser: 'position:relative;padding:6px 10px!important;padding-right:24px!important;font-size:12px;line-height:1.35;max-width:68%;word-wrap:break-word;background:#000000!important;border:none!important;color:#FFF!important;box-shadow:none!important;margin-right:12px!important;float:right;clear:both;border-radius:14px!important',
+    cssUserAfter: 'content:"";position:absolute;right:-7px;bottom:-0.4px;width:19px;height:19px;background-image:url("https://img.heliar.top/file/1775873123711_pop 小 尾 巴 _20260411100031.png");background-size:contain;background-repeat:no-repeat;background-position:bottom right;pointer-events:none;z-index:1;image-rendering:crisp-edges!important',
+    cssUserBefore: 'content:""!important;position:absolute!important;right:8px!important;bottom:7px!important;width:10px!important;height:10px!important;background-image:url("https://img.heliar.top/file/1775364726055_无 标 题13220260405125134.png")!important;background-size:contain!important;background-repeat:no-repeat!important;background-position:center!important;z-index:10!important;pointer-events:none!important',
+    cssAssistant: 'position:relative;padding:6px 10px!important;font-size:12px;line-height:1.35;max-width:68%;word-wrap:break-word;background:#F1F0F4!important;border:none!important;color:#2C2C2D!important;box-shadow:none!important;margin-left:12px!important;float:left;clear:both;border-radius:14px!important',
+    cssAssistantAfter: 'content:"";position:absolute;left:-7px;bottom:-0.4px;width:19px;height:19px;background-image:url("https://img.heliar.top/file/1775870740858_pop 小 尾 巴 _20260411092506.png");background-size:contain;background-repeat:no-repeat;background-position:bottom left;pointer-events:none;z-index:1;image-rendering:crisp-edges!important',
+    hideAvatar: true,
+    tags: ['简约', '透明']
+});
 
     saveShijieData(data);
 }
