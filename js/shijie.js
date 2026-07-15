@@ -167,7 +167,6 @@ function renderShijieContent() {
     var data = getShijieData();
 
     if (shijieSearch) {
-        // 搜索全部类型
         var q = shijieSearch.toLowerCase();
         var allResults = { bubbles: [], fonts: [], others: [] };
         ['bubbles', 'fonts', 'others'].forEach(function(type) {
@@ -300,21 +299,8 @@ function copyBubbleCSS(itemId) {
     if (item.hideAvatar) {
         css += '.bubble-row .bubble-avatar {\n  display: none !important;\n}\n\n';
     }
-    if (item.cssUser) {
-        css += '.bubble-user {\n' + item.cssUser + '\n}\n';
-    }
-    if (item.cssUserAfter) {
-        css += '.bubble-user::after {\n' + item.cssUserAfter + '\n}\n';
-    }
-    if (item.cssUserBefore) {
-        css += '.bubble-user::before {\n' + item.cssUserBefore + '\n}\n';
-    }
-    if (item.cssAssistant) {
-        css += '\n.bubble-assistant {\n' + item.cssAssistant + '\n}\n';
-    }
-    if (item.cssAssistantAfter) {
-        css += '.bubble-assistant::after {\n' + item.cssAssistantAfter + '\n}\n';
-    }
+    if (item.cssUser) css += '.bubble-user {\n' + item.cssUser + '\n}\n\n';
+    if (item.cssAssistant) css += '.bubble-assistant {\n' + item.cssAssistant + '\n}\n';
     copyToClipboard(css.trim());
     showToast('气泡CSS已复制，去美化软件粘贴吧');
 }
@@ -575,21 +561,17 @@ function removeShijieItem(type, itemId) {
 // ========== 初始化示例数据（首次使用时） ==========
 function initShijieSampleData() {
     localStorage.removeItem('shijie_data');
-var data = getShijieData();
-    
-    // 毛玻璃气泡 - 苹果风格尖角
+    var data = getShijieData();
+
     data.bubbles.push({
-    id: 'bubble_sample_1',
-    name: '毛玻璃气泡',
-    author: '官方',
-    cssUser: 'position:relative;padding:6px 10px!important;padding-right:24px!important;font-size:12px;line-height:1.35;max-width:68%;word-wrap:break-word;background:#000000!important;border:none!important;color:#FFF!important;box-shadow:none!important;margin-right:12px!important;float:right;clear:both;border-radius:14px!important',
-    cssUserAfter: 'content:"";position:absolute;right:-7px;bottom:-0.4px;width:19px;height:19px;background-image:url("https://img.heliar.top/file/1775873123711_pop 小 尾 巴 _20260411100031.png");background-size:contain;background-repeat:no-repeat;background-position:bottom right;pointer-events:none;z-index:1;image-rendering:crisp-edges!important',
-    cssUserBefore: 'content:""!important;position:absolute!important;right:8px!important;bottom:7px!important;width:10px!important;height:10px!important;background-image:url("https://img.heliar.top/file/1775364726055_无 标 题13220260405125134.png")!important;background-size:contain!important;background-repeat:no-repeat!important;background-position:center!important;z-index:10!important;pointer-events:none!important',
-    cssAssistant: 'position:relative;padding:6px 10px!important;font-size:12px;line-height:1.35;max-width:68%;word-wrap:break-word;background:#F1F0F4!important;border:none!important;color:#2C2C2D!important;box-shadow:none!important;margin-left:12px!important;float:left;clear:both;border-radius:14px!important',
-    cssAssistantAfter: 'content:"";position:absolute;left:-7px;bottom:-0.4px;width:19px;height:19px;background-image:url("https://img.heliar.top/file/1775870740858_pop 小 尾 巴 _20260411092506.png");background-size:contain;background-repeat:no-repeat;background-position:bottom left;pointer-events:none;z-index:1;image-rendering:crisp-edges!important',
-    hideAvatar: true,
-    tags: ['简约', '透明']
-});
+        id: 'bubble_no_avatar',
+        name: '无头像气泡',
+        author: '官方',
+        cssUser: 'background: #fff !important; color: #000 !important; border-top-right-radius: 4px !important; border-radius: 18px !important; box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important; padding: 10px 14px !important; font-size: 14px !important;',
+        cssAssistant: 'background: #1d1d1f !important; color: #fff !important; border-top-left-radius: 4px !important; border-radius: 18px !important; box-shadow: 0 1px 4px rgba(0,0,0,0.1) !important; padding: 10px 14px !important; font-size: 14px !important;',
+        hideAvatar: true,
+        tags: ['简约', '无头像']
+    });
 
     saveShijieData(data);
 }
