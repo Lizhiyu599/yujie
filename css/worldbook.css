@@ -395,3 +395,84 @@
 .wb-btn-delete:active {
     background: rgba(255, 59, 48, 0.12);
 }
+
+/* ===== 角色选择弹窗 ===== */
+.wb-char-select-panel {
+    width: 100%;
+    max-height: 60%;
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-radius: 24px 24px 0 0;
+    padding: 8px 16px 30px;
+    overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 -8px 30px rgba(0,0,0,0.1);
+    animation: sheetUp 0.3s cubic-bezier(0.2, 1, 0.3, 1);
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.wb-char-select-title {
+    font-size: 17px;
+    color: #000;
+    text-align: center;
+    margin: 16px 0;
+    font-weight: 600;
+}
+
+.wb-char-select-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+}
+
+.wb-char-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 8px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 15px;
+    color: #000;
+    transition: 0.15s;
+}
+.wb-char-item:active {
+    background: rgba(0, 0, 0, 0.04);
+}
+.wb-char-item.selected {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.wb-char-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    background: #e5e5ea;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: #8e8e93;
+    flex-shrink: 0;
+}
+
+.wb-btn-cancel {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 15px;
+    color: #000;
+    font-family: inherit;
+    cursor: pointer;
+    font-weight: 500;
+}
+.wb-btn-cancel:active {
+    background: rgba(255, 255, 255, 0.9);
+}
