@@ -95,8 +95,8 @@ function _logiRenderOrders() {
 }
 
 function _logiShareToChar(index) {
-    var orders = _logiGetOrders();
-    var o = orders.filter(function(ord) { return ord.cat === _logiCat; })[index];
+    var orders = _logiGetOrders().filter(function(o) { return o.cat === _logiCat; });
+    var o = orders[index];
     if (!o) return;
     var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
     var overlay = document.createElement('div');
@@ -109,8 +109,8 @@ function _logiShareToChar(index) {
 }
 function _logiConfirmShare(contactId, index) {
     var ov = document.querySelector('.sheet-mask.show'); if (ov) ov.remove();
-    var orders = _logiGetOrders();
-    var o = orders.filter(function(ord) { return ord.cat === _logiCat; })[index];
+    var orders = _logiGetOrders().filter(function(o) { return o.cat === _logiCat; });
+    var o = orders[index];
     if (!o) return;
     var msg = '（快递到了：' + o.name + '，¥' + o.price + '，帮我去取一下）';
     var prevId = window.ChatState && window.ChatState.currentContactId;
