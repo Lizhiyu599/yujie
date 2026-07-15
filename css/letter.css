@@ -131,7 +131,7 @@
     box-shadow: 0 4px 20px rgba(0,0,0,0.1);
 }
 
-/* 信封正面 - 简洁无字 */
+/* 信封正面 */
 .envelope-front {
     position: absolute;
     top: 0;
@@ -142,20 +142,6 @@
     border-radius: 8px;
     z-index: 3;
     box-shadow: 0 4px 20px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.3);
-}
-
-/* 信封对角线 */
-.envelope-front::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 0;
-    height: 0;
-    border-left: 140px solid transparent;
-    border-right: 140px solid transparent;
-    border-top: 100px solid rgba(0,0,0,0.06);
-    pointer-events: none;
 }
 
 /* 封口三角 */
@@ -180,8 +166,9 @@
 /* 邮票 */
 .envelope-stamp {
     position: absolute;
-    top: 12px;
+    bottom: 16px;
     right: 16px;
+    top: auto;
     width: 44px;
     height: 52px;
     background: #fff;
@@ -196,7 +183,7 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-/* 信纸 - 初始在信封里面 */
+/* 信纸 */
 .envelope-paper {
     position: absolute;
     top: 50%;
@@ -628,4 +615,4 @@
 }
 .letter-upload-box:active {
     background: rgba(0,0,0,0.02);
-    }
+}
