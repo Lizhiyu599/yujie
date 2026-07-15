@@ -300,7 +300,13 @@ function copyBubbleCSS(itemId) {
         css += '.bubble-row .bubble-avatar {\n  display: none !important;\n}\n\n';
     }
     if (item.cssUser) css += '.bubble-user {\n' + item.cssUser + '\n}\n\n';
-    if (item.cssAssistant) css += '.bubble-assistant {\n' + item.cssAssistant + '\n}\n';
+    if (item.cssUserAfter) css += '.bubble-user::after {\n' + item.cssUserAfter + '\n}\n';
+    if (item.cssUserBefore) css += '.bubble-user::before {\n' + item.cssUserBefore + '\n}\n';
+    if (item.cssAssistant) css += '\n.bubble-assistant {\n' + item.cssAssistant + '\n}\n';
+    if (item.cssAssistantAfter) css += '.bubble-assistant::after {\n' + item.cssAssistantAfter + '\n}\n';
+    if (item.extraCSS) {
+        css += '\n' + item.extraCSS;
+    }
     copyToClipboard(css.trim());
     showToast('气泡CSS已复制，去美化软件粘贴吧');
 }
@@ -565,25 +571,26 @@ function initShijieSampleData() {
 
     data.bubbles.push({
         id: 'bubble_no_avatar',
-        name: '无头像初始',
+        name: '无头像气泡',
         author: '官方',
         cssUser: 'background: #fff !important; color: #000 !important; border-radius: 18px !important; border-top-right-radius: 4px !important; box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important; padding: 10px 14px !important; font-size: 14px !important;',
-cssAssistant: 'background: #1d1d1f !important; color: #fff !important; border-radius: 18px !important; border-top-left-radius: 4px !important; box-shadow: 0 1px 4px rgba(0,0,0,0.1) !important; padding: 10px 14px !important; font-size: 14px !important;',
+        cssAssistant: 'background: #1d1d1f !important; color: #fff !important; border-radius: 18px !important; border-top-left-radius: 4px !important; box-shadow: 0 1px 4px rgba(0,0,0,0.1) !important; padding: 10px 14px !important; font-size: 14px !important;',
         hideAvatar: true,
         tags: ['简约', '无头像']
     });
 
     data.bubbles.push({
-    id: 'bubble_yugui',
-    name: '玉桂狗',
-    author: '官方',
-    cssUser: 'background: rgba(255,255,255,0.65) !important; border: 1px solid rgba(135,180,220,0.2) !important; color: #4a6fa5 !important; border-radius: 16px !important; box-shadow: 0 2px 8px rgba(135,180,220,0.1) !important; position: relative !important; font-size: 13px !important; padding: 10px 16px !important;',
-    cssUserBefore: 'content: "" !important; position: absolute !important; top: -8px !important; left: -6px !important; width: 32px !important; height: 32px !important; background: url("https://i.ibb.co/YBVQ1rL4/retouch-2026062723200616.png") no-repeat center center !important; background-size: contain !important;',
-    cssAssistant: 'background: rgba(255,255,255,0.65) !important; border: 1px solid rgba(135,180,220,0.2) !important; color: #5c4a6e !important; border-radius: 16px !important; box-shadow: 0 2px 8px rgba(135,180,220,0.1) !important; position: relative !important; font-size: 13px !important; padding: 10px 16px !important;',
-    cssAssistantAfter: 'content: "" !important; position: absolute !important; top: -40px !important; right: -40px !important; width: 90px !important; height: 90px !important; background: url("https://i.ibb.co/NXmbLL5/retouch-2026062723185133.png") no-repeat center center !important; background-size: contain !important;',
-    tags: ['可爱', '玉桂狗', '主题']
-});
-    
+        id: 'bubble_yugui',
+        name: '玉桂狗',
+        author: '官方',
+        cssUser: 'background: rgba(255,255,255,0.65) !important; border: 1px solid rgba(135,180,220,0.2) !important; color: #4a6fa5 !important; border-radius: 16px !important; box-shadow: 0 2px 8px rgba(135,180,220,0.1) !important; position: relative !important; font-size: 13px !important; padding: 10px 16px !important;',
+        cssUserBefore: 'content: "" !important; position: absolute !important; top: -8px !important; left: -6px !important; width: 32px !important; height: 32px !important; background: url("https://i.ibb.co/YBVQ1rL4/retouch-2026062723200616.png") no-repeat center center !important; background-size: contain !important;',
+        cssAssistant: 'background: rgba(255,255,255,0.65) !important; border: 1px solid rgba(135,180,220,0.2) !important; color: #5c4a6e !important; border-radius: 16px !important; box-shadow: 0 2px 8px rgba(135,180,220,0.1) !important; position: relative !important; font-size: 13px !important; padding: 10px 16px !important;',
+        cssAssistantAfter: 'content: "" !important; position: absolute !important; top: -40px !important; right: -40px !important; width: 90px !important; height: 90px !important; background: url("https://i.ibb.co/NXmbLL5/retouch-2026062723185133.png") no-repeat center center !important; background-size: contain !important;',
+        extraCSS: '.chat-messages {\n    background: url("https://backup.fukit.cn/autoupload/fr/XMSic35N2g8G3vDEx9ly9vKmK1t3AEQF5osy0mFewF6yl5f0KlZfm6UsKj-HyTuv/20260627/4cT1/2011X1946/retouch_2026062723005553.png") no-repeat 95% 90%, linear-gradient(180deg, #e8f4fd 0%, #fdf6f0 100%) !important;\n    background-size: 100px auto, cover !important;\n    background-blend-mode: soft-light !important;\n}\n.chat-overlay {\n    background: linear-gradient(180deg, #e8f4fd 0%, #fdf6f0 100%) !important;\n}\n.chat-nav {\n    background: rgba(255,255,255,0.55) !important;\n    backdrop-filter: blur(15px) !important;\n    -webkit-backdrop-filter: blur(15px) !important;\n    border-bottom: 1px solid rgba(135,180,220,0.2) !important;\n}\n.nav-title {\n    color: #5c7a9e !important;\n}\n.nav-back {\n    display: block !important;\n    width: 28px !important;\n    height: 28px !important;\n    background: url("https://i.ibb.co/6JbF6JhV/retouch-2026062723171576.png") no-repeat center center !important;\n    background-size: contain !important;\n    font-size: 0 !important;\n    color: transparent !important;\n}\n.nav-mental-btn {\n    display: block !important;\n    width: 28px !important;\n    height: 28px !important;\n    background: url("https://backup.fukit.cn/autoupload/fr/XMSic35N2g8G3vDEx9ly9vKmK1t3AEQF5osy0mFewF6yl5f0KlZfm6UsKj-HyTuv/20260627/4cT1/2011X1946/retouch_2026062723005553.png") no-repeat center center !important;\n    background-size: contain !important;\n    font-size: 0 !important;\n    color: transparent !important;\n    border-radius: 0 !important;\n}\n.bubble-narration {\n    color: #a0b8d8 !important;\n}\n.chat-input {\n    background: rgba(255,255,255,0.7) !important;\n    border: 1.5px solid rgba(135,180,220,0.3) !important;\n    color: #4a6fa5 !important;\n    border-radius: 20px !important;\n}\n.chat-input::placeholder {\n    color: rgba(74,111,165,0.3) !important;\n}\n.add-circle {\n    width: 32px !important;\n    height: 32px !important;\n    background: url("https://i.ibb.co/99f4ZLtR/retouch-2026062723283013.png") no-repeat center center !important;\n    background-size: contain !important;\n    font-size: 0 !important;\n    border: none !important;\n}\n.chat-send-btn {\n    width: 34px !important;\n    height: 34px !important;\n    background: url("https://i.ibb.co/MD5f4WFj/retouch-2026062723303161.png") no-repeat center center !important;\n    background-size: contain !important;\n    font-size: 0 !important;\n    border: none !important;\n}\n.chat-input-bar {\n    background: rgba(255,255,255,0.45) !important;\n    backdrop-filter: blur(15px) !important;\n    -webkit-backdrop-filter: blur(15px) !important;\n}\n.tab-fixed-bottom {\n    background: rgba(255,255,255,0.5) !important;\n    backdrop-filter: blur(15px) !important;\n    -webkit-backdrop-filter: blur(15px) !important;\n    border-top: 1px solid rgba(135,180,220,0.15) !important;\n}\n.tab-item.active {\n    color: #6b8fbe !important;\n}\n.add-panel-full {\n    background: rgba(255,255,255,0.55) !important;\n    backdrop-filter: blur(15px) !important;\n    -webkit-backdrop-filter: blur(15px) !important;\n    border: 1px solid rgba(135,180,220,0.2) !important;\n}\n.func-icon {\n    background: rgba(135,180,220,0.15) !important;\n    color: #7a9fc5 !important;\n}',
+        tags: ['可爱', '玉桂狗', '主题']
+    });
+
     saveShijieData(data);
 }
 
