@@ -115,6 +115,7 @@ function _logiConfirmShare(contactId, index) {
     var msg = '（快递到了：' + o.name + '，¥' + o.price + '，帮我去取一下）';
     var prevId = window.ChatState && window.ChatState.currentContactId;
     if (window.ChatState) window.ChatState.currentContactId = contactId;
+    if (typeof sendLogiCard === 'function') { sendLogiCard(contactId, o); }
     if (typeof appendMessage === 'function') { appendMessage('narration', msg); if (typeof saveChatHistory === 'function') saveChatHistory(contactId); }
     if (window.ChatState) window.ChatState.currentContactId = prevId;
     showToast('已分享');
