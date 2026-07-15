@@ -300,8 +300,21 @@ function copyBubbleCSS(itemId) {
     if (item.hideAvatar) {
         css += '.bubble-row .bubble-avatar {\n  display: none !important;\n}\n\n';
     }
-    if (item.cssUser) css += '.bubble-user {\n' + item.cssUser + '\n}\n\n';
-    if (item.cssAssistant) css += '.bubble-assistant {\n' + item.cssAssistant + '\n}\n';
+    if (item.cssUser) {
+        css += '.bubble-user {\n' + item.cssUser + '\n}\n';
+    }
+    if (item.cssUserAfter) {
+        css += '.bubble-user::after {\n' + item.cssUserAfter + '\n}\n';
+    }
+    if (item.cssUserBefore) {
+        css += '.bubble-user::before {\n' + item.cssUserBefore + '\n}\n';
+    }
+    if (item.cssAssistant) {
+        css += '\n.bubble-assistant {\n' + item.cssAssistant + '\n}\n';
+    }
+    if (item.cssAssistantAfter) {
+        css += '.bubble-assistant::after {\n' + item.cssAssistantAfter + '\n}\n';
+    }
     copyToClipboard(css.trim());
     showToast('气泡CSS已复制，去美化软件粘贴吧');
 }
@@ -570,8 +583,12 @@ function initShijieSampleData() {
         id: 'bubble_sample_1',
         name: '毛玻璃气泡',
         author: '官方',
-        cssUser: 'background: rgba(0,122,255,0.7) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; color: #fff !important; border-radius: 18px 18px 4px 18px !important; padding: 10px 14px !important; font-size: 15px !important; border: 1px solid rgba(255,255,255,0.3) !important;',
-        cssAssistant: 'background: rgba(255,255,255,0.55) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; color: #000 !important; border-radius: 18px 18px 18px 4px !important; padding: 10px 14px !important; font-size: 15px !important; border: 1px solid rgba(255,255,255,0.4) !important;',
+        cssUser: 'position: relative !important; padding: 8px 12px !important; padding-right: 26px !important; font-size: 13px !important; line-height: 1.35 !important; max-width: 68% !important; word-wrap: break-word !important; background: rgba(0,122,255,0.7) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; border: 1px solid rgba(255,255,255,0.3) !important; color: #fff !important; box-shadow: none !important; margin-right: 12px !important; float: right !important; clear: both !important; border-radius: 14px !important;',
+cssUserAfter: 'content: "" !important; position: absolute !important; right: -7px !important; bottom: -0.4px !important; width: 19px !important; height: 19px !important; background-image: url("https://img.heliar.top/file/1775873123711_pop 小 尾 巴 _20260411100031.png") !important; background-size: contain !important; background-repeat: no-repeat !important; background-position: bottom right !important; pointer-events: none !important; z-index: 1 !important;',
+cssUserBefore: 'content: "" !important; position: absolute !important; right: 8px !important; bottom: 7px !important; width: 10px !important; height: 10px !important; background-image: url("https://img.heliar.top/file/1775364726055_无 标 题13220260405125134.png") !important; background-size: contain !important; background-repeat: no-repeat !important; background-position: center !important; z-index: 10 !important; pointer-events: none !important;',
+cssAssistant: 'position: relative !important; padding: 8px 12px !important; font-size: 13px !important; line-height: 1.35 !important; max-width: 68% !important; word-wrap: break-word !important; background: rgba(255,255,255,0.55) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; border: 1px solid rgba(255,255,255,0.4) !important; color: #000 !important; box-shadow: none !important; margin-left: 12px !important; float: left !important; clear: both !important; border-radius: 14px !important;',
+cssAssistantAfter: 'content: "" !important; position: absolute !important; left: -7px !important; bottom: -0.4px !important; width: 19px !important; height: 19px !important; background-image: url("https://img.heliar.top/file/1775870740858_pop 小 尾 巴 _20260411092506.png") !important; background-size: contain !important; background-repeat: no-repeat !important; background-position: bottom left !important; pointer-events: none !important; z-index: 1 !important;',
+hideAvatar: true,
         tags: ['简约', '透明'],
         hideAvatar: true
     });
