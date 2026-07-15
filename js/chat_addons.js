@@ -986,27 +986,27 @@ function sendShopCard(contactId, item) {
         messages.scrollTop = messages.scrollHeight;
         saveChatHistory(contactId);
     } else {
-        var storageKey = 'chat_history_' + contactId;
-        var saved = localStorage.getItem(storageKey) || '';
-        var container = document.createElement('div');
-        container.innerHTML = saved;
-        var row = document.createElement('div');
-        row.className = 'bubble-row user';
-        row.setAttribute('data-role', 'user');
-        var avatar = _getUserAvatarHTML();
-        var bubble = document.createElement('div');
-        bubble.className = 'bubble bubble-user';
-        bubble.style.cssText = 'background:transparent;padding:0;box-shadow:none;border:none;backdrop-filter:none;-webkit-backdrop-filter:none;';
-        bubble.innerHTML = cardHTML;
-        row.appendChild(avatar);
-        row.appendChild(bubble);
-        container.appendChild(row);
-        var nRow = document.createElement('div');
-        nRow.className = 'bubble-narration';
-        nRow.textContent = '（想买：' + item.name + '，¥' + item.price + '，请求买单）';
-        nRow.style.display = 'none';
-        container.appendChild(nRow);
-        localStorage.setItem(storageKey, container.innerHTML);
+    var storageKey = 'chat_history_' + contactId;
+    var saved = localStorage.getItem(storageKey) || '';
+    var container = document.createElement('div');
+    if (saved) container.innerHTML = saved;
+    var row = document.createElement('div');
+    row.className = 'bubble-row user';
+    row.setAttribute('data-role', 'user');
+    var avatar = _getUserAvatarHTML();
+    var bubble = document.createElement('div');
+    bubble.className = 'bubble bubble-user';
+    bubble.style.cssText = 'background:transparent;padding:0;box-shadow:none;border:none;backdrop-filter:none;-webkit-backdrop-filter:none;';
+    bubble.innerHTML = cardHTML;
+    row.appendChild(avatar);
+    row.appendChild(bubble);
+    container.appendChild(row);
+    var nRow = document.createElement('div');
+    nRow.className = 'bubble-narration';
+    nRow.textContent = '（想买：' + item.name + '，¥' + item.price + '，请求买单）';
+    nRow.style.display = 'none';
+    container.appendChild(nRow);
+    localStorage.setItem(storageKey, container.innerHTML);
     }
 }
 
@@ -1039,27 +1039,27 @@ function sendLogiCard(contactId, item) {
         messages.scrollTop = messages.scrollHeight;
         saveChatHistory(contactId);
     } else {
-        var storageKey = 'chat_history_' + contactId;
-        var saved = localStorage.getItem(storageKey) || '';
-        var container = document.createElement('div');
-        container.innerHTML = saved;
-        var row = document.createElement('div');
-        row.className = 'bubble-row user';
-        row.setAttribute('data-role', 'user');
-        var avatar = _getUserAvatarHTML();
-        var bubble = document.createElement('div');
-        bubble.className = 'bubble bubble-user';
-        bubble.style.cssText = 'background:transparent;padding:0;box-shadow:none;border:none;backdrop-filter:none;-webkit-backdrop-filter:none;';
-        bubble.innerHTML = cardHTML;
-        row.appendChild(avatar);
-        row.appendChild(bubble);
-        container.appendChild(row);
-        var nRow = document.createElement('div');
-        nRow.className = 'bubble-narration';
-        nRow.textContent = '（快递到了：' + item.name + '，¥' + item.price + '，帮我去取一下）';
-        nRow.style.display = 'none';
-        container.appendChild(nRow);
-        localStorage.setItem(storageKey, container.innerHTML);
+    var storageKey = 'chat_history_' + contactId;
+    var saved = localStorage.getItem(storageKey) || '';
+    var container = document.createElement('div');
+    if (saved) container.innerHTML = saved;
+    var row = document.createElement('div');
+    row.className = 'bubble-row user';
+    row.setAttribute('data-role', 'user');
+    var avatar = _getUserAvatarHTML();
+    var bubble = document.createElement('div');
+    bubble.className = 'bubble bubble-user';
+    bubble.style.cssText = 'background:transparent;padding:0;box-shadow:none;border:none;backdrop-filter:none;-webkit-backdrop-filter:none;';
+    bubble.innerHTML = cardHTML;
+    row.appendChild(avatar);
+    row.appendChild(bubble);
+    container.appendChild(row);
+    var nRow = document.createElement('div');
+    nRow.className = 'bubble-narration';
+    nRow.textContent = '（快递到了：' + item.name + '，¥' + item.price + '，帮我去取一下）';
+    nRow.style.display = 'none';
+    container.appendChild(nRow);
+    localStorage.setItem(storageKey, container.innerHTML);
     }
 }
 
