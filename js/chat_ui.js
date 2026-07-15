@@ -797,7 +797,17 @@ if (messagesEl2) {
         localStorage.setItem('shop_pending_notices', JSON.stringify(shopNotices2));
     }
 
-    const userMessage = cpNote ? cpNote : (shopNote ? shopNote : (stickerNote ? stickerNote : '（用户暂时没有说话，你可以先开口）'));
+    var selfBuyNotices = JSON.parse(localStorage.getItem('shop_self_purchase_notices') || '[]');
+    var mySelfBuyNotices = selfBuyNotices.filter(function(n) { return n.contactId === contactId; });
+    var selfBuyNote = '';
+    if (mySelfBuyNotices.length > 0) {
+        var sb = mySelfBuyNotices[mySelfBuyNotices.length - 1];
+        selfBuyNote = '（系统：用户刚用' + sb.payMethod + '自己买了' + sb.name + '，花了¥' + sb.price + '）';
+        selfBuyNotices = selfBuyNotices.filter(function(n) { return n.contactId !== contactId; });
+        localStorage.setItem('shop_self_purchase_notices', JSON.stringify(selfBuyNotices));
+    }
+    
+    const userMessage = cpNote ? cpNote : (selfBuyNote ? selfBuyNote : (shopNote ? shopNote : (stickerNote ? stickerNote : '（用户暂时没有说话，你可以先开口）')));
     
     callChatAPI([
         { role: 'system', content: systemPrompt },
