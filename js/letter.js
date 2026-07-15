@@ -1,7 +1,7 @@
 /**
  * 玉界 - 信件软件
  * 包含：信封展示、展开动画、回信、日历跳转、信件设置、数据持久化
- * 一个角色一天最多一封信
+ * 一个角色一天最多一封信，内容基于聊天记录生成
  */
 
 // ========== 信件数据存储 ==========
@@ -20,6 +20,15 @@ function saveLetters(letters) {
 
 function getLetterSelectedChar() {
     return localStorage.getItem('letter_selected_char') || '';
+}
+
+function getLetterFontSettings() {
+    var raw = localStorage.getItem('letter_font_settings');
+    return raw ? JSON.parse(raw) : { size: 0, color: '#3a2a1a', fontFamily: '' };
+}
+
+function saveLetterFontSettings(settings) {
+    localStorage.setItem('letter_font_settings', JSON.stringify(settings));
 }
 
 // ========== 当前状态 ==========
@@ -58,6 +67,7 @@ function renderLetterApp() {
     var letters = getLetters();
     var hasLetters = letters.length > 0;
     var currentLetter = hasLetters ? letters[letterCurrentIndex] : null;
+    var fontSettings = getLetterFontSettings();
 
     appWindow.innerHTML = ''
         + '<div class="letter-app">'
@@ -71,18 +81,18 @@ function renderLetterApp() {
         + '</div>'
         + '</div>'
         + '<div class="letter-body">'
-        + renderLetterEnvelope(currentLetter)
+        + renderLetterEnvelope(currentLetter, fontSettings)
         + '</div>'
         + '<div class="letter-bottom-bar">'
         + (hasLetters && letterCurrentIndex > 0 ? '<button class="letter-nav-btn" onclick="prevLetter()">‹ 上一封</button>' : '<div></div>')
-        + '<button class="letter-reply-btn" onclick="replyLetter()">回 信</button>'
+        + '<button class="letter-reply-btn" onclick="openReplyModal()">回 信</button>'
         + (hasLetters && letterCurrentIndex < letters.length - 1 ? '<button class="letter-nav-btn" onclick="nextLetter()">下一封 ›</button>' : '<div></div>')
         + '</div>'
         + '</div>';
 }
 
 // ========== 渲染信封 ==========
-function renderLetterEnvelope(letter) {
+function renderLetterEnvelope(letter, fontSettings) {
     if (!letter) {
         return '<div class="letter-empty">'
             + '<div class="letter-empty-icon">✉</div>'
@@ -91,14 +101,22 @@ function renderLetterEnvelope(letter) {
             + '</div>';
     }
 
+    var paperStyle = ''
+        + 'font-size:' + (14 + parseInt(fontSettings.size) / 5) + 'px;'
+        + 'color:' + fontSettings.color + ';'
+        + (fontSettings.fontFamily ? 'font-family:' + fontSettings.fontFamily + ';' : '');
+
     return ''
         + '<div class="letter-envelope ' + (letterIsOpen ? 'open' : '') + '" id="letterEnvelope" onclick="openEnvelope()">'
         + '<div class="envelope-body">'
-        + '<div class="envelope-front">'
-        + '<div class="envelope-stamp">' + (letter.stamp || '') + '</div>'
+        + '<div class="envelope-back"></div>'
         + '<div class="envelope-flap"></div>'
+        + '<div class="envelope-front">'
+        + '<div class="envelope-stamp">' + (letter.stamp || '✿') + '</div>'
+        + '<div class="envelope-from">' + letter.author + '</div>'
+        + '<div class="envelope-to">致 你</div>'
         + '</div>'
-        + '<div class="envelope-paper" id="envelopePaper">'
+        + '<div class="envelope-paper" id="envelopePaper" style="' + paperStyle + '">'
         + '<div class="paper-date">' + letter.date + '</div>'
         + '<div class="paper-content">' + letter.content + '</div>'
         + '<div class="paper-signature">—— ' + letter.author + '</div>'
@@ -135,26 +153,70 @@ function nextLetter() {
     }
 }
 
-// ========== 回信 ==========
-function replyLetter() {
+// ========== 回信弹窗 ==========
+function openReplyModal() {
     var contactId = getLetterSelectedChar();
     if (!contactId) {
         showToast('请先在设置中选择角色');
         return;
     }
-    if (typeof openChat === 'function') {
-        closeLetter();
-        setTimeout(function() {
-            openChat();
-            setTimeout(function() {
-                if (typeof enterChat === 'function') {
-                    enterChat(contactId);
-                }
-            }, 300);
-        }, 200);
-    } else {
-        showToast('聊天功能未加载');
+
+    var overlay = document.createElement('div');
+    overlay.className = 'letter-reply-overlay';
+    overlay.id = 'letterReplyOverlay';
+    overlay.innerHTML = ''
+        + '<div class="letter-reply-panel">'
+        + '<div class="letter-reply-handle" id="letterReplyHandle"></div>'
+        + '<div class="letter-reply-title">回信</div>'
+        + '<textarea class="letter-reply-textarea" id="letterReplyInput" placeholder="写下你想说的话…"></textarea>'
+        + '<button class="letter-reply-send" onclick="sendReply()">发送回信</button>'
+        + '</div>';
+    document.body.appendChild(overlay);
+
+    overlay.onclick = function(e) { if (e.target === overlay) closeReplyModal(); };
+
+    var handle = document.getElementById('letterReplyHandle');
+    var startY = 0;
+    handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
+    handle.addEventListener('touchmove', function(e) { if (e.touches[0].clientY - startY > 40) closeReplyModal(); });
+    handle.addEventListener('click', function() { closeReplyModal(); });
+}
+
+function closeReplyModal() {
+    var overlay = document.getElementById('letterReplyOverlay');
+    if (overlay) overlay.remove();
+}
+
+function sendReply() {
+    var input = document.getElementById('letterReplyInput');
+    var text = input ? input.value.trim() : '';
+    if (!text) { showToast('请输入回信内容'); return; }
+
+    var contactId = getLetterSelectedChar();
+    var contact = window.ChatConfig && window.ChatConfig.contacts
+        ? window.ChatConfig.contacts.find(function(c) { return c.id === contactId; })
+        : null;
+
+    // 保存回信到聊天记录
+    if (contact && typeof appendMessage === 'function') {
+        var storageKey = 'chat_history_' + contactId;
+        var saved = localStorage.getItem(storageKey) || '';
+        var now = new Date();
+        var h = now.getHours(); var m = now.getMinutes().toString().padStart(2, '0');
+        var period = h < 12 ? '上午' : '下午'; var displayH = h % 12 || 12;
+        var timeStr = period + ' ' + displayH + ':' + m;
+        var htmlToAdd = ''
+            + '<div class="chat-time-stamp">' + timeStr + '</div>'
+            + '<div class="bubble-row user" data-role="user">'
+            + '<div class="bubble-avatar user-avatar">我</div>'
+            + '<div class="bubble bubble-user">' + text + '</div>'
+            + '</div>'
+            + '<div class="bubble-narration">（回信）</div>';
+        localStorage.setItem(storageKey, saved + htmlToAdd);
     }
+
+    closeReplyModal();
+    showToast('回信已发送');
 }
 
 // ========== 日历 ==========
@@ -232,8 +294,11 @@ function jumpToLetter(index) {
     renderLetterApp();
 }
 
-// ========== 设置 ==========
+// ========== 设置面板 ==========
 function openLetterSettings() {
+    var fontSettings = getLetterFontSettings();
+    var contactId = getLetterSelectedChar();
+
     var overlay = document.createElement('div');
     overlay.className = 'letter-settings-overlay';
     overlay.id = 'letterSettingsOverlay';
@@ -241,11 +306,48 @@ function openLetterSettings() {
         + '<div class="letter-settings-panel">'
         + '<div class="letter-settings-handle" id="letterSettingsHandle"></div>'
         + '<div class="letter-settings-title">信件设置</div>'
+
         + '<div class="letter-settings-section">选择角色</div>'
         + '<div id="letterCharList"></div>'
-        + '<button class="letter-btn-save" onclick="saveLetterChar()">保存</button>'
+        + '<button class="letter-btn-save" onclick="saveLetterChar()">保存角色</button>'
+
+        + '<div class="letter-font-header" onclick="toggleLetterFontSection()">'
+        + '<span>信件字体</span>'
+        + '<span class="arrow" id="letterFontArrow">∨</span>'
+        + '</div>'
+        + '<div class="letter-font-body" id="letterFontBody">'
+        + '<div class="letter-font-preview" id="letterFontPreview" style="'
+        + 'font-size:' + (15 + parseInt(fontSettings.size) / 5) + 'px;'
+        + 'color:' + fontSettings.color + ';'
+        + (fontSettings.fontFamily ? 'font-family:' + fontSettings.fontFamily + ';' : '')
+        + '">你好呀，见字如面。</div>'
+
+        + '<div class="letter-font-slider-row">'
+        + '<span>字体大小</span>'
+        + '<span id="letterFontSizeVal">' + fontSettings.size + '</span>'
+        + '</div>'
+        + '<input type="range" min="-50" max="50" value="' + fontSettings.size + '" class="letter-font-slider"'
+        + ' oninput="document.getElementById(\'letterFontSizeVal\').innerText=this.value; document.getElementById(\'letterFontPreview\').style.fontSize=' + (15 + parseInt(fontSettings.size) / 5) + ' + \'px\';">'
+
+        + '<div style="font-size:13px;color:#666;margin:10px 0 6px;">字体颜色</div>'
+        + '<div class="letter-color-row">'
+        + '<div class="letter-color-dot" style="background:#3a2a1a;" onclick="previewLetterFontColor(\'#3a2a1a\')"></div>'
+        + '<div class="letter-color-dot" style="background:#5c4a3a;" onclick="previewLetterFontColor(\'#5c4a3a\')"></div>'
+        + '<div class="letter-color-dot" style="background:#8e7a6a;" onclick="previewLetterFontColor(\'#8e7a6a\')"></div>'
+        + '<div class="letter-color-dot" style="background:#2a4a6a;" onclick="previewLetterFontColor(\'#2a4a6a\')"></div>'
+        + '<div class="letter-color-dot" style="background:#4a3a5a;" onclick="previewLetterFontColor(\'#4a3a5a\')"></div>'
+        + '<input type="color" class="letter-color-picker" onchange="previewLetterFontColor(this.value)">'
+        + '</div>'
+
+        + '<div style="font-size:13px;color:#666;margin:10px 0 6px;">字体上传</div>'
+        + '<div class="letter-upload-box" onclick="document.getElementById(\'letterFontFileInput\').click()">点击上传字体文件</div>'
+        + '<input type="file" id="letterFontFileInput" accept=".ttf,.otf,.woff,.woff2" style="display:none;" onchange="handleLetterFontUpload(event)">'
+
+        + '<button class="letter-btn-save" onclick="saveLetterFont()">保存字体</button>'
+        + '</div>'
         + '</div>';
     document.body.appendChild(overlay);
+
     overlay.onclick = function(e) { if (e.target === overlay) closeLetterSettings(); };
 
     var handle = document.getElementById('letterSettingsHandle');
@@ -285,7 +387,50 @@ function saveLetterChar() {
     closeLetterSettings();
 }
 
-// ========== 生成信件 ==========
+// ========== 字体设置 ==========
+var letterPreviewColor = '#3a2a1a';
+
+function previewLetterFontColor(color) {
+    letterPreviewColor = color;
+    var preview = document.getElementById('letterFontPreview');
+    if (preview) preview.style.color = color;
+}
+
+function handleLetterFontUpload(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+        localStorage.setItem('letter_custom_font', ev.target.result);
+        localStorage.setItem('letter_custom_font_name', file.name);
+        showToast('字体已上传：' + file.name);
+    };
+    reader.readAsDataURL(file);
+}
+
+function toggleLetterFontSection() {
+    var body = document.getElementById('letterFontBody');
+    var arrow = document.getElementById('letterFontArrow');
+    if (body && arrow) {
+        var isOpen = body.classList.toggle('open');
+        arrow.classList.toggle('open', isOpen);
+    }
+}
+
+function saveLetterFont() {
+    var size = parseInt(document.getElementById('letterFontSizeVal').innerText);
+    var settings = { size: size, color: letterPreviewColor, fontFamily: '' };
+    var customFontName = localStorage.getItem('letter_custom_font_name');
+    if (customFontName) {
+        settings.fontFamily = '"' + customFontName.replace(/\.[^.]+$/, '') + '"';
+    }
+    saveLetterFontSettings(settings);
+    closeLetterSettings();
+    renderLetterApp();
+    showToast('字体已保存');
+}
+
+// ========== 生成信件（基于聊天记录） ==========
 function generateLetter() {
     if (isLetterGenerating) { showToast('信件正在生成中…'); return; }
     var contactId = getLetterSelectedChar();
@@ -304,6 +449,16 @@ function generateLetter() {
         : null;
     var author = contact ? contact.name : '角色';
 
+    // 读取最近聊天记录
+    var chatHistory = '';
+    if (typeof getRecentHistory === 'function') {
+        var history = getRecentHistory(contactId, 30);
+        history.forEach(function(m) {
+            var roleName = m.role === 'user' ? '用户' : author;
+            chatHistory += roleName + '：' + m.content + '\n';
+        });
+    }
+
     isLetterGenerating = true;
     var toast = document.createElement('div');
     toast.className = 'global-toast';
@@ -311,7 +466,11 @@ function generateLetter() {
     document.body.appendChild(toast);
 
     var systemPrompt = typeof buildSystemPrompt === 'function' ? buildSystemPrompt(contactId) : '';
-    var prompt = '请以' + author + '的口吻，给用户写一封信。像真人写信一样，有称呼、正文、落款。内容可以分享最近的心情、对用户的想念、一些日常小事。字数300-500字。';
+    var prompt = '请以' + author + '的口吻，根据最近的聊天记录给用户写一封信。\n'
+        + '【字数要求】150~200字，必须在这个范围内。\n'
+        + '【格式要求】有称呼、正文、落款。像真人写信一样自然。\n'
+        + '【内容要求】根据聊天记录分享你的心情、对用户的想念、日常小事。\n\n'
+        + '最近的聊天记录：\n' + (chatHistory || '暂无聊天记录');
 
     if (typeof callChatAPI === 'function') {
         callChatAPI([
