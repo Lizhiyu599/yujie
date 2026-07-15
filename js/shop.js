@@ -8,6 +8,7 @@ var _shopItems = [];
 var _shopCart = [];
 
 function _shopLoad() {
+    localStorage.removeItem('shop_items');
     try { _shopItems = JSON.parse(localStorage.getItem('shop_items') || '[]'); } catch(e) { _shopItems = []; }
     if (_shopItems.length === 0) {
         _shopItems = [
