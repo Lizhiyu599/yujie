@@ -565,7 +565,7 @@ function initShijieSampleData() {
 
     data.bubbles.push({
         id: 'bubble_no_avatar',
-        name: '无头像气泡',
+        name: '无头像初始',
         author: '官方',
         cssUser: 'background: #fff !important; color: #000 !important; border-radius: 18px !important; border-top-right-radius: 4px !important; box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important; padding: 10px 14px !important; font-size: 14px !important;',
 cssAssistant: 'background: #1d1d1f !important; color: #fff !important; border-radius: 18px !important; border-top-left-radius: 4px !important; box-shadow: 0 1px 4px rgba(0,0,0,0.1) !important; padding: 10px 14px !important; font-size: 14px !important;',
@@ -573,6 +573,17 @@ cssAssistant: 'background: #1d1d1f !important; color: #fff !important; border-ra
         tags: ['简约', '无头像']
     });
 
+    data.bubbles.push({
+    id: 'bubble_yugui',
+    name: '玉桂狗',
+    author: '官方',
+    cssUser: 'background: rgba(255,255,255,0.65) !important; border: 1px solid rgba(135,180,220,0.2) !important; color: #4a6fa5 !important; border-radius: 16px !important; box-shadow: 0 2px 8px rgba(135,180,220,0.1) !important; position: relative !important; font-size: 13px !important; padding: 10px 16px !important;',
+    cssUserBefore: 'content: "" !important; position: absolute !important; top: -8px !important; left: -6px !important; width: 32px !important; height: 32px !important; background: url("https://i.ibb.co/YBVQ1rL4/retouch-2026062723200616.png") no-repeat center center !important; background-size: contain !important;',
+    cssAssistant: 'background: rgba(255,255,255,0.65) !important; border: 1px solid rgba(135,180,220,0.2) !important; color: #5c4a6e !important; border-radius: 16px !important; box-shadow: 0 2px 8px rgba(135,180,220,0.1) !important; position: relative !important; font-size: 13px !important; padding: 10px 16px !important;',
+    cssAssistantAfter: 'content: "" !important; position: absolute !important; top: -40px !important; right: -40px !important; width: 90px !important; height: 90px !important; background: url("https://i.ibb.co/NXmbLL5/retouch-2026062723185133.png") no-repeat center center !important; background-size: contain !important;',
+    tags: ['可爱', '玉桂狗', '主题']
+});
+    
     saveShijieData(data);
 }
 
