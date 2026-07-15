@@ -958,6 +958,33 @@ function sendShopCard(contactId, item) {
     }
 }
 
+function sendLogiCard(contactId, item) {
+    var cardHTML = '<div class="bubble-row user">'
+        + '<div class="bubble-avatar user-avatar">我</div>'
+        + '<div class="shop-chat-card" style="background:#fff;border-radius:14px;padding:12px;width:220px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">'
+        + (item.img ? '<div style="width:100%;height:100px;border-radius:8px;background-image:url(' + item.img + ');background-size:cover;background-position:center;margin-bottom:8px;"></div>' : '')
+        + '<div style="font-size:13px;font-weight:500;color:#000;">' + item.name + '</div>'
+        + '<div style="font-size:12px;color:#8e8e93;margin-top:4px;">¥' + item.price + '</div>'
+        + '<div style="font-size:11px;color:#ff9500;margin-top:6px;">快递到了，帮我去取一下</div>'
+        + '</div></div>';
+    var narrationHTML = '<div class="bubble-narration" style="display:none;">（快递到了：' + item.name + '，¥' + item.price + '，帮我去取一下）</div>';
+
+    var messages = document.getElementById('chatMessages');
+    var isCurrentContactOpen = messages && window.ChatState && window.ChatState.currentContactId === contactId;
+
+    if (isCurrentContactOpen) {
+        messages.insertAdjacentHTML('beforeend', cardHTML + narrationHTML);
+        messages.scrollTop = messages.scrollHeight;
+        saveChatHistory(contactId);
+    } else {
+        var storageKey = 'chat_history_' + contactId;
+        var saved = localStorage.getItem(storageKey) || '';
+        var container = document.createElement('div');
+        container.innerHTML = saved + cardHTML + narrationHTML;
+        localStorage.setItem(storageKey, container.innerHTML);
+    }
+}
+
 // ========== 线下模式切换 ==========
 function switchToOffline() {
     toggleAddPanel();
