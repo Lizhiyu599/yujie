@@ -424,7 +424,51 @@ function wbSwitchType(type) {
 }
 
 function selectCharacter() {
-    showToast('角色选择功能即将上线');
+    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
+    if (contacts.length === 0) {
+        showToast('暂无联系人，请先添加角色');
+        return;
+    }
+
+    var overlay = document.createElement('div');
+    overlay.className = 'wb-editor-overlay';
+    overlay.id = 'wbCharSelectOverlay';
+    overlay.style.zIndex = '10001';
+
+    var listHTML = '';
+    contacts.forEach(function(c) {
+        var avatarHTML = c.avatarData
+            ? '<div class="wb-char-avatar" style="background-image:url(' + c.avatarData + ');background-size:cover;background-position:center;"></div>'
+            : '<div class="wb-char-avatar">' + c.avatar + '</div>';
+        var selected = wbEditCharacterId === c.id ? ' selected' : '';
+        listHTML += '<div class="wb-char-item' + selected + '" onclick="confirmCharacterSelect(\'' + c.id + '\', \'' + c.name.replace(/'/g, "\\'") + '\')">' + avatarHTML + '<span>' + c.name + '</span></div>';
+    });
+
+    overlay.innerHTML = ''
+        + '<div class="wb-char-select-panel">'
+        + '<div class="wb-char-select-title">选择角色</div>'
+        + '<div class="wb-char-select-list">' + listHTML + '</div>'
+        + '<button class="wb-btn-cancel" onclick="closeCharacterSelect()">取消</button>'
+        + '</div>';
+
+    document.body.appendChild(overlay);
+
+    overlay.onclick = function(e) {
+        if (e.target === overlay) closeCharacterSelect();
+    };
+}
+
+function confirmCharacterSelect(characterId, characterName) {
+    wbEditCharacterId = characterId;
+    wbEditCharacterName = characterName;
+    var selectEl = document.getElementById('wbCharSelect');
+    if (selectEl) selectEl.textContent = characterName;
+    closeCharacterSelect();
+}
+
+function closeCharacterSelect() {
+    var overlay = document.getElementById('wbCharSelectOverlay');
+    if (overlay) overlay.remove();
 }
 
 function togglePresetType(id) {
