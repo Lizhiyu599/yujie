@@ -935,9 +935,9 @@ function loadChatHistory(contactId) {
     var storageKey = (window.ChatState && window.ChatState.isOfflineMode ? 'chat_history_offline_' : 'chat_history_') + contactId;
     var saved = localStorage.getItem(storageKey);
     if (saved) {
-        if (saved.indexOf('/v') === 0 || saved.indexOf('http') === 0 || saved.length < 20) {
-            localStorage.removeItem(storageKey);
-            return;
+        if (!saved || saved.length < 20 || saved.trim()[0] !== '<') {
+    localStorage.removeItem(storageKey);
+    return;
         }
         messages.innerHTML = saved;
         messages.scrollTop = messages.scrollHeight;
@@ -1087,8 +1087,6 @@ function getRandomContactId() {
 function saveAutoMsgToHistory(contactId, contactName, rawContent) {
     const storageKey = 'chat_history_' + contactId;
     const saved = localStorage.getItem(storageKey);
-    let container;
-    if (saved) { container = document.createElement('div'); container.innerHTML = saved; }
     const now = new Date();
     const h = now.getHours(); const m = now.getMinutes().toString().padStart(2, '0');
     const period = h < 12 ? '上午' : '下午'; const displayH = h % 12 || 12;
@@ -1099,8 +1097,11 @@ function saveAutoMsgToHistory(contactId, contactName, rawContent) {
     parts.forEach(part => {
         htmlToAdd += '<div class="bubble-row assistant" data-role="assistant"><div class="bubble-avatar bot-avatar">' + (contactName.charAt(0) || 'AI') + '</div><div class="bubble bubble-assistant">' + part.trim() + '</div></div>';
     });
-    if (saved && container) { container.innerHTML += htmlToAdd; localStorage.setItem(storageKey, container.innerHTML); }
-    else { const newContainer = document.createElement('div'); newContainer.innerHTML = htmlToAdd; localStorage.setItem(storageKey, newContainer.innerHTML); }
+    if (saved && saved.length >= 20 && saved.trim()[0] === '<') {
+        localStorage.setItem(storageKey, saved + htmlToAdd);
+    } else {
+        localStorage.setItem(storageKey, htmlToAdd);
+    }
     if (window.ChatConfig?.contacts) {
         const contact = window.ChatConfig.contacts.find(c => c.id === contactId);
         if (contact) { contact.preview = cleanContent.substring(0, 30); saveContactsToStorage(); }
