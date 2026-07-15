@@ -344,7 +344,7 @@ function openPresetEditor(presetId) {
     const charSelectHTML = type === 'local' ? `
         <div class="wb-editor-label">绑定角色</div>
         <div class="wb-character-select" id="wbCharSelect" onclick="selectCharacter()">
-            ${wbEditCharacterName || '点击选择角色（占位）'}
+            ${wbEditCharacterName || '点击选择角色'}
         </div>
     ` : '';
 
@@ -413,7 +413,7 @@ function wbSwitchType(type) {
         select.className = 'wb-character-select';
         select.id = 'wbCharSelect';
         select.onclick = selectCharacter;
-        select.textContent = wbEditCharacterName || '点击选择角色（占位）';
+        select.textContent = wbEditCharacterName || '点击选择角色';
         segment.parentNode.insertBefore(label, segment.nextSibling);
         segment.parentNode.insertBefore(select, label.nextSibling);
     } else if (type === 'global' && charSection) {
