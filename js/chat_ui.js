@@ -981,8 +981,16 @@ function sendVoiceBubble(role, text, voiceUrl, isRealVoice) {
     const avatar = document.createElement('div');
     avatar.className = 'bubble-avatar ' + (role === 'assistant' ? 'bot-avatar' : 'user-avatar');
     if (role === 'assistant') {
-    avatar.textContent = getContactById(window.ChatState.currentContactId)?.avatar || 'AI';
-} else {
+    var contact = getContactById(window.ChatState.currentContactId);
+    if (contact && contact.avatarData) {
+        avatar.style.backgroundImage = 'url(' + contact.avatarData + ')';
+        avatar.style.backgroundSize = 'cover';
+        avatar.style.backgroundPosition = 'center';
+        avatar.textContent = '';
+    } else {
+        avatar.textContent = contact ? contact.avatar : 'AI';
+    }
+}else {
     var masks = typeof getMasks === 'function' ? getMasks() : [];
     var contactForMask = getContactById(window.ChatState.currentContactId);
     var activeMaskId = (contactForMask && contactForMask.maskId) ? contactForMask.maskId : localStorage.getItem('active_mask_id') || '';
