@@ -934,53 +934,113 @@ function confirmSendLink() {
     }
 
 function sendShopCard(contactId, item) {
-    var cardHTML = '<div class="bubble-row user">'
-        + '<div class="bubble-avatar user-avatar">我</div>'
-        + '<div class="shop-chat-card" style="background:#fff;border-radius:14px;padding:12px;width:220px;box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;gap:10px;align-items:center;cursor:pointer;">'
+    var cardHTML = '<div class="shop-chat-card" style="background:#fff;border-radius:14px;padding:12px;width:220px;box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;gap:10px;align-items:center;cursor:pointer;">'
         + (item.img ? '<div style="width:50px;height:50px;border-radius:8px;background-image:url(' + item.img + ');background-size:cover;background-position:center;flex-shrink:0;"></div>' : '')
         + '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;color:#000;">' + item.name + '</div><div style="font-size:15px;font-weight:700;color:#000;margin-top:2px;">¥' + item.price + '</div></div>'
-        + '</div></div>';
-    var narrationHTML = '<div class="bubble-narration" style="display:none;">（想买：' + item.name + '，¥' + item.price + '，请求买单）</div>';
+        + '</div>';
 
     var messages = document.getElementById('chatMessages');
-    var isCurrentContactOpen = messages && window.ChatState && window.ChatState.currentContactId === contactId;
-
-    if (isCurrentContactOpen) {
-        messages.insertAdjacentHTML('beforeend', cardHTML + narrationHTML);
+    if (messages && window.ChatState && window.ChatState.currentContactId === contactId) {
+        var row = document.createElement('div');
+        row.className = 'bubble-row user';
+        row.setAttribute('data-role', 'user');
+        var avatar = document.createElement('div');
+        avatar.className = 'bubble-avatar user-avatar';
+        avatar.textContent = '我';
+        var bubble = document.createElement('div');
+        bubble.className = 'bubble bubble-user';
+        bubble.style.cssText = 'background:transparent;padding:0;box-shadow:none;border:none;backdrop-filter:none;-webkit-backdrop-filter:none;';
+        bubble.innerHTML = cardHTML;
+        row.appendChild(avatar);
+        row.appendChild(bubble);
+        messages.appendChild(row);
+        var nRow = document.createElement('div');
+        nRow.className = 'bubble-narration';
+        nRow.textContent = '（想买：' + item.name + '，¥' + item.price + '，请求买单）';
+        nRow.style.display = 'none';
+        messages.appendChild(nRow);
         messages.scrollTop = messages.scrollHeight;
         saveChatHistory(contactId);
     } else {
         var storageKey = 'chat_history_' + contactId;
         var saved = localStorage.getItem(storageKey) || '';
         var container = document.createElement('div');
-        container.innerHTML = saved + cardHTML + narrationHTML;
+        container.innerHTML = saved;
+        var row = document.createElement('div');
+        row.className = 'bubble-row user';
+        row.setAttribute('data-role', 'user');
+        var avatar = document.createElement('div');
+        avatar.className = 'bubble-avatar user-avatar';
+        avatar.textContent = '我';
+        var bubble = document.createElement('div');
+        bubble.className = 'bubble bubble-user';
+        bubble.style.cssText = 'background:transparent;padding:0;box-shadow:none;border:none;backdrop-filter:none;-webkit-backdrop-filter:none;';
+        bubble.innerHTML = cardHTML;
+        row.appendChild(avatar);
+        row.appendChild(bubble);
+        container.appendChild(row);
+        var nRow = document.createElement('div');
+        nRow.className = 'bubble-narration';
+        nRow.textContent = '（想买：' + item.name + '，¥' + item.price + '，请求买单）';
+        nRow.style.display = 'none';
+        container.appendChild(nRow);
         localStorage.setItem(storageKey, container.innerHTML);
     }
 }
 
 function sendLogiCard(contactId, item) {
-    var cardHTML = '<div class="bubble-row user">'
-        + '<div class="bubble-avatar user-avatar">我</div>'
-        + '<div class="shop-chat-card" style="background:#fff;border-radius:14px;padding:12px;width:220px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">'
+    var cardHTML = '<div class="shop-chat-card" style="background:#fff;border-radius:14px;padding:12px;width:220px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">'
         + (item.img ? '<div style="width:100%;height:100px;border-radius:8px;background-image:url(' + item.img + ');background-size:cover;background-position:center;margin-bottom:8px;"></div>' : '')
         + '<div style="font-size:13px;font-weight:500;color:#000;">' + item.name + '</div>'
         + '<div style="font-size:12px;color:#8e8e93;margin-top:4px;">¥' + item.price + '</div>'
         + '<div style="font-size:11px;color:#ff9500;margin-top:6px;">快递到了，帮我去取一下</div>'
-        + '</div></div>';
-    var narrationHTML = '<div class="bubble-narration" style="display:none;">（快递到了：' + item.name + '，¥' + item.price + '，帮我去取一下）</div>';
+        + '</div>';
 
     var messages = document.getElementById('chatMessages');
-    var isCurrentContactOpen = messages && window.ChatState && window.ChatState.currentContactId === contactId;
-
-    if (isCurrentContactOpen) {
-        messages.insertAdjacentHTML('beforeend', cardHTML + narrationHTML);
+    if (messages && window.ChatState && window.ChatState.currentContactId === contactId) {
+        var row = document.createElement('div');
+        row.className = 'bubble-row user';
+        row.setAttribute('data-role', 'user');
+        var avatar = document.createElement('div');
+        avatar.className = 'bubble-avatar user-avatar';
+        avatar.textContent = '我';
+        var bubble = document.createElement('div');
+        bubble.className = 'bubble bubble-user';
+        bubble.style.cssText = 'background:transparent;padding:0;box-shadow:none;border:none;backdrop-filter:none;-webkit-backdrop-filter:none;';
+        bubble.innerHTML = cardHTML;
+        row.appendChild(avatar);
+        row.appendChild(bubble);
+        messages.appendChild(row);
+        var nRow = document.createElement('div');
+        nRow.className = 'bubble-narration';
+        nRow.textContent = '（快递到了：' + item.name + '，¥' + item.price + '，帮我去取一下）';
+        nRow.style.display = 'none';
+        messages.appendChild(nRow);
         messages.scrollTop = messages.scrollHeight;
         saveChatHistory(contactId);
     } else {
         var storageKey = 'chat_history_' + contactId;
         var saved = localStorage.getItem(storageKey) || '';
         var container = document.createElement('div');
-        container.innerHTML = saved + cardHTML + narrationHTML;
+        container.innerHTML = saved;
+        var row = document.createElement('div');
+        row.className = 'bubble-row user';
+        row.setAttribute('data-role', 'user');
+        var avatar = document.createElement('div');
+        avatar.className = 'bubble-avatar user-avatar';
+        avatar.textContent = '我';
+        var bubble = document.createElement('div');
+        bubble.className = 'bubble bubble-user';
+        bubble.style.cssText = 'background:transparent;padding:0;box-shadow:none;border:none;backdrop-filter:none;-webkit-backdrop-filter:none;';
+        bubble.innerHTML = cardHTML;
+        row.appendChild(avatar);
+        row.appendChild(bubble);
+        container.appendChild(row);
+        var nRow = document.createElement('div');
+        nRow.className = 'bubble-narration';
+        nRow.textContent = '（快递到了：' + item.name + '，¥' + item.price + '，帮我去取一下）';
+        nRow.style.display = 'none';
+        container.appendChild(nRow);
         localStorage.setItem(storageKey, container.innerHTML);
     }
 }
