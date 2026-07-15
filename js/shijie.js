@@ -10,7 +10,6 @@ function getShijieData() {
     if (raw) {
         try { return JSON.parse(raw); } catch(e) {}
     }
-    // 默认空数据，后续手动添加
     var defaults = {
         bubbles: [],
         fonts: [],
@@ -45,7 +44,7 @@ function toggleFavorite(itemId) {
         favs.push(itemId);
     }
     saveFavorites(favs);
-    return idx < 0; // true = 已收藏, false = 已取消
+    return idx < 0;
 }
 
 function isFavorite(itemId) {
@@ -92,8 +91,8 @@ function renderShijie() {
     var title = tabTitles[shijieTab] || '视界';
 
     var searchHTML = '';
-    if (shijieTab === 'bubbles') {
-        searchHTML = '<div class="sj-search-bar" id="sjSearchBar" style="' + (shijieSearchVisible ? '' : 'display:none;') + '"><input type="text" class="sj-search-input" id="sjSearchInput" placeholder="搜索气泡..." value="' + shijieSearch + '" oninput="onShijieSearch(this.value)"></div>';
+    if (shijieTab !== 'me') {
+        searchHTML = '<div class="sj-search-bar" id="sjSearchBar" style="' + (shijieSearchVisible ? '' : 'display:none;') + '"><input type="text" class="sj-search-input" id="sjSearchInput" placeholder="搜索..." value="' + shijieSearch + '" oninput="onShijieSearch(this.value)"></div>';
     }
 
     appWindow.innerHTML = ''
@@ -136,19 +135,16 @@ function onShijieSearch(val) {
 
 // ========== 滚动控制搜索栏显隐 ==========
 function onShijieScroll() {
-    if (shijieTab !== 'bubbles') return;
     var body = document.getElementById('sjBody');
     if (!body) return;
     var currentY = body.scrollTop;
     if (currentY > shijieLastScrollY && currentY > 40) {
-        // 下滑隐藏
         if (shijieSearchVisible) {
             shijieSearchVisible = false;
             var bar = document.getElementById('sjSearchBar');
             if (bar) bar.style.display = 'none';
         }
     } else if (currentY < shijieLastScrollY || currentY < 10) {
-        // 上滑显示
         if (!shijieSearchVisible) {
             shijieSearchVisible = true;
             var bar = document.getElementById('sjSearchBar');
@@ -169,11 +165,10 @@ function renderShijieContent() {
     }
 
     var data = getShijieData();
-    var typeKey = shijieTab; // 'bubbles' | 'fonts' | 'others'
+    var typeKey = shijieTab;
     var items = data[typeKey] || [];
 
-    // 搜索过滤
-    if (shijieSearch && shijieTab === 'bubbles') {
+    if (shijieSearch) {
         var q = shijieSearch.toLowerCase();
         items = items.filter(function(item) {
             return item.name.toLowerCase().indexOf(q) >= 0
@@ -196,9 +191,6 @@ function renderShijieContent() {
     }
 
     content.innerHTML = html;
-
-    // 绑定收藏按钮事件
-    bindFavoriteClicks();
 }
 
 // ========== 渲染气泡卡片 ==========
@@ -280,6 +272,9 @@ function copyBubbleCSS(itemId) {
     var item = data.bubbles.find(function(b) { return b.id === itemId; });
     if (!item) return;
     var css = '';
+    if (item.hideAvatar) {
+        css += '.bubble-row .bubble-avatar {\n  display: none !important;\n}\n\n';
+    }
     if (item.cssUser) css += '.bubble-user {\n' + item.cssUser + '\n}\n\n';
     if (item.cssAssistant) css += '.bubble-assistant {\n' + item.cssAssistant + '\n}\n';
     copyToClipboard(css.trim());
@@ -340,11 +335,6 @@ function onFavClick(el, itemId) {
         el.textContent = '♡';
     }
     showToast(liked ? '已收藏' : '已取消收藏');
-}
-
-// ========== 绑定收藏按钮 ==========
-function bindFavoriteClicks() {
-    // 事件已在 onclick 中绑定，这里留空
 }
 
 // ========== 预览弹窗 ==========
@@ -438,7 +428,7 @@ function setupPreviewHandle() {
     handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
     handle.addEventListener('touchmove', function(e) { if (e.touches[0].clientY - startY > 40) closePreview(); });
     handle.addEventListener('click', function() { closePreview(); });
-}            
+}
 
 // ========== 收藏页面 ==========
 function renderFavoritesContent(content) {
@@ -451,7 +441,6 @@ function renderFavoritesContent(content) {
     var data = getShijieData();
     var allItems = [];
     favs.forEach(function(fid) {
-        var found = null;
         ['bubbles', 'fonts', 'others'].forEach(function(type) {
             var item = data[type].find(function(d) { return d.id === fid; });
             if (item) {
@@ -461,7 +450,6 @@ function renderFavoritesContent(content) {
         });
     });
 
-    // 筛选
     if (shijieFavFilter !== 'all') {
         allItems = allItems.filter(function(item) {
             return item._type === shijieFavFilter;
@@ -482,7 +470,6 @@ function renderFavoritesContent(content) {
         html += '<div class="sj-empty">暂无此类收藏</div>';
     } else {
         allItems.forEach(function(item) {
-            var liked = true;
             var typeLabel = { bubbles: '气泡', fonts: '字体', others: '其他' }[item._type] || '';
             html += ''
                 + '<div class="sj-card" onclick="openFavItem(\'' + item._type + '\', \'' + item.id + '\')">'
@@ -553,22 +540,15 @@ function initShijieSampleData() {
     var hasAny = data.bubbles.length > 0 || data.fonts.length > 0 || data.others.length > 0;
     if (hasAny) return;
 
-    // 示例气泡
+    // 示例气泡 - 毛玻璃
     data.bubbles.push({
         id: 'bubble_sample_1',
         name: '毛玻璃气泡',
         author: '官方',
-        cssUser: 'background: rgba(0,122,255,0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fff; border-radius: 18px 18px 4px 18px; padding: 10px 14px; font-size: 15px; border: 1px solid rgba(255,255,255,0.3);',
-        cssAssistant: 'background: rgba(255,255,255,0.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #000; border-radius: 18px 18px 18px 4px; padding: 10px 14px; font-size: 15px; border: 1px solid rgba(255,255,255,0.4);',
-        tags: ['简约', '透明']
-    });
-    data.bubbles.push({
-        id: 'bubble_sample_2',
-        name: '墨绿气泡',
-        author: '官方',
-        cssUser: 'background: #2d6a4f; color: #fff; border-radius: 16px 16px 4px 16px; padding: 10px 14px; font-size: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);',
-        cssAssistant: 'background: #d8f3dc; color: #1b4332; border-radius: 16px 16px 16px 4px; padding: 10px 14px; font-size: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.08);',
-        tags: ['自然', '清新']
+        cssUser: 'background: rgba(0,122,255,0.7) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; color: #fff !important; border-radius: 16px !important; padding: 10px 14px !important; font-size: 15px !important; border: 1px solid rgba(255,255,255,0.3) !important;',
+        cssAssistant: 'background: rgba(255,255,255,0.55) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; color: #000 !important; border-radius: 16px !important; padding: 10px 14px !important; font-size: 15px !important; border: 1px solid rgba(255,255,255,0.4) !important;',
+        tags: ['简约', '透明'],
+        hideAvatar: true
     });
 
     // 示例字体
