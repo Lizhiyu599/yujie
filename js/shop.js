@@ -8,6 +8,7 @@ var _shopItems = [];
 var _shopCart = [];
 
 function _shopLoad() {
+    localStorage.removeItem('shop_items');
     try { _shopItems = JSON.parse(localStorage.getItem('shop_items') || '[]'); } catch(e) { _shopItems = []; }
     if (_shopItems.length === 0) {
         _shopItems = [
@@ -19,6 +20,8 @@ function _shopLoad() {
             { name: '迪奥Dior烈艳蓝金口红', price: '420', desc: '720哑光唇膏口红滋润显色', img: 'https://i.ibb.co/Hf12JxHb/Screenshot-2026-07-15-09-15-12-59-4fbb30eb7b7166119bd25e41eddeee2f.jpg', tab: 'recommend' },
             { name: '香奈儿(CHANEL)女包白包', price: '25580', desc: '白色荔枝牛皮金球金扣链条零钱腰包斜挎', img: 'https://i.ibb.co/XxMZhb0n/Screenshot-2026-07-15-09-20-28-04-4fbb30eb7b7166119bd25e41eddeee2f.jpg', tab: 'recommend' },
             { name: '香奈儿（CHANEL）女包粉包', price: '53000', desc: '经典cf mini handle手柄浅粉色樱花粉手提单肩斜挎包', img: 'https://i.ibb.co/1YrCQNCP/Screenshot-2026-07-15-09-22-01-09-4fbb30eb7b7166119bd25e41eddeee2f.jpg', tab: 'recommend' },
+            { name: '爱因斯坦的脑子', price: '250', desc: '购买之后自动获取如爱因斯坦般的大脑思考能力，购买后拒绝任何理由退货', img: 'https://i.ibb.co/CFK3Fxh/Screenshot-2026-07-15-09-43-17-93-e41039de8eaacf222a951c16e0560c66.jpg', tab: 'recommend' },
+            { name: '臭宝柳州螺蛳粉', price: '99', desc: '高性价比浓汤大腐竹330g*11袋', img: 'https://i.ibb.co/sJmpHsVS/5c3d522df909e329d59b421a249628b8.jpg', tab: 'food' },
             { name: '美式快餐三件套', price: '35', desc: '经典汉堡+薯条+可乐', img: 'https://i.ibb.co/vx5Md2Sn/Fast-Food-Packaging-Mockup-1536x1152.jpg', tab: 'food' },
             { name: '轻食蔬菜沙拉', price: '23', desc: '新鲜时蔬搭配低脂酱汁', img: 'https://i.ibb.co/q3Y1cm8V/Square-Salad-Container-Mockup-1536x1536.jpg', tab: 'food' }
         ];
