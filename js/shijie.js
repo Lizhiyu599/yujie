@@ -574,10 +574,9 @@ function removeShijieItem(type, itemId) {
 
 // ========== 初始化示例数据（首次使用时） ==========
 function initShijieSampleData() {
-    var data = getShijieData();
-    var hasAny = data.bubbles.length > 0 || data.fonts.length > 0 || data.others.length > 0;
-    if (hasAny) return;
-
+    localStorage.removeItem('shijie_data');
+var data = getShijieData();
+    
     // 毛玻璃气泡 - 苹果风格尖角
     data.bubbles.push({
     id: 'bubble_sample_1',
