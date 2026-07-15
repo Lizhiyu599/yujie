@@ -934,61 +934,28 @@ function confirmSendLink() {
     }
 
 function sendShopCard(contactId, item) {
-    var messages = document.getElementById('chatMessages');
-    if (!messages) return;
-    var row = document.createElement('div');
-    row.className = 'bubble-row user';
-    var avatar = document.createElement('div');
-    avatar.className = 'bubble-avatar user-avatar';
-    avatar.textContent = '我';
-    var card = document.createElement('div');
-    card.className = 'shop-chat-card';
-    card.style.cssText = 'background:#fff;border-radius:14px;padding:12px;width:220px;box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;gap:10px;align-items:center;cursor:pointer;';
-    card.innerHTML = ''
+    var cardHTML = '<div class="bubble-row user">'
+        + '<div class="bubble-avatar user-avatar">我</div>'
+        + '<div class="shop-chat-card" style="background:#fff;border-radius:14px;padding:12px;width:220px;box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;gap:10px;align-items:center;cursor:pointer;">'
         + (item.img ? '<div style="width:50px;height:50px;border-radius:8px;background-image:url(' + item.img + ');background-size:cover;background-position:center;flex-shrink:0;"></div>' : '')
-        + '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;color:#000;">' + item.name + '</div><div style="font-size:15px;font-weight:700;color:#000;margin-top:2px;">¥' + item.price + '</div></div>';
-    row.appendChild(avatar); row.appendChild(card);
-    messages.appendChild(row);
+        + '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;color:#000;">' + item.name + '</div><div style="font-size:15px;font-weight:700;color:#000;margin-top:2px;">¥' + item.price + '</div></div>'
+        + '</div></div>';
+    var narrationHTML = '<div class="bubble-narration" style="display:none;">（想买：' + item.name + '，¥' + item.price + '，请求买单）</div>';
 
-    var nRow = document.createElement('div');
-    nRow.className = 'bubble-narration';
-    nRow.textContent = '（想买：' + item.name + '，¥' + item.price + '，请求买单）';
-    nRow.style.display = 'none';
-    messages.appendChild(nRow);
-    messages.scrollTop = messages.scrollHeight;
-    saveChatHistory(contactId);
-}
-
-function sendStickerFromBot(src, note) {
     var messages = document.getElementById('chatMessages');
-    if (!messages) return;
-    var row = document.createElement('div');
-    row.className = 'bubble-row assistant';
-    var avatar = document.createElement('div');
-    avatar.className = 'bubble-avatar bot-avatar';
-    avatar.textContent = getContactById(window.ChatState.currentContactId)?.avatar || 'AI';
-    var bubble = document.createElement('div');
-    bubble.className = 'bubble bubble-assistant';
-    bubble.style.backgroundImage = 'url(' + src + ')';
-    bubble.style.backgroundSize = 'cover';
-    bubble.style.backgroundPosition = 'center';
-    bubble.style.width = '100px';
-    bubble.style.height = '100px';
-    bubble.style.padding = '0';
-    bubble.style.borderRadius = '12px';
-    bubble.textContent = '';
-    bubble.onclick = function() { openImageViewer(src); };
-    row.appendChild(avatar);
-    row.appendChild(bubble);
-    messages.appendChild(row);
+    var isCurrentContactOpen = messages && window.ChatState && window.ChatState.currentContactId === contactId;
 
-    var nRow = document.createElement('div');
-    nRow.className = 'bubble-narration';
-    nRow.textContent = '（发送了表情包：' + note + '）';
-    nRow.style.display = 'none';
-    messages.appendChild(nRow);
-    messages.scrollTop = messages.scrollHeight;
-    saveChatHistory(window.ChatState.currentContactId);
+    if (isCurrentContactOpen) {
+        messages.insertAdjacentHTML('beforeend', cardHTML + narrationHTML);
+        messages.scrollTop = messages.scrollHeight;
+        saveChatHistory(contactId);
+    } else {
+        var storageKey = 'chat_history_' + contactId;
+        var saved = localStorage.getItem(storageKey) || '';
+        var container = document.createElement('div');
+        container.innerHTML = saved + cardHTML + narrationHTML;
+        localStorage.setItem(storageKey, container.innerHTML);
+    }
 }
 
 // ========== 线下模式切换 ==========
