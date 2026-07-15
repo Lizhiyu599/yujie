@@ -797,9 +797,7 @@ if (messagesEl2) {
         localStorage.setItem('shop_pending_notices', JSON.stringify(shopNotices2));
     }
 
-    const userMessage = shopNote ? shopNote : (stickerNote ? stickerNote : '（用户暂时没有说话，你可以先开口）');
-
-    const userMessage = cpNote ? cpNote : (stickerNote ? stickerNote : '（用户暂时没有说话，你可以先开口）');
+    const userMessage = cpNote ? cpNote : (shopNote ? shopNote : (stickerNote ? stickerNote : '（用户暂时没有说话，你可以先开口）'));
     
     callChatAPI([
         { role: 'system', content: systemPrompt },
