@@ -289,56 +289,16 @@ if (myCpNotices.length > 0) {
     }
 
     const memoryCount = parseInt(getContactSetting(contactId, 'memoryCount', '50'));
-const historyMessages = getRecentHistory(contactId, memoryCount);
+    const historyMessages = getRecentHistory(contactId, memoryCount);
+    const allMessages = [
+        { role: 'system', content: systemPrompt },
+        ...historyMessages,
+        { role: 'user', content: userMessage }
+    ];
 
-// ====== 新增：读取并注入商城通知 ======
-let shopPromptInject = "";
-try {
-    let notices = JSON.parse(localStorage.getItem('shop_pending_notices') || '[]');
-    const myNotices = notices.filter(n => n.contactId === contactId);
-    
-    if (myNotices.length > 0) {
-        shopPromptInject = "\n\n【系统提醒：用户刚刚向你发送了以下商品卡片，希望你帮他/她买单。请你对此做出符合你人设的傲娇、宠溺或调侃的回复，并决定是否帮他付款（可以通过口头答应或发送对应的转账卡片）：";
-        myNotices.forEach(item => {
-            shopPromptInject += `\n- 商品名: ${item.name}, 价格: ${item.price}元, 描述: ${item.desc}`;
-        });
-        shopPromptInject += "】";
-        
-        const remainingNotices = notices.filter(n => n.contactId !== contactId);
-        localStorage.setItem('shop_pending_notices', JSON.stringify(remainingNotices));
-    }
-} catch (e) {
-    console.error("读取商城通知失败", e);
-}
-
-const finalSystemPrompt = systemPrompt + shopPromptInject;
-// ===================================
-
-const allMessages = [
-    { role: 'system', content: finalSystemPrompt }, // 注入新 prompt
-    ...historyMessages,
-    { role: 'user', content: userMessage }
-];
-
-// 开启打字状态并调用 API 闭环
-window.ChatState.isAITyping = true;
-try {
-    const aiReply = await callChatAPI(allMessages); 
-    processAIReply(aiReply, contactName, contactId); 
-} catch(err) {
-    console.error(err);
-    // 这里最好加一个界面提示
-    const chatMessages = document.getElementById('chatMessages');
-    if (chatMessages) {
-        const errDiv = document.createElement('div');
-        errDiv.className = 'message system';
-        errDiv.innerText = '发送失败：' + err.message;
-        chatMessages.appendChild(errDiv);
-    }
-} finally {
     window.ChatState.isAITyping = false;
 }
-
+    
 // ========== 接收/退还红包转账（只处理卡片，返回 true/false） ==========
 function acceptLatestPayment() {
     var cards = document.querySelectorAll('.payment-card[data-msg-id]');
