@@ -17,7 +17,7 @@ function _shopLoad() {
             { name: '2024年日记本', price: '18', desc: '一本棕色复古版很有质感的日记本', img: 'https://i.ibb.co/pB9hkCM1/Leather-Notebook-Mockup-1536x1152.jpg', tab: 'recommend' },
             { name: '迪奥Dior魅惑丰唇蜜', price: '380', desc: '018乌龙奶茶6ml唇釉口红滋润显色', img: 'https://i.ibb.co/DfpCnN8x/Screenshot-2026-07-15-09-12-32-05-4fbb30eb7b7166119bd25e41eddeee2f.jpg', tab: 'recommend' },
             { name: '迪奥Dior烈艳蓝金口红', price: '420', desc: '720哑光唇膏口红滋润显色', img: 'https://i.ibb.co/Hf12JxHb/Screenshot-2026-07-15-09-15-12-59-4fbb30eb7b7166119bd25e41eddeee2f.jpg', tab: 'recommend' },
-            { name: '香奈儿(CHANEL)女包白色包', price: '25580', desc: '白色荔枝牛皮金球金扣链条零钱腰包斜挎', img: 'https://i.ibb.co/XxMZhb0n/Screenshot-2026-07-15-09-20-28-04-4fbb30eb7b7166119bd25e41eddeee2f.jpg', tab: 'recommend' },
+            { name: '香奈儿(CHANEL)女包白包', price: '25580', desc: '白色荔枝牛皮金球金扣链条零钱腰包斜挎', img: 'https://i.ibb.co/XxMZhb0n/Screenshot-2026-07-15-09-20-28-04-4fbb30eb7b7166119bd25e41eddeee2f.jpg', tab: 'recommend' },
             { name: '香奈儿（CHANEL）女包粉包', price: '53000', desc: '经典cf mini handle手柄浅粉色樱花粉手提单肩斜挎包', img: 'https://i.ibb.co/1YrCQNCP/Screenshot-2026-07-15-09-22-01-09-4fbb30eb7b7166119bd25e41eddeee2f.jpg', tab: 'recommend' },
             { name: '美式快餐三件套', price: '35', desc: '经典汉堡+薯条+可乐', img: 'https://i.ibb.co/vx5Md2Sn/Fast-Food-Packaging-Mockup-1536x1152.jpg', tab: 'food' },
             { name: '轻食蔬菜沙拉', price: '23', desc: '新鲜时蔬搭配低脂酱汁', img: 'https://i.ibb.co/q3Y1cm8V/Square-Salad-Container-Mockup-1536x1536.jpg', tab: 'food' }
