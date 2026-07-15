@@ -465,7 +465,7 @@ function generateLetter() {
 
     var systemPrompt = typeof buildSystemPrompt === 'function' ? buildSystemPrompt(contactId) : '';
     var prompt = '请以' + author + '的口吻，根据最近的聊天记录给用户写一封信。\n'
-        + '【字数要求】150~200字，必须在这个范围内。\n'
+        + '【字数要求】50~60字，必须在这个范围内。简洁精炼。\n'
         + '【格式要求】有称呼、正文、落款。像真人写信一样自然。\n'
         + '【内容要求】根据聊天记录分享你的心情、对用户的想念、日常小事。\n\n'
         + '最近的聊天记录：\n' + (chatHistory || '暂无聊天记录');
