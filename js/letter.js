@@ -113,8 +113,6 @@ function renderLetterEnvelope(letter, fontSettings) {
         + '<div class="envelope-flap"></div>'
         + '<div class="envelope-front">'
         + '<div class="envelope-stamp">' + (letter.stamp || '✿') + '</div>'
-        + '<div class="envelope-from">' + letter.author + '</div>'
-        + '<div class="envelope-to">致 你</div>'
         + '</div>'
         + '<div class="envelope-paper" id="envelopePaper" style="' + paperStyle + '">'
         + '<div class="paper-date">' + letter.date + '</div>'
