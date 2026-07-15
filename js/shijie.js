@@ -165,16 +165,41 @@ function renderShijieContent() {
     }
 
     var data = getShijieData();
-    var typeKey = shijieTab;
-    var items = data[typeKey] || [];
 
     if (shijieSearch) {
+        // 搜索全部类型
         var q = shijieSearch.toLowerCase();
-        items = items.filter(function(item) {
-            return item.name.toLowerCase().indexOf(q) >= 0
-                || (item.tags && item.tags.join(' ').toLowerCase().indexOf(q) >= 0);
+        var allResults = { bubbles: [], fonts: [], others: [] };
+        ['bubbles', 'fonts', 'others'].forEach(function(type) {
+            var items = data[type] || [];
+            allResults[type] = items.filter(function(item) {
+                return item.name.toLowerCase().indexOf(q) >= 0
+                    || (item.tags && item.tags.join(' ').toLowerCase().indexOf(q) >= 0)
+                    || (item.author && item.author.toLowerCase().indexOf(q) >= 0);
+            });
         });
+        var html = '';
+        if (allResults.bubbles.length > 0) {
+            html += '<div class="sj-section-title">气泡</div>';
+            html += renderBubbleCards(allResults.bubbles);
+        }
+        if (allResults.fonts.length > 0) {
+            html += '<div class="sj-section-title">字体</div>';
+            html += renderFontCards(allResults.fonts);
+        }
+        if (allResults.others.length > 0) {
+            html += '<div class="sj-section-title">其他</div>';
+            html += renderOtherCards(allResults.others);
+        }
+        if (!html) {
+            html = '<div class="sj-empty">未找到相关内容</div>';
+        }
+        content.innerHTML = html;
+        return;
     }
+
+    var typeKey = shijieTab;
+    var items = data[typeKey] || [];
 
     if (items.length === 0) {
         content.innerHTML = '<div class="sj-empty">暂无内容</div>';
@@ -540,41 +565,15 @@ function initShijieSampleData() {
     var hasAny = data.bubbles.length > 0 || data.fonts.length > 0 || data.others.length > 0;
     if (hasAny) return;
 
-    // 示例气泡 - 毛玻璃
+    // 毛玻璃气泡 - 苹果风格尖角
     data.bubbles.push({
         id: 'bubble_sample_1',
         name: '毛玻璃气泡',
         author: '官方',
-        cssUser: 'background: rgba(0,122,255,0.7) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; color: #fff !important; border-radius: 16px !important; padding: 10px 14px !important; font-size: 15px !important; border: 1px solid rgba(255,255,255,0.3) !important;',
-        cssAssistant: 'background: rgba(255,255,255,0.55) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; color: #000 !important; border-radius: 16px !important; padding: 10px 14px !important; font-size: 15px !important; border: 1px solid rgba(255,255,255,0.4) !important;',
+        cssUser: 'background: rgba(0,122,255,0.7) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; color: #fff !important; border-radius: 18px 18px 4px 18px !important; padding: 10px 14px !important; font-size: 15px !important; border: 1px solid rgba(255,255,255,0.3) !important;',
+        cssAssistant: 'background: rgba(255,255,255,0.55) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; color: #000 !important; border-radius: 18px 18px 18px 4px !important; padding: 10px 14px !important; font-size: 15px !important; border: 1px solid rgba(255,255,255,0.4) !important;',
         tags: ['简约', '透明'],
         hideAvatar: true
-    });
-
-    // 示例字体
-    data.fonts.push({
-        id: 'font_sample_1',
-        name: '系统苹方',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif',
-        importURL: '',
-        tags: ['系统', '默认']
-    });
-    data.fonts.push({
-        id: 'font_sample_2',
-        name: '楷体',
-        fontFamily: '"KaiTi", "STKaiti", serif',
-        importURL: '',
-        tags: ['书法', '古典']
-    });
-
-    // 示例其他（状态栏）
-    data.others.push({
-        id: 'other_sample_1',
-        name: '默认状态栏',
-        author: '官方',
-        css: '#topStatusBar { font-size: 15px; font-weight: 500; color: #000; }',
-        previewHTML: '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 16px;background:rgba(255,255,255,0.6);border-radius:12px;"><span style="font-size:15px;font-weight:500;">14:30</span><span style="font-size:13px;">▊▊▊▊ 80%</span></div>',
-        tags: ['默认']
     });
 
     saveShijieData(data);
