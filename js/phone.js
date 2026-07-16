@@ -161,10 +161,7 @@ function renderPhoneChatList() {
 
     phoneChatTargetId = null;
     var npcs = getPhoneNPCs();
-    var contact = getContactById(phoneContactId);
-    var contactName = contact ? contact.name : '角色';
 
-    // 联系人列表：用户 + NPC（直接用原始名字，不调API生成备注）
     var chatTargets = [];
     chatTargets.push({
         id: 'user',
@@ -319,36 +316,54 @@ function refreshPhoneNPCChat(targetName) {
     });
 }
 
-// ========== 生成 NPC 聊天 ==========
+// ========== 生成 NPC 聊天（手机弹窗排查版） ==========
 function generatePhoneNPCChat(npcName, contactId, callback) {
-    var contact = getContactById(contactId);
+    var contact = null;
+    try {
+        contact = typeof getContactById === 'function' ? getContactById(contactId) : null;
+    } catch(e) {}
+    
     var contactName = contact ? contact.name : '角色';
     var systemPrompt = typeof buildSystemPrompt === 'function' ? buildSystemPrompt(contactId) : '';
 
-    var prompt = '你是' + contactName + '。以下是你（' + contactName + '）和' + npcName + '的聊天记录。\n'
-        + '注意：你叫' + contactName + '，对方叫' + npcName + '，你们是完全不同的两个人。\n'
-        + '请生成你们的最近聊天记录，每条一行，轮流发言，你（' + contactName + '）先说话，一共10-16条。\n'
-        + '内容：日常闲聊，分享生活琐事。每条不超过30字。';
+    var prompt = '你是' + contactName + '。请生成你和' + npcName + '的最近聊天记录。\n'
+        + '格式：每条一行，轮流发言，一共10-16条。\n'
+        + '内容要求：自然随意，日常闲聊，分享生活琐事。\n'
+        + '每条消息不超过30字。';
 
-    if (typeof callChatAPI === 'function') {
-        callChatAPI([
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: prompt }
-        ]).then(function(reply) {
-            var clean = reply.replace(/\{[^}]*\}/g, '').trim();
-            callback(clean);
-        }).catch(function() {
-            callback('');
-        });
-    } else {
+    if (typeof callChatAPI !== 'function') {
+        alert("【排查】找不到 callChatAPI 函数！");
         callback('');
+        return;
     }
+
+    callChatAPI([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: prompt }
+    ]).then(function(reply) {
+        if (!reply) { alert("【排查】NPC聊天 API 返回空数据"); callback(''); return; }
+        var replyText = typeof reply === 'string' ? reply : (reply.content || reply.text || '');
+        var clean = replyText.replace(/\{[^}]*\}/g, '').trim();
+        callback(clean);
+    }).catch(function(err) {
+        alert("【排查】NPC聊天 API 请求失败：" + (err && err.message ? err.message : JSON.stringify(err)));
+        callback('');
+    });
 }
 
-// ========== 生成应用内容 ==========
+// ========== 生成应用内容（手机弹窗排查版） ==========
 function generatePhoneAppContent(app) {
-    var contact = getContactById(phoneContactId);
-    if (!contact) return;
+    var contact = null;
+    try {
+        contact = typeof getContactById === 'function' ? getContactById(phoneContactId) : null;
+    } catch(e) { 
+        alert("【排查】获取角色失败：" + e.message); 
+    }
+    
+    if (!contact) {
+        alert("【排查】找不到角色！当前角色 ID：" + phoneContactId);
+        return;
+    }
     var contactName = contact.name;
 
     showPhoneLoading();
@@ -381,26 +396,48 @@ function generatePhoneAppContent(app) {
             + '聊天记录：\n' + chatHistory;
     }
 
-    if (typeof callChatAPI === 'function') {
-        callChatAPI([
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: prompt }
-        ]).then(function(reply) {
-            hidePhoneLoading();
-            var clean = reply.replace(/\{[^}]*\}/g, '').trim();
-            if (!clean) { showToast('生成失败'); return; }
-            var data = getPhoneData(phoneContactId);
-            data[app] = { content: clean, time: Date.now() };
-            savePhoneData(phoneContactId, data);
-            renderPhoneAppContent(app, data[app]);
-        }).catch(function() {
-            hidePhoneLoading();
-            showToast('生成失败');
-        });
-    } else {
+    if (typeof callChatAPI !== 'function') {
         hidePhoneLoading();
-        showToast('API未配置');
+        alert("【排查】找不到 callChatAPI 函数！");
+        return;
     }
+
+    callChatAPI([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: prompt }
+    ]).then(function(reply) {
+        hidePhoneLoading();
+
+        if (!reply) {
+            alert("【排查】API 返回空数据！");
+            return;
+        }
+
+        var replyText = '';
+        if (typeof reply === 'string') {
+            replyText = reply;
+        } else if (reply && reply.content) {
+            replyText = reply.content;
+        } else if (reply && reply.text) {
+            replyText = reply.text;
+        } else {
+            replyText = JSON.stringify(reply);
+        }
+
+        var clean = replyText.replace(/\{[^}]*\}/g, '').trim();
+        if (!clean) { 
+            alert("【排查】过滤后内容为空。原始返回：" + replyText);
+            return; 
+        }
+        
+        var data = getPhoneData(phoneContactId);
+        data[app] = { content: clean, time: Date.now() };
+        savePhoneData(phoneContactId, data);
+        renderPhoneAppContent(app, data[app]);
+    }).catch(function(err) {
+        hidePhoneLoading();
+        alert("【排查】API 请求失败：" + (err && err.message ? err.message : JSON.stringify(err)));
+    });
 }
 
 // ========== 渲染应用内容 ==========
@@ -462,10 +499,9 @@ function showPhoneLoading() {
     phoneLoadingEl.className = 'phone-loading';
     phoneLoadingEl.innerHTML = '<div class="phone-loading-spinner"></div><div>正在偷看...</div>';
     appWindow.appendChild(phoneLoadingEl);
-    // 15秒超时自动关闭
     phoneLoadingTimer = setTimeout(function() {
         hidePhoneLoading();
-        showToast('请求超时，请重试');
+        alert("请求超时，请检查网络或重试");
     }, 15000);
 }
 
