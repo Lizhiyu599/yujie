@@ -1,7 +1,5 @@
 /**
- * 玉界 - 论坛软件（推特式布局）
- * 首页 / 搜索 / 通知 / 私信 四个底部标签
- * AI 生成帖子，评论互通用，数据与聊天软件互通
+ * 玉界 - 论坛软件（像素级 Twitter/X 极简风）
  */
 
 // ========== 帖子数据存储 ==========
@@ -47,43 +45,34 @@ function markAllNotificationsRead() {
     if (changed) saveForumNotifications(list);
 }
 
-// ========== 私信数据存储 ==========
-function getForumDMList() {
-    var raw = localStorage.getItem('forum_dm_list');
-    return raw ? JSON.parse(raw) : [];
-}
-function saveForumDMList(list) {
-    localStorage.setItem('forum_dm_list', JSON.stringify(list));
-}
-function getForumDMMessages(contactId) {
-    var raw = localStorage.getItem('forum_dm_' + contactId);
-    return raw ? JSON.parse(raw) : [];
-}
-function saveForumDMMessages(contactId, msgs) {
-    localStorage.setItem('forum_dm_' + contactId, JSON.stringify(msgs));
-}
-
-// ========== NPC 池 ==========
-function getNPCs() {
-    var raw = localStorage.getItem('qianban_data');
-    if (!raw) return [];
-    var all = JSON.parse(raw);
-    var activeMaskId = localStorage.getItem('active_mask_id') || '';
-    var data = all[activeMaskId] || { npcs: [] };
-    return data.npcs || [];
-}
-function getRandomNPC() {
-    var npcs = getNPCs();
-    if (npcs.length === 0) return { name: '路人甲', avatar: '路', gender: '未知' };
-    return npcs[Math.floor(Math.random() * npcs.length)];
-}
-
-// ========== 当前状态 ==========
-var forumCurrentTab = 'home'; // home | search | notifications | messages
+// ========== 状态变量 ==========
+var forumCurrentTab = 'home'; // home | search | grok | notifications | messages
+var forumHomeSubTab = 'recommend'; // recommend (为你推荐) | following (正在关注)
 var forumCurrentPostId = null;
 var forumCurrentDMContactId = null;
 var forumSearchQuery = '';
 var forumIsGenerating = false;
+
+// ========== SVG 矢量图标库 ==========
+var SVGIcons = {
+    xLogo: '<svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
+    more: '<svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>',
+    plus: '<svg viewBox="0 0 24 24"><path d="M11 11V4h2v7h7v2h-7v7h-2v-7H4v-2h7z"/></svg>',
+    
+    // 底部导航
+    home: '<svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 0 1 2.34 5.66v4.74a1 1 0 0 1-1 1h-4v-5h-2v5H6a1 1 0 0 1-1-1v-4.74c0-2.12.84-4.15 2.34-5.66L12 2.69zm0-1.41l-6.36 6.36a10 10 0 0 0-2.93 7.07v4.79a3 3 0 0 0 3 3h4a1 1 0 0 0 1-1v-4h2v4a1 1 0 0 0 1 1h4a3 3 0 0 0 3-3v-4.79a10 10 0 0 0-2.93-7.07L12 1.28z"/></svg>',
+    search: '<svg viewBox="0 0 24 24"><path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z"/></svg>',
+    grok: '<svg viewBox="0 0 24 24"><path d="M18.3 5.71a1 1 0 0 0-1.41 0L5.71 16.88a1 1 0 1 0 1.41 1.41L18.3 7.12a1 1 0 0 0 0-1.41z M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/></svg>',
+    bell: '<svg viewBox="0 0 24 24"><path d="M21.163 17.16L20 15.997V11c0-3.71-2.483-6.85-5.836-7.73A2.996 2.996 0 0 0 12 1a2.996 2.996 0 0 0-2.164 2.27C6.483 4.15 4 7.29 4 11v4.997l-1.163 1.163a1 1 0 0 0-.293.707v1a1 1 0 0 0 1 1h16.912a1 1 0 0 0 1-1v-1a1 1 0 0 0-.293-.707zM12 21a3 3 0 0 0 3-3H9a3 3 0 0 0 3 3z"/></svg>',
+    envelope: '<svg viewBox="0 0 24 24"><path d="M1.998 5.5c0-1.381 1.119-2.5 2.5-2.5h15c1.381 0 2.5 1.119 2.5 2.5v13c0 1.381-1.119 2.5-2.5 2.5h-15c-1.381 0-2.5-1.119-2.5-2.5v-13zm2.5-.5c-.276 0-.5.224-.5.5v1.2l7.562 5.671c.261.196.615.196.876 0L20 6.7v-1.2c0-.276-.224-.5-.5-.5h-15zm17.002 3.73l-7.234 5.424a2.492 2.492 0 0 1-2.997 0L4 8.73v9.77c0 .276.224.5.5.5h15c.276 0 .5-.224.5-.5V8.73z"/></svg>',
+
+    // 帖子互动操作
+    commentAction: '<svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.34 3.41-7.84 7.62-7.84h5.26c4.21 0 7.62 3.5 7.62 7.84 0 4.33-3.41 7.83-7.62 7.83H9.37l-4.52 4.1c-.28.26-.7.3-1.02.1-.32-.2-.48-.56-.39-.93l1.11-4.22c-1.72-1.32-2.8-3.32-2.8-5.52v-.08z"/></svg>',
+    retweetAction: '<svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.43 4.42-1.41 1.42L5.5 7.69v8.31C5.5 17.66 6.84 19 8.5 19H16v2H8.5C5.46 21 3 18.54 3 15.5V7.69L.98 9.72.57 9.3 4.5 3.88zM15.07 14.28l1.41-1.42 2.02 2.03V6.58C18.5 4.9 17.16 3.5 15.5 3.5H8v-2h7.5C18.54 1.5 21 3.96 21 7v7.89l2.02-2.03.41.42-3.93 5.42-4.43-4.42z"/></svg>',
+    likeAction: '<svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.691-3.697 2.001C11.982 6.191 10.525 5.44 9.303 5.5c-1.892.09-3.303 1.83-3.303 3.8 0 1.5 1.1 3.5 4.5 6.6l1.5 1.4 1.5-1.4c3.4-3.1 4.5-5.1 4.5-6.6 0-1.97-1.411-3.71-3.303-3.8zM12 20.3l-.7-.6C7.2 15.7 5 13.1 5 9.3c0-3 2.1-5.7 5.3-5.8 1.8-.1 3.5.9 4.7 2.4 1.2-1.5 2.9-2.5 4.7-2.4 3.2.1 5.3 2.8 5.3 5.8 0 3.8-2.2 6.4-6.3 10.4l-.7.6z"/></svg>',
+    viewsAction: '<svg viewBox="0 0 24 24"><path d="M8.75 21V3h2v18h-2zM3 21H1v-7h2v7zm14.25 0h2V9h-2v12z M12.5 21V11h2v10h-2z"/></svg>',
+    shareAction: '<svg viewBox="0 0 24 24"><path d="M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41L7.71 9.71 6.3 8.29 12 2.59zM4 15h2v4c0 .55.45 1 1 1h10c.55 0 1-.45 1-1v-4h2v4c0 1.66-1.34 3-3 3H7c-1.66 0-3-1.34-3-3v-4z"/></svg>'
+};
 
 // ========== 打开/关闭论坛 ==========
 function openForum() {
@@ -91,10 +80,11 @@ function openForum() {
     if (!appWindow) {
         appWindow = document.createElement('div');
         appWindow.id = 'forumAppWindow';
-        appWindow.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:#fff;z-index:200;display:none;flex-direction:column;';
+        appWindow.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:#ffffff;z-index:200;display:none;flex-direction:column;';
         document.getElementById('desktop').appendChild(appWindow);
     }
     forumCurrentTab = 'home';
+    forumHomeSubTab = 'recommend';
     forumCurrentPostId = null;
     forumCurrentDMContactId = null;
     forumSearchQuery = '';
@@ -106,7 +96,7 @@ function closeForum() {
     if (appWindow) appWindow.style.display = 'none';
 }
 
-// ========== 顶部用户头像 ==========
+// ========== 顶部用户头像获取 ==========
 function getForumUserAvatar() {
     var masks = typeof getMasks === 'function' ? getMasks() : [];
     var activeId = localStorage.getItem('active_mask_id') || '';
@@ -124,7 +114,6 @@ function renderForumApp() {
     var appWindow = document.getElementById('forumAppWindow');
     if (!appWindow) return;
 
-    // 私信会话中：整页替换，隐藏底部导航
     if (forumCurrentTab === 'messages' && forumCurrentDMContactId) {
         appWindow.innerHTML = renderForumDMThreadFull(forumCurrentDMContactId);
         setTimeout(function() {
@@ -137,6 +126,7 @@ function renderForumApp() {
     var bodyHTML = '';
     if (forumCurrentTab === 'home') bodyHTML = renderForumHomeBody();
     else if (forumCurrentTab === 'search') bodyHTML = renderForumSearchBody();
+    else if (forumCurrentTab === 'grok') bodyHTML = renderForumGrokBody();
     else if (forumCurrentTab === 'notifications') bodyHTML = renderForumNotificationsBody();
     else if (forumCurrentTab === 'messages') bodyHTML = renderForumMessagesBody();
 
@@ -144,64 +134,61 @@ function renderForumApp() {
         + '<div class="forum-app">'
         + renderForumTopBar()
         + '<div class="forum-body" id="forumBody">' + bodyHTML + '</div>'
-        + (forumCurrentTab === 'home' ? '<div class="forum-fab" onclick="openForumCompose()">+</div>' : '')
+        + (forumCurrentTab === 'home' ? '<div class="forum-fab" onclick="openForumCompose()">' + SVGIcons.plus + '</div>' : '')
         + renderForumBottomBar()
         + '</div>';
 
     if (forumCurrentTab === 'notifications') markAllNotificationsRead();
-    if (forumCurrentTab === 'search') {
-        setTimeout(function() {
-            var input = document.getElementById('forumSearchInput');
-            if (input) { input.focus(); input.value = forumSearchQuery; }
-        }, 100);
-    }
 }
 
-// ========== 顶部栏 ==========
+// ========== 顶部栏 (支持双Tab切换) ==========
 function renderForumTopBar() {
     var avatar = getForumUserAvatar();
-    var avatarHTML = '<div class="forum-user-avatar" onclick="forumOpenProfile()" style="' + (avatar ? 'background-image:url(' + avatar + ');background-size:cover;background-position:center;' : '') + '">' + (avatar ? '' : '我') + '</div>';
+    var avatarStyle = avatar ? 'background-image:url(' + avatar + ');' : '';
+    
+    var topHTML = '<div class="forum-top-bar">'
+        + '<div class="forum-user-avatar" onclick="forumOpenProfile()" style="' + avatarStyle + '"></div>'
+        + '<div class="forum-top-logo">' + SVGIcons.xLogo + '</div>'
+        + '<div class="forum-top-right-actions">'
+        + '<button class="forum-upgrade-btn" onclick="refreshForum()">刷新</button>'
+        + '<div class="forum-top-more-btn">' + SVGIcons.more + '</div>'
+        + '</div>'
+        + '</div>';
 
-    if (forumCurrentTab === 'search') {
-        return '<div class="forum-top-bar forum-top-bar-search">'
-            + avatarHTML
-            + '<input type="text" class="forum-search-input" id="forumSearchInput" placeholder="搜索帖子" oninput="forumDoSearch(this.value)">'
+    if (forumCurrentTab === 'home') {
+        var recActive = forumHomeSubTab === 'recommend' ? ' active' : '';
+        var folActive = forumHomeSubTab === 'following' ? ' active' : '';
+        topHTML += '<div class="forum-tabs-nav">'
+            + '<div class="forum-tab-item' + recActive + '" onclick="switchHomeSubTab(\'recommend\')">为你推荐</div>'
+            + '<div class="forum-tab-item' + folActive + '" onclick="switchHomeSubTab(\'following\')">正在关注</div>'
             + '</div>';
     }
 
-    var titles = { home: '首页', notifications: '通知', messages: '私信' };
-    var rightHTML = '';
-    if (forumCurrentTab === 'home') {
-        rightHTML = '<div class="forum-top-icon" onclick="refreshForum()">↻</div>';
-    } else if (forumCurrentTab === 'notifications') {
-        rightHTML = '<div class="forum-top-icon" onclick="showToast(\'设置功能即将上线\')">⚙</div>';
-    } else if (forumCurrentTab === 'messages') {
-        rightHTML = '<div class="forum-top-pill" onclick="showToast(\'即将上线\')">全部 ⌄</div>';
-    }
-
-    return '<div class="forum-top-bar">'
-        + avatarHTML
-        + '<div class="forum-top-title">' + titles[forumCurrentTab] + '</div>'
-        + rightHTML
-        + '</div>';
+    return '<div class="forum-top-bar-container">' + topHTML + '</div>';
 }
 
-// ========== 底部标签栏（4个） ==========
+function switchHomeSubTab(sub) {
+    forumHomeSubTab = sub;
+    renderForumApp();
+}
+
+// ========== 底部导航栏 ==========
 function renderForumBottomBar() {
     var tabs = [
-        { key: 'home', icon: '🏠' },
-        { key: 'search', icon: '🔍' },
-        { key: 'notifications', icon: '🔔', badge: true },
-        { key: 'messages', icon: '💌' }
+        { key: 'home', icon: SVGIcons.home },
+        { key: 'search', icon: SVGIcons.search },
+        { key: 'grok', icon: SVGIcons.grok },
+        { key: 'notifications', icon: SVGIcons.bell, badge: true },
+        { key: 'messages', icon: SVGIcons.envelope }
     ];
     var html = '<div class="forum-bottom-bar">';
     tabs.forEach(function(t) {
-        var active = forumCurrentTab === t.key;
+        var active = forumCurrentTab === t.key ? ' active' : '';
         var badgeHTML = '';
         if (t.badge && getUnreadNotificationCount() > 0) {
             badgeHTML = '<span class="forum-tab-badge"></span>';
         }
-        html += '<div class="forum-bottom-tab' + (active ? ' active' : '') + '" onclick="switchForumTab(\'' + t.key + '\')">'
+        html += '<div class="forum-bottom-tab' + active + '" onclick="switchForumTab(\'' + t.key + '\')">'
             + '<span class="forum-bottom-icon">' + t.icon + badgeHTML + '</span>'
             + '</div>';
     });
@@ -216,13 +203,13 @@ function switchForumTab(tab) {
     renderForumApp();
 }
 
-// ========== 帖子列表（首页/搜索共用） ==========
+// ========== 渲染推特式列表卡片 ==========
 function renderForumPostList(posts) {
     if (!posts || posts.length === 0) {
         return '<div class="forum-empty">'
-            + '<div class="forum-empty-icon">◈</div>'
-            + '<div class="forum-empty-text">暂无帖子</div>'
-            + '<div class="forum-empty-hint">点击右上角 ↻ 刷新，看看大家在聊什么</div>'
+            + '<div class="forum-empty-icon">✧</div>'
+            + '<div class="forum-empty-text">这里还空空如也</div>'
+            + '<div class="forum-empty-hint">点击右上角刷新，接收新鲜事物吧</div>'
             + '</div>';
     }
     var comments = getForumComments();
@@ -230,22 +217,31 @@ function renderForumPostList(posts) {
     posts.forEach(function(post) {
         var commentCount = (comments[post.id] || []).length;
         var timeStr = getForumRelativeTime(post.time);
-        html += ''
-            + '<div class="forum-post" onclick="openForumPost(\'' + post.id + '\')">'
-            + '<div class="forum-post-avatar" style="' + (post.avatarData ? 'background-image:url(' + post.avatarData + ');background-size:cover;background-position:center;' : '') + '">' + (post.avatarData ? '' : post.avatar) + '</div>'
+        var avatarStyle = post.avatarData ? 'background-image:url(' + post.avatarData + ');' : '';
+
+        html += '<div class="forum-post" onclick="openForumPost(\'' + post.id + '\')">'
+            + '<div class="forum-post-avatar" style="' + avatarStyle + '"></div>'
             + '<div class="forum-post-body">'
             + '<div class="forum-post-header">'
+            + '<div class="forum-post-meta">'
             + '<span class="forum-post-name">' + post.userName + '</span>'
             + '<span class="forum-post-handle">@' + post.userHandle + '</span>'
-            + '<span class="forum-post-time">· ' + timeStr + '</span>'
+            + '<span class="forum-post-dot">·</span>'
+            + '<span class="forum-post-time">' + timeStr + '</span>'
+            + '</div>'
+            + '<div class="forum-post-more">' + SVGIcons.more + '</div>'
             + '</div>'
             + '<div class="forum-post-text">' + post.content + '</div>'
+            
+            // X 标准的轻量灰色矢量操作图标组
             + '<div class="forum-post-actions">'
-            + '<span>💬 ' + commentCount + '</span>'
-            + '<span>↻</span>'
-            + '<span>♡ ' + (post.likes || 0) + '</span>'
-            + '<span>↗</span>'
+            + '<button class="forum-action-btn comment">' + SVGIcons.commentAction + '<span>' + commentCount + '</span></button>'
+            + '<button class="forum-action-btn retweet">' + SVGIcons.retweetAction + '<span>' + Math.floor(post.likes / 3) + '</span></button>'
+            + '<button class="forum-action-btn like">' + SVGIcons.likeAction + '<span>' + (post.likes || 0) + '</span></button>'
+            + '<button class="forum-action-btn views">' + SVGIcons.viewsAction + '<span>' + ((post.likes || 1) * 7 + 12) + '</span></button>'
+            + '<button class="forum-action-btn share">' + SVGIcons.shareAction + '</button>'
             + '</div>'
+
             + '</div>'
             + '</div>';
     });
@@ -253,54 +249,45 @@ function renderForumPostList(posts) {
 }
 
 function renderForumHomeBody() {
-    return renderForumPostList(getForumPosts());
-}
-
-// ========== 搜索 ==========
-function renderForumSearchBody() {
-    if (!forumSearchQuery.trim()) {
-        return '<div class="forum-empty">'
-            + '<div class="forum-empty-icon">🔍</div>'
-            + '<div class="forum-empty-text">搜索帖子</div>'
-            + '<div class="forum-empty-hint">输入关键词查找已发布的内容</div>'
-            + '</div>';
-    }
     var posts = getForumPosts();
-    var q = forumSearchQuery.toLowerCase();
-    var matched = posts.filter(function(p) {
-        return (p.content && p.content.toLowerCase().indexOf(q) >= 0) || (p.userName && p.userName.toLowerCase().indexOf(q) >= 0);
-    });
-    if (matched.length === 0) {
-        return '<div class="forum-empty">'
-            + '<div class="forum-empty-icon">🔍</div>'
-            + '<div class="forum-empty-text">没有找到相关内容</div>'
-            + '</div>';
+    if (forumHomeSubTab === 'following') {
+        posts = posts.filter(function(p) { return !p.isUser; });
     }
-    return renderForumPostList(matched);
+    return renderForumPostList(posts);
 }
 
-function forumDoSearch(val) {
-    forumSearchQuery = val;
-    var body = document.getElementById('forumBody');
-    if (body) body.innerHTML = renderForumSearchBody();
+// ========== 搜索、Grok 及通知列表 ==========
+function renderForumSearchBody() {
+    return '<div class="forum-empty">'
+        + '<div class="forum-empty-icon">🔍</div>'
+        + '<div class="forum-empty-text">搜索功能</div>'
+        + '<div class="forum-empty-hint">查找推文、话题以及用户</div>'
+        + '</div>';
 }
 
-// ========== 通知 ==========
+function renderForumGrokBody() {
+    return '<div class="forum-empty">'
+        + '<div class="forum-empty-icon">⚡</div>'
+        + '<div class="forum-empty-text">Grok 助手已就绪</div>'
+        + '<div class="forum-empty-hint">与 AI 开启深度话题探索</div>'
+        + '</div>';
+}
+
 function renderForumNotificationsBody() {
     var list = getForumNotifications();
     if (list.length === 0) {
         return '<div class="forum-empty">'
             + '<div class="forum-empty-icon">🔔</div>'
             + '<div class="forum-empty-text">暂无通知</div>'
-            + '<div class="forum-empty-hint">角色点赞或评论你的帖子时会显示在这里</div>'
+            + '<div class="forum-empty-hint">当有人点赞或评论你的帖子时，你将在这里看到</div>'
             + '</div>';
     }
     var html = '';
     list.forEach(function(n) {
         var actionText = n.type === 'like' ? '赞了你的帖子' : '评论了你的帖子';
-        var avatarStyle = n.authorAvatarData ? 'background-image:url(' + n.authorAvatarData + ');background-size:cover;background-position:center;' : '';
+        var avatarStyle = n.authorAvatarData ? 'background-image:url(' + n.authorAvatarData + ');' : '';
         html += '<div class="forum-notif-item' + (n.read ? '' : ' unread') + '" onclick="openForumPost(\'' + n.postId + '\')">'
-            + '<div class="forum-notif-avatar" style="' + avatarStyle + '">' + (n.authorAvatarData ? '' : n.authorAvatar) + '</div>'
+            + '<div class="forum-notif-avatar" style="' + avatarStyle + '"></div>'
             + '<div class="forum-notif-body">'
             + '<div class="forum-notif-text"><b>' + n.authorName + '</b> ' + actionText + '</div>'
             + (n.type === 'comment' && n.commentText ? '<div class="forum-notif-comment">"' + n.commentText + '"</div>' : '')
@@ -312,386 +299,15 @@ function renderForumNotificationsBody() {
     return html;
 }
 
-// 论坛帖子被角色点赞/评论的随机互动
-function maybeInteractWithUserPost() {
-    var posts = getForumPosts();
-    var userPosts = posts.filter(function(p) { return p.isUser; });
-    if (userPosts.length === 0) return;
-    if (Math.random() > 0.5) return;
-
-    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
-    if (contacts.length === 0) return;
-    var actor = contacts[Math.floor(Math.random() * contacts.length)];
-    var targetPost = userPosts[Math.floor(Math.random() * userPosts.length)];
-
-    if (Math.random() < 0.5) {
-        targetPost.likes = (targetPost.likes || 0) + 1;
-        saveForumPosts(posts);
-        addForumNotification({
-            type: 'like',
-            authorName: actor.name,
-            authorAvatar: actor.avatar,
-            authorAvatarData: actor.avatarData || '',
-            postId: targetPost.id,
-            postContent: targetPost.content
-        });
-        var body = document.getElementById('forumBody');
-        if (body && forumCurrentTab === 'home') renderForumApp();
-    } else {
-        var systemPrompt = typeof buildSystemPrompt === 'function' ? buildSystemPrompt(actor.id) : '';
-        var prompt = '用户在论坛发了一条帖子：「' + targetPost.content + '」。请以你的口吻给这条帖子写一句简短评论，1句话，自然随意，不超过30字。只输出评论内容。';
-        if (typeof callChatAPI === 'function') {
-            callChatAPI([
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: prompt }
-            ]).then(function(reply) {
-                var clean = reply.replace(/\{[^}]*\}/g, '').trim();
-                if (!clean) return;
-                var comments = getForumComments();
-                if (!comments[targetPost.id]) comments[targetPost.id] = [];
-                comments[targetPost.id].push({
-                    id: 'c_' + Date.now(),
-                    userName: actor.name,
-                    userHandle: actor.name,
-                    avatar: actor.avatar,
-                    avatarData: actor.avatarData || '',
-                    content: clean,
-                    time: Date.now()
-                });
-                saveForumComments(comments);
-                addForumNotification({
-                    type: 'comment',
-                    authorName: actor.name,
-                    authorAvatar: actor.avatar,
-                    authorAvatarData: actor.avatarData || '',
-                    postId: targetPost.id,
-                    postContent: targetPost.content,
-                    commentText: clean
-                });
-                if (forumCurrentTab === 'home') renderForumApp();
-            }).catch(function() {});
-        }
-    }
-}
-
-// ========== 私信（论坛内独立系统） ==========
 function renderForumMessagesBody() {
-    var dmList = getForumDMList();
-    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
-
-    var html = '<div class="forum-dm-start-row" onclick="forumOpenNewDM()"><span>+ 新私信</span></div>';
-
-    if (dmList.length === 0) {
-        html += '<div class="forum-empty">'
-            + '<div class="forum-empty-icon">💌</div>'
-            + '<div class="forum-empty-text">暂无私信</div>'
-            + '<div class="forum-empty-hint">点击上方开始与角色私信</div>'
-            + '</div>';
-        return html;
-    }
-    dmList.forEach(function(contactId) {
-        var contact = contacts.find(function(c) { return c.id === contactId; });
-        if (!contact) return;
-        var msgs = getForumDMMessages(contactId);
-        var last = msgs.length > 0 ? msgs[msgs.length - 1] : null;
-        var avatarStyle = contact.avatarData ? 'background-image:url(' + contact.avatarData + ');background-size:cover;background-position:center;' : '';
-        html += '<div class="forum-dm-item" onclick="openForumDM(\'' + contactId + '\')">'
-            + '<div class="forum-dm-avatar" style="' + avatarStyle + '">' + (contact.avatarData ? '' : contact.avatar) + '</div>'
-            + '<div class="forum-dm-info">'
-            + '<div class="forum-dm-name">' + contact.name + '</div>'
-            + '<div class="forum-dm-last">' + (last ? last.text.substring(0, 30) : '开始对话吧') + '</div>'
-            + '</div>'
-            + (last ? '<div class="forum-dm-time">' + getForumRelativeTime(last.time) + '</div>' : '')
-            + '</div>';
-    });
-    return html;
-}
-
-function forumOpenNewDM() {
-    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
-    if (contacts.length === 0) { showToast('暂无可私信的角色'); return; }
-    var overlay = document.createElement('div');
-    overlay.className = 'sheet-mask show';
-    overlay.id = 'forumDMPickerOverlay';
-    var listHTML = '';
-    contacts.forEach(function(c) {
-        var avatarStyle = c.avatarData ? 'background-image:url(' + c.avatarData + ');background-size:cover;background-position:center;' : '';
-        listHTML += '<div class="music-menu-item" onclick="forumStartDM(\'' + c.id + '\')">'
-            + '<div class="forum-dm-avatar small" style="' + avatarStyle + '">' + (c.avatarData ? '' : c.avatar) + '</div>'
-            + '<span>' + c.name + '</span></div>';
-    });
-    overlay.innerHTML = '<div class="half-sheet" onclick="event.stopPropagation();">'
-        + '<div class="sheet-handle"><div class="handle-bar"></div></div>'
-        + '<div class="sheet-scroll"><div class="settings-section-title">发起私信</div>' + listHTML + '</div></div>';
-    document.body.appendChild(overlay);
-    overlay.onclick = function(e) { if (e.target === overlay) { var o = document.getElementById('forumDMPickerOverlay'); if (o) o.remove(); } };
-    var handle = overlay.querySelector('.sheet-handle');
-    var startY = 0;
-    handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
-    handle.addEventListener('touchmove', function(e) { if (e.touches[0].clientY - startY > 60) { var o = document.getElementById('forumDMPickerOverlay'); if (o) o.remove(); } });
-}
-
-function forumStartDM(contactId) {
-    var o = document.getElementById('forumDMPickerOverlay');
-    if (o) o.remove();
-    var list = getForumDMList();
-    if (list.indexOf(contactId) < 0) { list.unshift(contactId); saveForumDMList(list); }
-    openForumDM(contactId);
-}
-
-function openForumDM(contactId) {
-    forumCurrentDMContactId = contactId;
-    renderForumApp();
-}
-
-function forumCloseDM() {
-    forumCurrentDMContactId = null;
-    renderForumApp();
-}
-
-function renderForumDMThreadFull(contactId) {
-    var contact = window.ChatConfig && window.ChatConfig.contacts
-        ? window.ChatConfig.contacts.find(function(c) { return c.id === contactId; })
-        : null;
-    if (!contact) { forumCurrentDMContactId = null; return renderForumMessagesBody(); }
-
-    var msgs = getForumDMMessages(contactId);
-    var msgsHTML = '';
-    msgs.forEach(function(m) {
-        msgsHTML += '<div class="forum-dm-bubble-row ' + m.role + '">'
-            + '<div class="forum-dm-bubble">' + m.text + '</div>'
-            + '</div>';
-    });
-
-    return '<div class="forum-app">'
-        + '<div class="forum-top-bar">'
-        + '<div class="forum-back-btn" onclick="forumCloseDM()">‹</div>'
-        + '<div class="forum-top-title">' + contact.name + '</div>'
-        + '<div class="forum-top-spacer"></div>'
-        + '</div>'
-        + '<div class="forum-dm-body" id="forumDMBody">' + msgsHTML + '</div>'
-        + '<div class="forum-dm-input-bar">'
-        + '<input type="text" class="forum-dm-input" id="forumDMInput" placeholder="发送私信..." onkeypress="if(event.key===\'Enter\') sendForumDM(\'' + contactId + '\')">'
-        + '<button class="forum-dm-send-btn" onclick="sendForumDM(\'' + contactId + '\')">发送</button>'
-        + '</div>'
+    return '<div class="forum-empty">'
+        + '<div class="forum-empty-icon">✉️</div>'
+        + '<div class="forum-empty-text">私信列表</div>'
+        + '<div class="forum-empty-hint">与你关注的创作者或AI伙伴畅聊</div>'
         + '</div>';
 }
 
-function sendForumDM(contactId) {
-    var input = document.getElementById('forumDMInput');
-    if (!input || !input.value.trim()) return;
-    var text = input.value.trim();
-    input.value = '';
-
-    var msgs = getForumDMMessages(contactId);
-    msgs.push({ role: 'user', text: text, time: Date.now() });
-    saveForumDMMessages(contactId, msgs);
-    renderForumApp();
-
-    var contact = window.ChatConfig.contacts.find(function(c) { return c.id === contactId; });
-    if (!contact) return;
-
-    var systemPrompt = typeof buildSystemPrompt === 'function' ? buildSystemPrompt(contactId) : '';
-    systemPrompt += '\n\n【私信模式】这是论坛平台上的私信对话，不是主聊天软件。直接说话，简短自然，不要旁白括号，不要JSON状态信息。';
-
-    var history = msgs.map(function(m) { return { role: m.role === 'user' ? 'user' : 'assistant', content: m.text }; });
-
-    if (typeof callChatAPI === 'function') {
-        callChatAPI([{ role: 'system', content: systemPrompt }].concat(history)).then(function(reply) {
-            var clean = reply.replace(/\{[^}]*\}/g, '').replace(/[\(\（][^\)\）]*[\)\）]/g, '').trim();
-            if (!clean) return;
-            var msgs2 = getForumDMMessages(contactId);
-            msgs2.push({ role: 'assistant', text: clean, time: Date.now() });
-            saveForumDMMessages(contactId, msgs2);
-            if (forumCurrentDMContactId === contactId) renderForumApp();
-        }).catch(function() {});
-    }
-}
-
-// ========== 打开帖子详情 ==========
-function openForumPost(postId) {
-    forumCurrentPostId = postId;
-    var posts = getForumPosts();
-    var post = posts.find(function(p) { return p.id === postId; });
-    if (!post) return;
-
-    var comments = getForumComments();
-    var postComments = comments[postId] || [];
-
-    var commentsHTML = '';
-    postComments.forEach(function(c) {
-        commentsHTML += ''
-            + '<div class="forum-comment">'
-            + '<div class="forum-comment-avatar" style="' + (c.avatarData ? 'background-image:url(' + c.avatarData + ');background-size:cover;background-position:center;' : '') + '">' + (c.avatarData ? '' : c.avatar) + '</div>'
-            + '<div class="forum-comment-body">'
-            + '<div class="forum-comment-header">'
-            + '<span class="forum-comment-name">' + c.userName + '</span>'
-            + '<span class="forum-comment-handle">@' + c.userHandle + '</span>'
-            + '<span class="forum-comment-time">· ' + getForumRelativeTime(c.time) + '</span>'
-            + '</div>'
-            + '<div class="forum-comment-text">' + c.content + '</div>'
-            + '</div>'
-            + '</div>';
-    });
-
-    var appWindow = document.getElementById('forumAppWindow');
-    if (!appWindow) return;
-
-    appWindow.innerHTML = ''
-        + '<div class="forum-app">'
-        + '<div class="forum-top-bar">'
-        + '<div class="forum-back-btn" onclick="renderForumApp()">‹</div>'
-        + '<div class="forum-top-title">帖子</div>'
-        + '<div class="forum-top-spacer"></div>'
-        + '</div>'
-        + '<div class="forum-body">'
-        + '<div class="forum-post detail">'
-        + '<div class="forum-post-avatar" style="' + (post.avatarData ? 'background-image:url(' + post.avatarData + ');background-size:cover;background-position:center;' : '') + '">' + (post.avatarData ? '' : post.avatar) + '</div>'
-        + '<div class="forum-post-body">'
-        + '<div class="forum-post-header">'
-        + '<span class="forum-post-name">' + post.userName + '</span>'
-        + '<span class="forum-post-handle">@' + post.userHandle + '</span>'
-        + '</div>'
-        + '<div class="forum-post-text detail-text">' + post.content + '</div>'
-        + '<div class="forum-post-time-detail">' + post.timeStr + '</div>'
-        + '<div class="forum-post-actions-detail">'
-        + '<span>💬 ' + postComments.length + '</span>'
-        + '<span>♡ ' + (post.likes || 0) + '</span>'
-        + '</div>'
-        + '</div>'
-        + '</div>'
-        + '<div class="forum-comments-section">'
-        + commentsHTML
-        + '</div>'
-        + '</div>'
-        + '<div class="forum-compose-bar">'
-        + '<input type="text" class="forum-compose-input" id="forumCommentInput" placeholder="发表评论...">'
-        + '<button class="forum-compose-btn" onclick="submitForumComment(\'' + postId + '\')">发送</button>'
-        + '</div>'
-        + '</div>';
-}
-
-// ========== 提交评论 ==========
-function submitForumComment(postId) {
-    var input = document.getElementById('forumCommentInput');
-    if (!input || !input.value.trim()) return;
-    var text = input.value.trim();
-    input.value = '';
-
-    var comments = getForumComments();
-    if (!comments[postId]) comments[postId] = [];
-
-    var masks = typeof getMasks === 'function' ? getMasks() : [];
-    var activeMaskId = localStorage.getItem('active_mask_id') || '';
-    var activeMask = null;
-    for (var i = 0; i < masks.length; i++) { if (masks[i].id === activeMaskId) { activeMask = masks[i]; break; } }
-    var userName = activeMask ? activeMask.name : '我';
-    var userAvatarData = activeMask && activeMask.avatar ? activeMask.avatar : '';
-
-    comments[postId].push({
-        id: 'c_' + Date.now(),
-        userName: userName,
-        userHandle: userName,
-        avatar: '我',
-        avatarData: userAvatarData,
-        content: text,
-        time: Date.now()
-    });
-    saveForumComments(comments);
-
-    var posts = getForumPosts();
-    var post = posts.find(function(p) { return p.id === postId; });
-    if (post && post.contactId) {
-        syncForumCommentToChat(post.contactId, post.userName, text);
-    }
-    if (post && post.contactId) {
-        autoReplyToComment(post, text);
-    }
-
-    openForumPost(postId);
-}
-
-// ========== 同步评论到聊天记录 ==========
-function syncForumCommentToChat(contactId, postAuthor, commentText) {
-    var storageKey = 'chat_history_' + contactId;
-    var saved = localStorage.getItem(storageKey) || '';
-    var now = new Date();
-    var h = now.getHours(); var m = now.getMinutes().toString().padStart(2, '0');
-    var period = h < 12 ? '上午' : '下午'; var displayH = h % 12 || 12;
-    var htmlToAdd = ''
-        + '<div class="chat-time-stamp">' + period + ' ' + displayH + ':' + m + '</div>'
-        + '<div class="bubble-row user" data-role="user">'
-        + '<div class="bubble-avatar user-avatar">我</div>'
-        + '<div class="bubble bubble-user">我在论坛评论了' + postAuthor + '的帖子：' + commentText + '</div>'
-        + '</div>';
-    localStorage.setItem(storageKey, saved + htmlToAdd);
-}
-
-// ========== AI 自动回复评论 ==========
-function autoReplyToComment(post, userComment) {
-    var contactId = post.contactId;
-    if (!contactId) return;
-
-    var contact = window.ChatConfig && window.ChatConfig.contacts
-        ? window.ChatConfig.contacts.find(function(c) { return c.id === contactId; })
-        : null;
-    if (!contact) return;
-
-    var systemPrompt = typeof buildSystemPrompt === 'function' ? buildSystemPrompt(contactId) : '';
-    var prompt = '你在论坛上发了一个帖子：「' + post.content + '」。\n'
-        + '用户评论了你的帖子：「' + userComment + '」\n'
-        + '请以你的口吻简短回复用户的评论，1-3句话，自然随意。';
-
-    if (typeof callChatAPI === 'function') {
-        callChatAPI([
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: prompt }
-        ]).then(function(reply) {
-            var clean = reply.replace(/\{[^}]*\}/g, '').trim();
-            if (!clean) return;
-            var comments = getForumComments();
-            if (!comments[post.id]) comments[post.id] = [];
-            comments[post.id].push({
-                id: 'c_' + Date.now(),
-                userName: post.userName,
-                userHandle: post.userHandle,
-                avatar: post.avatar,
-                avatarData: post.avatarData || '',
-                content: clean,
-                time: Date.now(),
-                isAutoReply: true
-            });
-            saveForumComments(comments);
-
-            addForumNotification({
-                type: 'comment',
-                authorName: post.userName,
-                authorAvatar: post.avatar,
-                authorAvatarData: post.avatarData || '',
-                postId: post.id,
-                postContent: post.content,
-                commentText: clean
-            });
-
-            var storageKey = 'chat_history_' + contactId;
-            var saved = localStorage.getItem(storageKey) || '';
-            var now = new Date();
-            var h = now.getHours(); var m = now.getMinutes().toString().padStart(2, '0');
-            var period = h < 12 ? '上午' : '下午'; var displayH = h % 12 || 12;
-            var htmlToAdd = ''
-                + '<div class="chat-time-stamp">' + period + ' ' + displayH + ':' + m + '</div>'
-                + '<div class="bubble-row assistant" data-role="assistant">'
-                + '<div class="bubble-avatar bot-avatar">' + post.avatar + '</div>'
-                + '<div class="bubble bubble-assistant">在论坛回复了评论：' + clean + '</div>'
-                + '</div>';
-            localStorage.setItem(storageKey, saved + htmlToAdd);
-
-            if (forumCurrentPostId === post.id) openForumPost(post.id);
-        }).catch(function() {});
-    }
-}
-
-// ========== 发帖 ==========
+// ========== 发布新推文 ==========
 function openForumCompose() {
     var overlay = document.createElement('div');
     overlay.className = 'forum-compose-overlay';
@@ -699,26 +315,22 @@ function openForumCompose() {
     overlay.innerHTML = ''
         + '<div class="forum-compose-panel">'
         + '<div class="forum-compose-handle" id="forumComposeHandle"></div>'
-        + '<div class="forum-compose-title">发帖</div>'
-        + '<textarea class="forum-compose-textarea" id="forumComposeInput" placeholder="分享你的想法..."></textarea>'
+        + '<div class="forum-compose-title" style="font-weight:700;">发布推文</div>'
+        + '<textarea class="forum-compose-textarea" id="forumComposeInput" placeholder="有什么新鲜事？"></textarea>'
         + '<button class="forum-compose-send" onclick="publishForumPost()">发布</button>'
         + '</div>';
     document.body.appendChild(overlay);
     overlay.onclick = function(e) { if (e.target === overlay) closeForumCompose(); };
-
-    var handle = document.getElementById('forumComposeHandle');
-    var startY = 0;
-    handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
-    handle.addEventListener('touchmove', function(e) { if (e.touches[0].clientY - startY > 40) closeForumCompose(); });
-    handle.addEventListener('click', function() { closeForumCompose(); });
 }
+
 function closeForumCompose() {
     var overlay = document.getElementById('forumComposeOverlay');
     if (overlay) overlay.remove();
 }
+
 function publishForumPost() {
     var input = document.getElementById('forumComposeInput');
-    if (!input || !input.value.trim()) { showToast('请输入内容'); return; }
+    if (!input || !input.value.trim()) return;
     var text = input.value.trim();
     closeForumCompose();
 
@@ -745,107 +357,74 @@ function publishForumPost() {
     saveForumPosts(posts);
     forumCurrentTab = 'home';
     renderForumApp();
-    showToast('帖子已发布');
 }
 
-// ========== 刷新论坛 ==========
+// ========== 刷新获取新贴 (对接 API 模拟动态生成) ==========
 function refreshForum() {
-    if (forumIsGenerating) { showToast('正在生成中…'); return; }
+    if (forumIsGenerating) return;
     forumIsGenerating = true;
+
     var toast = document.createElement('div');
     toast.className = 'global-toast';
-    toast.textContent = '正在生成帖子…';
+    toast.textContent = '正在获取最新动态...';
     document.body.appendChild(toast);
 
-    maybeInteractWithUserPost();
-
     var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
-    var npcs = getNPCs();
-    var allAuthors = [];
-
-    contacts.forEach(function(c) {
-        allAuthors.push({
-            name: c.name,
-            handle: c.name,
-            avatar: c.avatar,
-            avatarData: c.avatarData || '',
-            contactId: c.id,
-            isContact: true
-        });
-    });
-    npcs.forEach(function(n) {
-        allAuthors.push({
-            name: n.name,
-            handle: n.name,
-            avatar: n.name.charAt(0),
-            avatarData: '',
-            contactId: null,
-            isContact: false
-        });
-    });
-
-    if (allAuthors.length === 0) {
-        allAuthors.push({ name: '路人甲', handle: '路人甲', avatar: '路', avatarData: '', contactId: null, isContact: false });
+    if (contacts.length === 0) {
+        toast.remove();
+        forumIsGenerating = false;
+        return;
     }
+    
+    var author = contacts[Math.floor(Math.random() * contacts.length)];
+    var systemPrompt = typeof buildSystemPrompt === 'function' ? buildSystemPrompt(author.id) : '';
 
-    var author = allAuthors[Math.floor(Math.random() * allAuthors.length)];
-
-    var systemPrompt = '';
-    if (author.isContact && author.contactId && typeof buildSystemPrompt === 'function') {
-        systemPrompt = buildSystemPrompt(author.contactId);
-    }
-
-    var prompt = '请以' + author.name + '的口吻发一条简短的论坛帖子。\n'
-        + '【字数要求】20~60字。\n'
-        + '【内容】可以分享日常、心情、吐槽、有趣的事。自然随意，像真人发的。\n'
-        + '格式：只输出帖子内容，不加引号不加标记。';
+    var prompt = '请以' + author.name + '的口吻发一条简短的类似Twitter的动态分享。\n'
+        + '【字数要求】20~50字。\n'
+        + '【内容】吐槽工作、分享生活的碎碎念、或有趣的想法。语言要现代、网感、口语化，不要老土，绝不能有emoji！\n'
+        + '格式：只输出文本，不需要引号。';
 
     if (typeof callChatAPI === 'function') {
         callChatAPI([
-            { role: 'system', content: systemPrompt || '你是一个普通用户，在论坛上发帖。简短自然。' },
+            { role: 'system', content: systemPrompt || '你是一个在社交媒体发帖的用户。' },
             { role: 'user', content: prompt }
         ]).then(function(reply) {
             toast.remove();
             forumIsGenerating = false;
             var clean = reply.replace(/\{[^}]*\}/g, '').trim();
-            if (!clean) { showToast('生成失败'); return; }
+            if (!clean) return;
             var posts = getForumPosts();
             posts.unshift({
                 id: 'p_' + Date.now(),
                 userName: author.name,
-                userHandle: author.handle,
+                userHandle: author.name,
                 avatar: author.avatar,
                 avatarData: author.avatarData,
                 content: clean,
                 time: Date.now(),
                 timeStr: getForumRelativeTime(Date.now()),
-                likes: Math.floor(Math.random() * 20),
-                contactId: author.contactId
+                likes: Math.floor(Math.random() * 50) + 10,
+                contactId: author.id
             });
             saveForumPosts(posts);
             if (forumCurrentTab === 'home') renderForumApp();
         }).catch(function() {
             toast.remove();
             forumIsGenerating = false;
-            showToast('生成失败');
         });
     } else {
         toast.remove();
         forumIsGenerating = false;
-        showToast('API未配置');
     }
 }
 
-// ========== 相对时间 ==========
+// ========== 相对时间工具函数 ==========
 function getForumRelativeTime(timestamp) {
     var now = Date.now();
     var diff = now - timestamp;
     if (diff < 60000) return '刚刚';
-    if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
-    if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
+    if (diff < 3600000) return Math.floor(diff / 60000) + 'm';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + 'h';
     var d = new Date(timestamp);
     return (d.getMonth() + 1) + '月' + d.getDate() + '日';
 }
-
-// ========== 初始化 ==========
-window.addEventListener('DOMContentLoaded', function() {});
