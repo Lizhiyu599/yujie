@@ -1,0 +1,260 @@
+/* ===== 查手机容器 ===== */
+.phone-app {
+    width: 100%;
+    height: 100%;
+    background: #1d1d1f;
+    display: flex;
+    flex-direction: column;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    overflow: hidden;
+    position: relative;
+}
+
+/* ===== 顶部栏 ===== */
+.phone-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 48px 16px 12px;
+    background: rgba(29, 29, 31, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: 50;
+    flex-shrink: 0;
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
+}
+
+.phone-back-btn {
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 300;
+}
+.phone-back-btn:active { opacity: 0.5; }
+
+.phone-top-title {
+    font-size: 17px;
+    color: #fff;
+    font-weight: 600;
+}
+
+.phone-top-spacer { width: 36px; }
+
+.phone-btn-refresh {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    cursor: pointer;
+    color: #fff;
+    border-radius: 50%;
+    transition: 0.2s;
+}
+.phone-btn-refresh:active { background: rgba(255,255,255,0.1); }
+
+/* ===== 主体区域 ===== */
+.phone-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ===== 选择角色 ===== */
+.phone-select-hint {
+    font-size: 14px;
+    color: rgba(255,255,255,0.4);
+    text-align: center;
+    padding: 20px 0 16px;
+}
+
+.phone-contact-card {
+    display: flex;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 0.5px solid rgba(255,255,255,0.06);
+    cursor: pointer;
+    gap: 14px;
+    transition: 0.15s;
+}
+.phone-contact-card:active { opacity: 0.6; }
+
+.phone-contact-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.phone-contact-name {
+    flex: 1;
+    font-size: 16px;
+    color: #fff;
+    font-weight: 500;
+}
+
+.phone-contact-arrow {
+    font-size: 20px;
+    color: rgba(255,255,255,0.3);
+}
+
+/* ===== 手机桌面 ===== */
+.phone-desktop {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    padding: 40px 30px;
+    align-content: start;
+}
+
+.phone-app-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.phone-app-icon:active { transform: scale(0.85); opacity: 0.7; }
+
+.phone-icon-img {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+}
+
+.phone-icon-label {
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
+    text-align: center;
+}
+
+/* ===== 浏览器搜索记录 ===== */
+.phone-browser-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.phone-browser-item {
+    padding: 14px 0;
+    border-bottom: 0.5px solid rgba(255,255,255,0.06);
+    font-size: 14px;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.5;
+}
+
+/* ===== 聊天列表 ===== */
+.phone-chat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.phone-chat-item {
+    display: flex;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 0.5px solid rgba(255,255,255,0.06);
+    font-size: 14px;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.5;
+}
+
+/* ===== 便签 ===== */
+.phone-notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.phone-notes-item {
+    background: rgba(255,255,255,0.04);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 14px;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.6;
+    border: 1px solid rgba(255,255,255,0.04);
+}
+
+/* ===== 商城购物车 ===== */
+.phone-shop-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.phone-shop-item {
+    background: rgba(255,255,255,0.04);
+    border-radius: 12px;
+    padding: 14px 16px;
+    border: 1px solid rgba(255,255,255,0.04);
+}
+
+.phone-shop-name {
+    font-size: 15px;
+    color: #fff;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.phone-shop-price {
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 4px;
+}
+
+.phone-shop-reason {
+    font-size: 12px;
+    color: rgba(255,255,255,0.35);
+    line-height: 1.4;
+}
+
+/* ===== 加载动画 ===== */
+.phone-loading {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(29, 29, 31, 0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    z-index: 100;
+    color: rgba(255,255,255,0.5);
+    font-size: 14px;
+}
+
+.phone-loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid rgba(255,255,255,0.1);
+    border-top-color: rgba(255,255,255,0.5);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
