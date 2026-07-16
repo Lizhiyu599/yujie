@@ -1,6 +1,6 @@
 /**
  * 玉界 - 纸语（备忘录·电子手账）
- * 包含：分类管理、随手记、装饰系统、纸张背景、数据持久化
+ * 包含：分类管理、随手记、装饰系统（拖拽/缩放/旋转）、纸张背景、数据持久化
  */
 
 // ========== 数据存储 ==========
@@ -31,6 +31,18 @@ function savePaperCategories(categories) {
 var paperCurrentCategory = '全部';
 var paperEditingNoteId = null;
 var paperDecoIdCounter = 0;
+var paperActiveDeco = null;
+
+// ========== 装饰素材库 ==========
+var PAPER_DECOS = [
+    'https://i.ibb.co/zW6Cztm3/1784179491713.png',
+    'https://i.ibb.co/BH0jRDhg/1784179512627.png',
+    'https://i.ibb.co/HDvrPyJb/1784179530559.png',
+    'https://i.ibb.co/xSbq3PV0/1784179557806.png',
+    'https://i.ibb.co/8DSVrtqG/1784179573955.png',
+    'https://i.ibb.co/Dfjt7hpN/1784179626535.png',
+    'https://i.ibb.co/j95gWbRY/1784179652015.png'
+];
 
 // ========== 打开纸语 ==========
 function openPaper() {
@@ -153,6 +165,7 @@ function openPaperNote(noteId) {
     }
     paperEditingNoteId = noteId;
     paperDecoIdCounter = 0;
+    paperActiveDeco = null;
     renderPaperEditor(note);
 }
 
@@ -164,6 +177,7 @@ function renderPaperEditor(note) {
     var content = note ? note.content : '';
     var category = note ? note.category : '随手记';
     var paperBg = note ? (note.paperBg || '') : '';
+    var paperBgType = note ? (note.paperBgType || '') : '';
     var decorations = note ? (note.decorations || []) : [];
 
     var categories = getPaperCategories();
@@ -174,25 +188,30 @@ function renderPaperEditor(note) {
 
     var decoHTML = '';
     decorations.forEach(function(d, i) {
-        decoHTML += '<div class="paper-deco-wrapper" id="deco_' + i + '" style="left:' + (d.x || 10) + '%;top:' + (d.y || 10) + '%;width:' + (d.w || 60) + 'px;transform:rotate(' + (d.r || 0) + 'deg);" data-x="' + (d.x || 10) + '" data-y="' + (d.y || 10) + '" data-w="' + (d.w || 60) + '" data-r="' + (d.r || 0) + '" data-src="' + d.src + '">'
+        decoHTML += '<div class="paper-deco-wrapper" id="deco_' + i + '" '
+            + 'style="left:' + (d.x || 10) + '%;top:' + (d.y || 10) + '%;width:' + (d.w || 60) + 'px;transform:rotate(' + (d.r || 0) + 'deg);" '
+            + 'data-x="' + (d.x || 10) + '" data-y="' + (d.y || 10) + '" data-w="' + (d.w || 60) + '" data-r="' + (d.r || 0) + '" data-src="' + d.src + '">'
             + '<img src="' + d.src + '" class="paper-deco-img" style="width:100%;height:auto;pointer-events:none;">'
-            + '<span class="paper-deco-del" onclick="removePaperDecoById(' + i + ')">×</span>'
-            + '<span class="paper-deco-resize" onmousedown="startDecoResize(event, ' + i + ')" ontouchstart="startDecoResize(event, ' + i + ')"></span>'
+            + '<span class="paper-deco-del" onclick="event.stopPropagation();removePaperDecoById(' + i + ')">×</span>'
             + '</div>';
     });
+
+    var bgClass = '';
+    if (paperBgType === 'grid') bgClass = 'paper-bg-grid-pattern';
+    else if (paperBgType === 'dot') bgClass = 'paper-bg-dot-pattern';
 
     appWindow.innerHTML = ''
         + '<div class="paper-app">'
         + '<div class="paper-top-bar">'
         + '<div class="paper-back-btn" onclick="saveAndExitPaperEditor()">‹</div>'
-        + '<div class="paper-top-title">纸 语</div>'
+        + '<div class="paper-top-spacer" style="flex:1;"></div>'
         + '<div class="paper-top-actions">'
-        + '<span class="paper-btn-deco" onclick="openPaperDecoPanel()">🎀</span>'
-        + '<span class="paper-btn-bg" onclick="openPaperBgPanel()">🖼</span>'
+        + '<span class="paper-btn-deco" onclick="openPaperDecoPanel()"><img src="https://i.ibb.co/xK84zd6Y/retouch-2026071613485866.png" style="width:24px;height:24px;"></span>'
+        + '<span class="paper-btn-bg" onclick="openPaperBgPanel()"><img src="https://i.ibb.co/84YWCWgh/retouch-2026071613494498.png" style="width:24px;height:24px;"></span>'
         + '</div>'
         + '</div>'
-        + '<div class="paper-editor-body" style="' + (paperBg ? 'background-image:url(' + paperBg + ');background-size:cover;background-position:center;' : '') + '" id="paperEditorBody">'
-        + '<div id="paperDecoContainer" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:4;">' + decoHTML + '</div>'
+        + '<div class="paper-editor-body ' + bgClass + '" style="' + (paperBg && !paperBgType ? 'background-image:url(' + paperBg + ');background-size:cover;background-position:center;' : '') + '" id="paperEditorBody">'
+        + '<div id="paperDecoContainer">' + decoHTML + '</div>'
         + '<select class="paper-cat-select" id="paperCatSelect">' + catOptions + '</select>'
         + '<textarea class="paper-textarea" id="paperTextarea" placeholder="在此书写...">' + content + '</textarea>'
         + '</div>'
@@ -201,8 +220,7 @@ function renderPaperEditor(note) {
         + '</div>'
         + '</div>';
 
-    // 绑定拖拽
-    setTimeout(bindDecoDrag, 100);
+    setTimeout(bindDecoEvents, 200);
 }
 
 // ========== 保存笔记 ==========
@@ -214,7 +232,6 @@ function saveAndExitPaperEditor() {
     var content = textarea.value.trim();
     var category = catSelect ? catSelect.value : '随手记';
 
-    // 收集装饰数据
     var decorations = [];
     var wrappers = document.querySelectorAll('.paper-deco-wrapper');
     wrappers.forEach(function(w) {
@@ -242,6 +259,7 @@ function saveAndExitPaperEditor() {
             category: category,
             time: Date.now(),
             paperBg: window._paperTempBg || '',
+            paperBgType: window._paperTempBgType || '',
             decorations: decorations
         });
     } else {
@@ -254,6 +272,7 @@ function saveAndExitPaperEditor() {
                 notes[index].category = category;
                 notes[index].time = Date.now();
                 notes[index].paperBg = window._paperTempBg || notes[index].paperBg || '';
+                notes[index].paperBgType = window._paperTempBgType || notes[index].paperBgType || '';
                 notes[index].decorations = decorations;
             }
         }
@@ -262,6 +281,7 @@ function saveAndExitPaperEditor() {
     savePaperNotes(notes);
     paperEditingNoteId = null;
     window._paperTempBg = '';
+    window._paperTempBgType = '';
     renderPaperApp();
 }
 
@@ -283,10 +303,10 @@ function openPaperBgPanel() {
         + '<div class="paper-modal-panel">'
         + '<div class="paper-modal-title">选择纸张</div>'
         + '<div class="paper-bg-grid">'
-        + '<div class="paper-bg-item plain" onclick="setPaperBg(\'\')"><span>纯色</span></div>'
-        + '<div class="paper-bg-item grid" onclick="setPaperBg(\'grid\')"><span>网格</span></div>'
-        + '<div class="paper-bg-item dot" onclick="setPaperBg(\'dot\')"><span>点阵</span></div>'
-        + '<div class="paper-bg-item custom" onclick="document.getElementById(\'paperBgUpload\').click()"><span>+ 自定义</span></div>'
+        + '<div class="paper-bg-item plain" onclick="setPaperBg(\'\', \'\')"><span>纯色</span></div>'
+        + '<div class="paper-bg-item grid" onclick="setPaperBg(\'\', \'grid\')"><span>网格</span></div>'
+        + '<div class="paper-bg-item dot" onclick="setPaperBg(\'\', \'dot\')"><span>点阵</span></div>'
+        + '<div class="paper-bg-item custom" onclick="document.getElementById(\'paperBgUpload\').click()"><span>+</span></div>'
         + '<input type="file" id="paperBgUpload" accept="image/*" style="display:none;" onchange="uploadPaperBg(event)">'
         + '</div>'
         + '</div>';
@@ -299,18 +319,17 @@ function closePaperBgPanel() {
     if (overlay) overlay.remove();
 }
 
-function setPaperBg(type) {
+function setPaperBg(src, type) {
     var body = document.getElementById('paperEditorBody');
     if (!body) return;
-    body.style.backgroundImage = '';
+    body.style.backgroundImage = src ? 'url(' + src + ')' : '';
+    body.style.backgroundSize = src ? 'cover' : '';
+    body.style.backgroundPosition = src ? 'center' : '';
     body.classList.remove('paper-bg-grid-pattern', 'paper-bg-dot-pattern');
-    if (type === 'grid') {
-        body.classList.add('paper-bg-grid-pattern');
-    } else if (type === 'dot') {
-        body.classList.add('paper-bg-dot-pattern');
-    }
+    if (type === 'grid') body.classList.add('paper-bg-grid-pattern');
+    if (type === 'dot') body.classList.add('paper-bg-dot-pattern');
+    window._paperTempBg = src;
     window._paperTempBgType = type;
-    window._paperTempBg = '';
     closePaperBgPanel();
 }
 
@@ -319,32 +338,18 @@ function uploadPaperBg(e) {
     if (!file) return;
     var reader = new FileReader();
     reader.onload = function(ev) {
-        var body = document.getElementById('paperEditorBody');
-        if (body) {
-            body.style.backgroundImage = 'url(' + ev.target.result + ')';
-            body.style.backgroundSize = 'cover';
-            body.style.backgroundPosition = 'center';
-            body.classList.remove('paper-bg-grid-pattern', 'paper-bg-dot-pattern');
-        }
-        window._paperTempBg = ev.target.result;
-        window._paperTempBgType = '';
+        setPaperBg(ev.target.result, '');
     };
     reader.readAsDataURL(file);
 }
 
 // ========== 装饰面板 ==========
-var PAPER_DECOS = [
-    'https://i.ibb.co/zW6Cztm3/1784179491713.png',
-    'https://i.ibb.co/BH0jRDhg/1784179512627.png',
-    'https://i.ibb.co/HDvrPyJb/1784179530559.png'
-];
-
 function openPaperDecoPanel() {
     var overlay = document.createElement('div');
     overlay.className = 'paper-modal-overlay';
     overlay.id = 'paperDecoOverlay';
     var itemsHTML = '';
-    PAPER_DECOS.forEach(function(src, i) {
+    PAPER_DECOS.forEach(function(src) {
         itemsHTML += '<div class="paper-deco-item" onclick="addPaperDeco(\'' + src + '\')"><img src="' + src + '" style="width:100%;height:100%;object-fit:contain;"></div>';
     });
     itemsHTML += '<div class="paper-deco-item custom" onclick="document.getElementById(\'paperDecoUpload\').click()"><span>+</span></div>';
@@ -372,16 +377,15 @@ function addPaperDeco(src) {
     wrapper.id = 'deco_' + idx;
     wrapper.setAttribute('data-x', '30');
     wrapper.setAttribute('data-y', '30');
-    wrapper.setAttribute('data-w', '60');
+    wrapper.setAttribute('data-w', '70');
     wrapper.setAttribute('data-r', '0');
     wrapper.setAttribute('data-src', src);
-    wrapper.style.cssText = 'left:30%;top:30%;width:60px;transform:rotate(0deg);';
+    wrapper.style.cssText = 'left:30%;top:30%;width:70px;transform:rotate(0deg);';
     wrapper.innerHTML = ''
         + '<img src="' + src + '" class="paper-deco-img" style="width:100%;height:auto;pointer-events:none;">'
-        + '<span class="paper-deco-del" onclick="removePaperDecoById(' + idx + ')">×</span>'
-        + '<span class="paper-deco-resize" onmousedown="startDecoResize(event, ' + idx + ')" ontouchstart="startDecoResize(event, ' + idx + ')"></span>';
+        + '<span class="paper-deco-del" onclick="event.stopPropagation();removePaperDecoById(' + idx + ')">×</span>';
     container.appendChild(wrapper);
-    bindDecoDragForWrapper(wrapper);
+    bindDecoEventsForWrapper(wrapper);
     closePaperDecoPanel();
 }
 
@@ -400,77 +404,70 @@ function removePaperDecoById(idx) {
     if (el) el.remove();
 }
 
-// ========== 装饰拖拽 ==========
-function bindDecoDrag() {
+// ========== 装饰交互（拖拽移动 + 单指缩放旋转） ==========
+function bindDecoEvents() {
     var wrappers = document.querySelectorAll('.paper-deco-wrapper');
-    wrappers.forEach(function(w) { bindDecoDragForWrapper(w); });
+    wrappers.forEach(function(w) { bindDecoEventsForWrapper(w); });
 }
 
-function bindDecoDragForWrapper(wrapper) {
-    var startX, startY, origLeft, origTop;
+function bindDecoEventsForWrapper(wrapper) {
+    var startX, startY, origLeft, origTop, origW, origR;
+    var startDist = 0, startAngle = 0;
+    var isDragging = false;
+
     wrapper.addEventListener('touchstart', function(e) {
-        if (e.target.classList.contains('paper-deco-del') || e.target.classList.contains('paper-deco-resize')) return;
+        if (e.target.classList.contains('paper-deco-del')) return;
         e.stopPropagation();
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-        origLeft = parseFloat(wrapper.style.left);
-        origTop = parseFloat(wrapper.style.top);
+        var touches = e.touches;
+        if (touches.length === 1) {
+            startX = touches[0].clientX;
+            startY = touches[0].clientY;
+            origLeft = parseFloat(wrapper.style.left);
+            origTop = parseFloat(wrapper.style.top);
+            isDragging = true;
+        } else if (touches.length === 2) {
+            isDragging = false;
+            startDist = Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+            startAngle = Math.atan2(touches[0].clientY - touches[1].clientY, touches[0].clientX - touches[1].clientX) * 180 / Math.PI;
+            origW = parseInt(wrapper.getAttribute('data-w'));
+            origR = parseInt(wrapper.getAttribute('data-r'));
+        }
         wrapper.style.transition = 'none';
         wrapper.style.zIndex = '10';
     });
+
     wrapper.addEventListener('touchmove', function(e) {
-        if (!startX) return;
         e.preventDefault();
-        var dx = (e.touches[0].clientX - startX) / wrapper.parentElement.offsetWidth * 100;
-        var dy = (e.touches[0].clientY - startY) / wrapper.parentElement.offsetHeight * 100;
-        wrapper.style.left = Math.max(0, Math.min(90, origLeft + dx)) + '%';
-        wrapper.style.top = Math.max(0, Math.min(90, origTop + dy)) + '%';
+        var touches = e.touches;
+        if (touches.length === 1 && isDragging && startX) {
+            var dx = (touches[0].clientX - startX) / wrapper.parentElement.offsetWidth * 100;
+            var dy = (touches[0].clientY - startY) / wrapper.parentElement.offsetHeight * 100;
+            wrapper.style.left = Math.max(0, Math.min(90, origLeft + dx)) + '%';
+            wrapper.style.top = Math.max(0, Math.min(90, origTop + dy)) + '%';
+        } else if (touches.length === 2 && startDist > 0) {
+            var dist = Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+            var angle = Math.atan2(touches[0].clientY - touches[1].clientY, touches[0].clientX - touches[1].clientX) * 180 / Math.PI;
+            var scale = dist / startDist;
+            var newW = Math.max(30, Math.min(250, origW * scale));
+            var newR = origR + (angle - startAngle);
+            wrapper.style.width = newW + 'px';
+            wrapper.style.transform = 'rotate(' + newR + 'deg)';
+            wrapper.setAttribute('data-w', newW);
+            wrapper.setAttribute('data-r', Math.round(newR));
+        }
     });
+
     wrapper.addEventListener('touchend', function() {
         wrapper.style.transition = '';
         wrapper.style.zIndex = '4';
-        wrapper.setAttribute('data-x', parseFloat(wrapper.style.left));
-        wrapper.setAttribute('data-y', parseFloat(wrapper.style.top));
+        if (isDragging) {
+            wrapper.setAttribute('data-x', parseFloat(wrapper.style.left));
+            wrapper.setAttribute('data-y', parseFloat(wrapper.style.top));
+        }
         startX = null;
+        startDist = 0;
+        isDragging = false;
     });
-}
-
-// ========== 装饰缩放 ==========
-function startDecoResize(e, idx) {
-    e.stopPropagation();
-    e.preventDefault();
-    var wrapper = document.getElementById('deco_' + idx);
-    if (!wrapper) return;
-    var startDist = 0;
-    var origW = parseInt(wrapper.getAttribute('data-w'));
-    var touchStart = function(ev) {
-        if (ev.touches.length === 2) {
-            startDist = Math.hypot(
-                ev.touches[0].clientX - ev.touches[1].clientX,
-                ev.touches[0].clientY - ev.touches[1].clientY
-            );
-        }
-    };
-    var touchMove = function(ev) {
-        if (ev.touches.length === 2 && startDist > 0) {
-            var dist = Math.hypot(
-                ev.touches[0].clientX - ev.touches[1].clientX,
-                ev.touches[0].clientY - ev.touches[1].clientY
-            );
-            var scale = dist / startDist;
-            var newW = Math.max(30, Math.min(200, origW * scale));
-            wrapper.style.width = newW + 'px';
-            wrapper.setAttribute('data-w', newW);
-        }
-    };
-    var touchEnd = function() {
-        document.removeEventListener('touchstart', touchStart);
-        document.removeEventListener('touchmove', touchMove);
-        document.removeEventListener('touchend', touchEnd);
-    };
-    document.addEventListener('touchstart', touchStart);
-    document.addEventListener('touchmove', touchMove);
-    document.addEventListener('touchend', touchEnd);
 }
 
 // ========== 格式化时间 ==========
