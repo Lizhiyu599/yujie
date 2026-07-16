@@ -1110,6 +1110,7 @@ window.addEventListener('DOMContentLoaded', function() {
     addDesktopIcon({ id: 'logistics', name: '物流', icon: '<img src="https://i.ibb.co/xqd8X641/1782661077856.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openLogistics', page: 1 });
     addDesktopIcon({ id: 'shijie', name: '视界', icon: '<img src="https://i.ibb.co/cX2GTb7q/1784100386664.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openShijie', page: 1 });
     addDesktopIcon({ id: 'letter', name: '信件', icon: '<img src="https://i.ibb.co/vvC566Qt/1783095239358.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openLetter', page: 1 });
+    addDesktopIcon({ id: 'forum', name: 'X', icon: '<img src="https://i.ibb.co/HLdd2Kfv/1784169979063.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;">', action: 'openForum', page: 1 });
     
     var items = getItems();
     if (!items.find(function(i) { return i.id === 'widget-tarot-default'; })) {
