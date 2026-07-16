@@ -1,7 +1,23 @@
 /**
  * 玉界 - 纸语（备忘录·电子手账）
- * 包含：分类管理、随手记、装饰系统（拖拽/缩放/旋转）、纸张背景、数据持久化
+ * 书架样式、分类管理、装饰系统、纸张背景
  */
+
+// ========== 内置封面 ==========
+var PAPER_COVERS = [
+    'https://i.ibb.co/kVs1WT4y/1784182209547.png'
+];
+
+// ========== 装饰素材库 ==========
+var PAPER_DECOS = [
+    'https://i.ibb.co/zW6Cztm3/1784179491713.png',
+    'https://i.ibb.co/BH0jRDhg/1784179512627.png',
+    'https://i.ibb.co/HDvrPyJb/1784179530559.png',
+    'https://i.ibb.co/xSbq3PV0/1784179557806.png',
+    'https://i.ibb.co/8DSVrtqG/1784179573955.png',
+    'https://i.ibb.co/Dfjt7hpN/1784179626535.png',
+    'https://i.ibb.co/j95gWbRY/1784179652015.png'
+];
 
 // ========== 数据存储 ==========
 function getPaperNotes() {
@@ -15,9 +31,7 @@ function savePaperNotes(notes) {
 
 function getPaperCategories() {
     var raw = localStorage.getItem('paper_categories');
-    if (raw) {
-        try { return JSON.parse(raw); } catch(e) {}
-    }
+    if (raw) { try { return JSON.parse(raw); } catch(e) {} }
     var defaults = ['日记', '笔记', '随手记'];
     localStorage.setItem('paper_categories', JSON.stringify(defaults));
     return defaults;
@@ -31,18 +45,6 @@ function savePaperCategories(categories) {
 var paperCurrentCategory = '全部';
 var paperEditingNoteId = null;
 var paperDecoIdCounter = 0;
-var paperActiveDeco = null;
-
-// ========== 装饰素材库 ==========
-var PAPER_DECOS = [
-    'https://i.ibb.co/zW6Cztm3/1784179491713.png',
-    'https://i.ibb.co/BH0jRDhg/1784179512627.png',
-    'https://i.ibb.co/HDvrPyJb/1784179530559.png',
-    'https://i.ibb.co/xSbq3PV0/1784179557806.png',
-    'https://i.ibb.co/8DSVrtqG/1784179573955.png',
-    'https://i.ibb.co/Dfjt7hpN/1784179626535.png',
-    'https://i.ibb.co/j95gWbRY/1784179652015.png'
-];
 
 // ========== 打开纸语 ==========
 function openPaper() {
@@ -89,18 +91,25 @@ function renderPaperApp() {
             + '<div class="paper-empty-hint">点击右下角 + 开始记录</div>'
             + '</div>';
     } else {
-        filteredNotes.forEach(function(note) {
-            var preview = note.content.replace(/\n/g, ' ').substring(0, 60);
-            var bgStyle = note.paperBg ? 'background-image:url(' + note.paperBg + ');background-size:cover;' : '';
+        notesHTML = '<div class="paper-shelf">';
+        filteredNotes.forEach(function(note, index) {
+            var coverSrc = note.cover || PAPER_COVERS[0];
+            var preview = note.content.replace(/\n/g, ' ').substring(0, 30);
             notesHTML += ''
-                + '<div class="paper-note-card" style="' + bgStyle + '" onclick="openPaperNote(\'' + note.id + '\')">'
-                + '<div class="paper-note-time">' + formatPaperTime(note.time) + '</div>'
-                + '<div class="paper-note-preview">' + preview + '</div>'
-                + '<div class="paper-note-meta">'
-                + '<span class="paper-note-cat">' + note.category + '</span>'
+                + '<div class="paper-book" id="book_' + note.id + '" '
+                + 'onclick="openPaperNote(\'' + note.id + '\')" '
+                + 'ontouchstart="startBookLongPress(event, \'' + note.id + '\')" '
+                + 'ontouchend="cancelBookLongPress()" '
+                + 'ontouchmove="cancelBookLongPress()">'
+                + '<div class="paper-book-cover" style="background-image:url(' + coverSrc + ');background-size:cover;background-position:center;"></div>'
+                + '<div class="paper-book-spine"></div>'
+                + '<div class="paper-book-info">'
+                + '<div class="paper-book-cat">' + note.category + '</div>'
+                + '<div class="paper-book-preview">' + preview + '</div>'
                 + '</div>'
                 + '</div>';
         });
+        notesHTML += '</div>';
     }
 
     appWindow.innerHTML = ''
@@ -114,6 +123,47 @@ function renderPaperApp() {
         + '<div class="paper-body">' + notesHTML + '</div>'
         + '<div class="paper-fab" onclick="openPaperNote(\'new\')">+</div>'
         + '</div>';
+}
+
+// ========== 长按删除 ==========
+var bookLongPressTimer = null;
+function startBookLongPress(e, noteId) {
+    bookLongPressTimer = setTimeout(function() {
+        confirmDeletePaperNote(noteId);
+    }, 600);
+}
+function cancelBookLongPress() {
+    if (bookLongPressTimer) { clearTimeout(bookLongPressTimer); bookLongPressTimer = null; }
+}
+
+function confirmDeletePaperNote(noteId) {
+    var overlay = document.createElement('div');
+    overlay.className = 'paper-confirm-overlay';
+    overlay.id = 'paperConfirmOverlay';
+    overlay.innerHTML = ''
+        + '<div class="paper-confirm-dialog">'
+        + '<p>确认删除这本笔记？</p>'
+        + '<div class="paper-confirm-btns">'
+        + '<button class="paper-btn-cancel" onclick="closePaperConfirm()">取消</button>'
+        + '<button class="paper-btn-confirm" onclick="executeDeletePaperNote(\'' + noteId + '\')">删除</button>'
+        + '</div>'
+        + '</div>';
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closePaperConfirm(); };
+}
+
+function closePaperConfirm() {
+    var overlay = document.getElementById('paperConfirmOverlay');
+    if (overlay) overlay.remove();
+}
+
+function executeDeletePaperNote(noteId) {
+    closePaperConfirm();
+    var notes = getPaperNotes();
+    notes = notes.filter(function(n) { return n.id !== noteId; });
+    savePaperNotes(notes);
+    renderPaperApp();
+    showToast('笔记已删除');
 }
 
 function switchPaperCategory(cat) {
@@ -165,7 +215,6 @@ function openPaperNote(noteId) {
     }
     paperEditingNoteId = noteId;
     paperDecoIdCounter = 0;
-    paperActiveDeco = null;
     renderPaperEditor(note);
 }
 
@@ -179,6 +228,7 @@ function renderPaperEditor(note) {
     var paperBg = note ? (note.paperBg || '') : '';
     var paperBgType = note ? (note.paperBgType || '') : '';
     var decorations = note ? (note.decorations || []) : [];
+    var cover = note ? (note.cover || PAPER_COVERS[0]) : PAPER_COVERS[0];
 
     var categories = getPaperCategories();
     var catOptions = '';
@@ -212,15 +262,57 @@ function renderPaperEditor(note) {
         + '</div>'
         + '<div class="paper-editor-body ' + bgClass + '" style="' + (paperBg && !paperBgType ? 'background-image:url(' + paperBg + ');background-size:cover;background-position:center;' : '') + '" id="paperEditorBody">'
         + '<div id="paperDecoContainer">' + decoHTML + '</div>'
+        + '<div class="paper-editor-row">'
         + '<select class="paper-cat-select" id="paperCatSelect">' + catOptions + '</select>'
-        + '<textarea class="paper-textarea" id="paperTextarea" placeholder="在此书写...">' + content + '</textarea>'
+        + '<div class="paper-cover-select" onclick="openCoverPicker()" style="background-image:url(' + cover + ');background-size:cover;background-position:center;"></div>'
         + '</div>'
-        + '<div class="paper-editor-bottom">'
-        + (note ? '<button class="paper-btn-delete" onclick="deletePaperNote(\'' + note.id + '\')">删除</button>' : '')
+        + '<textarea class="paper-textarea" id="paperTextarea" placeholder="在此书写...">' + content + '</textarea>'
         + '</div>'
         + '</div>';
 
     setTimeout(bindDecoEvents, 200);
+}
+
+// ========== 封面选择 ==========
+function openCoverPicker() {
+    var overlay = document.createElement('div');
+    overlay.className = 'paper-modal-overlay';
+    overlay.id = 'paperCoverOverlay';
+    var itemsHTML = '';
+    PAPER_COVERS.forEach(function(src) {
+        itemsHTML += '<div class="paper-cover-item" onclick="selectPaperCover(\'' + src + '\')" style="background-image:url(' + src + ');background-size:cover;background-position:center;"></div>';
+    });
+    itemsHTML += '<div class="paper-cover-item custom" onclick="document.getElementById(\'paperCoverUpload\').click()"><span>+</span></div>';
+    overlay.innerHTML = ''
+        + '<div class="paper-modal-panel">'
+        + '<div class="paper-modal-title">选择封面</div>'
+        + '<div class="paper-cover-grid">' + itemsHTML + '</div>'
+        + '<input type="file" id="paperCoverUpload" accept="image/*" style="display:none;" onchange="uploadPaperCover(event)">'
+        + '</div>';
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) closeCoverPicker(); };
+}
+
+function closeCoverPicker() {
+    var overlay = document.getElementById('paperCoverOverlay');
+    if (overlay) overlay.remove();
+}
+
+function selectPaperCover(src) {
+    window._paperTempCover = src;
+    var el = document.querySelector('.paper-cover-select');
+    if (el) { el.style.backgroundImage = 'url(' + src + ')'; }
+    closeCoverPicker();
+}
+
+function uploadPaperCover(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+        selectPaperCover(ev.target.result);
+    };
+    reader.readAsDataURL(file);
 }
 
 // ========== 保存笔记 ==========
@@ -244,13 +336,9 @@ function saveAndExitPaperEditor() {
         });
     });
 
-    if (!content && paperEditingNoteId === 'new') {
-        renderPaperApp();
-        return;
-    }
+    if (!content && paperEditingNoteId === 'new') { renderPaperApp(); return; }
 
     var notes = getPaperNotes();
-
     if (paperEditingNoteId === 'new') {
         if (!content) { renderPaperApp(); return; }
         notes.unshift({
@@ -260,20 +348,21 @@ function saveAndExitPaperEditor() {
             time: Date.now(),
             paperBg: window._paperTempBg || '',
             paperBgType: window._paperTempBgType || '',
-            decorations: decorations
+            decorations: decorations,
+            cover: window._paperTempCover || PAPER_COVERS[0]
         });
     } else {
         var index = notes.findIndex(function(n) { return n.id === paperEditingNoteId; });
         if (index >= 0) {
-            if (!content) {
-                notes.splice(index, 1);
-            } else {
+            if (!content) { notes.splice(index, 1); }
+            else {
                 notes[index].content = content;
                 notes[index].category = category;
                 notes[index].time = Date.now();
                 notes[index].paperBg = window._paperTempBg || notes[index].paperBg || '';
                 notes[index].paperBgType = window._paperTempBgType || notes[index].paperBgType || '';
                 notes[index].decorations = decorations;
+                notes[index].cover = window._paperTempCover || notes[index].cover || PAPER_COVERS[0];
             }
         }
     }
@@ -282,16 +371,8 @@ function saveAndExitPaperEditor() {
     paperEditingNoteId = null;
     window._paperTempBg = '';
     window._paperTempBgType = '';
+    window._paperTempCover = '';
     renderPaperApp();
-}
-
-function deletePaperNote(noteId) {
-    var notes = getPaperNotes();
-    notes = notes.filter(function(n) { return n.id !== noteId; });
-    savePaperNotes(notes);
-    paperEditingNoteId = null;
-    renderPaperApp();
-    showToast('笔记已删除');
 }
 
 // ========== 背景纸面板 ==========
@@ -314,10 +395,7 @@ function openPaperBgPanel() {
     overlay.onclick = function(e) { if (e.target === overlay) closePaperBgPanel(); };
 }
 
-function closePaperBgPanel() {
-    var overlay = document.getElementById('paperBgOverlay');
-    if (overlay) overlay.remove();
-}
+function closePaperBgPanel() { var o = document.getElementById('paperBgOverlay'); if (o) o.remove(); }
 
 function setPaperBg(src, type) {
     var body = document.getElementById('paperEditorBody');
@@ -337,9 +415,7 @@ function uploadPaperBg(e) {
     var file = e.target.files[0];
     if (!file) return;
     var reader = new FileReader();
-    reader.onload = function(ev) {
-        setPaperBg(ev.target.result, '');
-    };
+    reader.onload = function(ev) { setPaperBg(ev.target.result, ''); };
     reader.readAsDataURL(file);
 }
 
@@ -363,10 +439,7 @@ function openPaperDecoPanel() {
     overlay.onclick = function(e) { if (e.target === overlay) closePaperDecoPanel(); };
 }
 
-function closePaperDecoPanel() {
-    var overlay = document.getElementById('paperDecoOverlay');
-    if (overlay) overlay.remove();
-}
+function closePaperDecoPanel() { var o = document.getElementById('paperDecoOverlay'); if (o) o.remove(); }
 
 function addPaperDeco(src) {
     var container = document.getElementById('paperDecoContainer');
@@ -393,9 +466,7 @@ function uploadPaperDeco(e) {
     var file = e.target.files[0];
     if (!file) return;
     var reader = new FileReader();
-    reader.onload = function(ev) {
-        addPaperDeco(ev.target.result);
-    };
+    reader.onload = function(ev) { addPaperDeco(ev.target.result); };
     reader.readAsDataURL(file);
 }
 
@@ -404,69 +475,42 @@ function removePaperDecoById(idx) {
     if (el) el.remove();
 }
 
-// ========== 装饰交互（拖拽移动 + 单指缩放旋转） ==========
+// ========== 装饰交互 ==========
 function bindDecoEvents() {
-    var wrappers = document.querySelectorAll('.paper-deco-wrapper');
-    wrappers.forEach(function(w) { bindDecoEventsForWrapper(w); });
+    document.querySelectorAll('.paper-deco-wrapper').forEach(function(w) { bindDecoEventsForWrapper(w); });
 }
 
 function bindDecoEventsForWrapper(wrapper) {
-    var startX, startY, origLeft, origTop, origW, origR;
-    var startDist = 0, startAngle = 0;
-    var isDragging = false;
-
+    var sx, sy, ox, oy, ow, or, sd = 0, sa = 0, dragging = false;
     wrapper.addEventListener('touchstart', function(e) {
         if (e.target.classList.contains('paper-deco-del')) return;
         e.stopPropagation();
-        var touches = e.touches;
-        if (touches.length === 1) {
-            startX = touches[0].clientX;
-            startY = touches[0].clientY;
-            origLeft = parseFloat(wrapper.style.left);
-            origTop = parseFloat(wrapper.style.top);
-            isDragging = true;
-        } else if (touches.length === 2) {
-            isDragging = false;
-            startDist = Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
-            startAngle = Math.atan2(touches[0].clientY - touches[1].clientY, touches[0].clientX - touches[1].clientX) * 180 / Math.PI;
-            origW = parseInt(wrapper.getAttribute('data-w'));
-            origR = parseInt(wrapper.getAttribute('data-r'));
-        }
-        wrapper.style.transition = 'none';
-        wrapper.style.zIndex = '10';
+        var t = e.touches;
+        if (t.length === 1) { sx = t[0].clientX; sy = t[0].clientY; ox = parseFloat(wrapper.style.left); oy = parseFloat(wrapper.style.top); dragging = true; }
+        else if (t.length === 2) { dragging = false; sd = Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); sa = Math.atan2(t[0].clientY - t[1].clientY, t[0].clientX - t[1].clientX) * 180 / Math.PI; ow = parseInt(wrapper.getAttribute('data-w')); or = parseInt(wrapper.getAttribute('data-r')); }
+        wrapper.style.transition = 'none'; wrapper.style.zIndex = '10';
     });
-
     wrapper.addEventListener('touchmove', function(e) {
         e.preventDefault();
-        var touches = e.touches;
-        if (touches.length === 1 && isDragging && startX) {
-            var dx = (touches[0].clientX - startX) / wrapper.parentElement.offsetWidth * 100;
-            var dy = (touches[0].clientY - startY) / wrapper.parentElement.offsetHeight * 100;
-            wrapper.style.left = Math.max(0, Math.min(90, origLeft + dx)) + '%';
-            wrapper.style.top = Math.max(0, Math.min(90, origTop + dy)) + '%';
-        } else if (touches.length === 2 && startDist > 0) {
-            var dist = Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
-            var angle = Math.atan2(touches[0].clientY - touches[1].clientY, touches[0].clientX - touches[1].clientX) * 180 / Math.PI;
-            var scale = dist / startDist;
-            var newW = Math.max(30, Math.min(250, origW * scale));
-            var newR = origR + (angle - startAngle);
-            wrapper.style.width = newW + 'px';
-            wrapper.style.transform = 'rotate(' + newR + 'deg)';
-            wrapper.setAttribute('data-w', newW);
-            wrapper.setAttribute('data-r', Math.round(newR));
+        var t = e.touches;
+        if (t.length === 1 && dragging && sx) {
+            var dx = (t[0].clientX - sx) / wrapper.parentElement.offsetWidth * 100;
+            var dy = (t[0].clientY - sy) / wrapper.parentElement.offsetHeight * 100;
+            wrapper.style.left = Math.max(0, Math.min(90, ox + dx)) + '%';
+            wrapper.style.top = Math.max(0, Math.min(90, oy + dy)) + '%';
+        } else if (t.length === 2 && sd > 0) {
+            var d = Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+            var a = Math.atan2(t[0].clientY - t[1].clientY, t[0].clientX - t[1].clientX) * 180 / Math.PI;
+            var nw = Math.max(30, Math.min(250, ow * (d / sd)));
+            var nr = or + (a - sa);
+            wrapper.style.width = nw + 'px'; wrapper.style.transform = 'rotate(' + nr + 'deg)';
+            wrapper.setAttribute('data-w', nw); wrapper.setAttribute('data-r', Math.round(nr));
         }
     });
-
     wrapper.addEventListener('touchend', function() {
-        wrapper.style.transition = '';
-        wrapper.style.zIndex = '4';
-        if (isDragging) {
-            wrapper.setAttribute('data-x', parseFloat(wrapper.style.left));
-            wrapper.setAttribute('data-y', parseFloat(wrapper.style.top));
-        }
-        startX = null;
-        startDist = 0;
-        isDragging = false;
+        wrapper.style.transition = ''; wrapper.style.zIndex = '4';
+        if (dragging) { wrapper.setAttribute('data-x', parseFloat(wrapper.style.left)); wrapper.setAttribute('data-y', parseFloat(wrapper.style.top)); }
+        sx = null; sd = 0; dragging = false;
     });
 }
 
@@ -476,5 +520,4 @@ function formatPaperTime(timestamp) {
     return d.getFullYear() + '.' + (d.getMonth() + 1) + '.' + d.getDate() + ' ' + d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
 }
 
-// ========== 初始化 ==========
 window.addEventListener('DOMContentLoaded', function() {});
