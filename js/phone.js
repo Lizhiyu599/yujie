@@ -154,43 +154,6 @@ function getPhoneNPCs() {
     return [];
 }
 
-// ========== 生成角色给联系人的备注 ==========
-function generatePhoneContactNotes(npcs, callback) {
-    if (npcs.length === 0) { callback({}); return; }
-    var contact = getContactById(phoneContactId);
-    var contactName = contact ? contact.name : '角色';
-    var systemPrompt = typeof buildSystemPrompt === 'function' ? buildSystemPrompt(phoneContactId) : '';
-
-    var npcNames = npcs.map(function(n) { return n.name; }).join('、');
-    var prompt = '你是' + contactName + '。你手机通讯录里有以下联系人：' + npcNames + '。\n'
-        + '还有一个联系人叫"用户"（就是和你聊天的那个人）。\n'
-        + '请根据你的性格和与这些人的关系，给每个人起一个备注名。\n'
-        + '格式：每行一个，格式为"原始名字 -> 备注名"。\n'
-        + '备注要自然，像真人手机里会存的备注。';
-
-    if (typeof callChatAPI === 'function') {
-        callChatAPI([
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: prompt }
-        ]).then(function(reply) {
-            var clean = reply.replace(/\{[^}]*\}/g, '').trim();
-            var lines = clean.split('\n');
-            var notes = {};
-            lines.forEach(function(line) {
-                var parts = line.split('->');
-                if (parts.length >= 2) {
-                    notes[parts[0].trim()] = parts[1].trim();
-                }
-            });
-            callback(notes);
-        }).catch(function() {
-            callback({});
-        });
-    } else {
-        callback({});
-    }
-}
-
 // ========== 聊天 → 好友列表 ==========
 function renderPhoneChatList() {
     var appWindow = document.getElementById('phoneAppWindow');
@@ -198,63 +161,55 @@ function renderPhoneChatList() {
 
     phoneChatTargetId = null;
     var npcs = getPhoneNPCs();
+    var contact = getContactById(phoneContactId);
+    var contactName = contact ? contact.name : '角色';
 
-    showPhoneLoading();
+    // 联系人列表：用户 + NPC（直接用原始名字，不调API生成备注）
+    var chatTargets = [];
+    chatTargets.push({
+        id: 'user',
+        name: '用户',
+        avatar: '你',
+        avatarData: '',
+        isUser: true
+    });
 
-    generatePhoneContactNotes(npcs, function(notes) {
-        hidePhoneLoading();
-
-        var chatTargets = [];
-
-        var userNote = notes['用户'] || '用户';
+    var npcCount = Math.min(npcs.length, 4);
+    for (var j = 0; j < npcCount; j++) {
+        var npc = npcs[j];
+        if (!npc) continue;
         chatTargets.push({
-            id: 'user',
-            name: userNote,
-            avatar: '你',
-            avatarData: '',
-            isUser: true
+            id: 'npc_' + j,
+            name: npc.name || '神秘好友',
+            avatar: (npc.name || '神').charAt(0),
+            avatarData: npc.avatar || '',
+            isUser: false
         });
+    }
 
-        var npcCount = Math.min(npcs.length, 4);
-        for (var j = 0; j < npcCount; j++) {
-            var npc = npcs[j];
-            if (!npc) continue;
-            var npcName = npc.name || '神秘好友';
-            var npcNote = notes[npcName] || npcName;
-            chatTargets.push({
-                id: 'npc_' + j,
-                name: npcNote,
-                originalName: npcName,
-                avatar: (npcName).charAt(0),
-                avatarData: npc.avatar || '',
-                isUser: false
-            });
-        }
-
-        var listHTML = '';
-        chatTargets.forEach(function(t) {
-            var avatarStyle = t.avatarData ? 'background-image:url(' + t.avatarData + ');background-size:cover;background-position:center;' : '';
-            listHTML += ''
-                + '<div class="phone-chat-contact" onclick="openPhoneChatDetail(\'' + t.id + '\', \'' + t.name.replace(/'/g, "\\'") + '\', ' + t.isUser + ')">'
-                + '<div class="phone-chat-contact-avatar" style="' + avatarStyle + '">' + (t.avatarData ? '' : t.avatar) + '</div>'
-                + '<div class="phone-chat-contact-name">' + t.name + '</div>'
-                + '<div class="phone-chat-contact-arrow">›</div>'
-                + '</div>';
-        });
-
-        appWindow.innerHTML = ''
-            + '<div class="phone-app">'
-            + '<div class="phone-top-bar">'
-            + '<div class="phone-back-btn" onclick="renderPhoneDesktop()">‹</div>'
-            + '<div class="phone-top-title">聊天</div>'
-            + '<div class="phone-top-spacer"></div>'
-            + '</div>'
-            + '<div class="phone-body">'
-            + '<div class="phone-chat-list-title">联系人</div>'
-            + listHTML
-            + '</div>'
+    var listHTML = '';
+    chatTargets.forEach(function(t) {
+        var avatarStyle = t.avatarData ? 'background-image:url(' + t.avatarData + ');background-size:cover;background-position:center;' : '';
+        listHTML += ''
+            + '<div class="phone-chat-contact" onclick="openPhoneChatDetail(\'' + t.id + '\', \'' + t.name.replace(/'/g, "\\'") + '\', ' + t.isUser + ')">'
+            + '<div class="phone-chat-contact-avatar" style="' + avatarStyle + '">' + (t.avatarData ? '' : t.avatar) + '</div>'
+            + '<div class="phone-chat-contact-name">' + t.name + '</div>'
+            + '<div class="phone-chat-contact-arrow">›</div>'
             + '</div>';
     });
+
+    appWindow.innerHTML = ''
+        + '<div class="phone-app">'
+        + '<div class="phone-top-bar">'
+        + '<div class="phone-back-btn" onclick="renderPhoneDesktop()">‹</div>'
+        + '<div class="phone-top-title">聊天</div>'
+        + '<div class="phone-top-spacer"></div>'
+        + '</div>'
+        + '<div class="phone-body">'
+        + '<div class="phone-chat-list-title">联系人</div>'
+        + listHTML
+        + '</div>'
+        + '</div>';
 }
 
 // ========== 聊天 → 聊天记录详情 ==========
@@ -309,8 +264,10 @@ function openPhoneChatDetail(targetId, targetName, isUser) {
             showPhoneLoading();
             generatePhoneNPCChat(targetName, phoneContactId, function(content) {
                 hidePhoneLoading();
-                localStorage.setItem(cacheKey, content);
-                renderPhoneNPCChatDetail(content, targetName);
+                if (content) {
+                    localStorage.setItem(cacheKey, content);
+                }
+                renderPhoneNPCChatDetail(content || '', targetName);
             });
         }
     }
@@ -321,15 +278,17 @@ function renderPhoneNPCChatDetail(content, targetName) {
     var appWindow = document.getElementById('phoneAppWindow');
     if (!appWindow) return;
 
-    var lines = content.split('\n').filter(function(l) { return l.trim(); });
     var messagesHTML = '';
-    lines.forEach(function(line, i) {
-        var isRoleMsg = i % 2 === 0;
-        messagesHTML += ''
-            + '<div class="phone-msg-row ' + (isRoleMsg ? 'right' : 'left') + '">'
-            + '<div class="phone-msg-bubble ' + (isRoleMsg ? 'me' : 'other') + '">' + line + '</div>'
-            + '</div>';
-    });
+    if (content) {
+        var lines = content.split('\n').filter(function(l) { return l.trim(); });
+        lines.forEach(function(line, i) {
+            var isRoleMsg = i % 2 === 0;
+            messagesHTML += ''
+                + '<div class="phone-msg-row ' + (isRoleMsg ? 'right' : 'left') + '">'
+                + '<div class="phone-msg-bubble ' + (isRoleMsg ? 'me' : 'other') + '">' + line + '</div>'
+                + '</div>';
+        });
+    }
     if (!messagesHTML) messagesHTML = '<div class="phone-empty-chat">暂无聊天记录</div>';
 
     appWindow.innerHTML = ''
@@ -353,8 +312,10 @@ function refreshPhoneNPCChat(targetName) {
     showPhoneLoading();
     generatePhoneNPCChat(targetName, phoneContactId, function(content) {
         hidePhoneLoading();
-        localStorage.setItem(cacheKey, content);
-        renderPhoneNPCChatDetail(content, targetName);
+        if (content) {
+            localStorage.setItem(cacheKey, content);
+        }
+        renderPhoneNPCChatDetail(content || '', targetName);
     });
 }
 
@@ -492,6 +453,7 @@ function renderPhoneAppContent(app, cached) {
 
 // ========== 加载动画 ==========
 var phoneLoadingEl = null;
+var phoneLoadingTimer = null;
 function showPhoneLoading() {
     hidePhoneLoading();
     var appWindow = document.getElementById('phoneAppWindow');
@@ -500,9 +462,15 @@ function showPhoneLoading() {
     phoneLoadingEl.className = 'phone-loading';
     phoneLoadingEl.innerHTML = '<div class="phone-loading-spinner"></div><div>正在偷看...</div>';
     appWindow.appendChild(phoneLoadingEl);
+    // 15秒超时自动关闭
+    phoneLoadingTimer = setTimeout(function() {
+        hidePhoneLoading();
+        showToast('请求超时，请重试');
+    }, 15000);
 }
 
 function hidePhoneLoading() {
+    if (phoneLoadingTimer) { clearTimeout(phoneLoadingTimer); phoneLoadingTimer = null; }
     if (phoneLoadingEl) { phoneLoadingEl.remove(); phoneLoadingEl = null; }
 }
 
