@@ -1,7 +1,7 @@
 /**
  * 玉界 - 查手机
  * 选择角色后进入模拟手机桌面，内含浏览器/聊天/便签/商城
- * 聊天：好友列表 + 真实聊天记录 + AI 生成 NPC 聊天
+ * 聊天：好友列表（联动牵绊关系网）+ 真实聊天记录 + AI 生成 NPC 聊天
  */
 
 // ========== 数据存储 ==========
@@ -135,6 +135,26 @@ function openPhoneApp(app) {
     }
 }
 
+// ========== 从牵绊读取NPC ==========
+function getPhoneNPCs() {
+    var contact = getContactById(phoneContactId);
+    var maskId = contact ? (contact.maskId || '') : '';
+    if (!maskId) {
+        maskId = localStorage.getItem('active_mask_id') || '';
+    }
+
+    var raw = localStorage.getItem('qianban_data');
+    if (!raw) return [];
+    try {
+        var allData = JSON.parse(raw);
+        var data = allData[maskId];
+        if (data && data.npcs) {
+            return data.npcs;
+        }
+    } catch(e) {}
+    return [];
+}
+
 // ========== 聊天 → 好友列表 ==========
 function renderPhoneChatList() {
     var appWindow = document.getElementById('phoneAppWindow');
@@ -142,26 +162,13 @@ function renderPhoneChatList() {
 
     phoneChatTargetId = null;
 
-    var npcs = [];
-    try {
-        if (typeof getNPCs === 'function') {
-            npcs = getNPCs();
-        }
-    } catch(e) {}
-
-    if (!npcs || npcs.length === 0) {
-        npcs = [
-            { name: '死党小张' },
-            { name: '妈妈' },
-            { name: '工作通知' }
-        ];
-    }
+    var npcs = getPhoneNPCs();
 
     var activeMaskId = localStorage.getItem('active_mask_id') || '';
     var masks = typeof getMasks === 'function' ? getMasks() : [];
     var activeMask = null;
-    for (var i = 0; i < masks.length; i++) { 
-        if (masks[i].id === activeMaskId) { activeMask = masks[i]; break; } 
+    for (var i = 0; i < masks.length; i++) {
+        if (masks[i].id === activeMaskId) { activeMask = masks[i]; break; }
     }
     var userName = activeMask ? activeMask.name : '我';
 
@@ -174,16 +181,15 @@ function renderPhoneChatList() {
         isUser: true
     });
 
-    var npcCount = Math.min(npcs.length, 4); 
-    var shuffled = npcs.slice().sort(function() { return Math.random() - 0.5; });
+    var npcCount = Math.min(npcs.length, 4);
     for (var j = 0; j < npcCount; j++) {
-        var npc = shuffled[j];
+        var npc = npcs[j];
         if (!npc) continue;
         chatTargets.push({
             id: 'npc_' + j,
             name: npc.name || '神秘好友',
             avatar: (npc.name || '神').charAt(0),
-            avatarData: '',
+            avatarData: npc.avatar || '',
             isUser: false
         });
     }
