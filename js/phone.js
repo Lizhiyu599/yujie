@@ -149,10 +149,20 @@ function renderPhoneChatList() {
         }
     } catch(e) {}
 
+    if (!npcs || npcs.length === 0) {
+        npcs = [
+            { name: '死党小张' },
+            { name: '妈妈' },
+            { name: '工作通知' }
+        ];
+    }
+
     var activeMaskId = localStorage.getItem('active_mask_id') || '';
     var masks = typeof getMasks === 'function' ? getMasks() : [];
     var activeMask = null;
-    for (var i = 0; i < masks.length; i++) { if (masks[i].id === activeMaskId) { activeMask = masks[i]; break; } }
+    for (var i = 0; i < masks.length; i++) { 
+        if (masks[i].id === activeMaskId) { activeMask = masks[i]; break; } 
+    }
     var userName = activeMask ? activeMask.name : '我';
 
     var chatTargets = [];
@@ -164,15 +174,15 @@ function renderPhoneChatList() {
         isUser: true
     });
 
-    var npcCount = Math.min(npcs.length, 4);
-    npcCount = Math.max(npcCount, 1);
+    var npcCount = Math.min(npcs.length, 4); 
     var shuffled = npcs.slice().sort(function() { return Math.random() - 0.5; });
     for (var j = 0; j < npcCount; j++) {
         var npc = shuffled[j];
+        if (!npc) continue;
         chatTargets.push({
             id: 'npc_' + j,
-            name: npc.name,
-            avatar: npc.name.charAt(0),
+            name: npc.name || '神秘好友',
+            avatar: (npc.name || '神').charAt(0),
             avatarData: '',
             isUser: false
         });
