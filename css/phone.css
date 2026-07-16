@@ -136,17 +136,104 @@
     width: 64px;
     height: 64px;
     border-radius: 16px;
-    background: rgba(255,255,255,0.1);
+    overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 30px;
 }
 
 .phone-icon-label {
     font-size: 12px;
     color: rgba(255,255,255,0.7);
     text-align: center;
+}
+
+/* ===== 聊天联系人列表 ===== */
+.phone-chat-list-title {
+    font-size: 13px;
+    color: rgba(255,255,255,0.35);
+    padding: 4px 0 12px;
+}
+
+.phone-chat-contact {
+    display: flex;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 0.5px solid rgba(255,255,255,0.06);
+    cursor: pointer;
+    gap: 14px;
+    transition: 0.15s;
+}
+.phone-chat-contact:active { opacity: 0.6; }
+
+.phone-chat-contact-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.phone-chat-contact-name {
+    flex: 1;
+    font-size: 15px;
+    color: #fff;
+    font-weight: 500;
+}
+
+.phone-chat-contact-arrow {
+    font-size: 18px;
+    color: rgba(255,255,255,0.3);
+}
+
+/* ===== 聊天消息列表 ===== */
+.phone-msg-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.phone-empty-chat {
+    text-align: center;
+    color: rgba(255,255,255,0.3);
+    padding: 60px 20px;
+    font-size: 14px;
+}
+
+.phone-msg-row {
+    display: flex;
+    max-width: 80%;
+}
+.phone-msg-row.right {
+    align-self: flex-end;
+    justify-content: flex-end;
+}
+.phone-msg-row.left {
+    align-self: flex-start;
+}
+
+.phone-msg-bubble {
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    word-break: break-word;
+}
+.phone-msg-bubble.other {
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.85);
+    border-top-left-radius: 4px;
+}
+.phone-msg-bubble.user {
+    background: rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.85);
+    border-top-right-radius: 4px;
 }
 
 /* ===== 浏览器搜索记录 ===== */
@@ -157,23 +244,6 @@
 }
 
 .phone-browser-item {
-    padding: 14px 0;
-    border-bottom: 0.5px solid rgba(255,255,255,0.06);
-    font-size: 14px;
-    color: rgba(255,255,255,0.7);
-    line-height: 1.5;
-}
-
-/* ===== 聊天列表 ===== */
-.phone-chat-list {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.phone-chat-item {
-    display: flex;
-    align-items: center;
     padding: 14px 0;
     border-bottom: 0.5px solid rgba(255,255,255,0.06);
     font-size: 14px;
