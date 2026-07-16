@@ -1,7 +1,7 @@
 /**
  * 玉界 - 查手机
  * 选择角色后进入模拟手机桌面，内含浏览器/聊天/便签/商城
- * 所有内容通过 API 基于聊天记录生成，与聊天软件无缝衔接
+ * 聊天：好友列表 + 真实聊天记录 + AI 生成 NPC 聊天
  */
 
 // ========== 数据存储 ==========
@@ -17,6 +17,7 @@ function savePhoneData(contactId, data) {
 // ========== 当前状态 ==========
 var phoneContactId = null;
 var phoneCurrentApp = null;
+var phoneChatTargetId = null;
 
 // ========== 打开查手机 ==========
 function openPhone() {
@@ -29,6 +30,7 @@ function openPhone() {
     }
     phoneContactId = null;
     phoneCurrentApp = null;
+    phoneChatTargetId = null;
     renderPhoneSelect();
     appWindow.style.display = 'flex';
 }
@@ -38,6 +40,7 @@ function closePhone() {
     if (appWindow) appWindow.style.display = 'none';
     phoneContactId = null;
     phoneCurrentApp = null;
+    phoneChatTargetId = null;
 }
 
 // ========== 选择角色页面 ==========
@@ -94,19 +97,19 @@ function renderPhoneDesktop() {
         + '</div>'
         + '<div class="phone-desktop">'
         + '<div class="phone-app-icon" onclick="openPhoneApp(\'browser\')">'
-        + '<div class="phone-icon-img">🌐</div>'
+        + '<div class="phone-icon-img"><img src="https://i.ibb.co/tMNtKCJn/1784185126743.png" style="width:64px;height:64px;border-radius:16px;"></div>'
         + '<div class="phone-icon-label">浏览器</div>'
         + '</div>'
         + '<div class="phone-app-icon" onclick="openPhoneApp(\'chat\')">'
-        + '<div class="phone-icon-img">💬</div>'
+        + '<div class="phone-icon-img"><img src="https://i.ibb.co/1YRp6Jmp/1784169343266.png" style="width:64px;height:64px;border-radius:16px;"></div>'
         + '<div class="phone-icon-label">聊天</div>'
         + '</div>'
         + '<div class="phone-app-icon" onclick="openPhoneApp(\'notes\')">'
-        + '<div class="phone-icon-img">📝</div>'
+        + '<div class="phone-icon-img"><img src="https://i.ibb.co/LXRSVNVd/1784178114743.png" style="width:64px;height:64px;border-radius:16px;"></div>'
         + '<div class="phone-icon-label">便签</div>'
         + '</div>'
         + '<div class="phone-app-icon" onclick="openPhoneApp(\'shop\')">'
-        + '<div class="phone-icon-img">🛒</div>'
+        + '<div class="phone-icon-img"><img src="https://i.ibb.co/M5J4TPmS/1782661025938.png" style="width:64px;height:64px;border-radius:16px;"></div>'
         + '<div class="phone-icon-label">商城</div>'
         + '</div>'
         + '</div>'
@@ -116,13 +119,190 @@ function renderPhoneDesktop() {
 // ========== 打开应用 ==========
 function openPhoneApp(app) {
     phoneCurrentApp = app;
+    phoneChatTargetId = null;
+
+    if (app === 'chat') {
+        renderPhoneChatList();
+        return;
+    }
+
     var data = getPhoneData(phoneContactId);
     var cached = data[app];
-
     if (cached) {
         renderPhoneAppContent(app, cached);
     } else {
         generatePhoneAppContent(app);
+    }
+}
+
+// ========== 聊天 → 好友列表 ==========
+function renderPhoneChatList() {
+    var appWindow = document.getElementById('phoneAppWindow');
+    if (!appWindow) return;
+
+    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
+    var npcs = typeof getNPCs === 'function' ? getNPCs() : [];
+    if (typeof getNPCs !== 'function') {
+        // 兜底
+        npcs = [];
+    }
+
+    // 收集联系人：用户 + NPC
+    var chatTargets = [];
+    // 用户永远第一位
+    var activeMaskId = localStorage.getItem('active_mask_id') || '';
+    var masks = typeof getMasks === 'function' ? getMasks() : [];
+    var activeMask = null;
+    for (var i = 0; i < masks.length; i++) { if (masks[i].id === activeMaskId) { activeMask = masks[i]; break; } }
+    var userName = activeMask ? activeMask.name : '我';
+
+    chatTargets.push({
+        id: 'user',
+        name: userName,
+        avatar: activeMask && activeMask.avatar ? activeMask.avatar : '我',
+        avatarData: activeMask && activeMask.avatar ? activeMask.avatar : '',
+        isUser: true
+    });
+
+    // 随机抽 1-4 个 NPC
+    var npcCount = Math.min(npcs.length, 4);
+    npcCount = Math.max(npcCount, 1);
+    var shuffled = npcs.slice().sort(function() { return Math.random() - 0.5; });
+    for (var j = 0; j < npcCount; j++) {
+        var npc = shuffled[j];
+        chatTargets.push({
+            id: 'npc_' + j,
+            name: npc.name,
+            avatar: npc.name.charAt(0),
+            avatarData: '',
+            isUser: false,
+            npcGender: npc.gender || '未知'
+        });
+    }
+
+    var listHTML = '';
+    chatTargets.forEach(function(t) {
+        var avatarStyle = t.avatarData ? 'background-image:url(' + t.avatarData + ');background-size:cover;background-position:center;' : '';
+        listHTML += ''
+            + '<div class="phone-chat-contact" onclick="openPhoneChatDetail(\'' + t.id + '\', \'' + t.name.replace(/'/g, "\\'") + '\', ' + t.isUser + ')">'
+            + '<div class="phone-chat-contact-avatar" style="' + avatarStyle + '">' + (t.avatarData ? '' : t.avatar) + '</div>'
+            + '<div class="phone-chat-contact-name">' + t.name + '</div>'
+            + '<div class="phone-chat-contact-arrow">›</div>'
+            + '</div>';
+    });
+
+    appWindow.innerHTML = ''
+        + '<div class="phone-app">'
+        + '<div class="phone-top-bar">'
+        + '<div class="phone-back-btn" onclick="renderPhoneDesktop()">‹</div>'
+        + '<div class="phone-top-title">聊天</div>'
+        + '<div class="phone-top-spacer"></div>'
+        + '</div>'
+        + '<div class="phone-body">'
+        + '<div class="phone-chat-list-title">联系人</div>'
+        + listHTML
+        + '</div>'
+        + '</div>';
+}
+
+// ========== 聊天 → 聊天记录详情 ==========
+function openPhoneChatDetail(targetId, targetName, isUser) {
+    phoneChatTargetId = targetId;
+    var appWindow = document.getElementById('phoneAppWindow');
+    if (!appWindow) return;
+
+    if (isUser) {
+        // 读取真实聊天记录
+        var storageKey = (window.ChatState && window.ChatState.isOfflineMode ? 'chat_history_offline_' : 'chat_history_') + phoneContactId;
+        var saved = localStorage.getItem(storageKey);
+        var messagesHTML = '';
+        if (saved) {
+            var temp = document.createElement('div');
+            temp.innerHTML = saved;
+            var rows = temp.querySelectorAll('.bubble-row');
+            var last10 = [];
+            for (var i = Math.max(0, rows.length - 10); i < rows.length; i++) {
+                last10.push(rows[i]);
+            }
+            last10.forEach(function(row) {
+                var bubble = row.querySelector('.bubble, .offline-message');
+                var text = bubble ? bubble.textContent : '';
+                var isUserMsg = row.classList.contains('user');
+                messagesHTML += ''
+                    + '<div class="phone-msg-row ' + (isUserMsg ? 'right' : 'left') + '">'
+                    + '<div class="phone-msg-bubble ' + (isUserMsg ? 'user' : 'other') + '">' + text + '</div>'
+                    + '</div>';
+            });
+        }
+        if (!messagesHTML) {
+            messagesHTML = '<div class="phone-empty-chat">暂无聊天记录</div>';
+        }
+
+        appWindow.innerHTML = ''
+            + '<div class="phone-app">'
+            + '<div class="phone-top-bar">'
+            + '<div class="phone-back-btn" onclick="openPhoneApp(\'chat\')">‹</div>'
+            + '<div class="phone-top-title">' + targetName + '</div>'
+            + '<div class="phone-top-spacer"></div>'
+            + '</div>'
+            + '<div class="phone-body">'
+            + '<div class="phone-msg-list">' + messagesHTML + '</div>'
+            + '</div>'
+            + '</div>';
+    } else {
+        // 生成 NPC 聊天记录
+        showPhoneLoading();
+        generatePhoneNPCChat(targetName, phoneContactId, function(content) {
+            hidePhoneLoading();
+            var lines = content.split('\n').filter(function(l) { return l.trim(); });
+            var messagesHTML = '';
+            lines.forEach(function(line, i) {
+                var isNPC = i % 2 === 0;
+                messagesHTML += ''
+                    + '<div class="phone-msg-row ' + (isNPC ? 'left' : 'right') + '">'
+                    + '<div class="phone-msg-bubble ' + (isNPC ? 'other' : 'user') + '">' + line + '</div>'
+                    + '</div>';
+            });
+            if (!messagesHTML) messagesHTML = '<div class="phone-empty-chat">暂无聊天记录</div>';
+
+            appWindow.innerHTML = ''
+                + '<div class="phone-app">'
+                + '<div class="phone-top-bar">'
+                + '<div class="phone-back-btn" onclick="openPhoneApp(\'chat\')">‹</div>'
+                + '<div class="phone-top-title">' + targetName + '</div>'
+                + '<div class="phone-top-spacer"></div>'
+                + '</div>'
+                + '<div class="phone-body">'
+                + '<div class="phone-msg-list">' + messagesHTML + '</div>'
+                + '</div>'
+                + '</div>';
+        });
+    }
+}
+
+// ========== 生成 NPC 聊天 ==========
+function generatePhoneNPCChat(npcName, contactId, callback) {
+    var contact = getContactById(contactId);
+    var contactName = contact ? contact.name : '角色';
+    var systemPrompt = typeof buildSystemPrompt === 'function' ? buildSystemPrompt(contactId) : '';
+
+    var prompt = '你是' + contactName + '。请生成你和' + npcName + '的最近聊天记录。\n'
+        + '格式：每条一行，轮流发言，一共10-16条。\n'
+        + '内容要求：自然随意，日常闲聊，分享生活琐事。\n'
+        + '每条消息不超过30字。';
+
+    if (typeof callChatAPI === 'function') {
+        callChatAPI([
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: prompt }
+        ]).then(function(reply) {
+            var clean = reply.replace(/\{[^}]*\}/g, '').trim();
+            callback(clean);
+        }).catch(function() {
+            callback('');
+        });
+    } else {
+        callback('');
     }
 }
 
@@ -136,7 +316,6 @@ function generatePhoneAppContent(app) {
 
     var systemPrompt = typeof buildSystemPrompt === 'function' ? buildSystemPrompt(phoneContactId) : '';
 
-    // 读取最近聊天记录
     var chatHistory = '';
     if (typeof getRecentHistory === 'function') {
         var history = getRecentHistory(phoneContactId, 40);
@@ -148,28 +327,18 @@ function generatePhoneAppContent(app) {
 
     var prompt = '';
     if (app === 'browser') {
-        prompt = '你是' + contactName + '。以下是你和用户的聊天记录，以及你的生活。\n'
-            + '请根据这些内容，生成你的浏览器搜索记录。\n'
+        prompt = '你是' + contactName + '。请生成你的浏览器搜索记录。\n'
             + '格式：每条一行，格式为"搜索：xxxx"。生成6-10条。\n'
-            + '内容要求：自然真实，包括生活琐事搜索、兴趣爱好搜索、偶尔搜索和用户相关的内容。\n\n'
-            + '聊天记录：\n' + chatHistory;
-    } else if (app === 'chat') {
-        prompt = '你是' + contactName + '。以下是你和用户的聊天记录。\n'
-            + '请生成你的聊天列表，展示你最近和谁聊了天。\n'
-            + '格式：每行一个人，格式为"与xxx聊天：最后一条消息内容"。生成4-6条。\n'
-            + '其中必须有一条是用户，并写出你给用户的备注名（用括号标注，如"备注：xxx"）。\n\n'
+            + '内容：生活琐事、兴趣爱好、偶尔搜索和用户相关的内容。\n\n'
             + '聊天记录：\n' + chatHistory;
     } else if (app === 'notes') {
-        prompt = '你是' + contactName + '。以下是你和用户的聊天记录，以及你的生活。\n'
-            + '请根据这些内容，生成你的便签/备忘录。\n'
-            + '格式：每条便签以"📌"开头，每条不超过200字。生成3-5条。\n'
-            + '内容要求：生活琐事、想法、提醒、对用户的感受等。自然真实。\n\n'
+        prompt = '你是' + contactName + '。请生成你的便签/备忘录。\n'
+            + '格式：每条以"📌"开头，每条不超过200字。生成3-5条。\n'
+            + '内容：生活琐事、想法、提醒、对用户的感受。\n\n'
             + '聊天记录：\n' + chatHistory;
     } else if (app === 'shop') {
-        prompt = '你是' + contactName + '。以下是你和用户的聊天记录，以及你的生活。\n'
-            + '请根据这些内容，生成你的购物车清单。\n'
-            + '格式：每行一个商品，格式为"商品名 - ¥价格 - 加入原因"。生成4-6个商品。\n'
-            + '价格合理，加入原因自然。\n\n'
+        prompt = '你是' + contactName + '。请生成你的购物车清单。\n'
+            + '格式：每行一个，格式为"商品名 - ¥价格 - 加入原因"。生成4-6个。\n\n'
             + '聊天记录：\n' + chatHistory;
     }
 
@@ -181,17 +350,13 @@ function generatePhoneAppContent(app) {
             hidePhoneLoading();
             var clean = reply.replace(/\{[^}]*\}/g, '').trim();
             if (!clean) { showToast('生成失败'); return; }
-
             var data = getPhoneData(phoneContactId);
-            data[app] = {
-                content: clean,
-                time: Date.now()
-            };
+            data[app] = { content: clean, time: Date.now() };
             savePhoneData(phoneContactId, data);
             renderPhoneAppContent(app, data[app]);
         }).catch(function() {
             hidePhoneLoading();
-            showToast('生成失败，请重试');
+            showToast('生成失败');
         });
     } else {
         hidePhoneLoading();
@@ -204,11 +369,9 @@ function renderPhoneAppContent(app, cached) {
     var appWindow = document.getElementById('phoneAppWindow');
     if (!appWindow) return;
 
-    var appNames = { browser: '浏览器', chat: '聊天', notes: '便签', shop: '商城' };
+    var appNames = { browser: '浏览器', notes: '便签', shop: '商城' };
     var appName = appNames[app] || '';
-
     var content = cached.content;
-    // 处理换行
     var lines = content.split('\n').filter(function(l) { return l.trim(); });
     var contentHTML = '';
 
@@ -216,12 +379,6 @@ function renderPhoneAppContent(app, cached) {
         contentHTML = '<div class="phone-browser-list">';
         lines.forEach(function(line) {
             contentHTML += '<div class="phone-browser-item">' + line.replace(/^搜索[：:]\s*/, '') + '</div>';
-        });
-        contentHTML += '</div>';
-    } else if (app === 'chat') {
-        contentHTML = '<div class="phone-chat-list">';
-        lines.forEach(function(line) {
-            contentHTML += '<div class="phone-chat-item">' + line + '</div>';
         });
         contentHTML += '</div>';
     } else if (app === 'notes') {
@@ -234,14 +391,11 @@ function renderPhoneAppContent(app, cached) {
         contentHTML = '<div class="phone-shop-list">';
         lines.forEach(function(line) {
             var parts = line.split(' - ');
-            var name = parts[0] || '';
-            var price = parts[1] || '';
-            var reason = parts[2] || '';
             contentHTML += ''
                 + '<div class="phone-shop-item">'
-                + '<div class="phone-shop-name">' + name + '</div>'
-                + '<div class="phone-shop-price">' + price + '</div>'
-                + '<div class="phone-shop-reason">' + reason + '</div>'
+                + '<div class="phone-shop-name">' + (parts[0] || '') + '</div>'
+                + '<div class="phone-shop-price">' + (parts[1] || '') + '</div>'
+                + '<div class="phone-shop-reason">' + (parts[2] || '') + '</div>'
                 + '</div>';
         });
         contentHTML += '</div>';
@@ -254,9 +408,7 @@ function renderPhoneAppContent(app, cached) {
         + '<div class="phone-top-title">' + appName + '</div>'
         + '<div class="phone-btn-refresh" onclick="generatePhoneAppContent(\'' + app + '\')">↻</div>'
         + '</div>'
-        + '<div class="phone-body">'
-        + contentHTML
-        + '</div>'
+        + '<div class="phone-body">' + contentHTML + '</div>'
         + '</div>';
 }
 
