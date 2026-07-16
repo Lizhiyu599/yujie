@@ -469,4 +469,4 @@ function getForumUserAvatar() {
 
 function forumOpenProfile() {
     if (typeof openMaskEditor === 'function') openMaskEditor();
-        }
+}
