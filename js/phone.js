@@ -156,7 +156,7 @@ function getPhoneNPCs() {
 
 // ========== 生成角色给联系人的备注 ==========
 function generatePhoneContactNotes(npcs, callback) {
-    if (npcs.length === 0) { callback([]); return; }
+    if (npcs.length === 0) { callback({}); return; }
     var contact = getContactById(phoneContactId);
     var contactName = contact ? contact.name : '角色';
     var systemPrompt = typeof buildSystemPrompt === 'function' ? buildSystemPrompt(phoneContactId) : '';
@@ -199,7 +199,6 @@ function renderPhoneChatList() {
     phoneChatTargetId = null;
     var npcs = getPhoneNPCs();
 
-    // 显示加载
     showPhoneLoading();
 
     generatePhoneContactNotes(npcs, function(notes) {
@@ -207,7 +206,6 @@ function renderPhoneChatList() {
 
         var chatTargets = [];
 
-        // 用户联系人（显示角色给用户的备注）
         var userNote = notes['用户'] || '用户';
         chatTargets.push({
             id: 'user',
@@ -217,7 +215,6 @@ function renderPhoneChatList() {
             isUser: true
         });
 
-        // NPC 联系人（显示角色给 NPC 的备注）
         var npcCount = Math.min(npcs.length, 4);
         for (var j = 0; j < npcCount; j++) {
             var npc = npcs[j];
@@ -267,7 +264,6 @@ function openPhoneChatDetail(targetId, targetName, isUser) {
     if (!appWindow) return;
 
     if (isUser === true || isUser === 'true') {
-        // 读取真实聊天记录
         var storageKey = (window.ChatState && window.ChatState.isOfflineMode ? 'chat_history_offline_' : 'chat_history_') + phoneContactId;
         var saved = localStorage.getItem(storageKey);
         var messagesHTML = '';
@@ -305,7 +301,6 @@ function openPhoneChatDetail(targetId, targetName, isUser) {
             + '</div>'
             + '</div>';
     } else {
-        // 查看 NPC 聊天缓存
         var cacheKey = 'phone_chat_' + phoneContactId + '_' + targetId;
         var cached = localStorage.getItem(cacheKey);
         if (cached) {
@@ -369,10 +364,10 @@ function generatePhoneNPCChat(npcName, contactId, callback) {
     var contactName = contact ? contact.name : '角色';
     var systemPrompt = typeof buildSystemPrompt === 'function' ? buildSystemPrompt(contactId) : '';
 
-    var prompt = '你是' + contactName + '。请生成你和' + npcName + '的最近聊天记录。\n'
-        + '格式：每条一行，轮流发言，你（' + contactName + '）先说话，一共10-16条。\n'
-        + '内容要求：自然随意，日常闲聊，分享生活琐事。\n'
-        + '每条消息不超过30字。';
+    var prompt = '你是' + contactName + '。以下是你（' + contactName + '）和' + npcName + '的聊天记录。\n'
+        + '注意：你叫' + contactName + '，对方叫' + npcName + '，你们是完全不同的两个人。\n'
+        + '请生成你们的最近聊天记录，每条一行，轮流发言，你（' + contactName + '）先说话，一共10-16条。\n'
+        + '内容：日常闲聊，分享生活琐事。每条不超过30字。';
 
     if (typeof callChatAPI === 'function') {
         callChatAPI([
