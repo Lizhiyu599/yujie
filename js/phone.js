@@ -140,25 +140,22 @@ function renderPhoneChatList() {
     var appWindow = document.getElementById('phoneAppWindow');
     if (!appWindow) return;
 
-    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
-    var npcs = [];
-try {
-    if (typeof getNPCs === 'function') {
-        npcs = getNPCs();
-    }
-} catch(e) {
-    npcs = [];
-}
+    phoneChatTargetId = null;
 
-    // 收集联系人：用户 + NPC
-    var chatTargets = [];
-    // 用户永远第一位
+    var npcs = [];
+    try {
+        if (typeof getNPCs === 'function') {
+            npcs = getNPCs();
+        }
+    } catch(e) {}
+
     var activeMaskId = localStorage.getItem('active_mask_id') || '';
     var masks = typeof getMasks === 'function' ? getMasks() : [];
     var activeMask = null;
     for (var i = 0; i < masks.length; i++) { if (masks[i].id === activeMaskId) { activeMask = masks[i]; break; } }
     var userName = activeMask ? activeMask.name : '我';
 
+    var chatTargets = [];
     chatTargets.push({
         id: 'user',
         name: userName,
@@ -167,7 +164,6 @@ try {
         isUser: true
     });
 
-    // 随机抽 1-4 个 NPC
     var npcCount = Math.min(npcs.length, 4);
     npcCount = Math.max(npcCount, 1);
     var shuffled = npcs.slice().sort(function() { return Math.random() - 0.5; });
@@ -178,8 +174,7 @@ try {
             name: npc.name,
             avatar: npc.name.charAt(0),
             avatarData: '',
-            isUser: false,
-            npcGender: npc.gender || '未知'
+            isUser: false
         });
     }
 
@@ -214,8 +209,7 @@ function openPhoneChatDetail(targetId, targetName, isUser) {
     var appWindow = document.getElementById('phoneAppWindow');
     if (!appWindow) return;
 
-    if (isUser) {
-        // 读取真实聊天记录
+    if (isUser === true || isUser === 'true') {
         var storageKey = (window.ChatState && window.ChatState.isOfflineMode ? 'chat_history_offline_' : 'chat_history_') + phoneContactId;
         var saved = localStorage.getItem(storageKey);
         var messagesHTML = '';
@@ -253,7 +247,6 @@ function openPhoneChatDetail(targetId, targetName, isUser) {
             + '</div>'
             + '</div>';
     } else {
-        // 生成 NPC 聊天记录
         showPhoneLoading();
         generatePhoneNPCChat(targetName, phoneContactId, function(content) {
             hidePhoneLoading();
