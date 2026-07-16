@@ -141,11 +141,14 @@ function renderPhoneChatList() {
     if (!appWindow) return;
 
     var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
-    var npcs = typeof getNPCs === 'function' ? getNPCs() : [];
-    if (typeof getNPCs !== 'function') {
-        // 兜底
-        npcs = [];
+    var npcs = [];
+try {
+    if (typeof getNPCs === 'function') {
+        npcs = getNPCs();
     }
+} catch(e) {
+    npcs = [];
+}
 
     // 收集联系人：用户 + NPC
     var chatTargets = [];
