@@ -1,26 +1,66 @@
 /**
- * 玉界 - 论坛软件
- * 推特风格，角色/路人/用户均可发帖评论
+ * 玉界 - 论坛软件（推特式布局）
+ * 首页 / 搜索 / 通知 / 私信 四个底部标签
  * AI 生成帖子，评论互通用，数据与聊天软件互通
  */
 
-// ========== 数据存储 ==========
+// ========== 帖子数据存储 ==========
 function getForumPosts() {
     var raw = localStorage.getItem('forum_posts');
     return raw ? JSON.parse(raw) : [];
 }
-
 function saveForumPosts(posts) {
     localStorage.setItem('forum_posts', JSON.stringify(posts));
 }
-
 function getForumComments() {
     var raw = localStorage.getItem('forum_comments');
     return raw ? JSON.parse(raw) : {};
 }
-
 function saveForumComments(comments) {
     localStorage.setItem('forum_comments', JSON.stringify(comments));
+}
+
+// ========== 通知数据存储 ==========
+function getForumNotifications() {
+    var raw = localStorage.getItem('forum_notifications');
+    return raw ? JSON.parse(raw) : [];
+}
+function saveForumNotifications(list) {
+    localStorage.setItem('forum_notifications', JSON.stringify(list));
+}
+function addForumNotification(n) {
+    var list = getForumNotifications();
+    n.id = 'n_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    n.time = Date.now();
+    n.read = false;
+    list.unshift(n);
+    if (list.length > 100) list = list.slice(0, 100);
+    saveForumNotifications(list);
+}
+function getUnreadNotificationCount() {
+    return getForumNotifications().filter(function(n) { return !n.read; }).length;
+}
+function markAllNotificationsRead() {
+    var list = getForumNotifications();
+    var changed = false;
+    list.forEach(function(n) { if (!n.read) { n.read = true; changed = true; } });
+    if (changed) saveForumNotifications(list);
+}
+
+// ========== 私信数据存储 ==========
+function getForumDMList() {
+    var raw = localStorage.getItem('forum_dm_list');
+    return raw ? JSON.parse(raw) : [];
+}
+function saveForumDMList(list) {
+    localStorage.setItem('forum_dm_list', JSON.stringify(list));
+}
+function getForumDMMessages(contactId) {
+    var raw = localStorage.getItem('forum_dm_' + contactId);
+    return raw ? JSON.parse(raw) : [];
+}
+function saveForumDMMessages(contactId, msgs) {
+    localStorage.setItem('forum_dm_' + contactId, JSON.stringify(msgs));
 }
 
 // ========== NPC 池 ==========
@@ -32,7 +72,6 @@ function getNPCs() {
     var data = all[activeMaskId] || { npcs: [] };
     return data.npcs || [];
 }
-
 function getRandomNPC() {
     var npcs = getNPCs();
     if (npcs.length === 0) return { name: '路人甲', avatar: '路', gender: '未知' };
@@ -40,10 +79,13 @@ function getRandomNPC() {
 }
 
 // ========== 当前状态 ==========
+var forumCurrentTab = 'home'; // home | search | notifications | messages
 var forumCurrentPostId = null;
+var forumCurrentDMContactId = null;
+var forumSearchQuery = '';
 var forumIsGenerating = false;
 
-// ========== 打开论坛 ==========
+// ========== 打开/关闭论坛 ==========
 function openForum() {
     var appWindow = document.getElementById('forumAppWindow');
     if (!appWindow) {
@@ -52,57 +94,137 @@ function openForum() {
         appWindow.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:#fff;z-index:200;display:none;flex-direction:column;';
         document.getElementById('desktop').appendChild(appWindow);
     }
+    forumCurrentTab = 'home';
     forumCurrentPostId = null;
+    forumCurrentDMContactId = null;
+    forumSearchQuery = '';
     renderForumApp();
     appWindow.style.display = 'flex';
 }
-
 function closeForum() {
     var appWindow = document.getElementById('forumAppWindow');
     if (appWindow) appWindow.style.display = 'none';
 }
 
-// ========== 渲染外壳 ==========
+// ========== 顶部用户头像 ==========
+function getForumUserAvatar() {
+    var masks = typeof getMasks === 'function' ? getMasks() : [];
+    var activeId = localStorage.getItem('active_mask_id') || '';
+    var mask = null;
+    for (var i = 0; i < masks.length; i++) { if (masks[i].id === activeId) { mask = masks[i]; break; } }
+    if (!mask && masks.length > 0) mask = masks[0];
+    return mask && mask.avatar ? mask.avatar : '';
+}
+function forumOpenProfile() {
+    if (typeof openMaskEditor === 'function') openMaskEditor();
+}
+
+// ========== 主渲染入口 ==========
 function renderForumApp() {
     var appWindow = document.getElementById('forumAppWindow');
     if (!appWindow) return;
 
+    // 私信会话中：整页替换，隐藏底部导航
+    if (forumCurrentTab === 'messages' && forumCurrentDMContactId) {
+        appWindow.innerHTML = renderForumDMThreadFull(forumCurrentDMContactId);
+        setTimeout(function() {
+            var body = document.getElementById('forumDMBody');
+            if (body) body.scrollTop = body.scrollHeight;
+        }, 50);
+        return;
+    }
+
+    var bodyHTML = '';
+    if (forumCurrentTab === 'home') bodyHTML = renderForumHomeBody();
+    else if (forumCurrentTab === 'search') bodyHTML = renderForumSearchBody();
+    else if (forumCurrentTab === 'notifications') bodyHTML = renderForumNotificationsBody();
+    else if (forumCurrentTab === 'messages') bodyHTML = renderForumMessagesBody();
+
     appWindow.innerHTML = ''
         + '<div class="forum-app">'
-        + '<div class="forum-top-bar">'
-        + '<div class="forum-back-btn" onclick="closeForum()">‹</div>'
-        + '<div class="forum-top-title">论 坛</div>'
-        + '<div class="forum-btn-refresh" onclick="refreshForum()">↻</div>'
-        + '</div>'
-        + '<div class="forum-body" id="forumBody">'
-        + renderForumContent()
-        + '</div>'
-        + '<div class="forum-bottom-bar">'
-        + '<span class="forum-tab active" onclick="switchForumTab(\'home\', this)">首页</span>'
-        + '<span class="forum-tab" onclick="openForumCompose()">发帖</span>'
-        + '<span class="forum-tab" onclick="switchForumTab(\'notifications\', this)">通知</span>'
-        + '</div>'
+        + renderForumTopBar()
+        + '<div class="forum-body" id="forumBody">' + bodyHTML + '</div>'
+        + (forumCurrentTab === 'home' ? '<div class="forum-fab" onclick="openForumCompose()">+</div>' : '')
+        + renderForumBottomBar()
         + '</div>';
-}
 
-function switchForumTab(tab, el) {
-    if (tab === 'home') {
-        forumCurrentPostId = null;
-        renderForumApp();
+    if (forumCurrentTab === 'notifications') markAllNotificationsRead();
+    if (forumCurrentTab === 'search') {
+        setTimeout(function() {
+            var input = document.getElementById('forumSearchInput');
+            if (input) { input.focus(); input.value = forumSearchQuery; }
+        }, 100);
     }
 }
 
-// ========== 渲染帖子列表 ==========
-function renderForumContent() {
-    var posts = getForumPosts();
-    if (posts.length === 0) {
-        return '<div class="forum-empty">'
-            + '<div class="forum-empty-icon">◈</div>'
-            + '<div class="forum-empty-text">暂无帖子</div>'
-            + '<div class="forum-empty-hint">点击 ↻ 刷新，看看大家在聊什么</div>'
+// ========== 顶部栏 ==========
+function renderForumTopBar() {
+    var avatar = getForumUserAvatar();
+    var avatarHTML = '<div class="forum-user-avatar" onclick="forumOpenProfile()" style="' + (avatar ? 'background-image:url(' + avatar + ');background-size:cover;background-position:center;' : '') + '">' + (avatar ? '' : '我') + '</div>';
+
+    if (forumCurrentTab === 'search') {
+        return '<div class="forum-top-bar forum-top-bar-search">'
+            + avatarHTML
+            + '<input type="text" class="forum-search-input" id="forumSearchInput" placeholder="搜索帖子" oninput="forumDoSearch(this.value)">'
             + '</div>';
     }
 
+    var titles = { home: '首页', notifications: '通知', messages: '私信' };
+    var rightHTML = '';
+    if (forumCurrentTab === 'home') {
+        rightHTML = '<div class="forum-top-icon" onclick="refreshForum()">↻</div>';
+    } else if (forumCurrentTab === 'notifications') {
+        rightHTML = '<div class="forum-top-icon" onclick="showToast(\'设置功能即将上线\')">⚙</div>';
+    } else if (forumCurrentTab === 'messages') {
+        rightHTML = '<div class="forum-top-pill" onclick="showToast(\'即将上线\')">全部 ⌄</div>';
+    }
+
+    return '<div class="forum-top-bar">'
+        + avatarHTML
+        + '<div class="forum-top-title">' + titles[forumCurrentTab] + '</div>'
+        + rightHTML
+        + '</div>';
+}
+
+// ========== 底部标签栏（4个） ==========
+function renderForumBottomBar() {
+    var tabs = [
+        { key: 'home', icon: '🏠' },
+        { key: 'search', icon: '🔍' },
+        { key: 'notifications', icon: '🔔', badge: true },
+        { key: 'messages', icon: '💌' }
+    ];
+    var html = '<div class="forum-bottom-bar">';
+    tabs.forEach(function(t) {
+        var active = forumCurrentTab === t.key;
+        var badgeHTML = '';
+        if (t.badge && getUnreadNotificationCount() > 0) {
+            badgeHTML = '<span class="forum-tab-badge"></span>';
+        }
+        html += '<div class="forum-bottom-tab' + (active ? ' active' : '') + '" onclick="switchForumTab(\'' + t.key + '\')">'
+            + '<span class="forum-bottom-icon">' + t.icon + badgeHTML + '</span>'
+            + '</div>';
+    });
+    html += '</div>';
+    return html;
+}
+
+function switchForumTab(tab) {
+    forumCurrentTab = tab;
+    forumCurrentPostId = null;
+    forumCurrentDMContactId = null;
+    renderForumApp();
+}
+
+// ========== 帖子列表（首页/搜索共用） ==========
+function renderForumPostList(posts) {
+    if (!posts || posts.length === 0) {
+        return '<div class="forum-empty">'
+            + '<div class="forum-empty-icon">◈</div>'
+            + '<div class="forum-empty-text">暂无帖子</div>'
+            + '<div class="forum-empty-hint">点击右上角 ↻ 刷新，看看大家在聊什么</div>'
+            + '</div>';
+    }
     var comments = getForumComments();
     var html = '';
     posts.forEach(function(post) {
@@ -130,6 +252,262 @@ function renderForumContent() {
     return html;
 }
 
+function renderForumHomeBody() {
+    return renderForumPostList(getForumPosts());
+}
+
+// ========== 搜索 ==========
+function renderForumSearchBody() {
+    if (!forumSearchQuery.trim()) {
+        return '<div class="forum-empty">'
+            + '<div class="forum-empty-icon">🔍</div>'
+            + '<div class="forum-empty-text">搜索帖子</div>'
+            + '<div class="forum-empty-hint">输入关键词查找已发布的内容</div>'
+            + '</div>';
+    }
+    var posts = getForumPosts();
+    var q = forumSearchQuery.toLowerCase();
+    var matched = posts.filter(function(p) {
+        return (p.content && p.content.toLowerCase().indexOf(q) >= 0) || (p.userName && p.userName.toLowerCase().indexOf(q) >= 0);
+    });
+    if (matched.length === 0) {
+        return '<div class="forum-empty">'
+            + '<div class="forum-empty-icon">🔍</div>'
+            + '<div class="forum-empty-text">没有找到相关内容</div>'
+            + '</div>';
+    }
+    return renderForumPostList(matched);
+}
+
+function forumDoSearch(val) {
+    forumSearchQuery = val;
+    var body = document.getElementById('forumBody');
+    if (body) body.innerHTML = renderForumSearchBody();
+}
+
+// ========== 通知 ==========
+function renderForumNotificationsBody() {
+    var list = getForumNotifications();
+    if (list.length === 0) {
+        return '<div class="forum-empty">'
+            + '<div class="forum-empty-icon">🔔</div>'
+            + '<div class="forum-empty-text">暂无通知</div>'
+            + '<div class="forum-empty-hint">角色点赞或评论你的帖子时会显示在这里</div>'
+            + '</div>';
+    }
+    var html = '';
+    list.forEach(function(n) {
+        var actionText = n.type === 'like' ? '赞了你的帖子' : '评论了你的帖子';
+        var avatarStyle = n.authorAvatarData ? 'background-image:url(' + n.authorAvatarData + ');background-size:cover;background-position:center;' : '';
+        html += '<div class="forum-notif-item' + (n.read ? '' : ' unread') + '" onclick="openForumPost(\'' + n.postId + '\')">'
+            + '<div class="forum-notif-avatar" style="' + avatarStyle + '">' + (n.authorAvatarData ? '' : n.authorAvatar) + '</div>'
+            + '<div class="forum-notif-body">'
+            + '<div class="forum-notif-text"><b>' + n.authorName + '</b> ' + actionText + '</div>'
+            + (n.type === 'comment' && n.commentText ? '<div class="forum-notif-comment">"' + n.commentText + '"</div>' : '')
+            + '<div class="forum-notif-post-preview">' + (n.postContent || '') + '</div>'
+            + '<div class="forum-notif-time">' + getForumRelativeTime(n.time) + '</div>'
+            + '</div>'
+            + '</div>';
+    });
+    return html;
+}
+
+// 论坛帖子被角色点赞/评论的随机互动
+function maybeInteractWithUserPost() {
+    var posts = getForumPosts();
+    var userPosts = posts.filter(function(p) { return p.isUser; });
+    if (userPosts.length === 0) return;
+    if (Math.random() > 0.5) return;
+
+    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
+    if (contacts.length === 0) return;
+    var actor = contacts[Math.floor(Math.random() * contacts.length)];
+    var targetPost = userPosts[Math.floor(Math.random() * userPosts.length)];
+
+    if (Math.random() < 0.5) {
+        targetPost.likes = (targetPost.likes || 0) + 1;
+        saveForumPosts(posts);
+        addForumNotification({
+            type: 'like',
+            authorName: actor.name,
+            authorAvatar: actor.avatar,
+            authorAvatarData: actor.avatarData || '',
+            postId: targetPost.id,
+            postContent: targetPost.content
+        });
+        var body = document.getElementById('forumBody');
+        if (body && forumCurrentTab === 'home') renderForumApp();
+    } else {
+        var systemPrompt = typeof buildSystemPrompt === 'function' ? buildSystemPrompt(actor.id) : '';
+        var prompt = '用户在论坛发了一条帖子：「' + targetPost.content + '」。请以你的口吻给这条帖子写一句简短评论，1句话，自然随意，不超过30字。只输出评论内容。';
+        if (typeof callChatAPI === 'function') {
+            callChatAPI([
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: prompt }
+            ]).then(function(reply) {
+                var clean = reply.replace(/\{[^}]*\}/g, '').trim();
+                if (!clean) return;
+                var comments = getForumComments();
+                if (!comments[targetPost.id]) comments[targetPost.id] = [];
+                comments[targetPost.id].push({
+                    id: 'c_' + Date.now(),
+                    userName: actor.name,
+                    userHandle: actor.name,
+                    avatar: actor.avatar,
+                    avatarData: actor.avatarData || '',
+                    content: clean,
+                    time: Date.now()
+                });
+                saveForumComments(comments);
+                addForumNotification({
+                    type: 'comment',
+                    authorName: actor.name,
+                    authorAvatar: actor.avatar,
+                    authorAvatarData: actor.avatarData || '',
+                    postId: targetPost.id,
+                    postContent: targetPost.content,
+                    commentText: clean
+                });
+                if (forumCurrentTab === 'home') renderForumApp();
+            }).catch(function() {});
+        }
+    }
+}
+
+// ========== 私信（论坛内独立系统） ==========
+function renderForumMessagesBody() {
+    var dmList = getForumDMList();
+    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
+
+    var html = '<div class="forum-dm-start-row" onclick="forumOpenNewDM()"><span>+ 新私信</span></div>';
+
+    if (dmList.length === 0) {
+        html += '<div class="forum-empty">'
+            + '<div class="forum-empty-icon">💌</div>'
+            + '<div class="forum-empty-text">暂无私信</div>'
+            + '<div class="forum-empty-hint">点击上方开始与角色私信</div>'
+            + '</div>';
+        return html;
+    }
+    dmList.forEach(function(contactId) {
+        var contact = contacts.find(function(c) { return c.id === contactId; });
+        if (!contact) return;
+        var msgs = getForumDMMessages(contactId);
+        var last = msgs.length > 0 ? msgs[msgs.length - 1] : null;
+        var avatarStyle = contact.avatarData ? 'background-image:url(' + contact.avatarData + ');background-size:cover;background-position:center;' : '';
+        html += '<div class="forum-dm-item" onclick="openForumDM(\'' + contactId + '\')">'
+            + '<div class="forum-dm-avatar" style="' + avatarStyle + '">' + (contact.avatarData ? '' : contact.avatar) + '</div>'
+            + '<div class="forum-dm-info">'
+            + '<div class="forum-dm-name">' + contact.name + '</div>'
+            + '<div class="forum-dm-last">' + (last ? last.text.substring(0, 30) : '开始对话吧') + '</div>'
+            + '</div>'
+            + (last ? '<div class="forum-dm-time">' + getForumRelativeTime(last.time) + '</div>' : '')
+            + '</div>';
+    });
+    return html;
+}
+
+function forumOpenNewDM() {
+    var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
+    if (contacts.length === 0) { showToast('暂无可私信的角色'); return; }
+    var overlay = document.createElement('div');
+    overlay.className = 'sheet-mask show';
+    overlay.id = 'forumDMPickerOverlay';
+    var listHTML = '';
+    contacts.forEach(function(c) {
+        var avatarStyle = c.avatarData ? 'background-image:url(' + c.avatarData + ');background-size:cover;background-position:center;' : '';
+        listHTML += '<div class="music-menu-item" onclick="forumStartDM(\'' + c.id + '\')">'
+            + '<div class="forum-dm-avatar small" style="' + avatarStyle + '">' + (c.avatarData ? '' : c.avatar) + '</div>'
+            + '<span>' + c.name + '</span></div>';
+    });
+    overlay.innerHTML = '<div class="half-sheet" onclick="event.stopPropagation();">'
+        + '<div class="sheet-handle"><div class="handle-bar"></div></div>'
+        + '<div class="sheet-scroll"><div class="settings-section-title">发起私信</div>' + listHTML + '</div></div>';
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) { var o = document.getElementById('forumDMPickerOverlay'); if (o) o.remove(); } };
+    var handle = overlay.querySelector('.sheet-handle');
+    var startY = 0;
+    handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
+    handle.addEventListener('touchmove', function(e) { if (e.touches[0].clientY - startY > 60) { var o = document.getElementById('forumDMPickerOverlay'); if (o) o.remove(); } });
+}
+
+function forumStartDM(contactId) {
+    var o = document.getElementById('forumDMPickerOverlay');
+    if (o) o.remove();
+    var list = getForumDMList();
+    if (list.indexOf(contactId) < 0) { list.unshift(contactId); saveForumDMList(list); }
+    openForumDM(contactId);
+}
+
+function openForumDM(contactId) {
+    forumCurrentDMContactId = contactId;
+    renderForumApp();
+}
+
+function forumCloseDM() {
+    forumCurrentDMContactId = null;
+    renderForumApp();
+}
+
+function renderForumDMThreadFull(contactId) {
+    var contact = window.ChatConfig && window.ChatConfig.contacts
+        ? window.ChatConfig.contacts.find(function(c) { return c.id === contactId; })
+        : null;
+    if (!contact) { forumCurrentDMContactId = null; return renderForumMessagesBody(); }
+
+    var msgs = getForumDMMessages(contactId);
+    var msgsHTML = '';
+    msgs.forEach(function(m) {
+        msgsHTML += '<div class="forum-dm-bubble-row ' + m.role + '">'
+            + '<div class="forum-dm-bubble">' + m.text + '</div>'
+            + '</div>';
+    });
+
+    return '<div class="forum-app">'
+        + '<div class="forum-top-bar">'
+        + '<div class="forum-back-btn" onclick="forumCloseDM()">‹</div>'
+        + '<div class="forum-top-title">' + contact.name + '</div>'
+        + '<div class="forum-top-spacer"></div>'
+        + '</div>'
+        + '<div class="forum-dm-body" id="forumDMBody">' + msgsHTML + '</div>'
+        + '<div class="forum-dm-input-bar">'
+        + '<input type="text" class="forum-dm-input" id="forumDMInput" placeholder="发送私信..." onkeypress="if(event.key===\'Enter\') sendForumDM(\'' + contactId + '\')">'
+        + '<button class="forum-dm-send-btn" onclick="sendForumDM(\'' + contactId + '\')">发送</button>'
+        + '</div>'
+        + '</div>';
+}
+
+function sendForumDM(contactId) {
+    var input = document.getElementById('forumDMInput');
+    if (!input || !input.value.trim()) return;
+    var text = input.value.trim();
+    input.value = '';
+
+    var msgs = getForumDMMessages(contactId);
+    msgs.push({ role: 'user', text: text, time: Date.now() });
+    saveForumDMMessages(contactId, msgs);
+    renderForumApp();
+
+    var contact = window.ChatConfig.contacts.find(function(c) { return c.id === contactId; });
+    if (!contact) return;
+
+    var systemPrompt = typeof buildSystemPrompt === 'function' ? buildSystemPrompt(contactId) : '';
+    systemPrompt += '\n\n【私信模式】这是论坛平台上的私信对话，不是主聊天软件。直接说话，简短自然，不要旁白括号，不要JSON状态信息。';
+
+    var history = msgs.map(function(m) { return { role: m.role === 'user' ? 'user' : 'assistant', content: m.text }; });
+
+    if (typeof callChatAPI === 'function') {
+        callChatAPI([{ role: 'system', content: systemPrompt }].concat(history)).then(function(reply) {
+            var clean = reply.replace(/\{[^}]*\}/g, '').replace(/[\(\（][^\)\）]*[\)\）]/g, '').trim();
+            if (!clean) return;
+            var msgs2 = getForumDMMessages(contactId);
+            msgs2.push({ role: 'assistant', text: clean, time: Date.now() });
+            saveForumDMMessages(contactId, msgs2);
+            if (forumCurrentDMContactId === contactId) renderForumApp();
+        }).catch(function() {});
+    }
+}
+
 // ========== 打开帖子详情 ==========
 function openForumPost(postId) {
     forumCurrentPostId = postId;
@@ -139,7 +517,6 @@ function openForumPost(postId) {
 
     var comments = getForumComments();
     var postComments = comments[postId] || [];
-    var timeStr = getForumRelativeTime(post.time);
 
     var commentsHTML = '';
     postComments.forEach(function(c) {
@@ -207,11 +584,8 @@ function submitForumComment(postId) {
     var masks = typeof getMasks === 'function' ? getMasks() : [];
     var activeMaskId = localStorage.getItem('active_mask_id') || '';
     var activeMask = null;
-    for (var i = 0; i < masks.length; i++) {
-        if (masks[i].id === activeMaskId) { activeMask = masks[i]; break; }
-    }
+    for (var i = 0; i < masks.length; i++) { if (masks[i].id === activeMaskId) { activeMask = masks[i]; break; } }
     var userName = activeMask ? activeMask.name : '我';
-    var userAvatar = activeMask && activeMask.avatar ? activeMask.avatar : '我';
     var userAvatarData = activeMask && activeMask.avatar ? activeMask.avatar : '';
 
     comments[postId].push({
@@ -225,14 +599,11 @@ function submitForumComment(postId) {
     });
     saveForumComments(comments);
 
-    // 同步到聊天记录
     var posts = getForumPosts();
     var post = posts.find(function(p) { return p.id === postId; });
     if (post && post.contactId) {
         syncForumCommentToChat(post.contactId, post.userName, text);
     }
-
-    // 调用 AI 让发帖人回复
     if (post && post.contactId) {
         autoReplyToComment(post, text);
     }
@@ -291,7 +662,17 @@ function autoReplyToComment(post, userComment) {
                 isAutoReply: true
             });
             saveForumComments(comments);
-            // 同步到聊天记录
+
+            addForumNotification({
+                type: 'comment',
+                authorName: post.userName,
+                authorAvatar: post.avatar,
+                authorAvatarData: post.avatarData || '',
+                postId: post.id,
+                postContent: post.content,
+                commentText: clean
+            });
+
             var storageKey = 'chat_history_' + contactId;
             var saved = localStorage.getItem(storageKey) || '';
             var now = new Date();
@@ -304,6 +685,8 @@ function autoReplyToComment(post, userComment) {
                 + '<div class="bubble bubble-assistant">在论坛回复了评论：' + clean + '</div>'
                 + '</div>';
             localStorage.setItem(storageKey, saved + htmlToAdd);
+
+            if (forumCurrentPostId === post.id) openForumPost(post.id);
         }).catch(function() {});
     }
 }
@@ -329,12 +712,10 @@ function openForumCompose() {
     handle.addEventListener('touchmove', function(e) { if (e.touches[0].clientY - startY > 40) closeForumCompose(); });
     handle.addEventListener('click', function() { closeForumCompose(); });
 }
-
 function closeForumCompose() {
     var overlay = document.getElementById('forumComposeOverlay');
     if (overlay) overlay.remove();
 }
-
 function publishForumPost() {
     var input = document.getElementById('forumComposeInput');
     if (!input || !input.value.trim()) { showToast('请输入内容'); return; }
@@ -344,11 +725,8 @@ function publishForumPost() {
     var masks = typeof getMasks === 'function' ? getMasks() : [];
     var activeMaskId = localStorage.getItem('active_mask_id') || '';
     var activeMask = null;
-    for (var i = 0; i < masks.length; i++) {
-        if (masks[i].id === activeMaskId) { activeMask = masks[i]; break; }
-    }
+    for (var i = 0; i < masks.length; i++) { if (masks[i].id === activeMaskId) { activeMask = masks[i]; break; } }
     var userName = activeMask ? activeMask.name : '我';
-    var userAvatar = activeMask && activeMask.avatar ? activeMask.avatar : '我';
     var userAvatarData = activeMask && activeMask.avatar ? activeMask.avatar : '';
 
     var posts = getForumPosts();
@@ -365,6 +743,7 @@ function publishForumPost() {
         isUser: true
     });
     saveForumPosts(posts);
+    forumCurrentTab = 'home';
     renderForumApp();
     showToast('帖子已发布');
 }
@@ -377,6 +756,8 @@ function refreshForum() {
     toast.className = 'global-toast';
     toast.textContent = '正在生成帖子…';
     document.body.appendChild(toast);
+
+    maybeInteractWithUserPost();
 
     var contacts = window.ChatConfig && window.ChatConfig.contacts ? window.ChatConfig.contacts : [];
     var npcs = getNPCs();
@@ -442,7 +823,7 @@ function refreshForum() {
                 contactId: author.contactId
             });
             saveForumPosts(posts);
-            renderForumApp();
+            if (forumCurrentTab === 'home') renderForumApp();
         }).catch(function() {
             toast.remove();
             forumIsGenerating = false;
