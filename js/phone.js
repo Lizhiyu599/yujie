@@ -500,10 +500,8 @@ function showPhoneLoading() {
     phoneLoadingEl.innerHTML = '<div class="phone-loading-spinner"></div><div>正在偷看...</div>';
     appWindow.appendChild(phoneLoadingEl);
     phoneLoadingTimer = setTimeout(function() {
-        hidePhoneLoading();
-        alert("请求超时，请检查网络或重试");
-    }, 15000);
-}
+    hidePhoneLoading();
+}, 30000);
 
 function hidePhoneLoading() {
     if (phoneLoadingTimer) { clearTimeout(phoneLoadingTimer); phoneLoadingTimer = null; }
