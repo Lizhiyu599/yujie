@@ -230,7 +230,7 @@
     color: rgba(255,255,255,0.85);
     border-top-left-radius: 4px;
 }
-.phone-msg-bubble.user {
+.phone-msg-bubble.me {
     background: rgba(255,255,255,0.2);
     color: rgba(255,255,255,0.85);
     border-top-right-radius: 4px;
