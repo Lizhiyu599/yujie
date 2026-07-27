@@ -207,16 +207,19 @@
 
 /* 颜文字气泡位置 */
 .gobang-emoji-spot {
-    min-height: 28px;
+    height: 28px;
     display: flex;
+    align-items: center;
     justify-content: center;
     margin-top: 2px;
+    overflow: visible;
 }
 
 .gobang-emoji-bubble {
-    padding: 4px 10px;
+    padding: 2px 10px;
     border-radius: 12px;
     font-size: 15px;
+    line-height: 1.2;
     background: rgba(255,255,255,0.55);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -366,29 +369,30 @@
 .gobang-win-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.35);
+    background: rgba(0,0,0,0.3);
     z-index: 500;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 .gobang-win-dialog {
-    width: 75%;
-    max-width: 280px;
-    background: rgba(255,255,255,0.85);
-    backdrop-filter: blur(30px);
-    -webkit-backdrop-filter: blur(30px);
-    border-radius: 20px;
-    padding: 30px 20px 24px;
+    width: 70%;
+    max-width: 260px;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border-radius: 24px;
+    padding: 36px 24px 28px;
     text-align: center;
-    border: 1px solid rgba(255,255,255,0.6);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    border: 1px solid rgba(255,255,255,0.5);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.6);
 }
 .gobang-win-text {
-    font-size: 22px;
+    font-size: 20px;
     color: #000;
-    font-weight: 700;
-    margin-bottom: 24px;
+    font-weight: 600;
+    margin-bottom: 28px;
+    letter-spacing: 1px;
 }
 
 /* ===== 确认弹窗 ===== */
