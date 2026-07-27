@@ -502,6 +502,7 @@ function showPhoneLoading() {
     phoneLoadingTimer = setTimeout(function() {
     hidePhoneLoading();
 }, 30000);
+}
 
 function hidePhoneLoading() {
     if (phoneLoadingTimer) { clearTimeout(phoneLoadingTimer); phoneLoadingTimer = null; }
