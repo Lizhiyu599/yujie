@@ -6,12 +6,12 @@
 
 // ========== 游戏状态 ==========
 var gameContactId = null;
-var gameType = null; // 'gobang'
+var gameType = null;
 var gobangBoard = [];
-var gobangCurrentPlayer = 'user'; // 'user' | 'ai'
+var gobangCurrentPlayer = 'user';
 var gobangHistory = [];
 var gobangGameOver = false;
-var gobangPendingUndo = null; // 谁发起了悔棋请求
+var gobangPendingUndo = null;
 var gobangEmojiTimer = null;
 
 // ========== 打开游戏 ==========
@@ -100,7 +100,6 @@ function startGobang(contactId) {
     gameContactId = contactId;
     gameType = 'gobang';
 
-    // 初始化棋盘
     gobangBoard = [];
     for (var i = 0; i < 15; i++) {
         gobangBoard[i] = [];
@@ -133,7 +132,6 @@ function renderGobang() {
     var userName = activeMask ? activeMask.name : '我';
     var userAvatar = activeMask && activeMask.avatar ? activeMask.avatar : '';
 
-    // 棋盘HTML
     var boardHTML = '';
     for (var r = 0; r < 15; r++) {
         for (var c = 0; c < 15; c++) {
@@ -150,7 +148,7 @@ function renderGobang() {
         + '<div class="gobang-app">'
         + '<div class="game-top-bar">'
         + '<div class="game-back-btn" onclick="gobangConfirmExit()">‹</div>'
-        + '<div class="game-top-title">五子棋</div>'
+        + '<div class="game-top-title"></div>'
         + '<div class="game-btn-undo" onclick="gobangRequestUndo()">悔棋</div>'
         + '</div>'
 
@@ -158,17 +156,19 @@ function renderGobang() {
         + '<div class="gobang-player user">'
         + '<div class="gobang-player-avatar" style="' + (userAvatar ? 'background-image:url(' + userAvatar + ');background-size:cover;background-position:center;' : '') + '">' + (userAvatar ? '' : userName.charAt(0)) + '</div>'
         + '<div class="gobang-player-name">' + userName + '</div>'
+        + '<div class="gobang-emoji-spot" id="gobangEmojiUser"></div>'
         + '</div>'
         + '<div class="gobang-vs">VS</div>'
         + '<div class="gobang-player ai">'
         + '<div class="gobang-player-avatar" style="' + (contactAvatar ? 'background-image:url(' + contactAvatar + ');background-size:cover;background-position:center;' : '') + '">' + (contactAvatar ? '' : contactAvatarText) + '</div>'
         + '<div class="gobang-player-name">' + contactName + '</div>'
+        + '<div class="gobang-emoji-spot" id="gobangEmojiAI"></div>'
         + '</div>'
         + '</div>'
 
-        + '<div class="gobang-emoji-area" id="gobangEmojiArea"></div>'
-
+        + '<div class="gobang-board-wrap">'
         + '<div class="gobang-board" id="gobangBoard">' + boardHTML + '</div>'
+        + '</div>'
 
         + '<div class="gobang-status">' + statusText + '</div>'
 
@@ -190,7 +190,7 @@ function gobangPlace(r, c) {
     if (gobangGameOver) return;
     if (gobangCurrentPlayer !== 'user') return;
     if (gobangBoard[r][c] !== 0) return;
-    if (gobangPendingUndo) return; // 有待处理的悔棋请求
+    if (gobangPendingUndo) return;
 
     gobangBoard[r][c] = 1;
     gobangHistory.push({ r: r, c: c, player: 1 });
@@ -198,14 +198,13 @@ function gobangPlace(r, c) {
     if (checkGobangWin(1)) {
         gobangGameOver = true;
         renderGobang();
-        showGobangEmoji('user', 'づ♡ど', '比心');
+        showGobangWinDialog('你赢了！🎉');
         return;
     }
 
     gobangCurrentPlayer = 'ai';
     renderGobang();
 
-    // AI走棋
     setTimeout(function() {
         gobangAIMove();
     }, 500);
@@ -221,24 +220,12 @@ function gobangAIMove() {
     gobangBoard[move.r][move.c] = 2;
     gobangHistory.push({ r: move.r, c: move.c, player: 2 });
 
-    // AI走了一步好棋，可能触发挑衅颜文字
-    if (move.score >= 100 && Math.random() < 0.3) {
-        setTimeout(function() {
-            showGobangEmoji('ai', 'o_O', '挑衅');
-        }, 300);
-    }
-
-    // AI走了很烂的棋（不太可能但兜底），触发迷惑
-    if (move.score < 0 && Math.random() < 0.5) {
-        setTimeout(function() {
-            showGobangEmoji('ai', '꩜ᯅ꩜', '迷惑');
-        }, 300);
-    }
-
     if (checkGobangWin(2)) {
         gobangGameOver = true;
         renderGobang();
-        showGobangEmoji('ai', 'づ♡ど', '比心');
+        var contact = getContactById(gameContactId);
+        var contactName = contact ? contact.name : '角色';
+        showGobangWinDialog(contactName + '赢了！');
         return;
     }
 
@@ -257,7 +244,7 @@ function gobangFindBestMove() {
             var score = gobangEval(r, c, 2) + gobangEval(r, c, 1) * 0.9;
             if (score > bestScore) {
                 bestScore = score;
-                bestMove = { r: r, c: c, score: score };
+                bestMove = { r: r, c: c };
             }
         }
     }
@@ -271,13 +258,11 @@ function gobangEval(r, c, player) {
     dirs.forEach(function(d) {
         var count = 1;
         var open = 0;
-        // 正方向
         for (var i = 1; i < 5; i++) {
             var nr = r + d[0] * i, nc = c + d[1] * i;
             if (nr >= 0 && nr < 15 && nc >= 0 && nc < 15 && gobangBoard[nr][nc] === player) count++;
             else { if (nr >= 0 && nr < 15 && nc >= 0 && nc < 15 && gobangBoard[nr][nc] === 0) open++; break; }
         }
-        // 反方向
         for (var i = 1; i < 5; i++) {
             var nr = r - d[0] * i, nc = c - d[1] * i;
             if (nr >= 0 && nr < 15 && nc >= 0 && nc < 15 && gobangBoard[nr][nc] === player) count++;
@@ -316,15 +301,56 @@ function checkGobangWin(player) {
     return false;
 }
 
+// ========== 游戏结束弹窗 ==========
+function showGobangWinDialog(message) {
+    var overlay = document.createElement('div');
+    overlay.className = 'gobang-win-overlay';
+    overlay.id = 'gobangWinOverlay';
+    overlay.innerHTML = ''
+        + '<div class="gobang-win-dialog">'
+        + '<div class="gobang-win-text">' + message + '</div>'
+        + '<button class="game-btn-confirm" onclick="gobangWinAction()">再来一局</button>'
+        + '<button class="game-btn-cancel" onclick="gobangWinExit()">退出</button>'
+        + '</div>';
+    document.body.appendChild(overlay);
+}
+
+function gobangWinAction() {
+    var overlay = document.getElementById('gobangWinOverlay');
+    if (overlay) overlay.remove();
+    startGobang(gameContactId);
+}
+
+function gobangWinExit() {
+    var overlay = document.getElementById('gobangWinOverlay');
+    if (overlay) overlay.remove();
+    renderGameHome();
+}
+
 // ========== 悔棋 ==========
 function gobangRequestUndo() {
     if (gobangGameOver) return;
     if (gobangHistory.length < 2) { showToast('无法悔棋'); return; }
 
-    // 判断角色是否同意
+    // 没配API时根据角色性格本地判断
+    if (typeof callChatAPI !== 'function') {
+        // 本地兜底：随机同意/拒绝
+        var agree = Math.random() > 0.4;
+        if (agree) {
+            gobangHistory.pop();
+            var last = gobangHistory.pop();
+            gobangBoard[last.r][last.c] = 0;
+            gobangCurrentPlayer = 'user';
+            renderGobang();
+            showToast('悔棋成功');
+        } else {
+            showGobangEmoji('ai', 'x( ˃ ⌂ ˂ ՞ )', '拒绝');
+        }
+        return;
+    }
+
     gobangDecideUndo(function(agree) {
         if (agree) {
-            // 双方各退一步
             gobangHistory.pop();
             var last = gobangHistory.pop();
             gobangBoard[last.r][last.c] = 0;
@@ -342,24 +368,20 @@ function gobangRequestUndo() {
 function gobangDecideUndo(callback) {
     var contact = getContactById(gameContactId);
     if (!contact) { callback(true); return; }
-
-    var systemPrompt = typeof buildSystemPrompt === 'function' ? buildSystemPrompt(gameContactId) : '';
     var contactName = contact.name;
 
-    var prompt = '你是' + contactName + '。你正在和用户下五子棋。用户请求悔棋。\n'
-        + '请根据你的性格决定是否同意。回复一个字：同意 或 拒绝。\n'
-        + '如果你性格好胜、认真，可能会拒绝。如果你性格随和、温柔，可能会同意。';
+    var prompt = '你是' + contactName + '。你正在和用户下五子棋。用户请求悔棋。请根据你的性格决定是否同意。回复一个字：同意 或 拒绝。';
 
     if (typeof callChatAPI === 'function') {
         callChatAPI([
-            { role: 'system', content: systemPrompt },
+            { role: 'system', content: typeof buildSystemPrompt === 'function' ? buildSystemPrompt(gameContactId) : '' },
             { role: 'user', content: prompt }
         ]).then(function(reply) {
             var text = typeof reply === 'string' ? reply : (reply.content || reply.text || '');
             if (text.indexOf('拒绝') >= 0) callback(false);
             else callback(true);
         }).catch(function() {
-            callback(true);
+            callback(Math.random() > 0.4);
         });
     } else {
         callback(true);
@@ -367,15 +389,6 @@ function gobangDecideUndo(callback) {
 }
 
 // ========== 颜文字系统 ==========
-var GOBANG_EMOJIS = {
-    'T^T': '哭哭',
-    'x( ˃ ⌂ ˂ ՞ )': '拒绝',
-    '꩜ᯅ꩜': '迷惑',
-    'づ♡ど': '比心',
-    'o_O': '挑衅',
-    '⦁֊⦁꧞': '无语'
-};
-
 function toggleGobangEmojiPanel() {
     var panel = document.getElementById('gobangEmojiPanel');
     if (!panel) return;
@@ -385,28 +398,26 @@ function toggleGobangEmojiPanel() {
 function sendGobangEmoji(emoji, meaning) {
     var panel = document.getElementById('gobangEmojiPanel');
     if (panel) panel.style.display = 'none';
+    showGobangEmoji('user', emoji);
 
-    showGobangEmoji('user', emoji, meaning);
-
-    // 角色回应
     setTimeout(function() {
         gobangAIRespondEmoji(meaning);
     }, 800);
 }
 
-function showGobangEmoji(from, emoji, meaning) {
-    if (gobangEmojiTimer) clearTimeout(gobangEmojiTimer);
+function showGobangEmoji(from, emoji) {
+    var spotId = from === 'user' ? 'gobangEmojiUser' : 'gobangEmojiAI';
+    var spot = document.getElementById(spotId);
+    if (!spot) return;
 
-    var area = document.getElementById('gobangEmojiArea');
-    if (!area) return;
-
+    spot.innerHTML = '';
     var bubble = document.createElement('div');
     bubble.className = 'gobang-emoji-bubble ' + from;
     bubble.textContent = emoji;
     bubble.onclick = function() { bubble.remove(); };
-    area.innerHTML = '';
-    area.appendChild(bubble);
+    spot.appendChild(bubble);
 
+    clearTimeout(gobangEmojiTimer);
     gobangEmojiTimer = setTimeout(function() {
         bubble.remove();
     }, 6000);
@@ -422,8 +433,7 @@ function gobangAIRespondEmoji(userMeaning) {
         '拒绝': '⦁֊⦁꧞'
     };
     var respondEmoji = responseMap[userMeaning] || 'T^T';
-    var respondMeaning = GOBANG_EMOJIS[respondEmoji] || '';
-    showGobangEmoji('ai', respondEmoji, respondMeaning);
+    showGobangEmoji('ai', respondEmoji);
 }
 
 // ========== 退出确认 ==========
