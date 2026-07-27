@@ -164,9 +164,9 @@
 /* 玩家头部 */
 .gobang-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    padding: 8px 16px 12px;
+    padding: 8px 16px 4px;
     gap: 20px;
     flex-shrink: 0;
 }
@@ -175,7 +175,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
+    min-width: 60px;
 }
 
 .gobang-player-avatar {
@@ -201,27 +202,28 @@
     font-size: 13px;
     color: #8e8e93;
     font-weight: 600;
+    padding-top: 14px;
 }
 
-/* 颜文字气泡区 */
-.gobang-emoji-area {
+/* 颜文字气泡位置 */
+.gobang-emoji-spot {
+    min-height: 28px;
     display: flex;
     justify-content: center;
-    padding: 0 16px 6px;
-    min-height: 36px;
-    flex-shrink: 0;
+    margin-top: 2px;
 }
 
 .gobang-emoji-bubble {
-    padding: 6px 12px;
-    border-radius: 14px;
-    font-size: 16px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 15px;
     background: rgba(255,255,255,0.55);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255,255,255,0.5);
     cursor: pointer;
     animation: emojiIn 0.3s ease;
+    white-space: nowrap;
 }
 
 @keyframes emojiIn {
@@ -229,7 +231,15 @@
     to { transform: scale(1); opacity: 1; }
 }
 
-/* 棋盘 */
+/* 棋盘固定区域 */
+.gobang-board-wrap {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 0;
+}
+
 .gobang-board {
     display: grid;
     grid-template-columns: repeat(15, 1fr);
@@ -238,14 +248,12 @@
     height: calc(100vw - 32px);
     max-width: 360px;
     max-height: 360px;
-    margin: 0 auto;
     background: rgba(255,255,255,0.25);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
     border: 1px solid rgba(255,255,255,0.4);
     border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.6);
-    flex-shrink: 0;
 }
 
 .gobang-cell {
@@ -286,14 +294,14 @@
     text-align: center;
     font-size: 13px;
     color: #8e8e93;
-    padding: 10px;
+    padding: 8px;
     flex-shrink: 0;
 }
 
 /* 颜文字按钮 */
 .gobang-emoji-btn {
     position: absolute;
-    bottom: 30px;
+    bottom: 20px;
     right: 20px;
     width: 44px;
     height: 44px;
@@ -319,7 +327,7 @@
 /* 颜文字弹窗 */
 .gobang-emoji-panel {
     position: absolute;
-    bottom: 84px;
+    bottom: 74px;
     right: 16px;
     background: rgba(255,255,255,0.6);
     backdrop-filter: blur(25px);
@@ -352,6 +360,35 @@
     font-size: 10px;
     color: #8e8e93;
     margin-top: 2px;
+}
+
+/* ===== 游戏结束弹窗 ===== */
+.gobang-win-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.gobang-win-dialog {
+    width: 75%;
+    max-width: 280px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-radius: 20px;
+    padding: 30px 20px 24px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.6);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+.gobang-win-text {
+    font-size: 22px;
+    color: #000;
+    font-weight: 700;
+    margin-bottom: 24px;
 }
 
 /* ===== 确认弹窗 ===== */
