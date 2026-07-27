@@ -594,16 +594,6 @@ function enterEditMode() {
     removeAddButton();
     document.querySelectorAll('.grid-cell').forEach(function(cell) {
         cell.classList.add('editing');
-        if (cell.querySelector('.delete-btn')) return;
-        var delBtn = document.createElement('div');
-        delBtn.className = 'delete-btn';
-        delBtn.textContent = '×';
-        var itemId = cell.getAttribute('data-id');
-        delBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            deleteItem(itemId);
-        });
-        cell.appendChild(delBtn);
     });
 }
 
