@@ -1,0 +1,413 @@
+/* ===== 游戏容器 ===== */
+.game-app {
+    width: 100%;
+    height: 100%;
+    background: #f2f2f7;
+    display: flex;
+    flex-direction: column;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    overflow: hidden;
+    position: relative;
+}
+
+/* ===== 顶部栏 ===== */
+.game-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 48px 16px 12px;
+    background: rgba(242, 242, 247, 0.9);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: 50;
+    flex-shrink: 0;
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
+}
+
+.game-back-btn {
+    color: #000;
+    font-size: 24px;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 300;
+}
+.game-back-btn:active { opacity: 0.5; }
+
+.game-top-title {
+    font-size: 17px;
+    color: #000;
+    font-weight: 600;
+    letter-spacing: 2px;
+}
+
+.game-top-spacer { width: 36px; }
+
+.game-btn-undo {
+    font-size: 14px;
+    color: #000;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: rgba(0,0,0,0.04);
+    font-weight: 500;
+}
+.game-btn-undo:active { background: rgba(0,0,0,0.1); }
+
+/* ===== 主体区域 ===== */
+.game-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ===== 游戏列表 ===== */
+.game-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.game-item {
+    background: rgba(255,255,255,0.55);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 16px;
+    padding: 18px 16px;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+.game-item:active { background: rgba(255,255,255,0.75); transform: scale(0.985); }
+
+.game-item-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    background: rgba(0,0,0,0.04);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+}
+
+.game-item-name {
+    font-size: 16px;
+    color: #000;
+    font-weight: 600;
+}
+
+.game-item-desc {
+    font-size: 12px;
+    color: #8e8e93;
+    margin-top: 2px;
+}
+
+/* ===== 选择对手 ===== */
+.game-contact-card {
+    display: flex;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 0.5px solid rgba(0,0,0,0.06);
+    cursor: pointer;
+    gap: 14px;
+    transition: 0.15s;
+}
+.game-contact-card:active { opacity: 0.6; }
+
+.game-contact-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #e5e5ea;
+    color: #8e8e93;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.game-contact-name {
+    flex: 1;
+    font-size: 16px;
+    color: #000;
+    font-weight: 500;
+}
+
+.game-contact-arrow {
+    font-size: 20px;
+    color: rgba(0,0,0,0.3);
+}
+
+/* ===== 五子棋 ===== */
+.gobang-app {
+    width: 100%;
+    height: 100%;
+    background: #f2f2f7;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+/* 玩家头部 */
+.gobang-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px 12px;
+    gap: 20px;
+    flex-shrink: 0;
+}
+
+.gobang-player {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.gobang-player-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e5e5ea;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: #8e8e93;
+}
+
+.gobang-player-name {
+    font-size: 12px;
+    color: #000;
+    font-weight: 500;
+}
+
+.gobang-vs {
+    font-size: 13px;
+    color: #8e8e93;
+    font-weight: 600;
+}
+
+/* 颜文字气泡区 */
+.gobang-emoji-area {
+    display: flex;
+    justify-content: center;
+    padding: 0 16px 6px;
+    min-height: 36px;
+    flex-shrink: 0;
+}
+
+.gobang-emoji-bubble {
+    padding: 6px 12px;
+    border-radius: 14px;
+    font-size: 16px;
+    background: rgba(255,255,255,0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.5);
+    cursor: pointer;
+    animation: emojiIn 0.3s ease;
+}
+
+@keyframes emojiIn {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* 棋盘 */
+.gobang-board {
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    grid-template-rows: repeat(15, 1fr);
+    width: calc(100vw - 32px);
+    height: calc(100vw - 32px);
+    max-width: 360px;
+    max-height: 360px;
+    margin: 0 auto;
+    background: rgba(255,255,255,0.25);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.6);
+    flex-shrink: 0;
+}
+
+.gobang-cell {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.gobang-cell::before {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: rgba(0,0,0,0.15);
+    border-radius: 50%;
+}
+
+.gobang-piece {
+    width: 80%;
+    height: 80%;
+    border-radius: 50%;
+    position: relative;
+    z-index: 1;
+    transition: 0.15s;
+}
+.gobang-piece.black {
+    background: #1d1d1f;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.gobang-piece.white {
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+/* 状态文字 */
+.gobang-status {
+    text-align: center;
+    font-size: 13px;
+    color: #8e8e93;
+    padding: 10px;
+    flex-shrink: 0;
+}
+
+/* 颜文字按钮 */
+.gobang-emoji-btn {
+    position: absolute;
+    bottom: 30px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.45);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255,255,255,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 20;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    color: #000;
+}
+.gobang-emoji-btn:active {
+    background: rgba(255,255,255,0.7);
+    transform: scale(0.92);
+}
+
+/* 颜文字弹窗 */
+.gobang-emoji-panel {
+    position: absolute;
+    bottom: 84px;
+    right: 16px;
+    background: rgba(255,255,255,0.6);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid rgba(255,255,255,0.6);
+    border-radius: 16px;
+    padding: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    z-index: 25;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+}
+
+.gobang-emoji-item {
+    width: calc(33.33% - 4px);
+    text-align: center;
+    padding: 10px 4px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: 0.15s;
+    color: #000;
+}
+.gobang-emoji-item:active {
+    background: rgba(0,0,0,0.06);
+}
+.gobang-emoji-item small {
+    display: block;
+    font-size: 10px;
+    color: #8e8e93;
+    margin-top: 2px;
+}
+
+/* ===== 确认弹窗 ===== */
+.game-confirm-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.game-confirm-dialog {
+    width: 75%;
+    max-width: 280px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-radius: 16px;
+    padding: 24px 20px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.6);
+}
+.game-confirm-dialog p {
+    font-size: 15px;
+    color: #000;
+    margin-bottom: 20px;
+}
+.game-confirm-btns {
+    display: flex;
+    gap: 10px;
+}
+
+.game-btn-cancel {
+    flex: 1;
+    background: rgba(0,0,0,0.04);
+    color: #000;
+    border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 15px;
+    cursor: pointer;
+    font-family: inherit;
+}
+.game-btn-cancel:active { background: rgba(0,0,0,0.08); }
+
+.game-btn-confirm {
+    flex: 1;
+    background: #1d1d1f;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 15px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+}
+.game-btn-confirm:active { background: #3a3a3c; }
