@@ -1,7 +1,7 @@
 /**
  * 玉界 - 查手机
  * 选择角色后进入模拟手机桌面，内含浏览器/聊天/便签/商城
- * 聊天：好友列表（联动牵绊关系网）+ 真实聊天记录 + AI 生成 NPC 聊天
+ * 聊天：好友列表（联动牵绊关系网）+ AI 生成 NPC 聊天
  */
 
 // ========== 数据存储 ==========
@@ -154,7 +154,7 @@ function getPhoneNPCs() {
     return [];
 }
 
-// ========== 聊天 → 好友列表 ==========
+// ========== 聊天 → 好友列表（只有NPC，无用户） ==========
 function renderPhoneChatList() {
     var appWindow = document.getElementById('phoneAppWindow');
     if (!appWindow) return;
@@ -163,15 +163,7 @@ function renderPhoneChatList() {
     var npcs = getPhoneNPCs();
 
     var chatTargets = [];
-    chatTargets.push({
-        id: 'user',
-        name: '用户',
-        avatar: '你',
-        avatarData: '',
-        isUser: true
-    });
-
-    var npcCount = Math.min(npcs.length, 4);
+    var npcCount = Math.min(npcs.length, 5);
     for (var j = 0; j < npcCount; j++) {
         var npc = npcs[j];
         if (!npc) continue;
@@ -184,11 +176,26 @@ function renderPhoneChatList() {
         });
     }
 
+    if (chatTargets.length === 0) {
+        appWindow.innerHTML = ''
+            + '<div class="phone-app">'
+            + '<div class="phone-top-bar">'
+            + '<div class="phone-back-btn" onclick="renderPhoneDesktop()">‹</div>'
+            + '<div class="phone-top-title">聊天</div>'
+            + '<div class="phone-top-spacer"></div>'
+            + '</div>'
+            + '<div class="phone-body">'
+            + '<div class="phone-empty-chat">暂无联系人，请先在牵绊中添加NPC</div>'
+            + '</div>'
+            + '</div>';
+        return;
+    }
+
     var listHTML = '';
     chatTargets.forEach(function(t) {
         var avatarStyle = t.avatarData ? 'background-image:url(' + t.avatarData + ');background-size:cover;background-position:center;' : '';
         listHTML += ''
-            + '<div class="phone-chat-contact" onclick="openPhoneChatDetail(\'' + t.id + '\', \'' + t.name.replace(/'/g, "\\'") + '\', ' + t.isUser + ')">'
+            + '<div class="phone-chat-contact" onclick="openPhoneChatDetail(\'' + t.id + '\', \'' + t.name.replace(/'/g, "\\'") + '\', false)">'
             + '<div class="phone-chat-contact-avatar" style="' + avatarStyle + '">' + (t.avatarData ? '' : t.avatar) + '</div>'
             + '<div class="phone-chat-contact-name">' + t.name + '</div>'
             + '<div class="phone-chat-contact-arrow">›</div>'
@@ -215,58 +222,19 @@ function openPhoneChatDetail(targetId, targetName, isUser) {
     var appWindow = document.getElementById('phoneAppWindow');
     if (!appWindow) return;
 
-    if (isUser === true || isUser === 'true') {
-        var storageKey = (window.ChatState && window.ChatState.isOfflineMode ? 'chat_history_offline_' : 'chat_history_') + phoneContactId;
-        var saved = localStorage.getItem(storageKey);
-        var messagesHTML = '';
-        if (saved) {
-            var temp = document.createElement('div');
-            temp.innerHTML = saved;
-            var rows = temp.querySelectorAll('.bubble-row');
-            var last10 = [];
-            for (var i = Math.max(0, rows.length - 10); i < rows.length; i++) {
-                last10.push(rows[i]);
-            }
-            last10.forEach(function(row) {
-                var bubble = row.querySelector('.bubble, .offline-message');
-                var text = bubble ? bubble.textContent : '';
-                var isRoleMsg = row.classList.contains('assistant');
-                messagesHTML += ''
-                    + '<div class="phone-msg-row ' + (isRoleMsg ? 'right' : 'left') + '">'
-                    + '<div class="phone-msg-bubble ' + (isRoleMsg ? 'me' : 'other') + '">' + text + '</div>'
-                    + '</div>';
-            });
-        }
-        if (!messagesHTML) {
-            messagesHTML = '<div class="phone-empty-chat">暂无聊天记录</div>';
-        }
-
-        appWindow.innerHTML = ''
-            + '<div class="phone-app">'
-            + '<div class="phone-top-bar">'
-            + '<div class="phone-back-btn" onclick="openPhoneApp(\'chat\')">‹</div>'
-            + '<div class="phone-top-title">' + targetName + '</div>'
-            + '<div class="phone-top-spacer"></div>'
-            + '</div>'
-            + '<div class="phone-body">'
-            + '<div class="phone-msg-list">' + messagesHTML + '</div>'
-            + '</div>'
-            + '</div>';
+    var cacheKey = 'phone_chat_' + phoneContactId + '_' + targetId;
+    var cached = localStorage.getItem(cacheKey);
+    if (cached) {
+        renderPhoneNPCChatDetail(cached, targetName);
     } else {
-        var cacheKey = 'phone_chat_' + phoneContactId + '_' + targetId;
-        var cached = localStorage.getItem(cacheKey);
-        if (cached) {
-            renderPhoneNPCChatDetail(cached, targetName);
-        } else {
-            showPhoneLoading();
-            generatePhoneNPCChat(targetName, phoneContactId, function(content) {
-                hidePhoneLoading();
-                if (content) {
-                    localStorage.setItem(cacheKey, content);
-                }
-                renderPhoneNPCChatDetail(content || '', targetName);
-            });
-        }
+        showPhoneLoading();
+        generatePhoneNPCChat(targetName, phoneContactId, function(content) {
+            hidePhoneLoading();
+            if (content) {
+                localStorage.setItem(cacheKey, content);
+            }
+            renderPhoneNPCChatDetail(content || '', targetName);
+        });
     }
 }
 
@@ -316,7 +284,7 @@ function refreshPhoneNPCChat(targetName) {
     });
 }
 
-// ========== 生成 NPC 聊天（手机弹窗排查版） ==========
+// ========== 生成 NPC 聊天 ==========
 function generatePhoneNPCChat(npcName, contactId, callback) {
     var contact = null;
     try {
@@ -332,7 +300,6 @@ function generatePhoneNPCChat(npcName, contactId, callback) {
         + '每条消息不超过30字。';
 
     if (typeof callChatAPI !== 'function') {
-        alert("【排查】找不到 callChatAPI 函数！");
         callback('');
         return;
     }
@@ -341,29 +308,23 @@ function generatePhoneNPCChat(npcName, contactId, callback) {
         { role: 'system', content: systemPrompt },
         { role: 'user', content: prompt }
     ]).then(function(reply) {
-        if (!reply) { alert("【排查】NPC聊天 API 返回空数据"); callback(''); return; }
+        if (!reply) { callback(''); return; }
         var replyText = typeof reply === 'string' ? reply : (reply.content || reply.text || '');
         var clean = replyText.replace(/\{[^}]*\}/g, '').trim();
         callback(clean);
-    }).catch(function(err) {
-        alert("【排查】NPC聊天 API 请求失败：" + (err && err.message ? err.message : JSON.stringify(err)));
+    }).catch(function() {
         callback('');
     });
 }
 
-// ========== 生成应用内容（手机弹窗排查版） ==========
+// ========== 生成应用内容 ==========
 function generatePhoneAppContent(app) {
     var contact = null;
     try {
         contact = typeof getContactById === 'function' ? getContactById(phoneContactId) : null;
-    } catch(e) { 
-        alert("【排查】获取角色失败：" + e.message); 
-    }
+    } catch(e) {}
     
-    if (!contact) {
-        alert("【排查】找不到角色！当前角色 ID：" + phoneContactId);
-        return;
-    }
+    if (!contact) return;
     var contactName = contact.name;
 
     showPhoneLoading();
@@ -392,13 +353,13 @@ function generatePhoneAppContent(app) {
             + '聊天记录：\n' + chatHistory;
     } else if (app === 'shop') {
         prompt = '你是' + contactName + '。请生成你的购物车清单。\n'
-            + '格式：每行一个，格式为"商品名 - ¥价格 - 加入原因"。生成4-6个。\n\n'
+            + '格式：每行一个，格式为"商品名 - ¥价格 - 加入原因"。生成4-6个。\n'
+            + '内容：日常用品、想买的东西。偶尔（概率很低）可以有一两个成人用品，自然不做作。\n\n'
             + '聊天记录：\n' + chatHistory;
     }
 
     if (typeof callChatAPI !== 'function') {
         hidePhoneLoading();
-        alert("【排查】找不到 callChatAPI 函数！");
         return;
     }
 
@@ -407,36 +368,17 @@ function generatePhoneAppContent(app) {
         { role: 'user', content: prompt }
     ]).then(function(reply) {
         hidePhoneLoading();
-
-        if (!reply) {
-            alert("【排查】API 返回空数据！");
-            return;
-        }
-
-        var replyText = '';
-        if (typeof reply === 'string') {
-            replyText = reply;
-        } else if (reply && reply.content) {
-            replyText = reply.content;
-        } else if (reply && reply.text) {
-            replyText = reply.text;
-        } else {
-            replyText = JSON.stringify(reply);
-        }
-
+        if (!reply) return;
+        var replyText = typeof reply === 'string' ? reply : (reply.content || reply.text || '');
         var clean = replyText.replace(/\{[^}]*\}/g, '').trim();
-        if (!clean) { 
-            alert("【排查】过滤后内容为空。原始返回：" + replyText);
-            return; 
-        }
+        if (!clean) return;
         
         var data = getPhoneData(phoneContactId);
         data[app] = { content: clean, time: Date.now() };
         savePhoneData(phoneContactId, data);
         renderPhoneAppContent(app, data[app]);
-    }).catch(function(err) {
+    }).catch(function() {
         hidePhoneLoading();
-        alert("【排查】API 请求失败：" + (err && err.message ? err.message : JSON.stringify(err)));
     });
 }
 
@@ -500,8 +442,8 @@ function showPhoneLoading() {
     phoneLoadingEl.innerHTML = '<div class="phone-loading-spinner"></div><div>正在偷看...</div>';
     appWindow.appendChild(phoneLoadingEl);
     phoneLoadingTimer = setTimeout(function() {
-    hidePhoneLoading();
-}, 30000);
+        hidePhoneLoading();
+    }, 30000);
 }
 
 function hidePhoneLoading() {
