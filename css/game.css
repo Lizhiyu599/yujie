@@ -347,13 +347,18 @@
 
 /* ===== 大富翁 ===== */
 .monopoly-app {
-    width: 100%;
-    height: 100%;
+    width: 100vh;
+    height: 100vw;
     background: #f2f2f7;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    position: relative;
+    position: fixed;
+    top: 0;
+    left: 0;
+    transform: rotate(90deg);
+    transform-origin: top left;
+    translate: 100vw 0;
 }
 
 .monopoly-header {
