@@ -445,17 +445,25 @@
 
 .tictactoe-avatar-badge {
     position: absolute;
-    width: 14px;
-    height: 14px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
+    background: #1d1d1f;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
     border: 2px solid #f2f2f7;
     box-shadow: 0 1px 3px rgba(0,0,0,0.12);
 }
-.tictactoe-avatar-badge.user { right: -2px; bottom: -2px; }
-.tictactoe-avatar-badge.ai { left: -2px; bottom: -2px; }
-.tictactoe-avatar-badge.x { background: #1d1d1f; }
+.tictactoe-avatar-badge.user { right: -3px; bottom: -3px; }
+.tictactoe-avatar-badge.ai { left: -3px; bottom: -3px; }
 .tictactoe-avatar-badge.o {
     background: #fff;
+    color: #1d1d1f;
     border: 1.5px solid rgba(0,0,0,0.1);
 }
 
@@ -515,8 +523,26 @@
     border: 1px solid rgba(255,255,255,0.4);
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.6);
-    gap: 2px;
-    padding: 10px;
+    position: relative;
+}
+
+/* 井字格线 */
+.tictactoe-board::before,
+.tictactoe-board::after {
+    content: '';
+    position: absolute;
+    background: rgba(0,0,0,0.08);
+    pointer-events: none;
+}
+.tictactoe-board::before {
+    width: 2px; height: 100%;
+    left: 33.33%; top: 0;
+    box-shadow: 93px 0 0 rgba(0,0,0,0.08);
+}
+.tictactoe-board::after {
+    height: 2px; width: 100%;
+    top: 33.33%; left: 0;
+    box-shadow: 0 93px 0 rgba(0,0,0,0.08);
 }
 
 .tictactoe-cell {
@@ -524,9 +550,9 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    border-radius: 8px;
     transition: 0.15s;
     position: relative;
+    z-index: 1;
 }
 .tictactoe-cell:active {
     background: rgba(0,0,0,0.03);
@@ -538,31 +564,10 @@
     line-height: 1;
     transition: 0.15s;
 }
-.tictactoe-mark.x {
-    color: #1d1d1f;
-}
-.tictactoe-mark.o {
-    color: #8e8e93;
-}
-.tictactoe-mark.preview {
-    opacity: 0.25;
-}
-.tictactoe-mark.last-move {
-    position: relative;
-}
-.tictactoe-mark.last-move::after {
-    content: '';
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: #ff3b30;
-    pointer-events: none;
-    z-index: 2;
-}
+.tictactoe-mark.x { color: #1d1d1f; }
+.tictactoe-mark.o { color: #8e8e93; }
+.tictactoe-mark.preview { opacity: 0.25; }
 
-/* 井字棋胜利连线 */
 .tictactoe-cell.win-cell {
     background: rgba(0,0,0,0.04);
     border-radius: 8px;
