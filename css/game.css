@@ -318,22 +318,21 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8);
 }
 
-/* 预览棋子 */
 .gobang-piece.preview {
-    opacity: 0.4;
+    opacity: 0.35;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.15);
 }
 
-/* 最后落子高亮光环 */
 .gobang-piece.last-move::after {
     content: '';
     position: absolute;
-    top: -3px; left: -3px; right: -3px; bottom: -3px;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 7px; height: 7px;
     border-radius: 50%;
-    border: 2px solid rgba(0,0,0,0.15);
+    background: #ff3b30;
     pointer-events: none;
-}
-.gobang-piece.white.last-move::after {
-    border-color: rgba(0,0,0,0.25);
+    z-index: 2;
 }
 
 /* 状态文字 */
