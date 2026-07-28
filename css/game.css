@@ -347,13 +347,27 @@
 
 /* ===== 大富翁 ===== */
 .monopoly-app {
-    width: 100%;
-    height: 100%;
+    width: 100vh;
+    height: 100vw;
     background: #f2f2f7;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    position: relative;
+    position: fixed;
+    top: 0;
+    left: 0;
+    transform: rotate(90deg);
+    transform-origin: top left;
+    translate: 100vw 0;
+}
+
+.monopoly-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 8px 16px 4px;
+    gap: 20px;
+    flex-shrink: 0;
 }
 
 .monopoly-player {
@@ -365,14 +379,14 @@
 }
 
 .monopoly-player-avatar {
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     background: #e5e5ea;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: 600;
     color: #8e8e93;
     position: relative;
@@ -406,14 +420,10 @@
 }
 
 .monopoly-vs {
-    font-size: 12px;
+    font-size: 13px;
     color: #8e8e93;
     font-weight: 600;
-}
-
-.monopoly-topbar {
-    padding: 44px 12px 6px;
-    gap: 6px;
+    padding-top: 14px;
 }
 
 .monopoly-emoji-spot {
@@ -441,28 +451,19 @@
 
 .monopoly-board-wrap {
     flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    overflow: auto;
     padding: 4px;
-    overflow: hidden;
-}
-
-.monopoly-board-outer {
-    position: relative;
-    width: calc(100vw - 140px);
-    height: calc(100vw - 140px);
-    max-width: 460px;
-    max-height: 460px;
+    -webkit-overflow-scrolling: touch;
 }
 
 .monopoly-board {
     display: grid;
     grid-template-columns: repeat(11, 1fr);
     grid-template-rows: repeat(11, 1fr);
-    width: 100%;
-    height: 100%;
-    gap: 1px;
+    width: 550px;
+    height: 550px;
+    margin: 0 auto;
+    gap: 2px;
 }
 
 .monopoly-cell {
@@ -480,7 +481,6 @@
     overflow: hidden;
 }
 
-/* 40格环形排列 */
 .monopoly-cell:nth-child(1) { grid-column: 11; grid-row: 11; }
 .monopoly-cell:nth-child(2) { grid-column: 10; grid-row: 11; }
 .monopoly-cell:nth-child(3) { grid-column: 9; grid-row: 11; }
@@ -529,22 +529,22 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
     z-index: 10;
 }
 
 .monopoly-dice {
-    width: 52px;
-    height: 52px;
+    width: 80px;
+    height: 80px;
     background: rgba(255,255,255,0.55);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
     border: 1px solid rgba(255,255,255,0.5);
-    border-radius: 14px;
+    border-radius: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 32px;
     cursor: pointer;
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     transition: 0.2s;
@@ -560,7 +560,7 @@
 }
 
 .monopoly-status {
-    font-size: 10px;
+    font-size: 12px;
     color: #8e8e93;
     text-align: center;
 }
