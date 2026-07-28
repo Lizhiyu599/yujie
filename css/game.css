@@ -152,123 +152,95 @@
 
 /* ===== 五子棋 ===== */
 .gobang-app {
-    width: 100%;
-    height: 100%;
-    background: #f2f2f7;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    position: relative;
+    width: 100%; height: 100%; background: #f2f2f7;
+    display: flex; flex-direction: column; overflow: hidden; position: relative;
 }
+.gobang-header { display: flex; align-items: flex-start; justify-content: center; padding: 8px 16px 4px; gap: 20px; flex-shrink: 0; }
+.gobang-player { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 60px; }
+.gobang-player-avatar { width: 40px; height: 40px; border-radius: 50%; background: #e5e5ea; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; color: #8e8e93; position: relative; }
+.gobang-avatar-badge { position: absolute; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #f2f2f7; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+.gobang-avatar-badge.user { right: -2px; bottom: -2px; }
+.gobang-avatar-badge.ai { left: -2px; bottom: -2px; }
+.gobang-avatar-badge.black { background: #1d1d1f; }
+.gobang-avatar-badge.white { background: #fff; border: 1.5px solid rgba(0,0,0,0.1); }
+.gobang-player-name { font-size: 12px; color: #000; font-weight: 500; }
+.gobang-vs { font-size: 13px; color: #8e8e93; font-weight: 600; padding-top: 14px; }
+.gobang-emoji-spot { height: 28px; display: flex; align-items: center; justify-content: center; margin-top: 2px; overflow: visible; }
+.gobang-emoji-bubble { padding: 2px 10px; border-radius: 12px; font-size: 15px; line-height: 1.2; background: rgba(255,255,255,0.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5); cursor: pointer; animation: emojiIn 0.3s ease; white-space: nowrap; }
+@keyframes emojiIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.gobang-board-wrap { flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 6px 0; }
+.gobang-board { display: grid; grid-template-columns: repeat(15, 1fr); grid-template-rows: repeat(15, 1fr); width: calc(100vw - 32px); height: calc(100vw - 32px); max-width: 360px; max-height: 360px; background: rgba(255,255,255,0.25); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.4); border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.6); }
+.gobang-cell { position: relative; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.gobang-cell::before { content: ''; position: absolute; width: 2px; height: 2px; background: rgba(0,0,0,0.15); border-radius: 50%; }
+.gobang-piece { width: 80%; height: 80%; border-radius: 50%; position: relative; z-index: 1; transition: 0.15s; }
+.gobang-piece.black { background: #1d1d1f; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.gobang-piece.white { background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8); }
+.gobang-piece.preview { opacity: 0.35; box-shadow: 0 0 0 2px rgba(0,0,0,0.15); }
+.gobang-piece.last-move::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 7px; height: 7px; border-radius: 50%; background: #ff3b30; pointer-events: none; z-index: 2; }
+.gobang-status { text-align: center; font-size: 13px; color: #8e8e93; padding: 8px; flex-shrink: 0; }
+.gobang-emoji-btn { position: absolute; bottom: 20px; right: 20px; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.45); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; z-index: 20; box-shadow: 0 2px 10px rgba(0,0,0,0.06); color: #000; }
+.gobang-emoji-btn:active { background: rgba(255,255,255,0.7); transform: scale(0.92); }
+.gobang-emoji-panel { position: absolute; bottom: 74px; right: 16px; background: rgba(255,255,255,0.45); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.5); border-radius: 16px; padding: 10px; display: flex; flex-wrap: wrap; gap: 6px; z-index: 25; box-shadow: 0 8px 30px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.5); }
+.gobang-emoji-item { width: calc(33.33% - 4px); text-align: center; padding: 10px 4px; border-radius: 10px; cursor: pointer; font-size: 16px; transition: 0.15s; color: #000; }
+.gobang-emoji-item:active { background: rgba(255,255,255,0.5); }
+.gobang-emoji-item small { display: block; font-size: 10px; color: #8e8e93; margin-top: 2px; }
 
-.gobang-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 8px 16px 4px;
-    gap: 20px;
-    flex-shrink: 0;
-}
+/* ===== 井字棋 ===== */
+.tictactoe-app { width: 100%; height: 100%; background: #f2f2f7; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+.tictactoe-header { display: flex; align-items: flex-start; justify-content: center; padding: 8px 16px 4px; gap: 20px; flex-shrink: 0; }
+.tictactoe-player { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 60px; }
+.tictactoe-player-avatar { width: 40px; height: 40px; border-radius: 50%; background: #e5e5ea; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; color: #8e8e93; position: relative; }
+.tictactoe-avatar-badge { position: absolute; width: 18px; height: 18px; border-radius: 50%; background: #1d1d1f; color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; line-height: 1; border: 2px solid #f2f2f7; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+.tictactoe-avatar-badge.user { right: -3px; bottom: -3px; }
+.tictactoe-avatar-badge.ai { left: -3px; bottom: -3px; }
+.tictactoe-avatar-badge.o { background: #fff; color: #1d1d1f; border: 1.5px solid rgba(0,0,0,0.1); }
+.tictactoe-player-name { font-size: 12px; color: #000; font-weight: 500; }
+.tictactoe-vs { font-size: 13px; color: #8e8e93; font-weight: 600; padding-top: 14px; }
+.tictactoe-emoji-spot { height: 28px; display: flex; align-items: center; justify-content: center; margin-top: 2px; overflow: visible; }
+.tictactoe-emoji-bubble { padding: 2px 10px; border-radius: 12px; font-size: 15px; line-height: 1.2; background: rgba(255,255,255,0.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5); cursor: pointer; animation: emojiIn 0.3s ease; white-space: nowrap; }
+.tictactoe-board-wrap { flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 12px 0; }
+.tictactoe-board { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); width: 280px; height: 280px; background: rgba(255,255,255,0.25); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.4); border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.6); position: relative; }
+.tictactoe-board::before, .tictactoe-board::after { content: ''; position: absolute; background: rgba(0,0,0,0.08); pointer-events: none; }
+.tictactoe-board::before { width: 2px; height: 100%; left: 33.33%; top: 0; box-shadow: 93px 0 0 rgba(0,0,0,0.08); }
+.tictactoe-board::after { height: 2px; width: 100%; top: 33.33%; left: 0; box-shadow: 0 93px 0 rgba(0,0,0,0.08); }
+.tictactoe-cell { display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.15s; position: relative; z-index: 1; }
+.tictactoe-cell:active { background: rgba(0,0,0,0.03); }
+.tictactoe-mark { font-size: 48px; font-weight: 700; line-height: 1; transition: 0.15s; }
+.tictactoe-mark.x { color: #1d1d1f; }
+.tictactoe-mark.o { color: #8e8e93; }
+.tictactoe-mark.preview { opacity: 0.25; }
+.tictactoe-cell.win-cell { background: rgba(0,0,0,0.04); border-radius: 8px; }
+.tictactoe-status { text-align: center; font-size: 13px; color: #8e8e93; padding: 8px; flex-shrink: 0; }
+.tictactoe-emoji-btn { position: absolute; bottom: 20px; right: 20px; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.45); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; z-index: 20; box-shadow: 0 2px 10px rgba(0,0,0,0.06); color: #000; }
+.tictactoe-emoji-btn:active { background: rgba(255,255,255,0.7); transform: scale(0.92); }
+.tictactoe-emoji-panel { position: absolute; bottom: 74px; right: 16px; background: rgba(255,255,255,0.45); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.5); border-radius: 16px; padding: 10px; display: flex; flex-wrap: wrap; gap: 6px; z-index: 25; box-shadow: 0 8px 30px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.5); }
+.tictactoe-emoji-item { width: calc(33.33% - 4px); text-align: center; padding: 10px 4px; border-radius: 10px; cursor: pointer; font-size: 16px; transition: 0.15s; color: #000; }
+.tictactoe-emoji-item:active { background: rgba(255,255,255,0.5); }
+.tictactoe-emoji-item small { display: block; font-size: 10px; color: #8e8e93; margin-top: 2px; }
 
-.gobang-player {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    min-width: 60px;
+/* ===== 黑白棋 ===== */
+.reversi-app {
+    width: 100%; height: 100%; background: #f2f2f7;
+    display: flex; flex-direction: column; overflow: hidden; position: relative;
 }
+.reversi-header { display: flex; align-items: flex-start; justify-content: center; padding: 8px 16px 4px; gap: 20px; flex-shrink: 0; }
+.reversi-player { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 60px; }
+.reversi-player-avatar { width: 40px; height: 40px; border-radius: 50%; background: #e5e5ea; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; color: #8e8e93; position: relative; }
+.reversi-avatar-badge { position: absolute; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #f2f2f7; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+.reversi-avatar-badge.user { right: -2px; bottom: -2px; }
+.reversi-avatar-badge.ai { left: -2px; bottom: -2px; }
+.reversi-avatar-badge.black { background: #1d1d1f; }
+.reversi-avatar-badge.white { background: #fff; border: 1.5px solid rgba(0,0,0,0.1); }
+.reversi-player-name { font-size: 12px; color: #000; font-weight: 500; }
+.reversi-vs { font-size: 13px; color: #8e8e93; font-weight: 600; padding-top: 14px; }
+.reversi-emoji-spot { height: 28px; display: flex; align-items: center; justify-content: center; margin-top: 2px; overflow: visible; }
+.reversi-emoji-bubble { padding: 2px 10px; border-radius: 12px; font-size: 15px; line-height: 1.2; background: rgba(255,255,255,0.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5); cursor: pointer; animation: emojiIn 0.3s ease; white-space: nowrap; }
 
-.gobang-player-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: #e5e5ea;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    font-weight: 600;
-    color: #8e8e93;
-    position: relative;
-}
-
-.gobang-avatar-badge {
-    position: absolute;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    border: 2px solid #f2f2f7;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-}
-.gobang-avatar-badge.user {
-    right: -2px;
-    bottom: -2px;
-}
-.gobang-avatar-badge.ai {
-    left: -2px;
-    bottom: -2px;
-}
-.gobang-avatar-badge.black {
-    background: #1d1d1f;
-}
-.gobang-avatar-badge.white {
-    background: #fff;
-    border: 1.5px solid rgba(0,0,0,0.1);
-}
-
-.gobang-player-name {
-    font-size: 12px;
-    color: #000;
-    font-weight: 500;
-}
-
-.gobang-vs {
-    font-size: 13px;
-    color: #8e8e93;
-    font-weight: 600;
-    padding-top: 14px;
-}
-
-.gobang-emoji-spot {
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 2px;
-    overflow: visible;
-}
-
-.gobang-emoji-bubble {
-    padding: 2px 10px;
-    border-radius: 12px;
-    font-size: 15px;
-    line-height: 1.2;
-    background: rgba(255,255,255,0.55);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.5);
-    cursor: pointer;
-    animation: emojiIn 0.3s ease;
-    white-space: nowrap;
-}
-
-@keyframes emojiIn {
-    from { transform: scale(0.5); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
-
-.gobang-board-wrap {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 6px 0;
-}
-
-.gobang-board {
+.reversi-board-wrap { flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 6px 0; }
+.reversi-board {
     display: grid;
-    grid-template-columns: repeat(15, 1fr);
-    grid-template-rows: repeat(15, 1fr);
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
     width: calc(100vw - 32px);
     height: calc(100vw - 32px);
     max-width: 360px;
@@ -281,23 +253,25 @@
     box-shadow: 0 4px 20px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.6);
 }
 
-.gobang-cell {
+.reversi-cell {
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    border: 0.5px solid rgba(0,0,0,0.04);
 }
-.gobang-cell::before {
+.reversi-cell.valid-move::after {
     content: '';
     position: absolute;
-    width: 2px;
-    height: 2px;
-    background: rgba(0,0,0,0.15);
+    width: 20%;
+    height: 20%;
     border-radius: 50%;
+    background: rgba(0,0,0,0.1);
+    pointer-events: none;
 }
 
-.gobang-piece {
+.reversi-piece {
     width: 80%;
     height: 80%;
     border-radius: 50%;
@@ -305,426 +279,63 @@
     z-index: 1;
     transition: 0.15s;
 }
-.gobang-piece.black {
-    background: #1d1d1f;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-.gobang-piece.white {
-    background: #fff;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8);
-}
+.reversi-piece.black { background: #1d1d1f; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.reversi-piece.white { background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8); }
+.reversi-piece.preview { opacity: 0.35; box-shadow: 0 0 0 2px rgba(0,0,0,0.15); }
+.reversi-piece.last-move::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 7px; height: 7px; border-radius: 50%; background: #ff3b30; pointer-events: none; z-index: 2; }
 
-.gobang-piece.preview {
-    opacity: 0.35;
-    box-shadow: 0 0 0 2px rgba(0,0,0,0.15);
-}
+.reversi-status { text-align: center; font-size: 13px; color: #8e8e93; padding: 8px; flex-shrink: 0; }
 
-.gobang-piece.last-move::after {
-    content: '';
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: #ff3b30;
-    pointer-events: none;
-    z-index: 2;
-}
+.reversi-emoji-btn { position: absolute; bottom: 20px; right: 20px; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.45); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; z-index: 20; box-shadow: 0 2px 10px rgba(0,0,0,0.06); color: #000; }
+.reversi-emoji-btn:active { background: rgba(255,255,255,0.7); transform: scale(0.92); }
 
-.gobang-status {
-    text-align: center;
-    font-size: 13px;
-    color: #8e8e93;
-    padding: 8px;
-    flex-shrink: 0;
-}
-
-.gobang-emoji-btn {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.45);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border: 1px solid rgba(255,255,255,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    cursor: pointer;
-    z-index: 20;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-    color: #000;
-}
-.gobang-emoji-btn:active {
-    background: rgba(255,255,255,0.7);
-    transform: scale(0.92);
-}
-
-.gobang-emoji-panel {
-    position: absolute;
-    bottom: 74px;
-    right: 16px;
-    background: rgba(255,255,255,0.45);
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
-    border: 1px solid rgba(255,255,255,0.5);
-    border-radius: 16px;
-    padding: 10px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    z-index: 25;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.5);
-}
-
-.gobang-emoji-item {
-    width: calc(33.33% - 4px);
-    text-align: center;
-    padding: 10px 4px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: 0.15s;
-    color: #000;
-}
-.gobang-emoji-item:active {
-    background: rgba(255,255,255,0.5);
-}
-.gobang-emoji-item small {
-    display: block;
-    font-size: 10px;
-    color: #8e8e93;
-    margin-top: 2px;
-}
-
-/* ===== 井字棋 ===== */
-.tictactoe-app {
-    width: 100%;
-    height: 100%;
-    background: #f2f2f7;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    position: relative;
-}
-
-.tictactoe-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 8px 16px 4px;
-    gap: 20px;
-    flex-shrink: 0;
-}
-
-.tictactoe-player {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    min-width: 60px;
-}
-
-.tictactoe-player-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: #e5e5ea;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    font-weight: 600;
-    color: #8e8e93;
-    position: relative;
-}
-
-.tictactoe-avatar-badge {
-    position: absolute;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #1d1d1f;
-    color: #fff;
-    font-size: 10px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    border: 2px solid #f2f2f7;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-}
-.tictactoe-avatar-badge.user { right: -3px; bottom: -3px; }
-.tictactoe-avatar-badge.ai { left: -3px; bottom: -3px; }
-.tictactoe-avatar-badge.o {
-    background: #fff;
-    color: #1d1d1f;
-    border: 1.5px solid rgba(0,0,0,0.1);
-}
-
-.tictactoe-player-name {
-    font-size: 12px;
-    color: #000;
-    font-weight: 500;
-}
-
-.tictactoe-vs {
-    font-size: 13px;
-    color: #8e8e93;
-    font-weight: 600;
-    padding-top: 14px;
-}
-
-.tictactoe-emoji-spot {
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 2px;
-    overflow: visible;
-}
-
-.tictactoe-emoji-bubble {
-    padding: 2px 10px;
-    border-radius: 12px;
-    font-size: 15px;
-    line-height: 1.2;
-    background: rgba(255,255,255,0.55);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.5);
-    cursor: pointer;
-    animation: emojiIn 0.3s ease;
-    white-space: nowrap;
-}
-
-.tictactoe-board-wrap {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 12px 0;
-}
-
-.tictactoe-board {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 1fr);
-    width: 280px;
-    height: 280px;
-    background: rgba(255,255,255,0.25);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border: 1px solid rgba(255,255,255,0.4);
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.6);
-    position: relative;
-}
-
-/* 井字格线 */
-.tictactoe-board::before,
-.tictactoe-board::after {
-    content: '';
-    position: absolute;
-    background: rgba(0,0,0,0.08);
-    pointer-events: none;
-}
-.tictactoe-board::before {
-    width: 2px; height: 100%;
-    left: 33.33%; top: 0;
-    box-shadow: 93px 0 0 rgba(0,0,0,0.08);
-}
-.tictactoe-board::after {
-    height: 2px; width: 100%;
-    top: 33.33%; left: 0;
-    box-shadow: 0 93px 0 rgba(0,0,0,0.08);
-}
-
-.tictactoe-cell {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: 0.15s;
-    position: relative;
-    z-index: 1;
-}
-.tictactoe-cell:active {
-    background: rgba(0,0,0,0.03);
-}
-
-.tictactoe-mark {
-    font-size: 48px;
-    font-weight: 700;
-    line-height: 1;
-    transition: 0.15s;
-}
-.tictactoe-mark.x { color: #1d1d1f; }
-.tictactoe-mark.o { color: #8e8e93; }
-.tictactoe-mark.preview { opacity: 0.25; }
-
-.tictactoe-cell.win-cell {
-    background: rgba(0,0,0,0.04);
-    border-radius: 8px;
-}
-
-.tictactoe-status {
-    text-align: center;
-    font-size: 13px;
-    color: #8e8e93;
-    padding: 8px;
-    flex-shrink: 0;
-}
-
-.tictactoe-emoji-btn {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.45);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border: 1px solid rgba(255,255,255,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    cursor: pointer;
-    z-index: 20;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-    color: #000;
-}
-.tictactoe-emoji-btn:active {
-    background: rgba(255,255,255,0.7);
-    transform: scale(0.92);
-}
-
-.tictactoe-emoji-panel {
-    position: absolute;
-    bottom: 74px;
-    right: 16px;
-    background: rgba(255,255,255,0.45);
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
-    border: 1px solid rgba(255,255,255,0.5);
-    border-radius: 16px;
-    padding: 10px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    z-index: 25;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.5);
-}
-
-.tictactoe-emoji-item {
-    width: calc(33.33% - 4px);
-    text-align: center;
-    padding: 10px 4px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: 0.15s;
-    color: #000;
-}
-.tictactoe-emoji-item:active { background: rgba(255,255,255,0.5); }
-.tictactoe-emoji-item small {
-    display: block;
-    font-size: 10px;
-    color: #8e8e93;
-    margin-top: 2px;
-}
+.reversi-emoji-panel { position: absolute; bottom: 74px; right: 16px; background: rgba(255,255,255,0.45); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.5); border-radius: 16px; padding: 10px; display: flex; flex-wrap: wrap; gap: 6px; z-index: 25; box-shadow: 0 8px 30px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.5); }
+.reversi-emoji-item { width: calc(33.33% - 4px); text-align: center; padding: 10px 4px; border-radius: 10px; cursor: pointer; font-size: 16px; transition: 0.15s; color: #000; }
+.reversi-emoji-item:active { background: rgba(255,255,255,0.5); }
+.reversi-emoji-item small { display: block; font-size: 10px; color: #8e8e93; margin-top: 2px; }
 
 /* ===== 通用 ===== */
-.gobang-win-overlay,
-.tictactoe-win-overlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.3);
-    z-index: 500;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.gobang-win-overlay, .tictactoe-win-overlay, .reversi-win-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.3); z-index: 500;
+    display: flex; align-items: center; justify-content: center;
 }
-.gobang-win-dialog,
-.tictactoe-win-dialog {
-    width: 70%;
-    max-width: 260px;
-    background: rgba(255,255,255,0.7);
-    backdrop-filter: blur(40px);
-    -webkit-backdrop-filter: blur(40px);
-    border-radius: 24px;
-    padding: 36px 24px 28px;
-    text-align: center;
+.gobang-win-dialog, .tictactoe-win-dialog, .reversi-win-dialog {
+    width: 70%; max-width: 260px;
+    background: rgba(255,255,255,0.7); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+    border-radius: 24px; padding: 36px 24px 28px; text-align: center;
     border: 1px solid rgba(255,255,255,0.5);
     box-shadow: 0 16px 48px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.6);
 }
-.gobang-win-text,
-.tictactoe-win-text {
-    font-size: 20px;
-    color: #000;
-    font-weight: 600;
-    margin-bottom: 28px;
-    letter-spacing: 1px;
+.gobang-win-text, .tictactoe-win-text, .reversi-win-text {
+    font-size: 20px; color: #000; font-weight: 600; margin-bottom: 28px; letter-spacing: 1px;
 }
 
 /* ===== 确认弹窗 ===== */
 .game-confirm-overlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.3);
-    z-index: 500;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.3); z-index: 500;
+    display: flex; align-items: center; justify-content: center;
 }
 .game-confirm-dialog {
-    width: 75%;
-    max-width: 280px;
-    background: rgba(255,255,255,0.85);
-    backdrop-filter: blur(30px);
-    -webkit-backdrop-filter: blur(30px);
-    border-radius: 16px;
-    padding: 24px 20px;
-    text-align: center;
+    width: 75%; max-width: 280px;
+    background: rgba(255,255,255,0.85); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+    border-radius: 16px; padding: 24px 20px; text-align: center;
     border: 1px solid rgba(255,255,255,0.6);
 }
-.game-confirm-dialog p {
-    font-size: 15px;
-    color: #000;
-    margin-bottom: 20px;
-}
+.game-confirm-dialog p { font-size: 15px; color: #000; margin-bottom: 20px; }
 .game-confirm-btns { display: flex; gap: 10px; }
 
 .game-btn-cancel {
-    flex: 1;
-    background: rgba(0,0,0,0.04);
-    color: #000;
-    border: 1px solid rgba(0,0,0,0.06);
-    border-radius: 10px;
-    padding: 12px;
-    font-size: 15px;
-    cursor: pointer;
-    font-family: inherit;
+    flex: 1; background: rgba(0,0,0,0.04); color: #000;
+    border: 1px solid rgba(0,0,0,0.06); border-radius: 10px;
+    padding: 12px; font-size: 15px; cursor: pointer; font-family: inherit;
 }
 .game-btn-cancel:active { background: rgba(0,0,0,0.08); }
 
 .game-btn-confirm {
-    flex: 1;
-    background: #1d1d1f;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    padding: 12px;
-    font-size: 15px;
-    cursor: pointer;
-    font-family: inherit;
-    font-weight: 600;
+    flex: 1; background: #1d1d1f; color: #fff;
+    border: none; border-radius: 10px;
+    padding: 12px; font-size: 15px; cursor: pointer; font-family: inherit; font-weight: 600;
 }
 .game-btn-confirm:active { background: #3a3a3c; }
