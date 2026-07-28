@@ -1,7 +1,7 @@
 /**
  * 玉界 - 游戏
  * 包含：五子棋等小游戏
- * 五子棋：AI 下棋、悔棋请求、颜文字互动
+ * 五子棋：AI 下棋、悔棋请求、颜文字互动、随机先手、两击落子、最后落子高亮
  */
 
 // ========== 游戏状态 ==========
@@ -13,6 +13,9 @@ var gobangHistory = [];
 var gobangGameOver = false;
 var gobangPendingUndo = null;
 var gobangEmojiTimer = null;
+var gobangUserColor = 1; // 1黑2白
+var gobangPreview = null; // {r, c}
+var gobangLastMove = null; // {r, c}
 
 // ========== 打开游戏 ==========
 function openGame() {
@@ -107,12 +110,24 @@ function startGobang(contactId) {
             gobangBoard[i][j] = 0;
         }
     }
-    gobangCurrentPlayer = 'user';
+
+    // 随机先手
+    gobangUserColor = Math.random() < 0.5 ? 1 : 2;
+    gobangCurrentPlayer = gobangUserColor === 1 ? 'user' : 'ai';
     gobangHistory = [];
     gobangGameOver = false;
     gobangPendingUndo = null;
+    gobangPreview = null;
+    gobangLastMove = null;
 
     renderGobang();
+
+    // AI先手
+    if (gobangCurrentPlayer === 'ai') {
+        setTimeout(function() {
+            gobangAIMove();
+        }, 600);
+    }
 }
 
 // ========== 渲染五子棋界面 ==========
@@ -132,13 +147,20 @@ function renderGobang() {
     var userName = activeMask ? activeMask.name : '我';
     var userAvatar = activeMask && activeMask.avatar ? activeMask.avatar : '';
 
+    var userPieceClass = gobangUserColor === 1 ? 'black' : 'white';
+    var aiPieceClass = gobangUserColor === 1 ? 'white' : 'black';
+
     var boardHTML = '';
     for (var r = 0; r < 15; r++) {
         for (var c = 0; c < 15; c++) {
             var pieceClass = '';
+            var lastClass = '';
             if (gobangBoard[r][c] === 1) pieceClass = 'black';
             else if (gobangBoard[r][c] === 2) pieceClass = 'white';
-            boardHTML += '<div class="gobang-cell" data-r="' + r + '" data-c="' + c + '" onclick="gobangPlace(' + r + ',' + c + ')"><div class="gobang-piece ' + pieceClass + '"></div></div>';
+            if (gobangLastMove && gobangLastMove.r === r && gobangLastMove.c === c) lastClass = ' last-move';
+            var previewClass = '';
+            if (gobangPreview && gobangPreview.r === r && gobangPreview.c === c) previewClass = ' preview';
+            boardHTML += '<div class="gobang-cell" data-r="' + r + '" data-c="' + c + '" onclick="gobangClick(' + r + ',' + c + ')"><div class="gobang-piece ' + pieceClass + lastClass + previewClass + '"></div></div>';
         }
     }
 
@@ -154,13 +176,19 @@ function renderGobang() {
 
         + '<div class="gobang-header">'
         + '<div class="gobang-player user">'
-        + '<div class="gobang-player-avatar" style="' + (userAvatar ? 'background-image:url(' + userAvatar + ');background-size:cover;background-position:center;' : '') + '">' + (userAvatar ? '' : userName.charAt(0)) + '</div>'
+        + '<div class="gobang-player-avatar" style="' + (userAvatar ? 'background-image:url(' + userAvatar + ');background-size:cover;background-position:center;' : '') + '">'
+        + (userAvatar ? '' : userName.charAt(0))
+        + '<div class="gobang-avatar-badge user ' + userPieceClass + '"></div>'
+        + '</div>'
         + '<div class="gobang-player-name">' + userName + '</div>'
         + '<div class="gobang-emoji-spot" id="gobangEmojiUser"></div>'
         + '</div>'
         + '<div class="gobang-vs">VS</div>'
         + '<div class="gobang-player ai">'
-        + '<div class="gobang-player-avatar" style="' + (contactAvatar ? 'background-image:url(' + contactAvatar + ');background-size:cover;background-position:center;' : '') + '">' + (contactAvatar ? '' : contactAvatarText) + '</div>'
+        + '<div class="gobang-player-avatar" style="' + (contactAvatar ? 'background-image:url(' + contactAvatar + ');background-size:cover;background-position:center;' : '') + '">'
+        + (contactAvatar ? '' : contactAvatarText)
+        + '<div class="gobang-avatar-badge ai ' + aiPieceClass + '"></div>'
+        + '</div>'
         + '<div class="gobang-player-name">' + contactName + '</div>'
         + '<div class="gobang-emoji-spot" id="gobangEmojiAI"></div>'
         + '</div>'
@@ -185,17 +213,32 @@ function renderGobang() {
         + '</div>';
 }
 
-// ========== 下棋 ==========
-function gobangPlace(r, c) {
+// ========== 点击棋盘 ==========
+function gobangClick(r, c) {
     if (gobangGameOver) return;
     if (gobangCurrentPlayer !== 'user') return;
     if (gobangBoard[r][c] !== 0) return;
-    if (gobangPendingUndo) return;
 
-    gobangBoard[r][c] = 1;
-    gobangHistory.push({ r: r, c: c, player: 1 });
+    if (gobangPreview && gobangPreview.r === r && gobangPreview.c === c) {
+        // 第二击确认
+        gobangPlace(r, c);
+    } else {
+        // 第一击预览
+        gobangPreview = { r: r, c: c };
+        renderGobang();
+    }
+}
 
-    if (checkGobangWin(1)) {
+// ========== 下棋 ==========
+function gobangPlace(r, c) {
+    gobangPreview = null;
+    if (gobangBoard[r][c] !== 0) return;
+
+    gobangBoard[r][c] = gobangUserColor;
+    gobangLastMove = { r: r, c: c };
+    gobangHistory.push({ r: r, c: c, player: gobangUserColor });
+
+    if (checkGobangWin(gobangUserColor)) {
         gobangGameOver = true;
         renderGobang();
         showGobangWinDialog('你赢了！🎉');
@@ -217,10 +260,12 @@ function gobangAIMove() {
     var move = gobangFindBestMove();
     if (!move) return;
 
-    gobangBoard[move.r][move.c] = 2;
-    gobangHistory.push({ r: move.r, c: move.c, player: 2 });
+    var aiColor = gobangUserColor === 1 ? 2 : 1;
+    gobangBoard[move.r][move.c] = aiColor;
+    gobangLastMove = { r: move.r, c: move.c };
+    gobangHistory.push({ r: move.r, c: move.c, player: aiColor });
 
-    if (checkGobangWin(2)) {
+    if (checkGobangWin(aiColor)) {
         gobangGameOver = true;
         renderGobang();
         var contact = getContactById(gameContactId);
@@ -237,11 +282,12 @@ function gobangAIMove() {
 function gobangFindBestMove() {
     var bestScore = -Infinity;
     var bestMove = null;
+    var aiColor = gobangUserColor === 1 ? 2 : 1;
 
     for (var r = 0; r < 15; r++) {
         for (var c = 0; c < 15; c++) {
             if (gobangBoard[r][c] !== 0) continue;
-            var score = gobangEval(r, c, 2) + gobangEval(r, c, 1) * 0.9;
+            var score = gobangEval(r, c, aiColor) + gobangEval(r, c, gobangUserColor) * 0.9;
             if (score > bestScore) {
                 bestScore = score;
                 bestMove = { r: r, c: c };
@@ -332,15 +378,15 @@ function gobangRequestUndo() {
     if (gobangGameOver) return;
     if (gobangHistory.length < 2) { showToast('无法悔棋'); return; }
 
-    // 没配API时根据角色性格本地判断
     if (typeof callChatAPI !== 'function') {
-        // 本地兜底：随机同意/拒绝
         var agree = Math.random() > 0.4;
         if (agree) {
             gobangHistory.pop();
             var last = gobangHistory.pop();
             gobangBoard[last.r][last.c] = 0;
+            gobangLastMove = gobangHistory.length > 0 ? gobangHistory[gobangHistory.length - 1] : null;
             gobangCurrentPlayer = 'user';
+            gobangPreview = null;
             renderGobang();
             showToast('悔棋成功');
         } else {
@@ -354,7 +400,9 @@ function gobangRequestUndo() {
             gobangHistory.pop();
             var last = gobangHistory.pop();
             gobangBoard[last.r][last.c] = 0;
+            gobangLastMove = gobangHistory.length > 0 ? gobangHistory[gobangHistory.length - 1] : null;
             gobangCurrentPlayer = 'user';
+            gobangPreview = null;
             gobangPendingUndo = null;
             renderGobang();
             showToast('悔棋成功');
