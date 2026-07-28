@@ -25,7 +25,6 @@ var tttCurrentPlayer = 'user';
 var tttHistory = [];
 var tttGameOver = false;
 var tttUserMark = 'X';
-var tttPreview = null;
 var tttLastMove = null;
 var tttWinCells = [];
 
@@ -282,18 +281,18 @@ function gobangConfirmExit() {
 }
 
 // ============================================================
-//                        井 字 棋
+//                        井 字 棋 （修 复 版）
 // ============================================================
 
 function startTicTacToe(contactId) {
     gameContactId = contactId;
     gameType = 'tictactoe';
     tttBoard = [0,0,0,0,0,0,0,0,0];
-    tttUserMark = Math.random() < 0.5 ? 'X' : 'O';
+    // 用时间戳+随机数确保每次随机不同
+    tttUserMark = (Date.now() % 2 === 0) ? 'X' : 'O';
     tttCurrentPlayer = tttUserMark === 'X' ? 'user' : 'ai';
     tttHistory = [];
     tttGameOver = false;
-    tttPreview = null;
     tttLastMove = null;
     tttWinCells = [];
     renderTicTacToe();
@@ -313,26 +312,25 @@ function renderTicTacToe() {
     for (var i = 0; i < masks.length; i++) { if (masks[i].id === activeMaskId) { activeMask = masks[i]; break; } }
     var userName = activeMask ? activeMask.name : '我';
     var userAvatar = activeMask && activeMask.avatar ? activeMask.avatar : '';
-    var userMarkClass = tttUserMark === 'X' ? 'x' : 'o';
-    var aiMarkClass = tttUserMark === 'X' ? 'o' : 'x';
+
+    var aiMark = tttUserMark === 'X' ? 'O' : 'X';
+
     var boardHTML = '';
     for (var i = 0; i < 9; i++) {
         var mark = '', extraClass = '';
-        if (tttBoard[i] === 1) { mark = tttUserMark; extraClass = ' ' + userMarkClass; }
-        else if (tttBoard[i] === 2) { mark = tttUserMark === 'X' ? 'O' : 'X'; extraClass = ' ' + aiMarkClass; }
-        var lastClass = (tttLastMove === i) ? ' last-move' : '';
-        var previewClass = (tttPreview === i) ? ' preview' : '';
+        if (tttBoard[i] === 1) { mark = tttUserMark; extraClass = ' x'; }
+        else if (tttBoard[i] === 2) { mark = aiMark; extraClass = ' o'; }
         var winClass = tttWinCells.indexOf(i) >= 0 ? ' win-cell' : '';
-        boardHTML += '<div class="tictactoe-cell' + winClass + '" onclick="tttClick(' + i + ')"><div class="tictactoe-mark' + extraClass + lastClass + previewClass + '">' + mark + '</div></div>';
+        boardHTML += '<div class="tictactoe-cell' + winClass + '" onclick="tttPlace(' + i + ')"><div class="tictactoe-mark' + extraClass + '">' + mark + '</div></div>';
     }
     var statusText = tttGameOver ? '游戏结束' : (tttCurrentPlayer === 'user' ? '你的回合' : contactName + '思考中...');
     appWindow.innerHTML = ''
         + '<div class="tictactoe-app">'
         + '<div class="game-top-bar"><div class="game-back-btn" onclick="tttConfirmExit()">‹</div><div class="game-top-title"></div><div class="game-btn-undo" onclick="tttRequestUndo()">悔棋</div></div>'
         + '<div class="tictactoe-header">'
-        + '<div class="tictactoe-player user"><div class="tictactoe-player-avatar" style="' + (userAvatar ? 'background-image:url(' + userAvatar + ');background-size:cover;background-position:center;' : '') + '">' + (userAvatar ? '' : userName.charAt(0)) + '<div class="tictactoe-avatar-badge user ' + userMarkClass + '"></div></div><div class="tictactoe-player-name">' + userName + '</div><div class="tictactoe-emoji-spot" id="tttEmojiUser"></div></div>'
+        + '<div class="tictactoe-player user"><div class="tictactoe-player-avatar" style="' + (userAvatar ? 'background-image:url(' + userAvatar + ');background-size:cover;background-position:center;' : '') + '">' + (userAvatar ? '' : userName.charAt(0)) + '<div class="tictactoe-avatar-badge user ' + (tttUserMark === 'X' ? 'x' : 'o') + '">' + tttUserMark + '</div></div><div class="tictactoe-player-name">' + userName + '</div><div class="tictactoe-emoji-spot" id="tttEmojiUser"></div></div>'
         + '<div class="tictactoe-vs">VS</div>'
-        + '<div class="tictactoe-player ai"><div class="tictactoe-player-avatar" style="' + (contactAvatar ? 'background-image:url(' + contactAvatar + ');background-size:cover;background-position:center;' : '') + '">' + (contactAvatar ? '' : contactAvatarText) + '<div class="tictactoe-avatar-badge ai ' + aiMarkClass + '"></div></div><div class="tictactoe-player-name">' + contactName + '</div><div class="tictactoe-emoji-spot" id="tttEmojiAI"></div></div>'
+        + '<div class="tictactoe-player ai"><div class="tictactoe-player-avatar" style="' + (contactAvatar ? 'background-image:url(' + contactAvatar + ');background-size:cover;background-position:center;' : '') + '">' + (contactAvatar ? '' : contactAvatarText) + '<div class="tictactoe-avatar-badge ai ' + (aiMark === 'X' ? 'x' : 'o') + '">' + aiMark + '</div></div><div class="tictactoe-player-name">' + contactName + '</div><div class="tictactoe-emoji-spot" id="tttEmojiAI"></div></div>'
         + '</div>'
         + '<div class="tictactoe-board-wrap"><div class="tictactoe-board">' + boardHTML + '</div></div>'
         + '<div class="tictactoe-status">' + statusText + '</div>'
@@ -347,14 +345,8 @@ function renderTicTacToe() {
         + '</div></div>';
 }
 
-function tttClick(i) {
-    if (tttGameOver || tttCurrentPlayer !== 'user' || tttBoard[i] !== 0) return;
-    if (tttPreview === i) { tttPlace(i); }
-    else { tttPreview = i; renderTicTacToe(); }
-}
-
 function tttPlace(i) {
-    tttPreview = null;
+    if (tttGameOver || tttCurrentPlayer !== 'user' || tttBoard[i] !== 0) return;
     tttBoard[i] = 1; tttLastMove = i; tttHistory.push(i);
     var result = checkTicTacToeWin();
     if (result) { tttGameOver = true; tttWinCells = result; renderTicTacToe(); showGameWinDialog('tictactoe', '你赢了！🎉'); return; }
@@ -365,8 +357,8 @@ function tttPlace(i) {
 
 function tttAIMove() {
     if (tttGameOver) return;
-    var aiMark = tttUserMark === 'X' ? 2 : 1;
-    var userMarkVal = tttUserMark === 'X' ? 1 : 2;
+    var aiMarkVal = 2;
+    var userMarkVal = 1;
     var mistakeRate = getAIMistakeRate();
     var move;
     if (Math.random() < mistakeRate) {
@@ -374,10 +366,10 @@ function tttAIMove() {
         for (var i = 0; i < 9; i++) if (tttBoard[i] === 0) empties.push(i);
         move = empties[Math.floor(Math.random() * empties.length)];
     } else {
-        move = tttBestMove(aiMark, userMarkVal);
+        move = tttBestMove(aiMarkVal, userMarkVal);
     }
     if (move === undefined || move === null) return;
-    tttBoard[move] = aiMark; tttLastMove = move; tttHistory.push(move);
+    tttBoard[move] = aiMarkVal; tttLastMove = move; tttHistory.push(move);
     var result = checkTicTacToeWin();
     if (result) { tttGameOver = true; tttWinCells = result; renderTicTacToe(); showGameWinDialog('tictactoe', (getContactById(gameContactId) || {}).name + '赢了！'); return; }
     if (tttHistory.length >= 9) { tttGameOver = true; renderTicTacToe(); showGameWinDialog('tictactoe', '平局！'); return; }
@@ -434,7 +426,7 @@ function checkTicTacToeWin() {
 function tttRequestUndo() {
     if (tttGameOver || tttHistory.length < 2) { showToast('无法悔棋'); return; }
     var agree = Math.random() > 0.4;
-    if (agree) { tttHistory.pop(); var last = tttHistory.pop(); tttBoard[last] = 0; tttLastMove = tttHistory.length > 0 ? tttHistory[tttHistory.length - 1] : null; tttCurrentPlayer = 'user'; tttPreview = null; renderTicTacToe(); showToast('悔棋成功'); }
+    if (agree) { tttHistory.pop(); var last = tttHistory.pop(); tttBoard[last] = 0; tttLastMove = tttHistory.length > 0 ? tttHistory[tttHistory.length - 1] : null; tttCurrentPlayer = 'user'; renderTicTacToe(); showToast('悔棋成功'); }
     else { showGameEmoji('tictactoe', 'ai', 'x( ˃ ⌂ ˂ ՞ )'); }
 }
 
