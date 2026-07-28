@@ -151,7 +151,7 @@ function renderGameHome() {
         + '</div>'
         + '<div class="game-item" onclick="selectMonopolyContact()">'
         + '<div class="game-item-icon">🎲</div>'
-        + '<div class="game-item-name">大富翁</div>'
+        + '<div class="game-item-name"></div>'
         + '<div class="game-item-desc">买地收租·财富对决</div>'
         + '</div>'
         + '</div>'
