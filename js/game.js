@@ -232,15 +232,13 @@ function renderMonopoly() {
     for (var i = 0; i < masks.length; i++) { if (masks[i].id === activeMaskId) { activeMask = masks[i]; break; } }
     var userName = activeMask ? activeMask.name : '我';
     var userAvatar = activeMask && activeMask.avatar ? activeMask.avatar : '';
-    var userPieceClass = monoUserColor === 1 ? 'black' : 'white';
-    var aiPieceClass = monoUserColor === 1 ? 'white' : 'black';
     var statusText = monoGameOver ? '游戏结束' : (monoCurrentTurn === 'user' ? '你的回合' : contactName + '思考中...');
     var diceHTML = monoDiceValue > 0 ? ('🎲 ' + monoDiceValue) : '🎲';
 
     appWindow.innerHTML = ''
         + '<div class="monopoly-app">'
-        + '<div class="game-top-bar"><div class="game-back-btn" onclick="monoConfirmExit()">‹</div><div class="game-top-title">大富翁</div><div class="game-top-spacer"></div></div>'
-        + '<div class="monopoly-header">'
+        + '<div class="game-top-bar monopoly-topbar">'
+        + '<div class="game-back-btn" onclick="monoConfirmExit()">‹</div>'
         + '<div class="monopoly-player user">'
         + '<div class="monopoly-player-avatar" style="' + (userAvatar ? 'background-image:url(' + userAvatar + ');background-size:cover;background-position:center;' : '') + '">' + (userAvatar ? '' : userName.charAt(0)) + '<div class="monopoly-avatar-badge user" style="color:' + (monoUserColor === 1 ? '#1d1d1f' : '#8e8e93') + ';">♟</div></div>'
         + '<div class="monopoly-player-name">' + userName + '</div>'
@@ -255,10 +253,14 @@ function renderMonopoly() {
         + '<div class="monopoly-emoji-spot" id="monoEmojiAI"></div>'
         + '</div>'
         + '</div>'
-        + '<div class="monopoly-board-wrap" id="monoBoardWrap">' + renderMonoBoard() + '</div>'
+        + '<div class="monopoly-board-wrap" id="monoBoardWrap">'
+        + '<div class="monopoly-board-outer">'
+        + renderMonoBoard()
         + '<div class="monopoly-center">'
         + '<div class="monopoly-dice ' + (monoIsRolling ? 'rolling' : '') + '" id="monoDice" onclick="monoRollDice()">' + diceHTML + '</div>'
         + '<div class="monopoly-status">' + statusText + '</div>'
+        + '</div>'
+        + '</div>'
         + '</div>'
         + '<div class="monopoly-emoji-btn" onclick="toggleMonopolyEmojiPanel()">>ᴗ<</div>'
         + '<div class="monopoly-emoji-panel" id="monoEmojiPanel" style="display:none;">'
