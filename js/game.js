@@ -237,7 +237,7 @@ function renderMonopoly() {
 
     appWindow.innerHTML = ''
         + '<div class="monopoly-app">'
-        + '<div class="game-top-bar"><div class="game-back-btn" onclick="monoConfirmExit()">‹</div><div class="game-top-title">大富翁</div><div class="game-top-spacer"></div></div>'
+        + '<div class="game-top-bar"><div class="game-back-btn" onclick="monoConfirmExit()">‹</div><div class="game-top-title"></div><div class="game-top-spacer"></div></div>'
         + '<div class="monopoly-header">'
         + '<div class="monopoly-player user">'
         + '<div class="monopoly-player-avatar" style="' + (userAvatar ? 'background-image:url(' + userAvatar + ');background-size:cover;background-position:center;' : '') + '">' + (userAvatar ? '' : userName.charAt(0)) + '<div class="monopoly-avatar-badge user" style="color:' + (monoUserColor === 1 ? '#1d1d1f' : '#8e8e93') + ';">♟</div></div>'
