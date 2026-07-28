@@ -75,7 +75,7 @@ function renderGameHome() {
         + '<div class="game-body">'
         + '<div class="game-list">'
         + '<div class="game-item" onclick="selectGobangContact()">'
-+ '<div class="game-item-icon">⚫⚫⚫⚫⚫</div>'
++ '<div class="game-item-icon">⚫⚫</div>'
 + '<div class="game-item-name">五子棋</div>'
 + '<div class="game-item-desc">和角色来一局</div>'
 + '</div>'
